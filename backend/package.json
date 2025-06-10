@@ -1,14 +1,11 @@
 {
-  "name": "backend",
+  "name": "railworker-backend",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "postinstall": "npx prisma generate"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
     "@prisma/client": "^6.9.0",
     "bcrypt": "^6.0.0",
