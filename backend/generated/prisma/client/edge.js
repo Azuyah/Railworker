@@ -168,6 +168,7 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
@@ -176,8 +177,8 @@ const config = {
       }
     }
   },
-  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/prisma/client\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel User {\n  id       Int     @id @default(autoincrement())\n  email    String  @unique\n  password String\n  name     String?\n  phone    String?\n  company  String?\n  role     String  @default(\"TSM\")\n}\n\nmodel Project {\n  id          Int      @id @default(autoincrement())\n  name        String\n  description String\n  createdAt   DateTime @default(now())\n}\n",
-  "inlineSchemaHash": "c928bf7247218b128f57904fd10dc4f0b94c06400cab1f245f5629216d68243c",
+  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/prisma/client\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel User {\n  id       Int     @id @default(autoincrement())\n  email    String  @unique\n  password String\n  name     String?\n  phone    String?\n  company  String?\n  role     String  @default(\"TSM\")\n}\n\nmodel Project {\n  id          Int      @id @default(autoincrement())\n  name        String\n  description String\n  createdAt   DateTime @default(now())\n}\n",
+  "inlineSchemaHash": "b1d69eb4816c988a7fbb0c5cbbc296db812c4758bed08b2a9ec33aff80e2dc54",
   "copyEngine": true
 }
 config.dirname = '/'
