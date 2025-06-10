@@ -218,28 +218,47 @@ const SkapaProjekt = () => {
       <div className="mt-8">
         <center>
 <button
-  onClick={() => {
-  const newProject = {
-    id: Date.now(), // unik ID
-    name: projektNamn,
-    description: plats,
-    startDate,
-    startTime,
-    endDate,
-    endTime,
-    plats,
-    namn,
-    telefonnummer,
-    beteckningar,
-    sections,
-  };
+  onClick={async () => {
+    const token = JSON.parse(localStorage.getItem('user'))?.token;
+    if (!token) {
+      alert('Du är inte inloggad.');
+      return;
+    }
 
-  const existingProjects = JSON.parse(localStorage.getItem('projects')) || [];
-  const updatedProjects = [...existingProjects, newProject];
+    try {
+      const newProject = {
+        name: projektNamn,
+        description: plats,
+        startDate,
+        startTime,
+        endDate,
+        endTime,
+        plats,
+        namn,
+        telefonnummer,
+        beteckningar,
+        sections,
+      };
 
-  localStorage.setItem('projects', JSON.stringify(updatedProjects));
-  navigate('/dashboard');
-}}
+      const response = await fetch('https://railworker-production.up.railway.app/api/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(newProject),
+      });
+
+      if (!response.ok) {
+        throw new Error('Kunde inte skapa projekt');
+      }
+
+      navigate('/dashboard');
+    } catch (err) {
+      console.error('Fel vid projekt-skapande:', err);
+      alert('Något gick fel. Försök igen.');
+    }
+  }}
   className="bg-blue-700 text-white px-6 py-3 rounded shadow hover:bg-blue-800 transition"
 >
   Skapa projekt

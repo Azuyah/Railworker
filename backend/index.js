@@ -69,13 +69,12 @@ app.post('/api/projects', async (req, res) => {
     const decoded = jwt.verify(token, JWT_SECRET);
     const userId = decoded.userId;
 
-    const project = await prisma.project.create({
-      data: {
-        name,
-        description,
-        user: { connect: { id: userId } },
-      },
-    });
+const project = await prisma.project.create({
+  data: {
+    name,
+    description,
+  },
+});
 
     res.status(201).json(project);
   } catch (error) {
