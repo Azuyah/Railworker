@@ -1,39 +1,14 @@
 // src/pages/ProjektVisa.js
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import Header from '../components/Header';
 
 const ProjektVisa = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [project, setProject] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  const tokenData = localStorage.getItem('user');
-  const token = tokenData ? JSON.parse(tokenData).token : null;
-
-  useEffect(() => {
-    if (!token) {
-      navigate('/');
-      return;
-    }
-
-    axios.get('https://railworker-production.up.railway.app/api/projects', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(res => {
-        const found = res.data.find(p => p.id === Number(id));
-        setProject(found);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Fel vid hämtning av projekt:', err);
-        setLoading(false);
-      });
-  }, [id, token, navigate]);
-
-  if (loading) return <div className="p-6">Laddar...</div>;
+  const allProjects = JSON.parse(localStorage.getItem('projects')) || [];
+  const project = allProjects.find((p) => p.id === Number(id));
 
   if (!project) {
     return (
@@ -48,7 +23,9 @@ const ProjektVisa = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <Header />
+      {/* Top Menu */}
+<Header />
+
       <div className="p-6 max-w-4xl mx-auto">
         <h2 className="text-2xl font-bold mb-4">{project.name}</h2>
         <p><strong>Plats:</strong> {project.plats}</p>
@@ -57,14 +34,14 @@ const ProjektVisa = () => {
 
         <h3 className="text-lg font-semibold mt-6">Beteckningar</h3>
         <ul className="list-disc list-inside">
-          {project.beteckningar?.map((b, i) => (
-            <li key={i}>{typeof b === 'object' ? b.value : b}</li>
-          ))}
+{project.beteckningar.map((b, i) => (
+  <li key={i}>{typeof b === 'object' ? b.value : b}</li>
+))}
         </ul>
 
         <h3 className="text-lg font-semibold mt-6">Delområden</h3>
         <ul className="space-y-2 mt-2">
-          {project.sections?.map((sec, i) => (
+          {project.sections.map((sec, i) => (
             <li key={i} className="p-3 bg-white rounded shadow">
               <strong>{sec.type} {String.fromCharCode(65 + i)}:</strong> {sec.signal}
             </li>

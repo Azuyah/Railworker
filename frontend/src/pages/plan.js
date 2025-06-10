@@ -1,17 +1,33 @@
-// Plan.js
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import Header from '../components/Header';
+import axios from 'axios';
 
 const Plan = () => {
+  const { id } = useParams(); // projekt-ID från URL
   const [project, setProject] = useState(null);
   const [rows, setRows] = useState([]);
   const [editingRow, setEditingRow] = useState(null);
   const [countdown, setCountdown] = useState('');
 
   useEffect(() => {
-    const current = JSON.parse(localStorage.getItem('currentProject'));
-    if (current) {
+    fetchProject();
+  }, []);
+
+  const fetchProject = async () => {
+    try {
+      const tokenData = localStorage.getItem('user');
+      const token = tokenData ? JSON.parse(tokenData).token : null;
+
+      const response = await axios.get(`https://railworker-production.up.railway.app/api/projects/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const current = response.data;
       setProject(current);
+
       setRows([
         {
           id: 1,
@@ -26,24 +42,27 @@ const Plan = () => {
         },
       ]);
 
-const interval = setInterval(() => {
-  const start = new Date(`${current.startDate}T${current.startTime}`);
-  const target = new Date(start.getTime() - 60 * 60 * 1000); // exakt 1 timme innan start
-  const now = new Date();
-  const diff = target - now;
+      const interval = setInterval(() => {
+        const start = new Date(`${current.startDate}T${current.startTime}`);
+        const target = new Date(start.getTime() - 60 * 60 * 1000);
+        const now = new Date();
+        const diff = target - now;
 
-  if (diff <= 0) {
-    setCountdown('Registrering stängd!');
-  } else {
-    const h = Math.floor(diff / (1000 * 60 * 60));
-    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const s = Math.floor((diff % (1000 * 60)) / 1000);
-    setCountdown(`${h}h ${m}m ${s}s kvar till registrering stänger`);
-  }
-}, 1000);
+        if (diff <= 0) {
+          setCountdown('Registrering stängd!');
+        } else {
+          const h = Math.floor(diff / (1000 * 60 * 60));
+          const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+          const s = Math.floor((diff % (1000 * 60)) / 1000);
+          setCountdown(`${h}h ${m}m ${s}s kvar till registrering stänger`);
+        }
+      }, 1000);
+
       return () => clearInterval(interval);
+    } catch (error) {
+      console.error('Kunde inte hämta projekt:', error);
     }
-  }, []);
+  };
 
   const handleChange = (index, field, value) => {
     const updated = [...rows];
@@ -87,7 +106,8 @@ const interval = setInterval(() => {
   };
 
   const samrad = getSharedContacts();
-  if (!project) return <div className="p-6">Inget projekt valt</div>;
+
+  if (!project) return <div className="p-6">Inget projekt hittades.</div>;
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">

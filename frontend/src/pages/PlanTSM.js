@@ -1,16 +1,32 @@
-// PlanTSM.js
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import Header from '../components/Header';
+import axios from 'axios';
 
 const PlanTSM = () => {
+  const { id } = useParams();
   const [project, setProject] = useState(null);
   const [rows, setRows] = useState([]);
   const [countdown, setCountdown] = useState('');
 
   useEffect(() => {
-    const current = JSON.parse(localStorage.getItem('currentProject'));
-    if (current) {
+    fetchProject();
+  }, []);
+
+  const fetchProject = async () => {
+    try {
+      const tokenData = localStorage.getItem('user');
+      const token = tokenData ? JSON.parse(tokenData).token : null;
+
+      const response = await axios.get(`https://railworker-production.up.railway.app/api/projects/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const current = response.data;
       setProject(current);
+
       setRows([
         {
           id: 1,
@@ -42,8 +58,10 @@ const PlanTSM = () => {
       }, 1000);
 
       return () => clearInterval(interval);
+    } catch (err) {
+      console.error('Kunde inte hämta projektet:', err);
     }
-  }, []);
+  };
 
   const getSharedContacts = () => {
     const firstRow = rows[0];
@@ -54,7 +72,7 @@ const PlanTSM = () => {
   };
 
   const samrad = getSharedContacts();
-  if (!project) return <div className="p-6">Inget projekt valt</div>;
+  if (!project) return <div className="p-6">Inget projekt hittades.</div>;
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
