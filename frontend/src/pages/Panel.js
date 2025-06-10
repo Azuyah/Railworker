@@ -17,19 +17,24 @@ export default function Panel() {
     }
   }, []);
 
-const fetchAllProjects = () => {
-  const stored = localStorage.getItem('projects');
-  if (stored) {
-    setProjects(JSON.parse(stored));
-  } else {
-    setProjects([]);
-  }
-};
+  const fetchAllProjects = async () => {
+    try {
+      const response = await axios.get('https://railworker-production.up.railway.app/api/projects', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setProjects(response.data);
+    } catch (error) {
+      console.error('Kunde inte hämta projekt:', error);
+      setProjects([]); // fallback
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Top Menu */}
-<Header />
+      <Header />
 
       {/* Projects List Only */}
       <div className="p-6 max-w-4xl mx-auto">
@@ -50,14 +55,15 @@ const fetchAllProjects = () => {
                       <p className="text-sm text-gray-600">{project.description}</p>
                     )}
                   </div>
-<button
-onClick={() => {
-    localStorage.setItem('currentProject', JSON.stringify(project));
-    navigate('/plan');
-  }}
->
-  Visa projekt
-</button>
+                  <button
+                    onClick={() => {
+                      localStorage.setItem('currentProject', JSON.stringify(project));
+                      navigate('/plan');
+                    }}
+                    className="ml-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
+                    Visa projekt
+                  </button>
                 </li>
               ))}
             </ul>

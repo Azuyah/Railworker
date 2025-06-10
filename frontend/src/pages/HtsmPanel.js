@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from '../components/Header'; // Justera sökvägen om det behövs
+import axios from 'axios';
+import Header from '../components/Header';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -19,11 +20,16 @@ const Dashboard = () => {
     }
   }, []);
 
-  const fetchAllProjects = () => {
-    const stored = localStorage.getItem('projects');
-    if (stored) {
-      setProjects(JSON.parse(stored));
-    } else {
+  const fetchAllProjects = async () => {
+    try {
+      const response = await axios.get('https://railworker-production.up.railway.app/api/projects', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setProjects(response.data);
+    } catch (error) {
+      console.error('Kunde inte hämta projekt:', error);
       setProjects([]);
     }
   };
@@ -65,10 +71,10 @@ const Dashboard = () => {
                     )}
                   </div>
                   <button
-onClick={() => {
-    localStorage.setItem('currentProject', JSON.stringify(project));
-    navigate('/plan');
-  }}
+                    onClick={() => {
+                      localStorage.setItem('currentProject', JSON.stringify(project));
+                      navigate('/plan');
+                    }}
                     className="text-blue-600 hover:underline"
                   >
                     Visa projekt
