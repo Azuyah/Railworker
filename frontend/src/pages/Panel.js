@@ -1,0 +1,69 @@
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import Header from '../components/Header';
+
+export default function Panel() {
+  const [projects, setProjects] = useState([]);
+  const navigate = useNavigate();
+  const tokenData = localStorage.getItem('user');
+  const token = tokenData ? JSON.parse(tokenData).token : null;
+
+  useEffect(() => {
+    if (!token) {
+      navigate('/');
+    } else {
+      fetchAllProjects();
+    }
+  }, []);
+
+const fetchAllProjects = () => {
+  const stored = localStorage.getItem('projects');
+  if (stored) {
+    setProjects(JSON.parse(stored));
+  } else {
+    setProjects([]);
+  }
+};
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      {/* Top Menu */}
+<Header />
+
+      {/* Projects List Only */}
+      <div className="p-6 max-w-4xl mx-auto">
+        <div className="bg-white p-6 rounded shadow-md">
+          <h2 className="text-lg font-semibold mb-4">Alla projekt</h2>
+          {projects.length === 0 ? (
+            <p className="text-gray-500">Inga projekt hittades.</p>
+          ) : (
+            <ul className="space-y-4">
+              {projects.map((project) => (
+                <li
+                  key={project.id}
+                  className="border rounded p-4 flex justify-between items-center"
+                >
+                  <div>
+                    <h3 className="font-semibold">{project.name}</h3>
+                    {project.description && (
+                      <p className="text-sm text-gray-600">{project.description}</p>
+                    )}
+                  </div>
+<button
+onClick={() => {
+    localStorage.setItem('currentProject', JSON.stringify(project));
+    navigate('/plan');
+  }}
+>
+  Visa projekt
+</button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
