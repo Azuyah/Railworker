@@ -73,6 +73,7 @@ const project = await prisma.project.create({
   data: {
     name,
     description,
+    user: { connect: { id: userId } },
   },
 });
 
