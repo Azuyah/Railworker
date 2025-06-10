@@ -58,7 +58,7 @@ export default function Panel() {
                   <button
                     onClick={() => {
                       localStorage.setItem('currentProject', JSON.stringify(project));
-                      navigate('/plan');
+                      navigate(`/plan/${project.id}`)
                     }}
                     className="ml-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                   >

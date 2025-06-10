@@ -73,7 +73,7 @@ const Dashboard = () => {
                   <button
                     onClick={() => {
                       localStorage.setItem('currentProject', JSON.stringify(project));
-                      navigate('/plan');
+                      navigate(`/plan/${project.id}`)
                     }}
                     className="text-blue-600 hover:underline"
                   >

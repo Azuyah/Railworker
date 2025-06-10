@@ -26,10 +26,10 @@ function AppRoutes() {
       <Route path="/profil" element={<Profil />} />
 
       {/* Här styr vi mellan Plan och PlanTSM baserat på rollen */}
-      <Route
-        path="/plan"
-        element={role === 'TSM' ? <PlanTSM /> : <Plan />}
-      />
+<Route
+  path="/plan/:id"
+  element={role === 'TSM' ? <PlanTSM /> : <Plan />}
+/>
 
       {/* Dashboard redirect */}
       <Route
