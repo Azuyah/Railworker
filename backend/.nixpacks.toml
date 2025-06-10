@@ -5,4 +5,4 @@ nixPkgs = ["nodejs"]
 cmds = ["npm install"]
 
 [phases.start]
-cmd = "node index.js"
+cmd = "PORT=$PORT node index.js"
