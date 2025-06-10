@@ -12,20 +12,21 @@ datasource db {
 }
 
 model User {
-  id       Int     @id @default(autoincrement())
-  email    String  @unique
+  id       Int       @id @default(autoincrement())
+  email    String    @unique
   password String
   name     String?
   phone    String?
   company  String?
-  role     String  @default("TSM")
+  role     String    @default("TSM")
+  projects Project[] // ✅ relation till Project
 }
 
 model Project {
   id          Int      @id @default(autoincrement())
   name        String
   description String?
-  user        User     @relation(fields: [userId], references: [id])
-  userId      Int
+user        User     @relation(fields: [userId], references: [id])
+userId      Int     
   createdAt   DateTime @default(now())
 }
