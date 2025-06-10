@@ -70,15 +70,12 @@ const Dashboard = () => {
                       <p className="text-sm text-gray-600">{project.description}</p>
                     )}
                   </div>
-                  <button
-                    onClick={() => {
-                      localStorage.setItem('currentProject', JSON.stringify(project));
-                      navigate(`/plan/${project.id}`)
-                    }}
-                    className="text-blue-600 hover:underline"
-                  >
-                    Visa projekt
-                  </button>
+<button
+  onClick={() => navigate(`/plan/${project.id}`)}
+  className="text-blue-600 hover:underline"
+>
+  Visa projekt
+</button>
                 </li>
               ))}
             </ul>

@@ -55,15 +55,12 @@ export default function Panel() {
                       <p className="text-sm text-gray-600">{project.description}</p>
                     )}
                   </div>
-                  <button
-                    onClick={() => {
-                      localStorage.setItem('currentProject', JSON.stringify(project));
-                      navigate(`/plan/${project.id}`)
-                    }}
-                    className="ml-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                  >
-                    Visa projekt
-                  </button>
+<button
+  onClick={() => navigate(`/plan/${project.id}`)}
+  className="text-blue-600 hover:underline"
+>
+  Visa projekt
+</button>
                 </li>
               ))}
             </ul>
