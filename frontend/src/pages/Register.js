@@ -24,7 +24,7 @@ const Register = () => {
     setLoading(true);
     setError('');
     try {
-      const response = await axios.post('railworker-production.up.railway.app/api/register', formData);
+      const response = await axios.post('https://railworker-production.up.railway.app/api/register', formData);
       if (response.status === 201) {
         alert('Registrering lyckades!');
         navigate('/login');
