@@ -124,36 +124,38 @@ const Plan = () => {
             <p><strong>Beteckningar:</strong> {project.beteckningar.map(b => b.value).join(', ')}</p>
           </div>
           <div className="text-right">
-            <div className="text-base font-bold text-blue-600">{countdown}</div>
+            <h2 className="text-lg font-semibold mb-2">Förplanering stänger</h2>
+            <div className="text-xl font-bold text-blue-600">{countdown}</div>
           </div>
         </div>
-                  <button
-      onClick={async () => {
-        if (!window.confirm('Är du säker på att du vill ta bort detta projekt?')) return;
+ <div className="mt-4 flex gap-4">
+  <button
+    onClick={async () => {
+      if (!window.confirm('Är du säker på att du vill ta bort detta projekt?')) return;
 
-        try {
-          const tokenData = localStorage.getItem('user');
-          const token = tokenData ? JSON.parse(tokenData).token : null;
-          await axios.delete(`https://railworker-production.up.railway.app/api/project/${id}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          window.location.href = '/dashboard';
-        } catch (err) {
-          console.error('Kunde inte ta bort projekt:', err);
-        }
-      }}
-      className="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-    >
-      Ta bort projekt
-    </button>
+      try {
+        const tokenData = localStorage.getItem('user');
+        const token = tokenData ? JSON.parse(tokenData).token : null;
+        await axios.delete(`https://railworker-production.up.railway.app/api/project/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        window.location.href = '/dashboard';
+      } catch (err) {
+        console.error('Kunde inte ta bort projekt:', err);
+      }
+    }}
+    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+  >
+    Ta bort projekt
+  </button>
 
-      <button
-    onClick={() => alert('Redigeringsfunktion kommer snart!')} // Eller öppna en modal osv.
+  <button
+    onClick={() => alert('Redigeringsfunktion kommer snart!')}
     className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
   >
     Redigera projekt
   </button>
-
+</div>
 <div className="mt-6 w-full flex gap-6 max-w-[1900px] mx-auto">
 <div className="flex-1">
   <table className="w-full border mt-4">
