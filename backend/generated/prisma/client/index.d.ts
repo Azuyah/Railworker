@@ -23,6 +23,16 @@ export type User = $Result.DefaultSelection<Prisma.$UserPayload>
  * 
  */
 export type Project = $Result.DefaultSelection<Prisma.$ProjectPayload>
+/**
+ * Model Section
+ * 
+ */
+export type Section = $Result.DefaultSelection<Prisma.$SectionPayload>
+/**
+ * Model Beteckning
+ * 
+ */
+export type Beteckning = $Result.DefaultSelection<Prisma.$BeteckningPayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -168,6 +178,26 @@ export class PrismaClient<
     * ```
     */
   get project(): Prisma.ProjectDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.section`: Exposes CRUD operations for the **Section** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Sections
+    * const sections = await prisma.section.findMany()
+    * ```
+    */
+  get section(): Prisma.SectionDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.beteckning`: Exposes CRUD operations for the **Beteckning** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Betecknings
+    * const betecknings = await prisma.beteckning.findMany()
+    * ```
+    */
+  get beteckning(): Prisma.BeteckningDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -609,7 +639,9 @@ export namespace Prisma {
 
   export const ModelName: {
     User: 'User',
-    Project: 'Project'
+    Project: 'Project',
+    Section: 'Section',
+    Beteckning: 'Beteckning'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -628,7 +660,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "project"
+      modelProps: "user" | "project" | "section" | "beteckning"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -780,6 +812,154 @@ export namespace Prisma {
           }
         }
       }
+      Section: {
+        payload: Prisma.$SectionPayload<ExtArgs>
+        fields: Prisma.SectionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SectionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SectionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionPayload>
+          }
+          findFirst: {
+            args: Prisma.SectionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SectionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionPayload>
+          }
+          findMany: {
+            args: Prisma.SectionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionPayload>[]
+          }
+          create: {
+            args: Prisma.SectionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionPayload>
+          }
+          createMany: {
+            args: Prisma.SectionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SectionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionPayload>[]
+          }
+          delete: {
+            args: Prisma.SectionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionPayload>
+          }
+          update: {
+            args: Prisma.SectionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionPayload>
+          }
+          deleteMany: {
+            args: Prisma.SectionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SectionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.SectionUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionPayload>[]
+          }
+          upsert: {
+            args: Prisma.SectionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SectionPayload>
+          }
+          aggregate: {
+            args: Prisma.SectionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSection>
+          }
+          groupBy: {
+            args: Prisma.SectionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SectionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SectionCountArgs<ExtArgs>
+            result: $Utils.Optional<SectionCountAggregateOutputType> | number
+          }
+        }
+      }
+      Beteckning: {
+        payload: Prisma.$BeteckningPayload<ExtArgs>
+        fields: Prisma.BeteckningFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BeteckningFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BeteckningPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BeteckningFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BeteckningPayload>
+          }
+          findFirst: {
+            args: Prisma.BeteckningFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BeteckningPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BeteckningFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BeteckningPayload>
+          }
+          findMany: {
+            args: Prisma.BeteckningFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BeteckningPayload>[]
+          }
+          create: {
+            args: Prisma.BeteckningCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BeteckningPayload>
+          }
+          createMany: {
+            args: Prisma.BeteckningCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.BeteckningCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BeteckningPayload>[]
+          }
+          delete: {
+            args: Prisma.BeteckningDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BeteckningPayload>
+          }
+          update: {
+            args: Prisma.BeteckningUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BeteckningPayload>
+          }
+          deleteMany: {
+            args: Prisma.BeteckningDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BeteckningUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.BeteckningUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BeteckningPayload>[]
+          }
+          upsert: {
+            args: Prisma.BeteckningUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BeteckningPayload>
+          }
+          aggregate: {
+            args: Prisma.BeteckningAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBeteckning>
+          }
+          groupBy: {
+            args: Prisma.BeteckningGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BeteckningGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BeteckningCountArgs<ExtArgs>
+            result: $Utils.Optional<BeteckningCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -866,6 +1046,8 @@ export namespace Prisma {
   export type GlobalOmitConfig = {
     user?: UserOmit
     project?: ProjectOmit
+    section?: SectionOmit
+    beteckning?: BeteckningOmit
   }
 
   /* Types for Logging */
@@ -983,6 +1165,46 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountProjectsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ProjectWhereInput
+  }
+
+
+  /**
+   * Count Type ProjectCountOutputType
+   */
+
+  export type ProjectCountOutputType = {
+    sections: number
+    beteckningar: number
+  }
+
+  export type ProjectCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    sections?: boolean | ProjectCountOutputTypeCountSectionsArgs
+    beteckningar?: boolean | ProjectCountOutputTypeCountBeteckningarArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * ProjectCountOutputType without action
+   */
+  export type ProjectCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectCountOutputType
+     */
+    select?: ProjectCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * ProjectCountOutputType without action
+   */
+  export type ProjectCountOutputTypeCountSectionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SectionWhereInput
+  }
+
+  /**
+   * ProjectCountOutputType without action
+   */
+  export type ProjectCountOutputTypeCountBeteckningarArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BeteckningWhereInput
   }
 
 
@@ -2293,7 +2515,7 @@ export namespace Prisma {
     id: number
     name: string
     description: string | null
-    userId: number
+    userId: number | null
     createdAt: Date
     _count: ProjectCountAggregateOutputType | null
     _avg: ProjectAvgAggregateOutputType | null
@@ -2322,7 +2544,10 @@ export namespace Prisma {
     description?: boolean
     userId?: boolean
     createdAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
+    user?: boolean | Project$userArgs<ExtArgs>
+    sections?: boolean | Project$sectionsArgs<ExtArgs>
+    beteckningar?: boolean | Project$beteckningarArgs<ExtArgs>
+    _count?: boolean | ProjectCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["project"]>
 
   export type ProjectSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -2331,7 +2556,7 @@ export namespace Prisma {
     description?: boolean
     userId?: boolean
     createdAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
+    user?: boolean | Project$userArgs<ExtArgs>
   }, ExtArgs["result"]["project"]>
 
   export type ProjectSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -2340,7 +2565,7 @@ export namespace Prisma {
     description?: boolean
     userId?: boolean
     createdAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
+    user?: boolean | Project$userArgs<ExtArgs>
   }, ExtArgs["result"]["project"]>
 
   export type ProjectSelectScalar = {
@@ -2353,25 +2578,30 @@ export namespace Prisma {
 
   export type ProjectOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "description" | "userId" | "createdAt", ExtArgs["result"]["project"]>
   export type ProjectInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
+    user?: boolean | Project$userArgs<ExtArgs>
+    sections?: boolean | Project$sectionsArgs<ExtArgs>
+    beteckningar?: boolean | Project$beteckningarArgs<ExtArgs>
+    _count?: boolean | ProjectCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type ProjectIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
+    user?: boolean | Project$userArgs<ExtArgs>
   }
   export type ProjectIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
+    user?: boolean | Project$userArgs<ExtArgs>
   }
 
   export type $ProjectPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Project"
     objects: {
-      user: Prisma.$UserPayload<ExtArgs>
+      user: Prisma.$UserPayload<ExtArgs> | null
+      sections: Prisma.$SectionPayload<ExtArgs>[]
+      beteckningar: Prisma.$BeteckningPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: number
       name: string
       description: string | null
-      userId: number
+      userId: number | null
       createdAt: Date
     }, ExtArgs["result"]["project"]>
     composites: {}
@@ -2767,7 +2997,9 @@ export namespace Prisma {
    */
   export interface Prisma__ProjectClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
-    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    user<T extends Project$userArgs<ExtArgs> = {}>(args?: Subset<T, Project$userArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    sections<T extends Project$sectionsArgs<ExtArgs> = {}>(args?: Subset<T, Project$sectionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    beteckningar<T extends Project$beteckningarArgs<ExtArgs> = {}>(args?: Subset<T, Project$beteckningarArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BeteckningPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3198,6 +3430,73 @@ export namespace Prisma {
   }
 
   /**
+   * Project.user
+   */
+  export type Project$userArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
+   * Project.sections
+   */
+  export type Project$sectionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Section
+     */
+    select?: SectionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Section
+     */
+    omit?: SectionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionInclude<ExtArgs> | null
+    where?: SectionWhereInput
+    orderBy?: SectionOrderByWithRelationInput | SectionOrderByWithRelationInput[]
+    cursor?: SectionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SectionScalarFieldEnum | SectionScalarFieldEnum[]
+  }
+
+  /**
+   * Project.beteckningar
+   */
+  export type Project$beteckningarArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Beteckning
+     */
+    select?: BeteckningSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Beteckning
+     */
+    omit?: BeteckningOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BeteckningInclude<ExtArgs> | null
+    where?: BeteckningWhereInput
+    orderBy?: BeteckningOrderByWithRelationInput | BeteckningOrderByWithRelationInput[]
+    cursor?: BeteckningWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: BeteckningScalarFieldEnum | BeteckningScalarFieldEnum[]
+  }
+
+  /**
    * Project without action
    */
   export type ProjectDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3213,6 +3512,2146 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: ProjectInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model Section
+   */
+
+  export type AggregateSection = {
+    _count: SectionCountAggregateOutputType | null
+    _avg: SectionAvgAggregateOutputType | null
+    _sum: SectionSumAggregateOutputType | null
+    _min: SectionMinAggregateOutputType | null
+    _max: SectionMaxAggregateOutputType | null
+  }
+
+  export type SectionAvgAggregateOutputType = {
+    id: number | null
+    projectId: number | null
+  }
+
+  export type SectionSumAggregateOutputType = {
+    id: number | null
+    projectId: number | null
+  }
+
+  export type SectionMinAggregateOutputType = {
+    id: number | null
+    name: string | null
+    projectId: number | null
+  }
+
+  export type SectionMaxAggregateOutputType = {
+    id: number | null
+    name: string | null
+    projectId: number | null
+  }
+
+  export type SectionCountAggregateOutputType = {
+    id: number
+    name: number
+    projectId: number
+    _all: number
+  }
+
+
+  export type SectionAvgAggregateInputType = {
+    id?: true
+    projectId?: true
+  }
+
+  export type SectionSumAggregateInputType = {
+    id?: true
+    projectId?: true
+  }
+
+  export type SectionMinAggregateInputType = {
+    id?: true
+    name?: true
+    projectId?: true
+  }
+
+  export type SectionMaxAggregateInputType = {
+    id?: true
+    name?: true
+    projectId?: true
+  }
+
+  export type SectionCountAggregateInputType = {
+    id?: true
+    name?: true
+    projectId?: true
+    _all?: true
+  }
+
+  export type SectionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Section to aggregate.
+     */
+    where?: SectionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Sections to fetch.
+     */
+    orderBy?: SectionOrderByWithRelationInput | SectionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SectionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Sections from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Sections.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Sections
+    **/
+    _count?: true | SectionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: SectionAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: SectionSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SectionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SectionMaxAggregateInputType
+  }
+
+  export type GetSectionAggregateType<T extends SectionAggregateArgs> = {
+        [P in keyof T & keyof AggregateSection]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSection[P]>
+      : GetScalarType<T[P], AggregateSection[P]>
+  }
+
+
+
+
+  export type SectionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SectionWhereInput
+    orderBy?: SectionOrderByWithAggregationInput | SectionOrderByWithAggregationInput[]
+    by: SectionScalarFieldEnum[] | SectionScalarFieldEnum
+    having?: SectionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SectionCountAggregateInputType | true
+    _avg?: SectionAvgAggregateInputType
+    _sum?: SectionSumAggregateInputType
+    _min?: SectionMinAggregateInputType
+    _max?: SectionMaxAggregateInputType
+  }
+
+  export type SectionGroupByOutputType = {
+    id: number
+    name: string
+    projectId: number
+    _count: SectionCountAggregateOutputType | null
+    _avg: SectionAvgAggregateOutputType | null
+    _sum: SectionSumAggregateOutputType | null
+    _min: SectionMinAggregateOutputType | null
+    _max: SectionMaxAggregateOutputType | null
+  }
+
+  type GetSectionGroupByPayload<T extends SectionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SectionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SectionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SectionGroupByOutputType[P]>
+            : GetScalarType<T[P], SectionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SectionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    projectId?: boolean
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["section"]>
+
+  export type SectionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    projectId?: boolean
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["section"]>
+
+  export type SectionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    projectId?: boolean
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["section"]>
+
+  export type SectionSelectScalar = {
+    id?: boolean
+    name?: boolean
+    projectId?: boolean
+  }
+
+  export type SectionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "projectId", ExtArgs["result"]["section"]>
+  export type SectionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+  }
+  export type SectionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+  }
+  export type SectionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+  }
+
+  export type $SectionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Section"
+    objects: {
+      project: Prisma.$ProjectPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      name: string
+      projectId: number
+    }, ExtArgs["result"]["section"]>
+    composites: {}
+  }
+
+  type SectionGetPayload<S extends boolean | null | undefined | SectionDefaultArgs> = $Result.GetResult<Prisma.$SectionPayload, S>
+
+  type SectionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<SectionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: SectionCountAggregateInputType | true
+    }
+
+  export interface SectionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Section'], meta: { name: 'Section' } }
+    /**
+     * Find zero or one Section that matches the filter.
+     * @param {SectionFindUniqueArgs} args - Arguments to find a Section
+     * @example
+     * // Get one Section
+     * const section = await prisma.section.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SectionFindUniqueArgs>(args: SelectSubset<T, SectionFindUniqueArgs<ExtArgs>>): Prisma__SectionClient<$Result.GetResult<Prisma.$SectionPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Section that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {SectionFindUniqueOrThrowArgs} args - Arguments to find a Section
+     * @example
+     * // Get one Section
+     * const section = await prisma.section.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SectionFindUniqueOrThrowArgs>(args: SelectSubset<T, SectionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SectionClient<$Result.GetResult<Prisma.$SectionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Section that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SectionFindFirstArgs} args - Arguments to find a Section
+     * @example
+     * // Get one Section
+     * const section = await prisma.section.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SectionFindFirstArgs>(args?: SelectSubset<T, SectionFindFirstArgs<ExtArgs>>): Prisma__SectionClient<$Result.GetResult<Prisma.$SectionPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Section that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SectionFindFirstOrThrowArgs} args - Arguments to find a Section
+     * @example
+     * // Get one Section
+     * const section = await prisma.section.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SectionFindFirstOrThrowArgs>(args?: SelectSubset<T, SectionFindFirstOrThrowArgs<ExtArgs>>): Prisma__SectionClient<$Result.GetResult<Prisma.$SectionPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Sections that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SectionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Sections
+     * const sections = await prisma.section.findMany()
+     * 
+     * // Get first 10 Sections
+     * const sections = await prisma.section.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const sectionWithIdOnly = await prisma.section.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends SectionFindManyArgs>(args?: SelectSubset<T, SectionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Section.
+     * @param {SectionCreateArgs} args - Arguments to create a Section.
+     * @example
+     * // Create one Section
+     * const Section = await prisma.section.create({
+     *   data: {
+     *     // ... data to create a Section
+     *   }
+     * })
+     * 
+     */
+    create<T extends SectionCreateArgs>(args: SelectSubset<T, SectionCreateArgs<ExtArgs>>): Prisma__SectionClient<$Result.GetResult<Prisma.$SectionPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Sections.
+     * @param {SectionCreateManyArgs} args - Arguments to create many Sections.
+     * @example
+     * // Create many Sections
+     * const section = await prisma.section.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SectionCreateManyArgs>(args?: SelectSubset<T, SectionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Sections and returns the data saved in the database.
+     * @param {SectionCreateManyAndReturnArgs} args - Arguments to create many Sections.
+     * @example
+     * // Create many Sections
+     * const section = await prisma.section.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Sections and only return the `id`
+     * const sectionWithIdOnly = await prisma.section.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SectionCreateManyAndReturnArgs>(args?: SelectSubset<T, SectionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SectionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Section.
+     * @param {SectionDeleteArgs} args - Arguments to delete one Section.
+     * @example
+     * // Delete one Section
+     * const Section = await prisma.section.delete({
+     *   where: {
+     *     // ... filter to delete one Section
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SectionDeleteArgs>(args: SelectSubset<T, SectionDeleteArgs<ExtArgs>>): Prisma__SectionClient<$Result.GetResult<Prisma.$SectionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Section.
+     * @param {SectionUpdateArgs} args - Arguments to update one Section.
+     * @example
+     * // Update one Section
+     * const section = await prisma.section.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SectionUpdateArgs>(args: SelectSubset<T, SectionUpdateArgs<ExtArgs>>): Prisma__SectionClient<$Result.GetResult<Prisma.$SectionPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Sections.
+     * @param {SectionDeleteManyArgs} args - Arguments to filter Sections to delete.
+     * @example
+     * // Delete a few Sections
+     * const { count } = await prisma.section.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SectionDeleteManyArgs>(args?: SelectSubset<T, SectionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Sections.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SectionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Sections
+     * const section = await prisma.section.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SectionUpdateManyArgs>(args: SelectSubset<T, SectionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Sections and returns the data updated in the database.
+     * @param {SectionUpdateManyAndReturnArgs} args - Arguments to update many Sections.
+     * @example
+     * // Update many Sections
+     * const section = await prisma.section.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Sections and only return the `id`
+     * const sectionWithIdOnly = await prisma.section.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends SectionUpdateManyAndReturnArgs>(args: SelectSubset<T, SectionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SectionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Section.
+     * @param {SectionUpsertArgs} args - Arguments to update or create a Section.
+     * @example
+     * // Update or create a Section
+     * const section = await prisma.section.upsert({
+     *   create: {
+     *     // ... data to create a Section
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Section we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SectionUpsertArgs>(args: SelectSubset<T, SectionUpsertArgs<ExtArgs>>): Prisma__SectionClient<$Result.GetResult<Prisma.$SectionPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Sections.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SectionCountArgs} args - Arguments to filter Sections to count.
+     * @example
+     * // Count the number of Sections
+     * const count = await prisma.section.count({
+     *   where: {
+     *     // ... the filter for the Sections we want to count
+     *   }
+     * })
+    **/
+    count<T extends SectionCountArgs>(
+      args?: Subset<T, SectionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SectionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Section.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SectionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SectionAggregateArgs>(args: Subset<T, SectionAggregateArgs>): Prisma.PrismaPromise<GetSectionAggregateType<T>>
+
+    /**
+     * Group by Section.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SectionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SectionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SectionGroupByArgs['orderBy'] }
+        : { orderBy?: SectionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SectionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSectionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Section model
+   */
+  readonly fields: SectionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Section.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SectionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    project<T extends ProjectDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ProjectDefaultArgs<ExtArgs>>): Prisma__ProjectClient<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Section model
+   */
+  interface SectionFieldRefs {
+    readonly id: FieldRef<"Section", 'Int'>
+    readonly name: FieldRef<"Section", 'String'>
+    readonly projectId: FieldRef<"Section", 'Int'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Section findUnique
+   */
+  export type SectionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Section
+     */
+    select?: SectionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Section
+     */
+    omit?: SectionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionInclude<ExtArgs> | null
+    /**
+     * Filter, which Section to fetch.
+     */
+    where: SectionWhereUniqueInput
+  }
+
+  /**
+   * Section findUniqueOrThrow
+   */
+  export type SectionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Section
+     */
+    select?: SectionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Section
+     */
+    omit?: SectionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionInclude<ExtArgs> | null
+    /**
+     * Filter, which Section to fetch.
+     */
+    where: SectionWhereUniqueInput
+  }
+
+  /**
+   * Section findFirst
+   */
+  export type SectionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Section
+     */
+    select?: SectionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Section
+     */
+    omit?: SectionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionInclude<ExtArgs> | null
+    /**
+     * Filter, which Section to fetch.
+     */
+    where?: SectionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Sections to fetch.
+     */
+    orderBy?: SectionOrderByWithRelationInput | SectionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Sections.
+     */
+    cursor?: SectionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Sections from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Sections.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Sections.
+     */
+    distinct?: SectionScalarFieldEnum | SectionScalarFieldEnum[]
+  }
+
+  /**
+   * Section findFirstOrThrow
+   */
+  export type SectionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Section
+     */
+    select?: SectionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Section
+     */
+    omit?: SectionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionInclude<ExtArgs> | null
+    /**
+     * Filter, which Section to fetch.
+     */
+    where?: SectionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Sections to fetch.
+     */
+    orderBy?: SectionOrderByWithRelationInput | SectionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Sections.
+     */
+    cursor?: SectionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Sections from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Sections.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Sections.
+     */
+    distinct?: SectionScalarFieldEnum | SectionScalarFieldEnum[]
+  }
+
+  /**
+   * Section findMany
+   */
+  export type SectionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Section
+     */
+    select?: SectionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Section
+     */
+    omit?: SectionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionInclude<ExtArgs> | null
+    /**
+     * Filter, which Sections to fetch.
+     */
+    where?: SectionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Sections to fetch.
+     */
+    orderBy?: SectionOrderByWithRelationInput | SectionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Sections.
+     */
+    cursor?: SectionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Sections from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Sections.
+     */
+    skip?: number
+    distinct?: SectionScalarFieldEnum | SectionScalarFieldEnum[]
+  }
+
+  /**
+   * Section create
+   */
+  export type SectionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Section
+     */
+    select?: SectionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Section
+     */
+    omit?: SectionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Section.
+     */
+    data: XOR<SectionCreateInput, SectionUncheckedCreateInput>
+  }
+
+  /**
+   * Section createMany
+   */
+  export type SectionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Sections.
+     */
+    data: SectionCreateManyInput | SectionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Section createManyAndReturn
+   */
+  export type SectionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Section
+     */
+    select?: SectionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Section
+     */
+    omit?: SectionOmit<ExtArgs> | null
+    /**
+     * The data used to create many Sections.
+     */
+    data: SectionCreateManyInput | SectionCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Section update
+   */
+  export type SectionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Section
+     */
+    select?: SectionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Section
+     */
+    omit?: SectionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Section.
+     */
+    data: XOR<SectionUpdateInput, SectionUncheckedUpdateInput>
+    /**
+     * Choose, which Section to update.
+     */
+    where: SectionWhereUniqueInput
+  }
+
+  /**
+   * Section updateMany
+   */
+  export type SectionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Sections.
+     */
+    data: XOR<SectionUpdateManyMutationInput, SectionUncheckedUpdateManyInput>
+    /**
+     * Filter which Sections to update
+     */
+    where?: SectionWhereInput
+    /**
+     * Limit how many Sections to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Section updateManyAndReturn
+   */
+  export type SectionUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Section
+     */
+    select?: SectionSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Section
+     */
+    omit?: SectionOmit<ExtArgs> | null
+    /**
+     * The data used to update Sections.
+     */
+    data: XOR<SectionUpdateManyMutationInput, SectionUncheckedUpdateManyInput>
+    /**
+     * Filter which Sections to update
+     */
+    where?: SectionWhereInput
+    /**
+     * Limit how many Sections to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Section upsert
+   */
+  export type SectionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Section
+     */
+    select?: SectionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Section
+     */
+    omit?: SectionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Section to update in case it exists.
+     */
+    where: SectionWhereUniqueInput
+    /**
+     * In case the Section found by the `where` argument doesn't exist, create a new Section with this data.
+     */
+    create: XOR<SectionCreateInput, SectionUncheckedCreateInput>
+    /**
+     * In case the Section was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SectionUpdateInput, SectionUncheckedUpdateInput>
+  }
+
+  /**
+   * Section delete
+   */
+  export type SectionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Section
+     */
+    select?: SectionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Section
+     */
+    omit?: SectionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionInclude<ExtArgs> | null
+    /**
+     * Filter which Section to delete.
+     */
+    where: SectionWhereUniqueInput
+  }
+
+  /**
+   * Section deleteMany
+   */
+  export type SectionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Sections to delete
+     */
+    where?: SectionWhereInput
+    /**
+     * Limit how many Sections to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Section without action
+   */
+  export type SectionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Section
+     */
+    select?: SectionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Section
+     */
+    omit?: SectionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model Beteckning
+   */
+
+  export type AggregateBeteckning = {
+    _count: BeteckningCountAggregateOutputType | null
+    _avg: BeteckningAvgAggregateOutputType | null
+    _sum: BeteckningSumAggregateOutputType | null
+    _min: BeteckningMinAggregateOutputType | null
+    _max: BeteckningMaxAggregateOutputType | null
+  }
+
+  export type BeteckningAvgAggregateOutputType = {
+    id: number | null
+    projectId: number | null
+  }
+
+  export type BeteckningSumAggregateOutputType = {
+    id: number | null
+    projectId: number | null
+  }
+
+  export type BeteckningMinAggregateOutputType = {
+    id: number | null
+    label: string | null
+    projectId: number | null
+  }
+
+  export type BeteckningMaxAggregateOutputType = {
+    id: number | null
+    label: string | null
+    projectId: number | null
+  }
+
+  export type BeteckningCountAggregateOutputType = {
+    id: number
+    label: number
+    projectId: number
+    _all: number
+  }
+
+
+  export type BeteckningAvgAggregateInputType = {
+    id?: true
+    projectId?: true
+  }
+
+  export type BeteckningSumAggregateInputType = {
+    id?: true
+    projectId?: true
+  }
+
+  export type BeteckningMinAggregateInputType = {
+    id?: true
+    label?: true
+    projectId?: true
+  }
+
+  export type BeteckningMaxAggregateInputType = {
+    id?: true
+    label?: true
+    projectId?: true
+  }
+
+  export type BeteckningCountAggregateInputType = {
+    id?: true
+    label?: true
+    projectId?: true
+    _all?: true
+  }
+
+  export type BeteckningAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Beteckning to aggregate.
+     */
+    where?: BeteckningWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Betecknings to fetch.
+     */
+    orderBy?: BeteckningOrderByWithRelationInput | BeteckningOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BeteckningWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Betecknings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Betecknings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Betecknings
+    **/
+    _count?: true | BeteckningCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: BeteckningAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: BeteckningSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BeteckningMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BeteckningMaxAggregateInputType
+  }
+
+  export type GetBeteckningAggregateType<T extends BeteckningAggregateArgs> = {
+        [P in keyof T & keyof AggregateBeteckning]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBeteckning[P]>
+      : GetScalarType<T[P], AggregateBeteckning[P]>
+  }
+
+
+
+
+  export type BeteckningGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BeteckningWhereInput
+    orderBy?: BeteckningOrderByWithAggregationInput | BeteckningOrderByWithAggregationInput[]
+    by: BeteckningScalarFieldEnum[] | BeteckningScalarFieldEnum
+    having?: BeteckningScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BeteckningCountAggregateInputType | true
+    _avg?: BeteckningAvgAggregateInputType
+    _sum?: BeteckningSumAggregateInputType
+    _min?: BeteckningMinAggregateInputType
+    _max?: BeteckningMaxAggregateInputType
+  }
+
+  export type BeteckningGroupByOutputType = {
+    id: number
+    label: string
+    projectId: number
+    _count: BeteckningCountAggregateOutputType | null
+    _avg: BeteckningAvgAggregateOutputType | null
+    _sum: BeteckningSumAggregateOutputType | null
+    _min: BeteckningMinAggregateOutputType | null
+    _max: BeteckningMaxAggregateOutputType | null
+  }
+
+  type GetBeteckningGroupByPayload<T extends BeteckningGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BeteckningGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BeteckningGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BeteckningGroupByOutputType[P]>
+            : GetScalarType<T[P], BeteckningGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BeteckningSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    label?: boolean
+    projectId?: boolean
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["beteckning"]>
+
+  export type BeteckningSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    label?: boolean
+    projectId?: boolean
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["beteckning"]>
+
+  export type BeteckningSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    label?: boolean
+    projectId?: boolean
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["beteckning"]>
+
+  export type BeteckningSelectScalar = {
+    id?: boolean
+    label?: boolean
+    projectId?: boolean
+  }
+
+  export type BeteckningOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "label" | "projectId", ExtArgs["result"]["beteckning"]>
+  export type BeteckningInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+  }
+  export type BeteckningIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+  }
+  export type BeteckningIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+  }
+
+  export type $BeteckningPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Beteckning"
+    objects: {
+      project: Prisma.$ProjectPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      label: string
+      projectId: number
+    }, ExtArgs["result"]["beteckning"]>
+    composites: {}
+  }
+
+  type BeteckningGetPayload<S extends boolean | null | undefined | BeteckningDefaultArgs> = $Result.GetResult<Prisma.$BeteckningPayload, S>
+
+  type BeteckningCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BeteckningFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BeteckningCountAggregateInputType | true
+    }
+
+  export interface BeteckningDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Beteckning'], meta: { name: 'Beteckning' } }
+    /**
+     * Find zero or one Beteckning that matches the filter.
+     * @param {BeteckningFindUniqueArgs} args - Arguments to find a Beteckning
+     * @example
+     * // Get one Beteckning
+     * const beteckning = await prisma.beteckning.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BeteckningFindUniqueArgs>(args: SelectSubset<T, BeteckningFindUniqueArgs<ExtArgs>>): Prisma__BeteckningClient<$Result.GetResult<Prisma.$BeteckningPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Beteckning that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BeteckningFindUniqueOrThrowArgs} args - Arguments to find a Beteckning
+     * @example
+     * // Get one Beteckning
+     * const beteckning = await prisma.beteckning.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BeteckningFindUniqueOrThrowArgs>(args: SelectSubset<T, BeteckningFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BeteckningClient<$Result.GetResult<Prisma.$BeteckningPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Beteckning that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BeteckningFindFirstArgs} args - Arguments to find a Beteckning
+     * @example
+     * // Get one Beteckning
+     * const beteckning = await prisma.beteckning.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BeteckningFindFirstArgs>(args?: SelectSubset<T, BeteckningFindFirstArgs<ExtArgs>>): Prisma__BeteckningClient<$Result.GetResult<Prisma.$BeteckningPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Beteckning that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BeteckningFindFirstOrThrowArgs} args - Arguments to find a Beteckning
+     * @example
+     * // Get one Beteckning
+     * const beteckning = await prisma.beteckning.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BeteckningFindFirstOrThrowArgs>(args?: SelectSubset<T, BeteckningFindFirstOrThrowArgs<ExtArgs>>): Prisma__BeteckningClient<$Result.GetResult<Prisma.$BeteckningPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Betecknings that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BeteckningFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Betecknings
+     * const betecknings = await prisma.beteckning.findMany()
+     * 
+     * // Get first 10 Betecknings
+     * const betecknings = await prisma.beteckning.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const beteckningWithIdOnly = await prisma.beteckning.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends BeteckningFindManyArgs>(args?: SelectSubset<T, BeteckningFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BeteckningPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Beteckning.
+     * @param {BeteckningCreateArgs} args - Arguments to create a Beteckning.
+     * @example
+     * // Create one Beteckning
+     * const Beteckning = await prisma.beteckning.create({
+     *   data: {
+     *     // ... data to create a Beteckning
+     *   }
+     * })
+     * 
+     */
+    create<T extends BeteckningCreateArgs>(args: SelectSubset<T, BeteckningCreateArgs<ExtArgs>>): Prisma__BeteckningClient<$Result.GetResult<Prisma.$BeteckningPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Betecknings.
+     * @param {BeteckningCreateManyArgs} args - Arguments to create many Betecknings.
+     * @example
+     * // Create many Betecknings
+     * const beteckning = await prisma.beteckning.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BeteckningCreateManyArgs>(args?: SelectSubset<T, BeteckningCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Betecknings and returns the data saved in the database.
+     * @param {BeteckningCreateManyAndReturnArgs} args - Arguments to create many Betecknings.
+     * @example
+     * // Create many Betecknings
+     * const beteckning = await prisma.beteckning.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Betecknings and only return the `id`
+     * const beteckningWithIdOnly = await prisma.beteckning.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends BeteckningCreateManyAndReturnArgs>(args?: SelectSubset<T, BeteckningCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BeteckningPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Beteckning.
+     * @param {BeteckningDeleteArgs} args - Arguments to delete one Beteckning.
+     * @example
+     * // Delete one Beteckning
+     * const Beteckning = await prisma.beteckning.delete({
+     *   where: {
+     *     // ... filter to delete one Beteckning
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BeteckningDeleteArgs>(args: SelectSubset<T, BeteckningDeleteArgs<ExtArgs>>): Prisma__BeteckningClient<$Result.GetResult<Prisma.$BeteckningPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Beteckning.
+     * @param {BeteckningUpdateArgs} args - Arguments to update one Beteckning.
+     * @example
+     * // Update one Beteckning
+     * const beteckning = await prisma.beteckning.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BeteckningUpdateArgs>(args: SelectSubset<T, BeteckningUpdateArgs<ExtArgs>>): Prisma__BeteckningClient<$Result.GetResult<Prisma.$BeteckningPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Betecknings.
+     * @param {BeteckningDeleteManyArgs} args - Arguments to filter Betecknings to delete.
+     * @example
+     * // Delete a few Betecknings
+     * const { count } = await prisma.beteckning.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BeteckningDeleteManyArgs>(args?: SelectSubset<T, BeteckningDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Betecknings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BeteckningUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Betecknings
+     * const beteckning = await prisma.beteckning.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BeteckningUpdateManyArgs>(args: SelectSubset<T, BeteckningUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Betecknings and returns the data updated in the database.
+     * @param {BeteckningUpdateManyAndReturnArgs} args - Arguments to update many Betecknings.
+     * @example
+     * // Update many Betecknings
+     * const beteckning = await prisma.beteckning.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Betecknings and only return the `id`
+     * const beteckningWithIdOnly = await prisma.beteckning.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends BeteckningUpdateManyAndReturnArgs>(args: SelectSubset<T, BeteckningUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BeteckningPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Beteckning.
+     * @param {BeteckningUpsertArgs} args - Arguments to update or create a Beteckning.
+     * @example
+     * // Update or create a Beteckning
+     * const beteckning = await prisma.beteckning.upsert({
+     *   create: {
+     *     // ... data to create a Beteckning
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Beteckning we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BeteckningUpsertArgs>(args: SelectSubset<T, BeteckningUpsertArgs<ExtArgs>>): Prisma__BeteckningClient<$Result.GetResult<Prisma.$BeteckningPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Betecknings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BeteckningCountArgs} args - Arguments to filter Betecknings to count.
+     * @example
+     * // Count the number of Betecknings
+     * const count = await prisma.beteckning.count({
+     *   where: {
+     *     // ... the filter for the Betecknings we want to count
+     *   }
+     * })
+    **/
+    count<T extends BeteckningCountArgs>(
+      args?: Subset<T, BeteckningCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BeteckningCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Beteckning.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BeteckningAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BeteckningAggregateArgs>(args: Subset<T, BeteckningAggregateArgs>): Prisma.PrismaPromise<GetBeteckningAggregateType<T>>
+
+    /**
+     * Group by Beteckning.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BeteckningGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BeteckningGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BeteckningGroupByArgs['orderBy'] }
+        : { orderBy?: BeteckningGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BeteckningGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBeteckningGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Beteckning model
+   */
+  readonly fields: BeteckningFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Beteckning.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BeteckningClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    project<T extends ProjectDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ProjectDefaultArgs<ExtArgs>>): Prisma__ProjectClient<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Beteckning model
+   */
+  interface BeteckningFieldRefs {
+    readonly id: FieldRef<"Beteckning", 'Int'>
+    readonly label: FieldRef<"Beteckning", 'String'>
+    readonly projectId: FieldRef<"Beteckning", 'Int'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Beteckning findUnique
+   */
+  export type BeteckningFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Beteckning
+     */
+    select?: BeteckningSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Beteckning
+     */
+    omit?: BeteckningOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BeteckningInclude<ExtArgs> | null
+    /**
+     * Filter, which Beteckning to fetch.
+     */
+    where: BeteckningWhereUniqueInput
+  }
+
+  /**
+   * Beteckning findUniqueOrThrow
+   */
+  export type BeteckningFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Beteckning
+     */
+    select?: BeteckningSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Beteckning
+     */
+    omit?: BeteckningOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BeteckningInclude<ExtArgs> | null
+    /**
+     * Filter, which Beteckning to fetch.
+     */
+    where: BeteckningWhereUniqueInput
+  }
+
+  /**
+   * Beteckning findFirst
+   */
+  export type BeteckningFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Beteckning
+     */
+    select?: BeteckningSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Beteckning
+     */
+    omit?: BeteckningOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BeteckningInclude<ExtArgs> | null
+    /**
+     * Filter, which Beteckning to fetch.
+     */
+    where?: BeteckningWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Betecknings to fetch.
+     */
+    orderBy?: BeteckningOrderByWithRelationInput | BeteckningOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Betecknings.
+     */
+    cursor?: BeteckningWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Betecknings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Betecknings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Betecknings.
+     */
+    distinct?: BeteckningScalarFieldEnum | BeteckningScalarFieldEnum[]
+  }
+
+  /**
+   * Beteckning findFirstOrThrow
+   */
+  export type BeteckningFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Beteckning
+     */
+    select?: BeteckningSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Beteckning
+     */
+    omit?: BeteckningOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BeteckningInclude<ExtArgs> | null
+    /**
+     * Filter, which Beteckning to fetch.
+     */
+    where?: BeteckningWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Betecknings to fetch.
+     */
+    orderBy?: BeteckningOrderByWithRelationInput | BeteckningOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Betecknings.
+     */
+    cursor?: BeteckningWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Betecknings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Betecknings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Betecknings.
+     */
+    distinct?: BeteckningScalarFieldEnum | BeteckningScalarFieldEnum[]
+  }
+
+  /**
+   * Beteckning findMany
+   */
+  export type BeteckningFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Beteckning
+     */
+    select?: BeteckningSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Beteckning
+     */
+    omit?: BeteckningOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BeteckningInclude<ExtArgs> | null
+    /**
+     * Filter, which Betecknings to fetch.
+     */
+    where?: BeteckningWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Betecknings to fetch.
+     */
+    orderBy?: BeteckningOrderByWithRelationInput | BeteckningOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Betecknings.
+     */
+    cursor?: BeteckningWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Betecknings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Betecknings.
+     */
+    skip?: number
+    distinct?: BeteckningScalarFieldEnum | BeteckningScalarFieldEnum[]
+  }
+
+  /**
+   * Beteckning create
+   */
+  export type BeteckningCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Beteckning
+     */
+    select?: BeteckningSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Beteckning
+     */
+    omit?: BeteckningOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BeteckningInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Beteckning.
+     */
+    data: XOR<BeteckningCreateInput, BeteckningUncheckedCreateInput>
+  }
+
+  /**
+   * Beteckning createMany
+   */
+  export type BeteckningCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Betecknings.
+     */
+    data: BeteckningCreateManyInput | BeteckningCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Beteckning createManyAndReturn
+   */
+  export type BeteckningCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Beteckning
+     */
+    select?: BeteckningSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Beteckning
+     */
+    omit?: BeteckningOmit<ExtArgs> | null
+    /**
+     * The data used to create many Betecknings.
+     */
+    data: BeteckningCreateManyInput | BeteckningCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BeteckningIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Beteckning update
+   */
+  export type BeteckningUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Beteckning
+     */
+    select?: BeteckningSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Beteckning
+     */
+    omit?: BeteckningOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BeteckningInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Beteckning.
+     */
+    data: XOR<BeteckningUpdateInput, BeteckningUncheckedUpdateInput>
+    /**
+     * Choose, which Beteckning to update.
+     */
+    where: BeteckningWhereUniqueInput
+  }
+
+  /**
+   * Beteckning updateMany
+   */
+  export type BeteckningUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Betecknings.
+     */
+    data: XOR<BeteckningUpdateManyMutationInput, BeteckningUncheckedUpdateManyInput>
+    /**
+     * Filter which Betecknings to update
+     */
+    where?: BeteckningWhereInput
+    /**
+     * Limit how many Betecknings to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Beteckning updateManyAndReturn
+   */
+  export type BeteckningUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Beteckning
+     */
+    select?: BeteckningSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Beteckning
+     */
+    omit?: BeteckningOmit<ExtArgs> | null
+    /**
+     * The data used to update Betecknings.
+     */
+    data: XOR<BeteckningUpdateManyMutationInput, BeteckningUncheckedUpdateManyInput>
+    /**
+     * Filter which Betecknings to update
+     */
+    where?: BeteckningWhereInput
+    /**
+     * Limit how many Betecknings to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BeteckningIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Beteckning upsert
+   */
+  export type BeteckningUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Beteckning
+     */
+    select?: BeteckningSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Beteckning
+     */
+    omit?: BeteckningOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BeteckningInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Beteckning to update in case it exists.
+     */
+    where: BeteckningWhereUniqueInput
+    /**
+     * In case the Beteckning found by the `where` argument doesn't exist, create a new Beteckning with this data.
+     */
+    create: XOR<BeteckningCreateInput, BeteckningUncheckedCreateInput>
+    /**
+     * In case the Beteckning was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BeteckningUpdateInput, BeteckningUncheckedUpdateInput>
+  }
+
+  /**
+   * Beteckning delete
+   */
+  export type BeteckningDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Beteckning
+     */
+    select?: BeteckningSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Beteckning
+     */
+    omit?: BeteckningOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BeteckningInclude<ExtArgs> | null
+    /**
+     * Filter which Beteckning to delete.
+     */
+    where: BeteckningWhereUniqueInput
+  }
+
+  /**
+   * Beteckning deleteMany
+   */
+  export type BeteckningDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Betecknings to delete
+     */
+    where?: BeteckningWhereInput
+    /**
+     * Limit how many Betecknings to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Beteckning without action
+   */
+  export type BeteckningDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Beteckning
+     */
+    select?: BeteckningSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Beteckning
+     */
+    omit?: BeteckningOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BeteckningInclude<ExtArgs> | null
   }
 
 
@@ -3252,6 +5691,24 @@ export namespace Prisma {
   };
 
   export type ProjectScalarFieldEnum = (typeof ProjectScalarFieldEnum)[keyof typeof ProjectScalarFieldEnum]
+
+
+  export const SectionScalarFieldEnum: {
+    id: 'id',
+    name: 'name',
+    projectId: 'projectId'
+  };
+
+  export type SectionScalarFieldEnum = (typeof SectionScalarFieldEnum)[keyof typeof SectionScalarFieldEnum]
+
+
+  export const BeteckningScalarFieldEnum: {
+    id: 'id',
+    label: 'label',
+    projectId: 'projectId'
+  };
+
+  export type BeteckningScalarFieldEnum = (typeof BeteckningScalarFieldEnum)[keyof typeof BeteckningScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -3416,18 +5873,22 @@ export namespace Prisma {
     id?: IntFilter<"Project"> | number
     name?: StringFilter<"Project"> | string
     description?: StringNullableFilter<"Project"> | string | null
-    userId?: IntFilter<"Project"> | number
+    userId?: IntNullableFilter<"Project"> | number | null
     createdAt?: DateTimeFilter<"Project"> | Date | string
-    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+    sections?: SectionListRelationFilter
+    beteckningar?: BeteckningListRelationFilter
   }
 
   export type ProjectOrderByWithRelationInput = {
     id?: SortOrder
     name?: SortOrder
     description?: SortOrderInput | SortOrder
-    userId?: SortOrder
+    userId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     user?: UserOrderByWithRelationInput
+    sections?: SectionOrderByRelationAggregateInput
+    beteckningar?: BeteckningOrderByRelationAggregateInput
   }
 
   export type ProjectWhereUniqueInput = Prisma.AtLeast<{
@@ -3437,16 +5898,18 @@ export namespace Prisma {
     NOT?: ProjectWhereInput | ProjectWhereInput[]
     name?: StringFilter<"Project"> | string
     description?: StringNullableFilter<"Project"> | string | null
-    userId?: IntFilter<"Project"> | number
+    userId?: IntNullableFilter<"Project"> | number | null
     createdAt?: DateTimeFilter<"Project"> | Date | string
-    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+    sections?: SectionListRelationFilter
+    beteckningar?: BeteckningListRelationFilter
   }, "id">
 
   export type ProjectOrderByWithAggregationInput = {
     id?: SortOrder
     name?: SortOrder
     description?: SortOrderInput | SortOrder
-    userId?: SortOrder
+    userId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     _count?: ProjectCountOrderByAggregateInput
     _avg?: ProjectAvgOrderByAggregateInput
@@ -3462,8 +5925,102 @@ export namespace Prisma {
     id?: IntWithAggregatesFilter<"Project"> | number
     name?: StringWithAggregatesFilter<"Project"> | string
     description?: StringNullableWithAggregatesFilter<"Project"> | string | null
-    userId?: IntWithAggregatesFilter<"Project"> | number
+    userId?: IntNullableWithAggregatesFilter<"Project"> | number | null
     createdAt?: DateTimeWithAggregatesFilter<"Project"> | Date | string
+  }
+
+  export type SectionWhereInput = {
+    AND?: SectionWhereInput | SectionWhereInput[]
+    OR?: SectionWhereInput[]
+    NOT?: SectionWhereInput | SectionWhereInput[]
+    id?: IntFilter<"Section"> | number
+    name?: StringFilter<"Section"> | string
+    projectId?: IntFilter<"Section"> | number
+    project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
+  }
+
+  export type SectionOrderByWithRelationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    projectId?: SortOrder
+    project?: ProjectOrderByWithRelationInput
+  }
+
+  export type SectionWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    AND?: SectionWhereInput | SectionWhereInput[]
+    OR?: SectionWhereInput[]
+    NOT?: SectionWhereInput | SectionWhereInput[]
+    name?: StringFilter<"Section"> | string
+    projectId?: IntFilter<"Section"> | number
+    project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
+  }, "id">
+
+  export type SectionOrderByWithAggregationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    projectId?: SortOrder
+    _count?: SectionCountOrderByAggregateInput
+    _avg?: SectionAvgOrderByAggregateInput
+    _max?: SectionMaxOrderByAggregateInput
+    _min?: SectionMinOrderByAggregateInput
+    _sum?: SectionSumOrderByAggregateInput
+  }
+
+  export type SectionScalarWhereWithAggregatesInput = {
+    AND?: SectionScalarWhereWithAggregatesInput | SectionScalarWhereWithAggregatesInput[]
+    OR?: SectionScalarWhereWithAggregatesInput[]
+    NOT?: SectionScalarWhereWithAggregatesInput | SectionScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"Section"> | number
+    name?: StringWithAggregatesFilter<"Section"> | string
+    projectId?: IntWithAggregatesFilter<"Section"> | number
+  }
+
+  export type BeteckningWhereInput = {
+    AND?: BeteckningWhereInput | BeteckningWhereInput[]
+    OR?: BeteckningWhereInput[]
+    NOT?: BeteckningWhereInput | BeteckningWhereInput[]
+    id?: IntFilter<"Beteckning"> | number
+    label?: StringFilter<"Beteckning"> | string
+    projectId?: IntFilter<"Beteckning"> | number
+    project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
+  }
+
+  export type BeteckningOrderByWithRelationInput = {
+    id?: SortOrder
+    label?: SortOrder
+    projectId?: SortOrder
+    project?: ProjectOrderByWithRelationInput
+  }
+
+  export type BeteckningWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    AND?: BeteckningWhereInput | BeteckningWhereInput[]
+    OR?: BeteckningWhereInput[]
+    NOT?: BeteckningWhereInput | BeteckningWhereInput[]
+    label?: StringFilter<"Beteckning"> | string
+    projectId?: IntFilter<"Beteckning"> | number
+    project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
+  }, "id">
+
+  export type BeteckningOrderByWithAggregationInput = {
+    id?: SortOrder
+    label?: SortOrder
+    projectId?: SortOrder
+    _count?: BeteckningCountOrderByAggregateInput
+    _avg?: BeteckningAvgOrderByAggregateInput
+    _max?: BeteckningMaxOrderByAggregateInput
+    _min?: BeteckningMinOrderByAggregateInput
+    _sum?: BeteckningSumOrderByAggregateInput
+  }
+
+  export type BeteckningScalarWhereWithAggregatesInput = {
+    AND?: BeteckningScalarWhereWithAggregatesInput | BeteckningScalarWhereWithAggregatesInput[]
+    OR?: BeteckningScalarWhereWithAggregatesInput[]
+    NOT?: BeteckningScalarWhereWithAggregatesInput | BeteckningScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"Beteckning"> | number
+    label?: StringWithAggregatesFilter<"Beteckning"> | string
+    projectId?: IntWithAggregatesFilter<"Beteckning"> | number
   }
 
   export type UserCreateInput = {
@@ -3541,37 +6098,45 @@ export namespace Prisma {
     name: string
     description?: string | null
     createdAt?: Date | string
-    user: UserCreateNestedOneWithoutProjectsInput
+    user?: UserCreateNestedOneWithoutProjectsInput
+    sections?: SectionCreateNestedManyWithoutProjectInput
+    beteckningar?: BeteckningCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectUncheckedCreateInput = {
     id?: number
     name: string
     description?: string | null
-    userId: number
+    userId?: number | null
     createdAt?: Date | string
+    sections?: SectionUncheckedCreateNestedManyWithoutProjectInput
+    beteckningar?: BeteckningUncheckedCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectUpdateInput = {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    user?: UserUpdateOneRequiredWithoutProjectsNestedInput
+    user?: UserUpdateOneWithoutProjectsNestedInput
+    sections?: SectionUpdateManyWithoutProjectNestedInput
+    beteckningar?: BeteckningUpdateManyWithoutProjectNestedInput
   }
 
   export type ProjectUncheckedUpdateInput = {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
-    userId?: IntFieldUpdateOperationsInput | number
+    userId?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sections?: SectionUncheckedUpdateManyWithoutProjectNestedInput
+    beteckningar?: BeteckningUncheckedUpdateManyWithoutProjectNestedInput
   }
 
   export type ProjectCreateManyInput = {
     id?: number
     name: string
     description?: string | null
-    userId: number
+    userId?: number | null
     createdAt?: Date | string
   }
 
@@ -3585,8 +6150,84 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
-    userId?: IntFieldUpdateOperationsInput | number
+    userId?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SectionCreateInput = {
+    name: string
+    project: ProjectCreateNestedOneWithoutSectionsInput
+  }
+
+  export type SectionUncheckedCreateInput = {
+    id?: number
+    name: string
+    projectId: number
+  }
+
+  export type SectionUpdateInput = {
+    name?: StringFieldUpdateOperationsInput | string
+    project?: ProjectUpdateOneRequiredWithoutSectionsNestedInput
+  }
+
+  export type SectionUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    projectId?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type SectionCreateManyInput = {
+    id?: number
+    name: string
+    projectId: number
+  }
+
+  export type SectionUpdateManyMutationInput = {
+    name?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type SectionUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    projectId?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type BeteckningCreateInput = {
+    label: string
+    project: ProjectCreateNestedOneWithoutBeteckningarInput
+  }
+
+  export type BeteckningUncheckedCreateInput = {
+    id?: number
+    label: string
+    projectId: number
+  }
+
+  export type BeteckningUpdateInput = {
+    label?: StringFieldUpdateOperationsInput | string
+    project?: ProjectUpdateOneRequiredWithoutBeteckningarNestedInput
+  }
+
+  export type BeteckningUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    label?: StringFieldUpdateOperationsInput | string
+    projectId?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type BeteckningCreateManyInput = {
+    id?: number
+    label: string
+    projectId: number
+  }
+
+  export type BeteckningUpdateManyMutationInput = {
+    label?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type BeteckningUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    label?: StringFieldUpdateOperationsInput | string
+    projectId?: IntFieldUpdateOperationsInput | number
   }
 
   export type IntFilter<$PrismaModel = never> = {
@@ -3735,6 +6376,17 @@ export namespace Prisma {
     _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
+  export type IntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
   export type DateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -3746,9 +6398,29 @@ export namespace Prisma {
     not?: NestedDateTimeFilter<$PrismaModel> | Date | string
   }
 
-  export type UserScalarRelationFilter = {
-    is?: UserWhereInput
-    isNot?: UserWhereInput
+  export type UserNullableScalarRelationFilter = {
+    is?: UserWhereInput | null
+    isNot?: UserWhereInput | null
+  }
+
+  export type SectionListRelationFilter = {
+    every?: SectionWhereInput
+    some?: SectionWhereInput
+    none?: SectionWhereInput
+  }
+
+  export type BeteckningListRelationFilter = {
+    every?: BeteckningWhereInput
+    some?: BeteckningWhereInput
+    none?: BeteckningWhereInput
+  }
+
+  export type SectionOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type BeteckningOrderByRelationAggregateInput = {
+    _count?: SortOrder
   }
 
   export type ProjectCountOrderByAggregateInput = {
@@ -3785,6 +6457,22 @@ export namespace Prisma {
     userId?: SortOrder
   }
 
+  export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
   export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -3797,6 +6485,67 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedDateTimeFilter<$PrismaModel>
     _max?: NestedDateTimeFilter<$PrismaModel>
+  }
+
+  export type ProjectScalarRelationFilter = {
+    is?: ProjectWhereInput
+    isNot?: ProjectWhereInput
+  }
+
+  export type SectionCountOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    projectId?: SortOrder
+  }
+
+  export type SectionAvgOrderByAggregateInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+  }
+
+  export type SectionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    projectId?: SortOrder
+  }
+
+  export type SectionMinOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    projectId?: SortOrder
+  }
+
+  export type SectionSumOrderByAggregateInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+  }
+
+  export type BeteckningCountOrderByAggregateInput = {
+    id?: SortOrder
+    label?: SortOrder
+    projectId?: SortOrder
+  }
+
+  export type BeteckningAvgOrderByAggregateInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+  }
+
+  export type BeteckningMaxOrderByAggregateInput = {
+    id?: SortOrder
+    label?: SortOrder
+    projectId?: SortOrder
+  }
+
+  export type BeteckningMinOrderByAggregateInput = {
+    id?: SortOrder
+    label?: SortOrder
+    projectId?: SortOrder
+  }
+
+  export type BeteckningSumOrderByAggregateInput = {
+    id?: SortOrder
+    projectId?: SortOrder
   }
 
   export type ProjectCreateNestedManyWithoutUserInput = {
@@ -3863,16 +6612,138 @@ export namespace Prisma {
     connect?: UserWhereUniqueInput
   }
 
+  export type SectionCreateNestedManyWithoutProjectInput = {
+    create?: XOR<SectionCreateWithoutProjectInput, SectionUncheckedCreateWithoutProjectInput> | SectionCreateWithoutProjectInput[] | SectionUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: SectionCreateOrConnectWithoutProjectInput | SectionCreateOrConnectWithoutProjectInput[]
+    createMany?: SectionCreateManyProjectInputEnvelope
+    connect?: SectionWhereUniqueInput | SectionWhereUniqueInput[]
+  }
+
+  export type BeteckningCreateNestedManyWithoutProjectInput = {
+    create?: XOR<BeteckningCreateWithoutProjectInput, BeteckningUncheckedCreateWithoutProjectInput> | BeteckningCreateWithoutProjectInput[] | BeteckningUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: BeteckningCreateOrConnectWithoutProjectInput | BeteckningCreateOrConnectWithoutProjectInput[]
+    createMany?: BeteckningCreateManyProjectInputEnvelope
+    connect?: BeteckningWhereUniqueInput | BeteckningWhereUniqueInput[]
+  }
+
+  export type SectionUncheckedCreateNestedManyWithoutProjectInput = {
+    create?: XOR<SectionCreateWithoutProjectInput, SectionUncheckedCreateWithoutProjectInput> | SectionCreateWithoutProjectInput[] | SectionUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: SectionCreateOrConnectWithoutProjectInput | SectionCreateOrConnectWithoutProjectInput[]
+    createMany?: SectionCreateManyProjectInputEnvelope
+    connect?: SectionWhereUniqueInput | SectionWhereUniqueInput[]
+  }
+
+  export type BeteckningUncheckedCreateNestedManyWithoutProjectInput = {
+    create?: XOR<BeteckningCreateWithoutProjectInput, BeteckningUncheckedCreateWithoutProjectInput> | BeteckningCreateWithoutProjectInput[] | BeteckningUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: BeteckningCreateOrConnectWithoutProjectInput | BeteckningCreateOrConnectWithoutProjectInput[]
+    createMany?: BeteckningCreateManyProjectInputEnvelope
+    connect?: BeteckningWhereUniqueInput | BeteckningWhereUniqueInput[]
+  }
+
   export type DateTimeFieldUpdateOperationsInput = {
     set?: Date | string
   }
 
-  export type UserUpdateOneRequiredWithoutProjectsNestedInput = {
+  export type UserUpdateOneWithoutProjectsNestedInput = {
     create?: XOR<UserCreateWithoutProjectsInput, UserUncheckedCreateWithoutProjectsInput>
     connectOrCreate?: UserCreateOrConnectWithoutProjectsInput
     upsert?: UserUpsertWithoutProjectsInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
     connect?: UserWhereUniqueInput
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutProjectsInput, UserUpdateWithoutProjectsInput>, UserUncheckedUpdateWithoutProjectsInput>
+  }
+
+  export type SectionUpdateManyWithoutProjectNestedInput = {
+    create?: XOR<SectionCreateWithoutProjectInput, SectionUncheckedCreateWithoutProjectInput> | SectionCreateWithoutProjectInput[] | SectionUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: SectionCreateOrConnectWithoutProjectInput | SectionCreateOrConnectWithoutProjectInput[]
+    upsert?: SectionUpsertWithWhereUniqueWithoutProjectInput | SectionUpsertWithWhereUniqueWithoutProjectInput[]
+    createMany?: SectionCreateManyProjectInputEnvelope
+    set?: SectionWhereUniqueInput | SectionWhereUniqueInput[]
+    disconnect?: SectionWhereUniqueInput | SectionWhereUniqueInput[]
+    delete?: SectionWhereUniqueInput | SectionWhereUniqueInput[]
+    connect?: SectionWhereUniqueInput | SectionWhereUniqueInput[]
+    update?: SectionUpdateWithWhereUniqueWithoutProjectInput | SectionUpdateWithWhereUniqueWithoutProjectInput[]
+    updateMany?: SectionUpdateManyWithWhereWithoutProjectInput | SectionUpdateManyWithWhereWithoutProjectInput[]
+    deleteMany?: SectionScalarWhereInput | SectionScalarWhereInput[]
+  }
+
+  export type BeteckningUpdateManyWithoutProjectNestedInput = {
+    create?: XOR<BeteckningCreateWithoutProjectInput, BeteckningUncheckedCreateWithoutProjectInput> | BeteckningCreateWithoutProjectInput[] | BeteckningUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: BeteckningCreateOrConnectWithoutProjectInput | BeteckningCreateOrConnectWithoutProjectInput[]
+    upsert?: BeteckningUpsertWithWhereUniqueWithoutProjectInput | BeteckningUpsertWithWhereUniqueWithoutProjectInput[]
+    createMany?: BeteckningCreateManyProjectInputEnvelope
+    set?: BeteckningWhereUniqueInput | BeteckningWhereUniqueInput[]
+    disconnect?: BeteckningWhereUniqueInput | BeteckningWhereUniqueInput[]
+    delete?: BeteckningWhereUniqueInput | BeteckningWhereUniqueInput[]
+    connect?: BeteckningWhereUniqueInput | BeteckningWhereUniqueInput[]
+    update?: BeteckningUpdateWithWhereUniqueWithoutProjectInput | BeteckningUpdateWithWhereUniqueWithoutProjectInput[]
+    updateMany?: BeteckningUpdateManyWithWhereWithoutProjectInput | BeteckningUpdateManyWithWhereWithoutProjectInput[]
+    deleteMany?: BeteckningScalarWhereInput | BeteckningScalarWhereInput[]
+  }
+
+  export type NullableIntFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
+  export type SectionUncheckedUpdateManyWithoutProjectNestedInput = {
+    create?: XOR<SectionCreateWithoutProjectInput, SectionUncheckedCreateWithoutProjectInput> | SectionCreateWithoutProjectInput[] | SectionUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: SectionCreateOrConnectWithoutProjectInput | SectionCreateOrConnectWithoutProjectInput[]
+    upsert?: SectionUpsertWithWhereUniqueWithoutProjectInput | SectionUpsertWithWhereUniqueWithoutProjectInput[]
+    createMany?: SectionCreateManyProjectInputEnvelope
+    set?: SectionWhereUniqueInput | SectionWhereUniqueInput[]
+    disconnect?: SectionWhereUniqueInput | SectionWhereUniqueInput[]
+    delete?: SectionWhereUniqueInput | SectionWhereUniqueInput[]
+    connect?: SectionWhereUniqueInput | SectionWhereUniqueInput[]
+    update?: SectionUpdateWithWhereUniqueWithoutProjectInput | SectionUpdateWithWhereUniqueWithoutProjectInput[]
+    updateMany?: SectionUpdateManyWithWhereWithoutProjectInput | SectionUpdateManyWithWhereWithoutProjectInput[]
+    deleteMany?: SectionScalarWhereInput | SectionScalarWhereInput[]
+  }
+
+  export type BeteckningUncheckedUpdateManyWithoutProjectNestedInput = {
+    create?: XOR<BeteckningCreateWithoutProjectInput, BeteckningUncheckedCreateWithoutProjectInput> | BeteckningCreateWithoutProjectInput[] | BeteckningUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: BeteckningCreateOrConnectWithoutProjectInput | BeteckningCreateOrConnectWithoutProjectInput[]
+    upsert?: BeteckningUpsertWithWhereUniqueWithoutProjectInput | BeteckningUpsertWithWhereUniqueWithoutProjectInput[]
+    createMany?: BeteckningCreateManyProjectInputEnvelope
+    set?: BeteckningWhereUniqueInput | BeteckningWhereUniqueInput[]
+    disconnect?: BeteckningWhereUniqueInput | BeteckningWhereUniqueInput[]
+    delete?: BeteckningWhereUniqueInput | BeteckningWhereUniqueInput[]
+    connect?: BeteckningWhereUniqueInput | BeteckningWhereUniqueInput[]
+    update?: BeteckningUpdateWithWhereUniqueWithoutProjectInput | BeteckningUpdateWithWhereUniqueWithoutProjectInput[]
+    updateMany?: BeteckningUpdateManyWithWhereWithoutProjectInput | BeteckningUpdateManyWithWhereWithoutProjectInput[]
+    deleteMany?: BeteckningScalarWhereInput | BeteckningScalarWhereInput[]
+  }
+
+  export type ProjectCreateNestedOneWithoutSectionsInput = {
+    create?: XOR<ProjectCreateWithoutSectionsInput, ProjectUncheckedCreateWithoutSectionsInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutSectionsInput
+    connect?: ProjectWhereUniqueInput
+  }
+
+  export type ProjectUpdateOneRequiredWithoutSectionsNestedInput = {
+    create?: XOR<ProjectCreateWithoutSectionsInput, ProjectUncheckedCreateWithoutSectionsInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutSectionsInput
+    upsert?: ProjectUpsertWithoutSectionsInput
+    connect?: ProjectWhereUniqueInput
+    update?: XOR<XOR<ProjectUpdateToOneWithWhereWithoutSectionsInput, ProjectUpdateWithoutSectionsInput>, ProjectUncheckedUpdateWithoutSectionsInput>
+  }
+
+  export type ProjectCreateNestedOneWithoutBeteckningarInput = {
+    create?: XOR<ProjectCreateWithoutBeteckningarInput, ProjectUncheckedCreateWithoutBeteckningarInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutBeteckningarInput
+    connect?: ProjectWhereUniqueInput
+  }
+
+  export type ProjectUpdateOneRequiredWithoutBeteckningarNestedInput = {
+    create?: XOR<ProjectCreateWithoutBeteckningarInput, ProjectUncheckedCreateWithoutBeteckningarInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutBeteckningarInput
+    upsert?: ProjectUpsertWithoutBeteckningarInput
+    connect?: ProjectWhereUniqueInput
+    update?: XOR<XOR<ProjectUpdateToOneWithWhereWithoutBeteckningarInput, ProjectUpdateWithoutBeteckningarInput>, ProjectUncheckedUpdateWithoutBeteckningarInput>
   }
 
   export type NestedIntFilter<$PrismaModel = never> = {
@@ -3997,6 +6868,33 @@ export namespace Prisma {
     not?: NestedDateTimeFilter<$PrismaModel> | Date | string
   }
 
+  export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
+  export type NestedFloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+
   export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -4015,6 +6913,8 @@ export namespace Prisma {
     name: string
     description?: string | null
     createdAt?: Date | string
+    sections?: SectionCreateNestedManyWithoutProjectInput
+    beteckningar?: BeteckningCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectUncheckedCreateWithoutUserInput = {
@@ -4022,6 +6922,8 @@ export namespace Prisma {
     name: string
     description?: string | null
     createdAt?: Date | string
+    sections?: SectionUncheckedCreateNestedManyWithoutProjectInput
+    beteckningar?: BeteckningUncheckedCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectCreateOrConnectWithoutUserInput = {
@@ -4057,7 +6959,7 @@ export namespace Prisma {
     id?: IntFilter<"Project"> | number
     name?: StringFilter<"Project"> | string
     description?: StringNullableFilter<"Project"> | string | null
-    userId?: IntFilter<"Project"> | number
+    userId?: IntNullableFilter<"Project"> | number | null
     createdAt?: DateTimeFilter<"Project"> | Date | string
   }
 
@@ -4083,6 +6985,44 @@ export namespace Prisma {
   export type UserCreateOrConnectWithoutProjectsInput = {
     where: UserWhereUniqueInput
     create: XOR<UserCreateWithoutProjectsInput, UserUncheckedCreateWithoutProjectsInput>
+  }
+
+  export type SectionCreateWithoutProjectInput = {
+    name: string
+  }
+
+  export type SectionUncheckedCreateWithoutProjectInput = {
+    id?: number
+    name: string
+  }
+
+  export type SectionCreateOrConnectWithoutProjectInput = {
+    where: SectionWhereUniqueInput
+    create: XOR<SectionCreateWithoutProjectInput, SectionUncheckedCreateWithoutProjectInput>
+  }
+
+  export type SectionCreateManyProjectInputEnvelope = {
+    data: SectionCreateManyProjectInput | SectionCreateManyProjectInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type BeteckningCreateWithoutProjectInput = {
+    label: string
+  }
+
+  export type BeteckningUncheckedCreateWithoutProjectInput = {
+    id?: number
+    label: string
+  }
+
+  export type BeteckningCreateOrConnectWithoutProjectInput = {
+    where: BeteckningWhereUniqueInput
+    create: XOR<BeteckningCreateWithoutProjectInput, BeteckningUncheckedCreateWithoutProjectInput>
+  }
+
+  export type BeteckningCreateManyProjectInputEnvelope = {
+    data: BeteckningCreateManyProjectInput | BeteckningCreateManyProjectInput[]
+    skipDuplicates?: boolean
   }
 
   export type UserUpsertWithoutProjectsInput = {
@@ -4115,6 +7055,156 @@ export namespace Prisma {
     role?: StringFieldUpdateOperationsInput | string
   }
 
+  export type SectionUpsertWithWhereUniqueWithoutProjectInput = {
+    where: SectionWhereUniqueInput
+    update: XOR<SectionUpdateWithoutProjectInput, SectionUncheckedUpdateWithoutProjectInput>
+    create: XOR<SectionCreateWithoutProjectInput, SectionUncheckedCreateWithoutProjectInput>
+  }
+
+  export type SectionUpdateWithWhereUniqueWithoutProjectInput = {
+    where: SectionWhereUniqueInput
+    data: XOR<SectionUpdateWithoutProjectInput, SectionUncheckedUpdateWithoutProjectInput>
+  }
+
+  export type SectionUpdateManyWithWhereWithoutProjectInput = {
+    where: SectionScalarWhereInput
+    data: XOR<SectionUpdateManyMutationInput, SectionUncheckedUpdateManyWithoutProjectInput>
+  }
+
+  export type SectionScalarWhereInput = {
+    AND?: SectionScalarWhereInput | SectionScalarWhereInput[]
+    OR?: SectionScalarWhereInput[]
+    NOT?: SectionScalarWhereInput | SectionScalarWhereInput[]
+    id?: IntFilter<"Section"> | number
+    name?: StringFilter<"Section"> | string
+    projectId?: IntFilter<"Section"> | number
+  }
+
+  export type BeteckningUpsertWithWhereUniqueWithoutProjectInput = {
+    where: BeteckningWhereUniqueInput
+    update: XOR<BeteckningUpdateWithoutProjectInput, BeteckningUncheckedUpdateWithoutProjectInput>
+    create: XOR<BeteckningCreateWithoutProjectInput, BeteckningUncheckedCreateWithoutProjectInput>
+  }
+
+  export type BeteckningUpdateWithWhereUniqueWithoutProjectInput = {
+    where: BeteckningWhereUniqueInput
+    data: XOR<BeteckningUpdateWithoutProjectInput, BeteckningUncheckedUpdateWithoutProjectInput>
+  }
+
+  export type BeteckningUpdateManyWithWhereWithoutProjectInput = {
+    where: BeteckningScalarWhereInput
+    data: XOR<BeteckningUpdateManyMutationInput, BeteckningUncheckedUpdateManyWithoutProjectInput>
+  }
+
+  export type BeteckningScalarWhereInput = {
+    AND?: BeteckningScalarWhereInput | BeteckningScalarWhereInput[]
+    OR?: BeteckningScalarWhereInput[]
+    NOT?: BeteckningScalarWhereInput | BeteckningScalarWhereInput[]
+    id?: IntFilter<"Beteckning"> | number
+    label?: StringFilter<"Beteckning"> | string
+    projectId?: IntFilter<"Beteckning"> | number
+  }
+
+  export type ProjectCreateWithoutSectionsInput = {
+    name: string
+    description?: string | null
+    createdAt?: Date | string
+    user?: UserCreateNestedOneWithoutProjectsInput
+    beteckningar?: BeteckningCreateNestedManyWithoutProjectInput
+  }
+
+  export type ProjectUncheckedCreateWithoutSectionsInput = {
+    id?: number
+    name: string
+    description?: string | null
+    userId?: number | null
+    createdAt?: Date | string
+    beteckningar?: BeteckningUncheckedCreateNestedManyWithoutProjectInput
+  }
+
+  export type ProjectCreateOrConnectWithoutSectionsInput = {
+    where: ProjectWhereUniqueInput
+    create: XOR<ProjectCreateWithoutSectionsInput, ProjectUncheckedCreateWithoutSectionsInput>
+  }
+
+  export type ProjectUpsertWithoutSectionsInput = {
+    update: XOR<ProjectUpdateWithoutSectionsInput, ProjectUncheckedUpdateWithoutSectionsInput>
+    create: XOR<ProjectCreateWithoutSectionsInput, ProjectUncheckedCreateWithoutSectionsInput>
+    where?: ProjectWhereInput
+  }
+
+  export type ProjectUpdateToOneWithWhereWithoutSectionsInput = {
+    where?: ProjectWhereInput
+    data: XOR<ProjectUpdateWithoutSectionsInput, ProjectUncheckedUpdateWithoutSectionsInput>
+  }
+
+  export type ProjectUpdateWithoutSectionsInput = {
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneWithoutProjectsNestedInput
+    beteckningar?: BeteckningUpdateManyWithoutProjectNestedInput
+  }
+
+  export type ProjectUncheckedUpdateWithoutSectionsInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    userId?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    beteckningar?: BeteckningUncheckedUpdateManyWithoutProjectNestedInput
+  }
+
+  export type ProjectCreateWithoutBeteckningarInput = {
+    name: string
+    description?: string | null
+    createdAt?: Date | string
+    user?: UserCreateNestedOneWithoutProjectsInput
+    sections?: SectionCreateNestedManyWithoutProjectInput
+  }
+
+  export type ProjectUncheckedCreateWithoutBeteckningarInput = {
+    id?: number
+    name: string
+    description?: string | null
+    userId?: number | null
+    createdAt?: Date | string
+    sections?: SectionUncheckedCreateNestedManyWithoutProjectInput
+  }
+
+  export type ProjectCreateOrConnectWithoutBeteckningarInput = {
+    where: ProjectWhereUniqueInput
+    create: XOR<ProjectCreateWithoutBeteckningarInput, ProjectUncheckedCreateWithoutBeteckningarInput>
+  }
+
+  export type ProjectUpsertWithoutBeteckningarInput = {
+    update: XOR<ProjectUpdateWithoutBeteckningarInput, ProjectUncheckedUpdateWithoutBeteckningarInput>
+    create: XOR<ProjectCreateWithoutBeteckningarInput, ProjectUncheckedCreateWithoutBeteckningarInput>
+    where?: ProjectWhereInput
+  }
+
+  export type ProjectUpdateToOneWithWhereWithoutBeteckningarInput = {
+    where?: ProjectWhereInput
+    data: XOR<ProjectUpdateWithoutBeteckningarInput, ProjectUncheckedUpdateWithoutBeteckningarInput>
+  }
+
+  export type ProjectUpdateWithoutBeteckningarInput = {
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneWithoutProjectsNestedInput
+    sections?: SectionUpdateManyWithoutProjectNestedInput
+  }
+
+  export type ProjectUncheckedUpdateWithoutBeteckningarInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    userId?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sections?: SectionUncheckedUpdateManyWithoutProjectNestedInput
+  }
+
   export type ProjectCreateManyUserInput = {
     id?: number
     name: string
@@ -4126,6 +7216,8 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sections?: SectionUpdateManyWithoutProjectNestedInput
+    beteckningar?: BeteckningUpdateManyWithoutProjectNestedInput
   }
 
   export type ProjectUncheckedUpdateWithoutUserInput = {
@@ -4133,6 +7225,8 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sections?: SectionUncheckedUpdateManyWithoutProjectNestedInput
+    beteckningar?: BeteckningUncheckedUpdateManyWithoutProjectNestedInput
   }
 
   export type ProjectUncheckedUpdateManyWithoutUserInput = {
@@ -4140,6 +7234,44 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SectionCreateManyProjectInput = {
+    id?: number
+    name: string
+  }
+
+  export type BeteckningCreateManyProjectInput = {
+    id?: number
+    label: string
+  }
+
+  export type SectionUpdateWithoutProjectInput = {
+    name?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type SectionUncheckedUpdateWithoutProjectInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type SectionUncheckedUpdateManyWithoutProjectInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type BeteckningUpdateWithoutProjectInput = {
+    label?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type BeteckningUncheckedUpdateWithoutProjectInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    label?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type BeteckningUncheckedUpdateManyWithoutProjectInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    label?: StringFieldUpdateOperationsInput | string
   }
 
 
