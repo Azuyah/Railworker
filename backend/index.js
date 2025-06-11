@@ -16,13 +16,6 @@ const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
   throw new Error('❌ JWT_SECRET is not defined in your .env file');
 }
-
-app.post('/api/test', (req, res) => {
-  console.log('✅ /api/test kallades!');
-  console.log('📦 Body:', req.body);
-  res.send('OK');
-});
-
 // Register user
 app.post('/api/register', async (req, res) => {
   const { email, password, name, phone, company } = req.body;
