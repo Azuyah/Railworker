@@ -124,7 +124,7 @@ const Plan = () => {
             <p><strong>Beteckningar:</strong> {project.beteckningar.map(b => b.value).join(', ')}</p>
           </div>
           <div className="text-right">
-            <h2 className="text-lg font-semibold mb-2">Förplanering stänger</h2>
+            <h2 className="text-lg font-semibold mb-2">Förplanering stänger:</h2>
             <div className="text-xl font-bold text-blue-600">{countdown}</div>
           </div>
         </div>
@@ -151,7 +151,7 @@ const Plan = () => {
 
   <button
     onClick={() => alert('Redigeringsfunktion kommer snart!')}
-    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
   >
     Redigera projekt
   </button>
@@ -191,33 +191,79 @@ const Plan = () => {
   className="cursor-pointer hover:bg-blue-50"
 >
                     <td className="border px-2 py-1 text-center">{row.id}</td>
-                    <td className="border px-2 py-1">
-                      <input disabled={editingRow !== rowIndex} value={row.namn} onChange={(e) => handleChange(rowIndex, 'namn', e.target.value)}  className={`w-[200px] px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`} />
-                    </td>
-                    <td className="border px-2 py-1">
-                      <input disabled={editingRow !== rowIndex} value={row.telefon} onChange={(e) => handleChange(rowIndex, 'telefon', e.target.value)} className={`w-[140px] px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`} />
-                    </td>
-                    <td className="border px-2 py-1">
-                      <input disabled={editingRow !== rowIndex} value={row.anordning} onChange={(e) => handleChange(rowIndex, 'anordning', e.target.value)} className={`w-full px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`} />
-                    </td>
-                    {project.sections.map((_, sectionIdx) => (
-                      <td key={sectionIdx} className="border text-center">
-                        <input type="checkbox" checked={row.selections[sectionIdx]} onChange={(e) => handleCheckboxChange(rowIndex, sectionIdx, e.target.checked)} />
-                      </td>
-                    ))}
-                    <td className="border px-2 py-1">
-                      <input disabled={editingRow !== rowIndex} type="time" value={row.starttid} onChange={(e) => handleChange(rowIndex, 'starttid', e.target.value)} className={`w-full px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`} />
-                    </td>
-                    <td className="border px-2 py-1">
-                      <input disabled={editingRow !== rowIndex} type="time" value={row.begard} onChange={(e) => handleChange(rowIndex, 'begard', e.target.value)} className={`w-full px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`} />
-                    </td>
-                    <td className="border px-2 py-1">
-                      <input disabled={editingRow !== rowIndex} type="time" value={row.avslutat} onChange={(e) => handleChange(rowIndex, 'avslutat', e.target.value)} className={`w-full px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`} />
-                    </td>
-                    <td className="border px-2 py-1">
-                      <input disabled={editingRow !== rowIndex} value={row.anteckning} onChange={(e) => handleChange(rowIndex, 'anteckning', e.target.value)} className={`w-full px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`} />
-                    </td>
-                  </tr>
+                   <td className="border px-2 py-1">
+  <input
+    disabled={editingRow !== rowIndex}
+    value={row.namn}
+    onChange={(e) => handleChange(rowIndex, 'namn', e.target.value)}
+    onKeyDown={(e) => handleKeyDown(e, rowIndex)}
+    className={`w-[200px] px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`}
+  />
+</td>
+
+<td className="border px-2 py-1">
+  <input
+    disabled={editingRow !== rowIndex}
+    value={row.telefon}
+    onChange={(e) => handleChange(rowIndex, 'telefon', e.target.value)}
+    onKeyDown={(e) => handleKeyDown(e, rowIndex)}
+    className={`w-[140px] px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`}
+  />
+</td>
+
+<td className="border px-2 py-1">
+  <input
+    disabled={editingRow !== rowIndex}
+    value={row.anordning}
+    onChange={(e) => handleChange(rowIndex, 'anordning', e.target.value)}
+    onKeyDown={(e) => handleKeyDown(e, rowIndex)}
+    className={`w-full px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`}
+  />
+</td>
+
+<td className="border px-2 py-1">
+  <input
+    disabled={editingRow !== rowIndex}
+    type="time"
+    value={row.starttid}
+    onChange={(e) => handleChange(rowIndex, 'starttid', e.target.value)}
+    onKeyDown={(e) => handleKeyDown(e, rowIndex)}
+    className={`w-full px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`}
+  />
+</td>
+
+<td className="border px-2 py-1">
+  <input
+    disabled={editingRow !== rowIndex}
+    type="time"
+    value={row.begard}
+    onChange={(e) => handleChange(rowIndex, 'begard', e.target.value)}
+    onKeyDown={(e) => handleKeyDown(e, rowIndex)}
+    className={`w-full px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`}
+  />
+</td>
+
+<td className="border px-2 py-1">
+  <input
+    disabled={editingRow !== rowIndex}
+    type="time"
+    value={row.avslutat}
+    onChange={(e) => handleChange(rowIndex, 'avslutat', e.target.value)}
+    onKeyDown={(e) => handleKeyDown(e, rowIndex)}
+    className={`w-full px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`}
+  />
+</td>
+
+<td className="border px-2 py-1">
+  <input
+    disabled={editingRow !== rowIndex}
+    value={row.anteckning}
+    onChange={(e) => handleChange(rowIndex, 'anteckning', e.target.value)}
+    onKeyDown={(e) => handleKeyDown(e, rowIndex)}
+    className={`w-full px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`}
+  />
+</td>
+</tr>
                 ))}
               </tbody>
             </table>
