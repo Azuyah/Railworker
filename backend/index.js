@@ -181,6 +181,31 @@ app.get('/api/project/:id', async (req, res) => {
   }
 });
 
+app.delete('/api/project/:id', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Ingen token angiven' });
+  }
+
+  try {
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    const projectId = parseInt(req.params.id, 10);
+
+    // Radera sektioner & beteckningar först om du inte har ON DELETE CASCADE
+    await prisma.section.deleteMany({ where: { projectId } });
+    await prisma.beteckning.deleteMany({ where: { projectId } });
+
+    await prisma.project.delete({ where: { id: projectId } });
+
+    res.json({ message: 'Projekt raderat' });
+  } catch (error) {
+    console.error('❌ Fel vid borttagning:', error);
+    res.status(500).json({ error: 'Kunde inte ta bort projekt' });
+  }
+});
+
 // Start server
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`✅ Backend running on port ${PORT}`));

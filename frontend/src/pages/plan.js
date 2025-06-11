@@ -58,6 +58,26 @@ const Plan = () => {
         }
       }, 1000);
 
+      <button
+  onClick={async () => {
+    if (!window.confirm('Är du säker på att du vill ta bort detta projekt?')) return;
+
+    try {
+      const tokenData = localStorage.getItem('user');
+      const token = tokenData ? JSON.parse(tokenData).token : null;
+      await axios.delete(`https://railworker-production.up.railway.app/api/project/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      window.location.href = '/'; // Gå tillbaka till dashboard
+    } catch (err) {
+      console.error('Kunde inte ta bort projekt:', err);
+    }
+  }}
+  className="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+>
+  Ta bort projekt
+</button>
+
       return () => clearInterval(interval);
     } catch (error) {
       console.error('Kunde inte hämta projekt:', error);
@@ -148,12 +168,12 @@ const Plan = () => {
                   <th className="border px-4 py-2">Begärd till</th>
                   <th className="border px-4 py-2">Avslutat</th>
                   <th className="border px-4 py-2">Anteckning</th>
-                  <th className="border px-4 py-2">Redigera</th>
+
                 </tr>
               </thead>
               <tbody>
                 {rows.map((row, rowIndex) => (
-                  <tr key={row.id}>
+                 <tr key={row.id} onClick={() => setEditingRow(rowIndex)} className="cursor-pointer hover:bg-blue-50">
                     <td className="border px-2 py-1 text-center">{row.id}</td>
                     <td className="border px-2 py-1">
                       <input disabled={editingRow !== rowIndex} value={row.namn} onChange={(e) => handleChange(rowIndex, 'namn', e.target.value)} className={`w-[200px] px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`} />
@@ -180,11 +200,6 @@ const Plan = () => {
                     </td>
                     <td className="border px-2 py-1">
                       <input disabled={editingRow !== rowIndex} value={row.anteckning} onChange={(e) => handleChange(rowIndex, 'anteckning', e.target.value)} className={`w-full px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`} />
-                    </td>
-                    <td className="border px-2 py-1 text-center">
-                      <button onClick={() => toggleEdit(rowIndex)} className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
-                        {editingRow === rowIndex ? 'Stäng' : 'Redigera'}
-                      </button>
                     </td>
                   </tr>
                 ))}
