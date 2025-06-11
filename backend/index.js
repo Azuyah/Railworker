@@ -84,7 +84,6 @@ const project = await prisma.project.create({
   }
 });
 
-// Get single project by ID (auth required)
 app.get('/api/projects/:id', async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
@@ -97,6 +96,10 @@ app.get('/api/projects/:id', async (req, res) => {
 
     const project = await prisma.project.findUnique({
       where: { id: parseInt(req.params.id, 10) },
+      include: {
+        sections: true,
+        beteckningar: true,
+      },
     });
 
     if (!project) {
