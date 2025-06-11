@@ -138,7 +138,7 @@ app.get('/api/project/:id', async (req, res) => {
     console.error('❌ Fel vid hämtning av projekt:', error);
     res.status(500).json({ error: 'Kunde inte hämta projekt' });
   }
-});s
+});
 
 // Start server
 const PORT = process.env.PORT || 4000;
