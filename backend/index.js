@@ -17,6 +17,12 @@ if (!JWT_SECRET) {
   throw new Error('❌ JWT_SECRET is not defined in your .env file');
 }
 
+app.post('/api/test', (req, res) => {
+  console.log('✅ /api/test kallades!');
+  console.log('📦 Body:', req.body);
+  res.send('OK');
+});
+
 // Register user
 app.post('/api/register', async (req, res) => {
   const { email, password, name, phone, company } = req.body;
@@ -55,9 +61,23 @@ app.post('/api/login', async (req, res) => {
 res.json({ token, role: user.role });
 });
 
-// Create project (auth required)
 app.post('/api/projects', async (req, res) => {
-  const { name, description } = req.body;
+    console.log('📥 POST /api/projects');              
+  console.log('🧾 Inkommande req.body:', req.body);  
+
+  const {
+    name,
+    description,
+    startDate,
+    startTime,
+    endDate,
+    endTime,
+    plats,
+    namn,
+    telefonnummer,
+    sections = [],
+    beteckningar = [],
+  } = req.body;
 
   try {
     const authHeader = req.headers.authorization;
@@ -69,44 +89,46 @@ app.post('/api/projects', async (req, res) => {
     const decoded = jwt.verify(token, JWT_SECRET);
     const userId = decoded.userId;
 
-const project = await prisma.project.create({
-  data: {
-    name,
-    description,
-    user: { connect: { id: userId } },
-  },
-});
+    const project = await prisma.project.create({
+      data: {
+        name,
+        description,
+        startDate,
+        startTime,
+        endDate,
+        endTime,
+        plats,
+        namn,
+        telefonnummer,
+        user: { connect: { id: userId } },
+      },
+    });
+
+    // Skapa sektioner
+    for (const sec of sections) {
+      await prisma.section.create({
+        data: {
+          name: sec.signal || '',
+          type: sec.type,
+          projectId: project.id,
+        },
+      });
+    }
+
+    // Skapa beteckningar
+    for (const b of beteckningar) {
+      await prisma.beteckning.create({
+        data: {
+          label: b.value,
+          projectId: project.id,
+        },
+      });
+    }
 
     res.status(201).json(project);
   } catch (error) {
     console.error('❌ Create project error:', error);
     res.status(500).json({ error: 'Could not create project' });
-  }
-});
-
-// Hämta alla projekt
-app.get('/api/projects', async (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Ingen token angiven' });
-  }
-
-  try {
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, JWT_SECRET);
-
-    const projects =
-      decoded.role === 'HTSM' || decoded.role === 'TSM'
-        ? await prisma.project.findMany({ orderBy: { createdAt: 'desc' } })
-        : await prisma.project.findMany({
-            where: { userId: decoded.userId },
-            orderBy: { createdAt: 'desc' },
-          });
-
-    res.json(projects);
-  } catch (error) {
-    console.error('Error fetching projects:', error);
-    res.status(500).json({ error: 'Kunde inte hämta projekt' });
   }
 });
 

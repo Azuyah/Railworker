@@ -134,6 +134,13 @@ exports.Prisma.ProjectScalarFieldEnum = {
   id: 'id',
   name: 'name',
   description: 'description',
+  startDate: 'startDate',
+  startTime: 'startTime',
+  endDate: 'endDate',
+  endTime: 'endTime',
+  plats: 'plats',
+  namn: 'namn',
+  telefonnummer: 'telefonnummer',
   userId: 'userId',
   createdAt: 'createdAt'
 };
@@ -141,6 +148,8 @@ exports.Prisma.ProjectScalarFieldEnum = {
 exports.Prisma.SectionScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  type: 'type',
+  signal: 'signal',
   projectId: 'projectId'
 };
 

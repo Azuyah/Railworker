@@ -226,19 +226,21 @@ const SkapaProjekt = () => {
     }
 
     try {
-      const newProject = {
-        name: projektNamn,
-        description: plats,
-        startDate,
-        startTime,
-        endDate,
-        endTime,
-        plats,
-        namn,
-        telefonnummer,
-        beteckningar,
-        sections,
-      };
+const newProject = {
+  name: projektNamn,
+  description: 'placeholder', // eller skapa ett nytt fält om du vill ha input
+  startDate: startDate || null,
+  startTime: startTime || null,
+  endDate: endDate || null,
+  endTime: endTime || null,
+  plats: plats || null,
+  namn: namn || null,
+  telefonnummer: telefonnummer || null,
+  beteckningar,
+  sections,
+};
+
+console.log('🚀 Payload som skickas:', newProject);
 
       const response = await fetch('https://railworker-production.up.railway.app/api/projects', {
         method: 'POST',

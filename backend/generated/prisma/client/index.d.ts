@@ -2368,6 +2368,13 @@ export namespace Prisma {
     id: number | null
     name: string | null
     description: string | null
+    startDate: string | null
+    startTime: string | null
+    endDate: string | null
+    endTime: string | null
+    plats: string | null
+    namn: string | null
+    telefonnummer: string | null
     userId: number | null
     createdAt: Date | null
   }
@@ -2376,6 +2383,13 @@ export namespace Prisma {
     id: number | null
     name: string | null
     description: string | null
+    startDate: string | null
+    startTime: string | null
+    endDate: string | null
+    endTime: string | null
+    plats: string | null
+    namn: string | null
+    telefonnummer: string | null
     userId: number | null
     createdAt: Date | null
   }
@@ -2384,6 +2398,13 @@ export namespace Prisma {
     id: number
     name: number
     description: number
+    startDate: number
+    startTime: number
+    endDate: number
+    endTime: number
+    plats: number
+    namn: number
+    telefonnummer: number
     userId: number
     createdAt: number
     _all: number
@@ -2404,6 +2425,13 @@ export namespace Prisma {
     id?: true
     name?: true
     description?: true
+    startDate?: true
+    startTime?: true
+    endDate?: true
+    endTime?: true
+    plats?: true
+    namn?: true
+    telefonnummer?: true
     userId?: true
     createdAt?: true
   }
@@ -2412,6 +2440,13 @@ export namespace Prisma {
     id?: true
     name?: true
     description?: true
+    startDate?: true
+    startTime?: true
+    endDate?: true
+    endTime?: true
+    plats?: true
+    namn?: true
+    telefonnummer?: true
     userId?: true
     createdAt?: true
   }
@@ -2420,6 +2455,13 @@ export namespace Prisma {
     id?: true
     name?: true
     description?: true
+    startDate?: true
+    startTime?: true
+    endDate?: true
+    endTime?: true
+    plats?: true
+    namn?: true
+    telefonnummer?: true
     userId?: true
     createdAt?: true
     _all?: true
@@ -2515,6 +2557,13 @@ export namespace Prisma {
     id: number
     name: string
     description: string | null
+    startDate: string | null
+    startTime: string | null
+    endDate: string | null
+    endTime: string | null
+    plats: string | null
+    namn: string | null
+    telefonnummer: string | null
     userId: number | null
     createdAt: Date
     _count: ProjectCountAggregateOutputType | null
@@ -2542,6 +2591,13 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     description?: boolean
+    startDate?: boolean
+    startTime?: boolean
+    endDate?: boolean
+    endTime?: boolean
+    plats?: boolean
+    namn?: boolean
+    telefonnummer?: boolean
     userId?: boolean
     createdAt?: boolean
     user?: boolean | Project$userArgs<ExtArgs>
@@ -2554,6 +2610,13 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     description?: boolean
+    startDate?: boolean
+    startTime?: boolean
+    endDate?: boolean
+    endTime?: boolean
+    plats?: boolean
+    namn?: boolean
+    telefonnummer?: boolean
     userId?: boolean
     createdAt?: boolean
     user?: boolean | Project$userArgs<ExtArgs>
@@ -2563,6 +2626,13 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     description?: boolean
+    startDate?: boolean
+    startTime?: boolean
+    endDate?: boolean
+    endTime?: boolean
+    plats?: boolean
+    namn?: boolean
+    telefonnummer?: boolean
     userId?: boolean
     createdAt?: boolean
     user?: boolean | Project$userArgs<ExtArgs>
@@ -2572,11 +2642,18 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     description?: boolean
+    startDate?: boolean
+    startTime?: boolean
+    endDate?: boolean
+    endTime?: boolean
+    plats?: boolean
+    namn?: boolean
+    telefonnummer?: boolean
     userId?: boolean
     createdAt?: boolean
   }
 
-  export type ProjectOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "description" | "userId" | "createdAt", ExtArgs["result"]["project"]>
+  export type ProjectOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "description" | "startDate" | "startTime" | "endDate" | "endTime" | "plats" | "namn" | "telefonnummer" | "userId" | "createdAt", ExtArgs["result"]["project"]>
   export type ProjectInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | Project$userArgs<ExtArgs>
     sections?: boolean | Project$sectionsArgs<ExtArgs>
@@ -2601,6 +2678,13 @@ export namespace Prisma {
       id: number
       name: string
       description: string | null
+      startDate: string | null
+      startTime: string | null
+      endDate: string | null
+      endTime: string | null
+      plats: string | null
+      namn: string | null
+      telefonnummer: string | null
       userId: number | null
       createdAt: Date
     }, ExtArgs["result"]["project"]>
@@ -3032,6 +3116,13 @@ export namespace Prisma {
     readonly id: FieldRef<"Project", 'Int'>
     readonly name: FieldRef<"Project", 'String'>
     readonly description: FieldRef<"Project", 'String'>
+    readonly startDate: FieldRef<"Project", 'String'>
+    readonly startTime: FieldRef<"Project", 'String'>
+    readonly endDate: FieldRef<"Project", 'String'>
+    readonly endTime: FieldRef<"Project", 'String'>
+    readonly plats: FieldRef<"Project", 'String'>
+    readonly namn: FieldRef<"Project", 'String'>
+    readonly telefonnummer: FieldRef<"Project", 'String'>
     readonly userId: FieldRef<"Project", 'Int'>
     readonly createdAt: FieldRef<"Project", 'DateTime'>
   }
@@ -3540,18 +3631,24 @@ export namespace Prisma {
   export type SectionMinAggregateOutputType = {
     id: number | null
     name: string | null
+    type: string | null
+    signal: string | null
     projectId: number | null
   }
 
   export type SectionMaxAggregateOutputType = {
     id: number | null
     name: string | null
+    type: string | null
+    signal: string | null
     projectId: number | null
   }
 
   export type SectionCountAggregateOutputType = {
     id: number
     name: number
+    type: number
+    signal: number
     projectId: number
     _all: number
   }
@@ -3570,18 +3667,24 @@ export namespace Prisma {
   export type SectionMinAggregateInputType = {
     id?: true
     name?: true
+    type?: true
+    signal?: true
     projectId?: true
   }
 
   export type SectionMaxAggregateInputType = {
     id?: true
     name?: true
+    type?: true
+    signal?: true
     projectId?: true
   }
 
   export type SectionCountAggregateInputType = {
     id?: true
     name?: true
+    type?: true
+    signal?: true
     projectId?: true
     _all?: true
   }
@@ -3675,6 +3778,8 @@ export namespace Prisma {
   export type SectionGroupByOutputType = {
     id: number
     name: string
+    type: string
+    signal: string | null
     projectId: number
     _count: SectionCountAggregateOutputType | null
     _avg: SectionAvgAggregateOutputType | null
@@ -3700,6 +3805,8 @@ export namespace Prisma {
   export type SectionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     name?: boolean
+    type?: boolean
+    signal?: boolean
     projectId?: boolean
     project?: boolean | ProjectDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["section"]>
@@ -3707,6 +3814,8 @@ export namespace Prisma {
   export type SectionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     name?: boolean
+    type?: boolean
+    signal?: boolean
     projectId?: boolean
     project?: boolean | ProjectDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["section"]>
@@ -3714,6 +3823,8 @@ export namespace Prisma {
   export type SectionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     name?: boolean
+    type?: boolean
+    signal?: boolean
     projectId?: boolean
     project?: boolean | ProjectDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["section"]>
@@ -3721,10 +3832,12 @@ export namespace Prisma {
   export type SectionSelectScalar = {
     id?: boolean
     name?: boolean
+    type?: boolean
+    signal?: boolean
     projectId?: boolean
   }
 
-  export type SectionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "projectId", ExtArgs["result"]["section"]>
+  export type SectionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "type" | "signal" | "projectId", ExtArgs["result"]["section"]>
   export type SectionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     project?: boolean | ProjectDefaultArgs<ExtArgs>
   }
@@ -3743,6 +3856,8 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: number
       name: string
+      type: string
+      signal: string | null
       projectId: number
     }, ExtArgs["result"]["section"]>
     composites: {}
@@ -4170,6 +4285,8 @@ export namespace Prisma {
   interface SectionFieldRefs {
     readonly id: FieldRef<"Section", 'Int'>
     readonly name: FieldRef<"Section", 'String'>
+    readonly type: FieldRef<"Section", 'String'>
+    readonly signal: FieldRef<"Section", 'String'>
     readonly projectId: FieldRef<"Section", 'Int'>
   }
     
@@ -5686,6 +5803,13 @@ export namespace Prisma {
     id: 'id',
     name: 'name',
     description: 'description',
+    startDate: 'startDate',
+    startTime: 'startTime',
+    endDate: 'endDate',
+    endTime: 'endTime',
+    plats: 'plats',
+    namn: 'namn',
+    telefonnummer: 'telefonnummer',
     userId: 'userId',
     createdAt: 'createdAt'
   };
@@ -5696,6 +5820,8 @@ export namespace Prisma {
   export const SectionScalarFieldEnum: {
     id: 'id',
     name: 'name',
+    type: 'type',
+    signal: 'signal',
     projectId: 'projectId'
   };
 
@@ -5873,6 +5999,13 @@ export namespace Prisma {
     id?: IntFilter<"Project"> | number
     name?: StringFilter<"Project"> | string
     description?: StringNullableFilter<"Project"> | string | null
+    startDate?: StringNullableFilter<"Project"> | string | null
+    startTime?: StringNullableFilter<"Project"> | string | null
+    endDate?: StringNullableFilter<"Project"> | string | null
+    endTime?: StringNullableFilter<"Project"> | string | null
+    plats?: StringNullableFilter<"Project"> | string | null
+    namn?: StringNullableFilter<"Project"> | string | null
+    telefonnummer?: StringNullableFilter<"Project"> | string | null
     userId?: IntNullableFilter<"Project"> | number | null
     createdAt?: DateTimeFilter<"Project"> | Date | string
     user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
@@ -5884,6 +6017,13 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     description?: SortOrderInput | SortOrder
+    startDate?: SortOrderInput | SortOrder
+    startTime?: SortOrderInput | SortOrder
+    endDate?: SortOrderInput | SortOrder
+    endTime?: SortOrderInput | SortOrder
+    plats?: SortOrderInput | SortOrder
+    namn?: SortOrderInput | SortOrder
+    telefonnummer?: SortOrderInput | SortOrder
     userId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     user?: UserOrderByWithRelationInput
@@ -5898,6 +6038,13 @@ export namespace Prisma {
     NOT?: ProjectWhereInput | ProjectWhereInput[]
     name?: StringFilter<"Project"> | string
     description?: StringNullableFilter<"Project"> | string | null
+    startDate?: StringNullableFilter<"Project"> | string | null
+    startTime?: StringNullableFilter<"Project"> | string | null
+    endDate?: StringNullableFilter<"Project"> | string | null
+    endTime?: StringNullableFilter<"Project"> | string | null
+    plats?: StringNullableFilter<"Project"> | string | null
+    namn?: StringNullableFilter<"Project"> | string | null
+    telefonnummer?: StringNullableFilter<"Project"> | string | null
     userId?: IntNullableFilter<"Project"> | number | null
     createdAt?: DateTimeFilter<"Project"> | Date | string
     user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
@@ -5909,6 +6056,13 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     description?: SortOrderInput | SortOrder
+    startDate?: SortOrderInput | SortOrder
+    startTime?: SortOrderInput | SortOrder
+    endDate?: SortOrderInput | SortOrder
+    endTime?: SortOrderInput | SortOrder
+    plats?: SortOrderInput | SortOrder
+    namn?: SortOrderInput | SortOrder
+    telefonnummer?: SortOrderInput | SortOrder
     userId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     _count?: ProjectCountOrderByAggregateInput
@@ -5925,6 +6079,13 @@ export namespace Prisma {
     id?: IntWithAggregatesFilter<"Project"> | number
     name?: StringWithAggregatesFilter<"Project"> | string
     description?: StringNullableWithAggregatesFilter<"Project"> | string | null
+    startDate?: StringNullableWithAggregatesFilter<"Project"> | string | null
+    startTime?: StringNullableWithAggregatesFilter<"Project"> | string | null
+    endDate?: StringNullableWithAggregatesFilter<"Project"> | string | null
+    endTime?: StringNullableWithAggregatesFilter<"Project"> | string | null
+    plats?: StringNullableWithAggregatesFilter<"Project"> | string | null
+    namn?: StringNullableWithAggregatesFilter<"Project"> | string | null
+    telefonnummer?: StringNullableWithAggregatesFilter<"Project"> | string | null
     userId?: IntNullableWithAggregatesFilter<"Project"> | number | null
     createdAt?: DateTimeWithAggregatesFilter<"Project"> | Date | string
   }
@@ -5935,6 +6096,8 @@ export namespace Prisma {
     NOT?: SectionWhereInput | SectionWhereInput[]
     id?: IntFilter<"Section"> | number
     name?: StringFilter<"Section"> | string
+    type?: StringFilter<"Section"> | string
+    signal?: StringNullableFilter<"Section"> | string | null
     projectId?: IntFilter<"Section"> | number
     project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
   }
@@ -5942,6 +6105,8 @@ export namespace Prisma {
   export type SectionOrderByWithRelationInput = {
     id?: SortOrder
     name?: SortOrder
+    type?: SortOrder
+    signal?: SortOrderInput | SortOrder
     projectId?: SortOrder
     project?: ProjectOrderByWithRelationInput
   }
@@ -5952,6 +6117,8 @@ export namespace Prisma {
     OR?: SectionWhereInput[]
     NOT?: SectionWhereInput | SectionWhereInput[]
     name?: StringFilter<"Section"> | string
+    type?: StringFilter<"Section"> | string
+    signal?: StringNullableFilter<"Section"> | string | null
     projectId?: IntFilter<"Section"> | number
     project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
   }, "id">
@@ -5959,6 +6126,8 @@ export namespace Prisma {
   export type SectionOrderByWithAggregationInput = {
     id?: SortOrder
     name?: SortOrder
+    type?: SortOrder
+    signal?: SortOrderInput | SortOrder
     projectId?: SortOrder
     _count?: SectionCountOrderByAggregateInput
     _avg?: SectionAvgOrderByAggregateInput
@@ -5973,6 +6142,8 @@ export namespace Prisma {
     NOT?: SectionScalarWhereWithAggregatesInput | SectionScalarWhereWithAggregatesInput[]
     id?: IntWithAggregatesFilter<"Section"> | number
     name?: StringWithAggregatesFilter<"Section"> | string
+    type?: StringWithAggregatesFilter<"Section"> | string
+    signal?: StringNullableWithAggregatesFilter<"Section"> | string | null
     projectId?: IntWithAggregatesFilter<"Section"> | number
   }
 
@@ -6097,6 +6268,13 @@ export namespace Prisma {
   export type ProjectCreateInput = {
     name: string
     description?: string | null
+    startDate?: string | null
+    startTime?: string | null
+    endDate?: string | null
+    endTime?: string | null
+    plats?: string | null
+    namn?: string | null
+    telefonnummer?: string | null
     createdAt?: Date | string
     user?: UserCreateNestedOneWithoutProjectsInput
     sections?: SectionCreateNestedManyWithoutProjectInput
@@ -6107,6 +6285,13 @@ export namespace Prisma {
     id?: number
     name: string
     description?: string | null
+    startDate?: string | null
+    startTime?: string | null
+    endDate?: string | null
+    endTime?: string | null
+    plats?: string | null
+    namn?: string | null
+    telefonnummer?: string | null
     userId?: number | null
     createdAt?: Date | string
     sections?: SectionUncheckedCreateNestedManyWithoutProjectInput
@@ -6116,6 +6301,13 @@ export namespace Prisma {
   export type ProjectUpdateInput = {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableStringFieldUpdateOperationsInput | string | null
+    startTime?: NullableStringFieldUpdateOperationsInput | string | null
+    endDate?: NullableStringFieldUpdateOperationsInput | string | null
+    endTime?: NullableStringFieldUpdateOperationsInput | string | null
+    plats?: NullableStringFieldUpdateOperationsInput | string | null
+    namn?: NullableStringFieldUpdateOperationsInput | string | null
+    telefonnummer?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneWithoutProjectsNestedInput
     sections?: SectionUpdateManyWithoutProjectNestedInput
@@ -6126,6 +6318,13 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableStringFieldUpdateOperationsInput | string | null
+    startTime?: NullableStringFieldUpdateOperationsInput | string | null
+    endDate?: NullableStringFieldUpdateOperationsInput | string | null
+    endTime?: NullableStringFieldUpdateOperationsInput | string | null
+    plats?: NullableStringFieldUpdateOperationsInput | string | null
+    namn?: NullableStringFieldUpdateOperationsInput | string | null
+    telefonnummer?: NullableStringFieldUpdateOperationsInput | string | null
     userId?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     sections?: SectionUncheckedUpdateManyWithoutProjectNestedInput
@@ -6136,6 +6335,13 @@ export namespace Prisma {
     id?: number
     name: string
     description?: string | null
+    startDate?: string | null
+    startTime?: string | null
+    endDate?: string | null
+    endTime?: string | null
+    plats?: string | null
+    namn?: string | null
+    telefonnummer?: string | null
     userId?: number | null
     createdAt?: Date | string
   }
@@ -6143,6 +6349,13 @@ export namespace Prisma {
   export type ProjectUpdateManyMutationInput = {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableStringFieldUpdateOperationsInput | string | null
+    startTime?: NullableStringFieldUpdateOperationsInput | string | null
+    endDate?: NullableStringFieldUpdateOperationsInput | string | null
+    endTime?: NullableStringFieldUpdateOperationsInput | string | null
+    plats?: NullableStringFieldUpdateOperationsInput | string | null
+    namn?: NullableStringFieldUpdateOperationsInput | string | null
+    telefonnummer?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -6150,45 +6363,66 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableStringFieldUpdateOperationsInput | string | null
+    startTime?: NullableStringFieldUpdateOperationsInput | string | null
+    endDate?: NullableStringFieldUpdateOperationsInput | string | null
+    endTime?: NullableStringFieldUpdateOperationsInput | string | null
+    plats?: NullableStringFieldUpdateOperationsInput | string | null
+    namn?: NullableStringFieldUpdateOperationsInput | string | null
+    telefonnummer?: NullableStringFieldUpdateOperationsInput | string | null
     userId?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type SectionCreateInput = {
     name: string
+    type: string
+    signal?: string | null
     project: ProjectCreateNestedOneWithoutSectionsInput
   }
 
   export type SectionUncheckedCreateInput = {
     id?: number
     name: string
+    type: string
+    signal?: string | null
     projectId: number
   }
 
   export type SectionUpdateInput = {
     name?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    signal?: NullableStringFieldUpdateOperationsInput | string | null
     project?: ProjectUpdateOneRequiredWithoutSectionsNestedInput
   }
 
   export type SectionUncheckedUpdateInput = {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    signal?: NullableStringFieldUpdateOperationsInput | string | null
     projectId?: IntFieldUpdateOperationsInput | number
   }
 
   export type SectionCreateManyInput = {
     id?: number
     name: string
+    type: string
+    signal?: string | null
     projectId: number
   }
 
   export type SectionUpdateManyMutationInput = {
     name?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    signal?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type SectionUncheckedUpdateManyInput = {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    signal?: NullableStringFieldUpdateOperationsInput | string | null
     projectId?: IntFieldUpdateOperationsInput | number
   }
 
@@ -6427,6 +6661,13 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     description?: SortOrder
+    startDate?: SortOrder
+    startTime?: SortOrder
+    endDate?: SortOrder
+    endTime?: SortOrder
+    plats?: SortOrder
+    namn?: SortOrder
+    telefonnummer?: SortOrder
     userId?: SortOrder
     createdAt?: SortOrder
   }
@@ -6440,6 +6681,13 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     description?: SortOrder
+    startDate?: SortOrder
+    startTime?: SortOrder
+    endDate?: SortOrder
+    endTime?: SortOrder
+    plats?: SortOrder
+    namn?: SortOrder
+    telefonnummer?: SortOrder
     userId?: SortOrder
     createdAt?: SortOrder
   }
@@ -6448,6 +6696,13 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     description?: SortOrder
+    startDate?: SortOrder
+    startTime?: SortOrder
+    endDate?: SortOrder
+    endTime?: SortOrder
+    plats?: SortOrder
+    namn?: SortOrder
+    telefonnummer?: SortOrder
     userId?: SortOrder
     createdAt?: SortOrder
   }
@@ -6495,6 +6750,8 @@ export namespace Prisma {
   export type SectionCountOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
+    type?: SortOrder
+    signal?: SortOrder
     projectId?: SortOrder
   }
 
@@ -6506,12 +6763,16 @@ export namespace Prisma {
   export type SectionMaxOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
+    type?: SortOrder
+    signal?: SortOrder
     projectId?: SortOrder
   }
 
   export type SectionMinOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
+    type?: SortOrder
+    signal?: SortOrder
     projectId?: SortOrder
   }
 
@@ -6912,6 +7173,13 @@ export namespace Prisma {
   export type ProjectCreateWithoutUserInput = {
     name: string
     description?: string | null
+    startDate?: string | null
+    startTime?: string | null
+    endDate?: string | null
+    endTime?: string | null
+    plats?: string | null
+    namn?: string | null
+    telefonnummer?: string | null
     createdAt?: Date | string
     sections?: SectionCreateNestedManyWithoutProjectInput
     beteckningar?: BeteckningCreateNestedManyWithoutProjectInput
@@ -6921,6 +7189,13 @@ export namespace Prisma {
     id?: number
     name: string
     description?: string | null
+    startDate?: string | null
+    startTime?: string | null
+    endDate?: string | null
+    endTime?: string | null
+    plats?: string | null
+    namn?: string | null
+    telefonnummer?: string | null
     createdAt?: Date | string
     sections?: SectionUncheckedCreateNestedManyWithoutProjectInput
     beteckningar?: BeteckningUncheckedCreateNestedManyWithoutProjectInput
@@ -6959,6 +7234,13 @@ export namespace Prisma {
     id?: IntFilter<"Project"> | number
     name?: StringFilter<"Project"> | string
     description?: StringNullableFilter<"Project"> | string | null
+    startDate?: StringNullableFilter<"Project"> | string | null
+    startTime?: StringNullableFilter<"Project"> | string | null
+    endDate?: StringNullableFilter<"Project"> | string | null
+    endTime?: StringNullableFilter<"Project"> | string | null
+    plats?: StringNullableFilter<"Project"> | string | null
+    namn?: StringNullableFilter<"Project"> | string | null
+    telefonnummer?: StringNullableFilter<"Project"> | string | null
     userId?: IntNullableFilter<"Project"> | number | null
     createdAt?: DateTimeFilter<"Project"> | Date | string
   }
@@ -6989,11 +7271,15 @@ export namespace Prisma {
 
   export type SectionCreateWithoutProjectInput = {
     name: string
+    type: string
+    signal?: string | null
   }
 
   export type SectionUncheckedCreateWithoutProjectInput = {
     id?: number
     name: string
+    type: string
+    signal?: string | null
   }
 
   export type SectionCreateOrConnectWithoutProjectInput = {
@@ -7077,6 +7363,8 @@ export namespace Prisma {
     NOT?: SectionScalarWhereInput | SectionScalarWhereInput[]
     id?: IntFilter<"Section"> | number
     name?: StringFilter<"Section"> | string
+    type?: StringFilter<"Section"> | string
+    signal?: StringNullableFilter<"Section"> | string | null
     projectId?: IntFilter<"Section"> | number
   }
 
@@ -7108,6 +7396,13 @@ export namespace Prisma {
   export type ProjectCreateWithoutSectionsInput = {
     name: string
     description?: string | null
+    startDate?: string | null
+    startTime?: string | null
+    endDate?: string | null
+    endTime?: string | null
+    plats?: string | null
+    namn?: string | null
+    telefonnummer?: string | null
     createdAt?: Date | string
     user?: UserCreateNestedOneWithoutProjectsInput
     beteckningar?: BeteckningCreateNestedManyWithoutProjectInput
@@ -7117,6 +7412,13 @@ export namespace Prisma {
     id?: number
     name: string
     description?: string | null
+    startDate?: string | null
+    startTime?: string | null
+    endDate?: string | null
+    endTime?: string | null
+    plats?: string | null
+    namn?: string | null
+    telefonnummer?: string | null
     userId?: number | null
     createdAt?: Date | string
     beteckningar?: BeteckningUncheckedCreateNestedManyWithoutProjectInput
@@ -7141,6 +7443,13 @@ export namespace Prisma {
   export type ProjectUpdateWithoutSectionsInput = {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableStringFieldUpdateOperationsInput | string | null
+    startTime?: NullableStringFieldUpdateOperationsInput | string | null
+    endDate?: NullableStringFieldUpdateOperationsInput | string | null
+    endTime?: NullableStringFieldUpdateOperationsInput | string | null
+    plats?: NullableStringFieldUpdateOperationsInput | string | null
+    namn?: NullableStringFieldUpdateOperationsInput | string | null
+    telefonnummer?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneWithoutProjectsNestedInput
     beteckningar?: BeteckningUpdateManyWithoutProjectNestedInput
@@ -7150,6 +7459,13 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableStringFieldUpdateOperationsInput | string | null
+    startTime?: NullableStringFieldUpdateOperationsInput | string | null
+    endDate?: NullableStringFieldUpdateOperationsInput | string | null
+    endTime?: NullableStringFieldUpdateOperationsInput | string | null
+    plats?: NullableStringFieldUpdateOperationsInput | string | null
+    namn?: NullableStringFieldUpdateOperationsInput | string | null
+    telefonnummer?: NullableStringFieldUpdateOperationsInput | string | null
     userId?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     beteckningar?: BeteckningUncheckedUpdateManyWithoutProjectNestedInput
@@ -7158,6 +7474,13 @@ export namespace Prisma {
   export type ProjectCreateWithoutBeteckningarInput = {
     name: string
     description?: string | null
+    startDate?: string | null
+    startTime?: string | null
+    endDate?: string | null
+    endTime?: string | null
+    plats?: string | null
+    namn?: string | null
+    telefonnummer?: string | null
     createdAt?: Date | string
     user?: UserCreateNestedOneWithoutProjectsInput
     sections?: SectionCreateNestedManyWithoutProjectInput
@@ -7167,6 +7490,13 @@ export namespace Prisma {
     id?: number
     name: string
     description?: string | null
+    startDate?: string | null
+    startTime?: string | null
+    endDate?: string | null
+    endTime?: string | null
+    plats?: string | null
+    namn?: string | null
+    telefonnummer?: string | null
     userId?: number | null
     createdAt?: Date | string
     sections?: SectionUncheckedCreateNestedManyWithoutProjectInput
@@ -7191,6 +7521,13 @@ export namespace Prisma {
   export type ProjectUpdateWithoutBeteckningarInput = {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableStringFieldUpdateOperationsInput | string | null
+    startTime?: NullableStringFieldUpdateOperationsInput | string | null
+    endDate?: NullableStringFieldUpdateOperationsInput | string | null
+    endTime?: NullableStringFieldUpdateOperationsInput | string | null
+    plats?: NullableStringFieldUpdateOperationsInput | string | null
+    namn?: NullableStringFieldUpdateOperationsInput | string | null
+    telefonnummer?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneWithoutProjectsNestedInput
     sections?: SectionUpdateManyWithoutProjectNestedInput
@@ -7200,6 +7537,13 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableStringFieldUpdateOperationsInput | string | null
+    startTime?: NullableStringFieldUpdateOperationsInput | string | null
+    endDate?: NullableStringFieldUpdateOperationsInput | string | null
+    endTime?: NullableStringFieldUpdateOperationsInput | string | null
+    plats?: NullableStringFieldUpdateOperationsInput | string | null
+    namn?: NullableStringFieldUpdateOperationsInput | string | null
+    telefonnummer?: NullableStringFieldUpdateOperationsInput | string | null
     userId?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     sections?: SectionUncheckedUpdateManyWithoutProjectNestedInput
@@ -7209,12 +7553,26 @@ export namespace Prisma {
     id?: number
     name: string
     description?: string | null
+    startDate?: string | null
+    startTime?: string | null
+    endDate?: string | null
+    endTime?: string | null
+    plats?: string | null
+    namn?: string | null
+    telefonnummer?: string | null
     createdAt?: Date | string
   }
 
   export type ProjectUpdateWithoutUserInput = {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableStringFieldUpdateOperationsInput | string | null
+    startTime?: NullableStringFieldUpdateOperationsInput | string | null
+    endDate?: NullableStringFieldUpdateOperationsInput | string | null
+    endTime?: NullableStringFieldUpdateOperationsInput | string | null
+    plats?: NullableStringFieldUpdateOperationsInput | string | null
+    namn?: NullableStringFieldUpdateOperationsInput | string | null
+    telefonnummer?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     sections?: SectionUpdateManyWithoutProjectNestedInput
     beteckningar?: BeteckningUpdateManyWithoutProjectNestedInput
@@ -7224,6 +7582,13 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableStringFieldUpdateOperationsInput | string | null
+    startTime?: NullableStringFieldUpdateOperationsInput | string | null
+    endDate?: NullableStringFieldUpdateOperationsInput | string | null
+    endTime?: NullableStringFieldUpdateOperationsInput | string | null
+    plats?: NullableStringFieldUpdateOperationsInput | string | null
+    namn?: NullableStringFieldUpdateOperationsInput | string | null
+    telefonnummer?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     sections?: SectionUncheckedUpdateManyWithoutProjectNestedInput
     beteckningar?: BeteckningUncheckedUpdateManyWithoutProjectNestedInput
@@ -7233,12 +7598,21 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableStringFieldUpdateOperationsInput | string | null
+    startTime?: NullableStringFieldUpdateOperationsInput | string | null
+    endDate?: NullableStringFieldUpdateOperationsInput | string | null
+    endTime?: NullableStringFieldUpdateOperationsInput | string | null
+    plats?: NullableStringFieldUpdateOperationsInput | string | null
+    namn?: NullableStringFieldUpdateOperationsInput | string | null
+    telefonnummer?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type SectionCreateManyProjectInput = {
     id?: number
     name: string
+    type: string
+    signal?: string | null
   }
 
   export type BeteckningCreateManyProjectInput = {
@@ -7248,16 +7622,22 @@ export namespace Prisma {
 
   export type SectionUpdateWithoutProjectInput = {
     name?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    signal?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type SectionUncheckedUpdateWithoutProjectInput = {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    signal?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type SectionUncheckedUpdateManyWithoutProjectInput = {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    signal?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type BeteckningUpdateWithoutProjectInput = {
