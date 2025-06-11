@@ -42,21 +42,20 @@ const Plan = () => {
         },
       ]);
 
-      const interval = setInterval(() => {
-        const start = new Date(`${current.startDate}T${current.startTime}`);
-        const target = new Date(start.getTime() - 60 * 60 * 1000);
-        const now = new Date();
-        const diff = target - now;
+const interval = setInterval(() => {
+  const target = new Date(`${current.endDate}T${current.endTime}`);
+  const now = new Date();
+  const diff = target - now;
 
-        if (diff <= 0) {
-          setCountdown('Förplanering stängd!');
-        } else {
-          const h = Math.floor(diff / (1000 * 60 * 60));
-          const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-          const s = Math.floor((diff % (1000 * 60)) / 1000);
-          setCountdown(`${h}h ${m}m ${s}s`);
-        }
-      }, 1000);
+  if (diff <= 0) {
+    setCountdown('Dispositionsarbetsplan stängd!');
+  } else {
+    const h = Math.floor(diff / (1000 * 60 * 60));
+    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const s = Math.floor((diff % (1000 * 60)) / 1000);
+    setCountdown(`${h}h ${m}m ${s}s`);
+  }
+}, 1000);
 
       return () => clearInterval(interval);
     } catch (error) {
@@ -126,7 +125,7 @@ const handleKeyDown = (e) => {
             <p><strong>Beteckningar:</strong> {project.beteckningar.map(b => b.value).join(', ')}</p>
           </div>
           <div className="text-right">
-            <h2 className="text-lg font-semibold mb-2">Förplanering stänger:</h2>
+            <h2 className="text-lg font-semibold mb-2">Dispositionsarbetsplan avslutas:</h2>
             <div className="text-xl font-bold text-blue-600">{countdown}</div>
           </div>
         </div>
@@ -186,7 +185,8 @@ const handleKeyDown = (e) => {
   key={row.id}
   onClick={(e) => {
     // Förhindra att klick på input eller checkbox stänger redigering
-    if (e.target.type === 'checkbox') return;
+    if (['INPUT', 'TEXTAREA', 'SELECT', 'LABEL'].includes(e.target.tagName)) return;
+
     setEditingRow(editingRow === rowIndex ? null : rowIndex);
   }}
   className="cursor-pointer hover:bg-blue-50"
