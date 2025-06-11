@@ -138,7 +138,7 @@ const Plan = () => {
           await axios.delete(`https://railworker-production.up.railway.app/api/project/${id}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
-          window.location.href = '/'; // Gå tillbaka till dashboard
+          window.location.href = '/dashboard';
         } catch (err) {
           console.error('Kunde inte ta bort projekt:', err);
         }

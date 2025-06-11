@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 
+
+
 const SkapaProjekt = () => {
   const navigate = useNavigate();
 
@@ -228,7 +230,6 @@ const SkapaProjekt = () => {
     try {
 const newProject = {
   name: projektNamn,
-  description: 'placeholder', // eller skapa ett nytt fält om du vill ha input
   startDate: startDate || null,
   startTime: startTime || null,
   endDate: endDate || null,
@@ -239,8 +240,6 @@ const newProject = {
   beteckningar,
   sections,
 };
-
-console.log('🚀 Payload som skickas:', newProject);
 
       const response = await fetch('https://railworker-production.up.railway.app/api/projects', {
         method: 'POST',
