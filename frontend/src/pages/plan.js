@@ -49,12 +49,12 @@ const Plan = () => {
         const diff = target - now;
 
         if (diff <= 0) {
-          setCountdown('Registrering stängd!');
+          setCountdown('Förplanering stängd!');
         } else {
           const h = Math.floor(diff / (1000 * 60 * 60));
           const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
           const s = Math.floor((diff % (1000 * 60)) / 1000);
-          setCountdown(`${h}h ${m}m ${s}s kvar till registrering stänger`);
+          setCountdown(`${h}h ${m}m ${s}s kvar till förplanering stänger`);
         }
       }, 1000);
 
@@ -172,14 +172,19 @@ const Plan = () => {
               </thead>
               <tbody>
                 {rows.map((row, rowIndex) => (
-                 <tr
+<tr
   key={row.id}
-  onClick={() => setEditingRow(editingRow === rowIndex ? null : rowIndex)}
+  onClick={(e) => {
+    // Förhindra att klick på input eller checkbox stänger redigering
+    if (['INPUT', 'TEXTAREA', 'SELECT', 'LABEL'].includes(e.target.tagName)) return;
+
+    setEditingRow(editingRow === rowIndex ? null : rowIndex);
+  }}
   className="cursor-pointer hover:bg-blue-50"
 >
                     <td className="border px-2 py-1 text-center">{row.id}</td>
                     <td className="border px-2 py-1">
-                      <input disabled={editingRow !== rowIndex} value={row.namn} onChange={(e) => handleChange(rowIndex, 'namn', e.target.value)} className={`w-[200px] px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`} />
+                      <input disabled={editingRow !== rowIndex} value={row.namn} onChange={(e) => handleChange(rowIndex, 'namn', e.target.value)}  className={`w-[200px] px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`} />
                     </td>
                     <td className="border px-2 py-1">
                       <input disabled={editingRow !== rowIndex} value={row.telefon} onChange={(e) => handleChange(rowIndex, 'telefon', e.target.value)} className={`w-[140px] px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`} />
