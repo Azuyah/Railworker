@@ -132,6 +132,32 @@ app.post('/api/projects', async (req, res) => {
   }
 });
 
+app.get('/api/projects', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Ingen token angiven' });
+  }
+
+  try {
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const userId = decoded.userId;
+
+    const projects = await prisma.project.findMany({
+      where: { userId },
+      include: {
+        sections: true,
+        beteckningar: true,
+      },
+    });
+
+    res.json(projects);
+  } catch (err) {
+    console.error('❌ Fel vid hämtning av projekt:', err);
+    res.status(500).json({ error: 'Kunde inte hämta projekt' });
+  }
+});
+
 // Hämta ett specifikt projekt med ID (alla roller kan se)
 app.get('/api/project/:id', async (req, res) => {
   const authHeader = req.headers.authorization;
