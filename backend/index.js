@@ -84,8 +84,8 @@ const project = await prisma.project.create({
   }
 });
 
-// Hämta alla projekt
-app.get('/api/projects', async (req, res) => {
+// Hämta ett specifikt projekt med ID (HTSM och TSM ser alla)
+app.get('/api/projects/:id', async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Ingen token angiven' });
@@ -95,17 +95,21 @@ app.get('/api/projects', async (req, res) => {
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    const projects =
-      decoded.role === 'HTSM' || decoded.role === 'TSM'
-        ? await prisma.project.findMany({ orderBy: { createdAt: 'desc' } })
-        : await prisma.project.findMany({
-            where: { userId: decoded.userId },
-            orderBy: { createdAt: 'desc' },
-          });
+    const project = await prisma.project.findUnique({
+      where: { id: parseInt(req.params.id, 10) },
+      include: {
+        sections: true,
+        beteckningar: true,
+      },
+    });
 
-    res.json(projects);
+    if (!project) {
+      return res.status(404).json({ error: 'Projekt hittades inte' });
+    }
+
+    res.json(project);
   } catch (error) {
-    console.error('Error fetching projects:', error);
+    console.error('❌ Fel vid hämtning av projekt:', error);
     res.status(500).json({ error: 'Kunde inte hämta projekt' });
   }
 });
