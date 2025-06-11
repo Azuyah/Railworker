@@ -58,26 +58,6 @@ const Plan = () => {
         }
       }, 1000);
 
-      <button
-  onClick={async () => {
-    if (!window.confirm('Är du säker på att du vill ta bort detta projekt?')) return;
-
-    try {
-      const tokenData = localStorage.getItem('user');
-      const token = tokenData ? JSON.parse(tokenData).token : null;
-      await axios.delete(`https://railworker-production.up.railway.app/api/project/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      window.location.href = '/'; // Gå tillbaka till dashboard
-    } catch (err) {
-      console.error('Kunde inte ta bort projekt:', err);
-    }
-  }}
-  className="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
->
-  Ta bort projekt
-</button>
-
       return () => clearInterval(interval);
     } catch (error) {
       console.error('Kunde inte hämta projekt:', error);
@@ -143,6 +123,26 @@ const Plan = () => {
             <p><strong>FJTKL:</strong> {project.namn} ({project.telefonnummer})</p>
             <p><strong>Beteckningar:</strong> {project.beteckningar.map(b => b.value).join(', ')}</p>
           </div>
+
+          <button
+      onClick={async () => {
+        if (!window.confirm('Är du säker på att du vill ta bort detta projekt?')) return;
+
+        try {
+          const tokenData = localStorage.getItem('user');
+          const token = tokenData ? JSON.parse(tokenData).token : null;
+          await axios.delete(`https://railworker-production.up.railway.app/api/project/${id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          window.location.href = '/'; // Gå tillbaka till dashboard
+        } catch (err) {
+          console.error('Kunde inte ta bort projekt:', err);
+        }
+      }}
+      className="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+    >
+      🗑 Ta bort projekt
+    </button>
           <div className="text-right">
             <h2 className="text-lg font-semibold mb-2">⏳ Nedräkning</h2>
             <div className="text-2xl font-bold text-blue-600">{countdown}</div>
@@ -173,7 +173,11 @@ const Plan = () => {
               </thead>
               <tbody>
                 {rows.map((row, rowIndex) => (
-                 <tr key={row.id} onClick={() => setEditingRow(rowIndex)} className="cursor-pointer hover:bg-blue-50">
+                 <tr
+  key={row.id}
+  onClick={() => setEditingRow(editingRow === rowIndex ? null : rowIndex)}
+  className="cursor-pointer hover:bg-blue-50"
+>
                     <td className="border px-2 py-1 text-center">{row.id}</td>
                     <td className="border px-2 py-1">
                       <input disabled={editingRow !== rowIndex} value={row.namn} onChange={(e) => handleChange(rowIndex, 'namn', e.target.value)} className={`w-[200px] px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`} />
