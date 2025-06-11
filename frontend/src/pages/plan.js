@@ -54,7 +54,7 @@ const Plan = () => {
           const h = Math.floor(diff / (1000 * 60 * 60));
           const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
           const s = Math.floor((diff % (1000 * 60)) / 1000);
-          setCountdown(`${h}h ${m}m ${s}s kvar till förplanering stänger`);
+          setCountdown(`${h}h ${m}m ${s}s tills förplanering stänger`);
         }
       }, 1000);
 
@@ -124,8 +124,7 @@ const Plan = () => {
             <p><strong>Beteckningar:</strong> {project.beteckningar.map(b => b.value).join(', ')}</p>
           </div>
           <div className="text-right">
-            <h2 className="text-lg font-semibold mb-2">Nedräkning</h2>
-            <div className="text-2xl font-bold text-blue-600">{countdown}</div>
+            <div className="text-base font-bold text-blue-600">{countdown}</div>
           </div>
         </div>
                   <button
@@ -147,6 +146,13 @@ const Plan = () => {
     >
       Ta bort projekt
     </button>
+
+      <button
+    onClick={() => alert('Redigeringsfunktion kommer snart!')} // Eller öppna en modal osv.
+    className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
+  >
+    Redigera projekt
+  </button>
 
 <div className="mt-6 w-full flex gap-6 max-w-[1900px] mx-auto">
 <div className="flex-1">
