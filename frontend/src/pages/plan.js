@@ -19,7 +19,7 @@ const Plan = () => {
       const tokenData = localStorage.getItem('user');
       const token = tokenData ? JSON.parse(tokenData).token : null;
 
-      const response = await axios.get(`https://railworker-production.up.railway.app/api/projects/${id}`, {
+      const response = await axios.get(`https://railworker-production.up.railway.app/api/project/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
