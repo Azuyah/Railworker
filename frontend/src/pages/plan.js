@@ -49,7 +49,7 @@ const Plan = () => {
         const diff = target - now;
 
         if (diff <= 0) {
-          setCountdown('Förplanering stängd!');
+          setCountdown('Dispositionsarbetsplan stängd!');
         } else {
           const h = Math.floor(diff / (1000 * 60 * 60));
           const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -97,6 +97,12 @@ const Plan = () => {
     setEditingRow(editingRow === rowIndex ? null : rowIndex);
   };
 
+const handleKeyDown = (e, rowIndex) => {
+  if (e.key === 'Enter') {
+    setEditingRow(null); // stänger redigering
+  }
+};
+
   const getSharedContacts = () => {
     const firstRow = rows[0];
     return rows.filter((row, i) => {
@@ -124,7 +130,7 @@ const Plan = () => {
             <p><strong>Beteckningar:</strong> {project.beteckningar.map(b => b.value).join(', ')}</p>
           </div>
           <div className="text-right">
-            <h2 className="text-lg font-semibold mb-2">Förplanering stänger:</h2>
+            <h2 className="text-lg font-semibold mb-2">Dispositionsarbetsplan avslutas:</h2>
             <div className="text-xl font-bold text-blue-600">{countdown}</div>
           </div>
         </div>
@@ -188,6 +194,8 @@ const Plan = () => {
 
     setEditingRow(editingRow === rowIndex ? null : rowIndex);
   }}
+
+  
   className="cursor-pointer hover:bg-blue-50"
 >
                     <td className="border px-2 py-1 text-center">{row.id}</td>
@@ -200,6 +208,7 @@ const Plan = () => {
     className={`w-[200px] px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`}
   />
 </td>
+
 
 <td className="border px-2 py-1">
   <input
