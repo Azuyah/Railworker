@@ -54,7 +54,7 @@ const Plan = () => {
           const h = Math.floor(diff / (1000 * 60 * 60));
           const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
           const s = Math.floor((diff % (1000 * 60)) / 1000);
-          setCountdown(`${h}h ${m}m ${s}s tills förplanering stänger`);
+          setCountdown(`${h}h ${m}m ${s}s`);
         }
       }, 1000);
 
@@ -151,7 +151,7 @@ const Plan = () => {
 
   <button
     onClick={() => alert('Redigeringsfunktion kommer snart!')}
-    className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
+    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
   >
     Redigera projekt
   </button>
