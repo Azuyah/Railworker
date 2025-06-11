@@ -110,7 +110,6 @@ app.get('/api/projects', async (req, res) => {
   }
 });
 
-// Hämta ett specifikt projekt med ID (alla roller kan se)
 app.get('/api/project/:id', async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
@@ -119,10 +118,13 @@ app.get('/api/project/:id', async (req, res) => {
 
   try {
     const token = authHeader.split(' ')[1];
-    jwt.verify(token, JWT_SECRET); // Vi verifierar endast token, men struntar i rollen
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    const projectId = parseInt(req.params.id, 10);
+    console.log('🔍 Försöker hämta projekt med ID:', projectId);
 
     const project = await prisma.project.findUnique({
-      where: { id: parseInt(req.params.id, 10) },
+      where: { id: projectId },
       include: {
         sections: true,
         beteckningar: true,
@@ -130,6 +132,7 @@ app.get('/api/project/:id', async (req, res) => {
     });
 
     if (!project) {
+      console.log('❌ Projekt hittades inte i databasen');
       return res.status(404).json({ error: 'Projekt hittades inte' });
     }
 
