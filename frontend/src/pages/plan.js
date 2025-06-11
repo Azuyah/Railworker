@@ -123,8 +123,12 @@ const Plan = () => {
             <p><strong>FJTKL:</strong> {project.namn} ({project.telefonnummer})</p>
             <p><strong>Beteckningar:</strong> {project.beteckningar.map(b => b.value).join(', ')}</p>
           </div>
-
-          <button
+          <div className="text-right">
+            <h2 className="text-lg font-semibold mb-2">Nedräkning</h2>
+            <div className="text-2xl font-bold text-blue-600">{countdown}</div>
+          </div>
+        </div>
+                  <button
       onClick={async () => {
         if (!window.confirm('Är du säker på att du vill ta bort detta projekt?')) return;
 
@@ -141,13 +145,8 @@ const Plan = () => {
       }}
       className="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
     >
-      🗑 Ta bort projekt
+      Ta bort projekt
     </button>
-          <div className="text-right">
-            <h2 className="text-lg font-semibold mb-2">⏳ Nedräkning</h2>
-            <div className="text-2xl font-bold text-blue-600">{countdown}</div>
-          </div>
-        </div>
 
 <div className="mt-6 w-full flex gap-6 max-w-[1900px] mx-auto">
 <div className="flex-1">

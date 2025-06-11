@@ -67,7 +67,7 @@ const Dashboard = () => {
                   <div>
                     <h3 className="font-semibold">{project.name}</h3>
                     {project.description && (
-                      <p className="text-sm text-gray-600">{project.description}</p>
+                      <p className="text-sm text-gray-600">{project.plats}</p>
                     )}
                   </div>
 <button
