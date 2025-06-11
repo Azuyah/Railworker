@@ -186,8 +186,7 @@ const handleKeyDown = (e) => {
   key={row.id}
   onClick={(e) => {
     // Förhindra att klick på input eller checkbox stänger redigering
-    if (['INPUT', 'TEXTAREA', 'SELECT', 'LABEL'].includes(e.target.tagName)) return;
-
+    if (e.target.type === 'checkbox') return;
     setEditingRow(editingRow === rowIndex ? null : rowIndex);
   }}
   className="cursor-pointer hover:bg-blue-50"
