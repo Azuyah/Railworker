@@ -110,6 +110,36 @@ app.get('/api/projects', async (req, res) => {
   }
 });
 
+// Hämta ett specifikt projekt med ID (utan att påverka /api/projects)
+app.get('/api/project/:id', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Ingen token angiven' });
+  }
+
+  try {
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    const project = await prisma.project.findUnique({
+      where: { id: parseInt(req.params.id, 10) },
+      include: {
+        sections: true,
+        beteckningar: true,
+      },
+    });
+
+    if (!project) {
+      return res.status(404).json({ error: 'Projekt hittades inte' });
+    }
+
+    res.json(project);
+  } catch (error) {
+    console.error('❌ Fel vid hämtning av projekt:', error);
+    res.status(500).json({ error: 'Kunde inte hämta projekt' });
+  }
+});
+
 // Start server
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`✅ Backend running on port ${PORT}`));
