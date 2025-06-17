@@ -171,6 +171,11 @@ const Plan = () => {
   const filteredRows = filterValue === 'all' ? rows : rows.filter(row => row.namn === filterValue);
     if (!project) return <Box p={6}>Inget projekt hittades.</Box>;
 
+    const handleModalSave = () => {
+  setRows([...rows]); // Trigger en re-render med uppdaterade rader
+  onClose(); // Stänger modalen
+};
+
   return (
     <Box bg="gray.100" minH="100vh" py={10} px={[4, 8]}>
       <Header />
@@ -235,114 +240,176 @@ const Plan = () => {
         </Flex>
 <Flex gap={6} align="start" overflowX="auto">
   <Box overflowX="auto" w="100%">
-    <Box transform="scale(0.65)" transformOrigin="top left" minW="2500px">
+    <Box transform="scale(0.65)" transformOrigin="top left" minW="2400px">
       <TableContainer bg="white" p={4} borderRadius="lg" boxShadow="md">
-              <Table variant="simple" size="sm">
-                <Thead bg="gray.200">
-                  <Tr>
-                    <Th>BTKN</Th>
-                    {visibleColumns.namn && <Th>Namn</Th>}
-                    {visibleColumns.telefon && <Th>Telefon</Th>}
-                    {visibleColumns.anordning && <Th>Anordning</Th>}
-                    {project.sections.map((sec, idx) => (
-                      <Th key={idx} minW="90px" bg={idx % 2 === 0 ? 'yellow.100' : 'transparent'}>
-                        <Flex direction="column" align="center">
-                          <Textarea
-                            value={sec.signal}
-                            onChange={(e) => {
-                              const updatedSections = [...project.sections];
-                              updatedSections[idx].signal = e.target.value;
-                              setProject({ ...project, sections: updatedSections });
-                            }}
-                            resize="none"
-                            rows={2}
-                            textAlign="center"
-                            fontWeight="bold"
-                            fontSize="xs"
-                            borderColor="gray.300"
-                            mb={1}
-                            px={1}
-                            py={1}
-                          />
-                          <Text fontSize="sm">{sec.type} {String.fromCharCode(65 + idx)}</Text>
-                        </Flex>
-                      </Th>
-                    ))}
-                    {visibleColumns.starttid && <Th>Starttid</Th>}
-                    {visibleColumns.begard && <Th>Begärd till</Th>}
-                    {visibleColumns.avslutat && <Th>Avslutat</Th>}
-                    {visibleColumns.anteckning && <Th>Anteckning</Th>}
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {filteredRows.map((row, rowIndex) => (
-                    <Tr
-                      key={row.id}
-                      onClick={(e) => {
-                        if (["INPUT", "TEXTAREA", "SELECT", "LABEL", "BUTTON"].includes(e.target.tagName)) return;
-                        handleRowClick(row, rowIndex);
+        <Table variant="simple" size="sm">
+          <Thead bg="gray.200">
+            <Tr>
+              <Th>BTKN</Th>
+              {visibleColumns.namn && <Th>Namn</Th>}
+              {visibleColumns.telefon && <Th>Telefon</Th>}
+              {visibleColumns.anordning && <Th>Anordning</Th>}
+              {project.sections.map((sec, idx) => (
+                <Th key={idx} minW="40px" maxW="40" bg={idx % 2 === 0 ? 'yellow.100' : 'transparent'}>
+                  <Flex direction="column" align="center">
+                    <Textarea
+                      value={sec.signal}
+                      onChange={(e) => {
+                        const updatedSections = [...project.sections];
+                        updatedSections[idx].signal = e.target.value;
+                        setProject({ ...project, sections: updatedSections });
                       }}
-                      _hover={{ bg: 'blue.50' }}
-                      cursor="pointer"
-                    >
-                      <Td>
-                        <Input
-                          size="sm"
-                          value={row.btkn || ''}
-                          isDisabled
-                          width="80px"
-                        />
-                      </Td>
-                      {visibleColumns.namn && <Td minW="180px"><Input size="sm" value={row.namn} isDisabled /></Td>}
-                      {visibleColumns.telefon && <Td minW="145px"><Input size="sm" value={row.telefon} isDisabled /></Td>}
-                      {visibleColumns.anordning && <Td><Input size="sm" value={row.anordning} isDisabled /></Td>}
-                      {project.sections.map((_, secIdx) => (
-                        <Td key={secIdx} bg={secIdx % 2 === 0 ? 'yellow.50' : 'transparent'}>
-                          <Flex justify="center">
-                            <Checkbox isChecked={row.selections[secIdx]} isDisabled />
-                          </Flex>
-                        </Td>
-                      ))}
-                      {visibleColumns.starttid && <Td><Input size="sm" type="time" value={row.starttid} isDisabled /></Td>}
-                      {visibleColumns.begard && <Td><Input size="sm" type="time" value={row.begard} isDisabled /></Td>}
-                      {visibleColumns.avslutat && <Td><Input size="sm" type="time" value={row.avslutat} isDisabled /></Td>}
-                      {visibleColumns.anteckning && <Td minW="250px"><Input size="sm" value={row.anteckning} isDisabled /></Td>}
-                    </Tr>
-                  ))}
-                </Tbody>
-              </Table>
-              <Button onClick={addRow} colorScheme="blue" mt={4}>+ Lägg till rad</Button>
-            </TableContainer>
-          </Box>
-          </Box>
-        </Flex>
-      </Box>
+                      resize="none"
+                      rows={2}
+                      textAlign="center"
+                      fontWeight="bold"
+                      fontSize="xs"
+                      borderColor="gray.300"
+                      mb={1}
+                      px={1}
+                      py={1}
+                    />
+                    <Text fontSize="sm">{sec.type} {String.fromCharCode(65 + idx)}</Text>
+                  </Flex>
+                </Th>
+              ))}
+              {visibleColumns.starttid && <Th>Starttid</Th>}
+              {visibleColumns.begard && <Th>Begärd till</Th>}
+              {visibleColumns.avslutat && <Th>Avslutat</Th>}
+              {visibleColumns.anteckning && <Th>Anteckning</Th>}
+            </Tr>
+          </Thead>
+<Tbody>
+  {filteredRows.map((row, rowIndex) => (
+    <Tr
+      key={row.id}
+onClick={(e) => {
+  if (e.target.closest('input[type="checkbox"], textarea, select, label, button, input[type="text"]')) return;
+  handleRowClick(row, rowIndex);
+}}
+      _hover={{ bg: 'blue.50' }}
+      cursor="pointer"
+    >
+      <Td width="80px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
+        <Text color="black" fontSize="md" w="80px" isTruncated>
+          {row.btkn}
+        </Text>
+      </Td>
 
-      {/* Modal för redigering */}
-      <Modal isOpen={isOpen} onClose={onClose} size="xl">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Redigera rad</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            {selectedRow && (
-              <Stack spacing={3}>
-                <Input placeholder="BTKN" value={selectedRow.btkn} onChange={(e) => handleModalChange('btkn', e.target.value)} />
-                <Input placeholder="Namn" value={selectedRow.namn} onChange={(e) => handleModalChange('namn', e.target.value)} />
-                <Input placeholder="Telefon" value={selectedRow.telefon} onChange={(e) => handleModalChange('telefon', e.target.value)} />
-                <Input placeholder="Anordning" value={selectedRow.anordning} onChange={(e) => handleModalChange('anordning', e.target.value)} />
-                <Input placeholder="Starttid" type="time" value={selectedRow.starttid} onChange={(e) => handleModalChange('starttid', e.target.value)} />
-                <Input placeholder="Begärd till" type="time" value={selectedRow.begard} onChange={(e) => handleModalChange('begard', e.target.value)} />
-                <Input placeholder="Avslutat" type="time" value={selectedRow.avslutat} onChange={(e) => handleModalChange('avslutat', e.target.value)} />
-                <Textarea placeholder="Anteckning" value={selectedRow.anteckning} onChange={(e) => handleModalChange('anteckning', e.target.value)} />
-              </Stack>
-            )}
-          </ModalBody>
-          <ModalFooter>
-            <Button onClick={onClose}>Stäng</Button>
-          </ModalFooter>
+      {visibleColumns.namn && (
+        <Td maxW="150px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
+          <Text color="black" fontSize="md" w="170px" isTruncated>
+            {row.namn}
+          </Text>
+        </Td>
+      )}
+
+      {visibleColumns.telefon && (
+        <Td maxW="115px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
+          <Text color="black" fontSize="md" w="160px" isTruncated>
+            {row.telefon}
+          </Text>
+        </Td>
+      )}
+
+      {visibleColumns.anordning && (
+        <Td maxW="100px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
+          <Text color="black" fontSize="md" w="100px" isTruncated>
+            {row.anordning}
+          </Text>
+        </Td>
+      )}
+{project.sections.map((_, secIdx) => (
+  <Td
+    key={secIdx}
+    width="100px"
+    bg={secIdx % 2 === 0 ? 'yellow.50' : 'transparent'}
+    borderRight="1px solid rgba(0, 0, 0, 0.1)"
+    onClick={(e) => e.stopPropagation()} // Hindrar att modalen öppnas
+  >
+    <Flex justify="center">
+      <Checkbox
+        isChecked={row.selections[secIdx]}
+onChange={(e) => {
+  const updatedRows = [...rows];
+  if (!updatedRows[rowIndex]) return;
+
+  const updatedSelections = [...(updatedRows[rowIndex].selections || [])];
+  updatedSelections[secIdx] = e.target.checked;
+  updatedRows[rowIndex].selections = updatedSelections;
+  setRows(updatedRows);
+}}
+      />
+    </Flex>
+  </Td>
+))}
+      {visibleColumns.starttid && (
+        <Td width="90px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
+          <Text color="black" fontSize="md" w="90px" isTruncated>
+            {row.starttid}
+          </Text>
+        </Td>
+      )}
+
+      {visibleColumns.begard && (
+        <Td width="90px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
+          <Text color="black" fontSize="md" w="90px" isTruncated>
+            {row.begard}
+          </Text>
+        </Td>
+      )}
+
+      {visibleColumns.avslutat && (
+        <Td width="90px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
+          <Text color="black" fontSize="md" w="90px" isTruncated>
+            {row.avslutat}
+          </Text>
+        </Td>
+      )}
+
+      {visibleColumns.anteckning && (
+        <Td minW="250px">
+          <Text color="black" fontSize="md" w="250px" isTruncated>
+            {row.anteckning}
+          </Text>
+        </Td>
+      )}
+    </Tr>
+  ))}
+</Tbody>
+        </Table>
+        <Button onClick={addRow} colorScheme="blue" mt={4}>+ Lägg till rad</Button>
+      </TableContainer>
+    </Box>
+  </Box>
+</Flex>
+
+<Modal isOpen={isOpen} onClose={onClose} size="xl">
+  <ModalOverlay />
+  <ModalContent>
+    <ModalHeader>Redigera rad</ModalHeader>
+    <ModalCloseButton />
+    <ModalBody>
+      {selectedRow && (
+        <Stack spacing={3}>
+          <Input placeholder="BTKN" value={selectedRow.btkn} onChange={(e) => handleModalChange('btkn', e.target.value)} />
+          <Input placeholder="Namn" value={selectedRow.namn} onChange={(e) => handleModalChange('namn', e.target.value)} />
+          <Input placeholder="Telefon" value={selectedRow.telefon} onChange={(e) => handleModalChange('telefon', e.target.value)} />
+          <Input placeholder="Anordning" value={selectedRow.anordning} onChange={(e) => handleModalChange('anordning', e.target.value)} />
+          <Input placeholder="Starttid" type="time" value={selectedRow.starttid} onChange={(e) => handleModalChange('starttid', e.target.value)} />
+          <Input placeholder="Begärd till" type="time" value={selectedRow.begard} onChange={(e) => handleModalChange('begard', e.target.value)} />
+          <Input placeholder="Avslutat" type="time" value={selectedRow.avslutat} onChange={(e) => handleModalChange('avslutat', e.target.value)} />
+          <Textarea placeholder="Anteckning" value={selectedRow.anteckning} onChange={(e) => handleModalChange('anteckning', e.target.value)} />
+        </Stack>
+      )}
+</ModalBody>
+<ModalFooter>
+  <Button colorScheme="blue" mr={3} onClick={handleModalSave}>Spara</Button>
+  <Button onClick={onClose}>Stäng</Button>
+</ModalFooter>
         </ModalContent>
       </Modal>
+    </Box>
     </Box>
   );
 };
