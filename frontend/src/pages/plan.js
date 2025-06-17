@@ -315,19 +315,6 @@ const Plan = () => {
             </TableContainer>
           </Box>
           </Box>
-
-          <Box w="320px" bg="white" p={6} borderRadius="lg" boxShadow="md">
-            <Heading size="md" mb={4}>Mina samråd</Heading>
-            {samrad.length === 0 ? (
-              <Text fontStyle="italic" color="gray.500">(tom)</Text>
-            ) : (
-              <Stack spacing={2}>
-                {samrad.map((r) => (
-                  <Text key={r.id} fontSize="sm">{r.namn} ({r.telefon})</Text>
-                ))}
-              </Stack>
-            )}
-          </Box>
         </Flex>
       </Box>
 
