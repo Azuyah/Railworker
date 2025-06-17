@@ -1,14 +1,54 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import Header from '../components/Header';
 import axios from 'axios';
+import {
+  Box,
+  Button,
+  Checkbox,
+  Flex,
+  Heading,
+  Input,
+  Stack,
+  Table,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+  Text,
+  useToast,
+  TableContainer,
+  Select,
+  VStack,
+  HStack,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  IconButton,
+  CheckboxGroup,
+  Textarea,
+} from '@chakra-ui/react';
+import { ChevronDownIcon } from '@chakra-ui/icons';
+import Header from '../components/Header';
 
 const Plan = () => {
-  const { id } = useParams(); // projekt-ID från URL
+  const { id } = useParams();
   const [project, setProject] = useState(null);
   const [rows, setRows] = useState([]);
   const [editingRow, setEditingRow] = useState(null);
   const [countdown, setCountdown] = useState('');
+  const [filterValue, setFilterValue] = useState('all');
+  const [visibleColumns, setVisibleColumns] = useState({
+    namn: true,
+    telefon: true,
+    anordning: true,
+    starttid: true,
+    begard: true,
+    avslutat: true,
+    anteckning: true,
+  });
+  const toast = useToast();
 
   useEffect(() => {
     fetchProject();
@@ -27,10 +67,10 @@ const Plan = () => {
 
       const current = response.data;
       setProject(current);
-
       setRows([
         {
           id: 1,
+          btkn: '',
           namn: '',
           telefon: '',
           anordning: '',
@@ -42,20 +82,20 @@ const Plan = () => {
         },
       ]);
 
-const interval = setInterval(() => {
-  const target = new Date(`${current.endDate}T${current.endTime}`);
-  const now = new Date();
-  const diff = target - now;
+      const interval = setInterval(() => {
+        const target = new Date(`${current.endDate}T${current.endTime}`);
+        const now = new Date();
+        const diff = target - now;
 
-  if (diff <= 0) {
-    setCountdown('Dispositionsarbetsplan stängd!');
-  } else {
-    const h = Math.floor(diff / (1000 * 60 * 60));
-    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const s = Math.floor((diff % (1000 * 60)) / 1000);
-    setCountdown(`${h}h ${m}m ${s}s`);
-  }
-}, 1000);
+        if (diff <= 0) {
+          setCountdown('Dispositionsarbetsplan stängd!');
+        } else {
+          const h = Math.floor(diff / (1000 * 60 * 60));
+          const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+          const s = Math.floor((diff % (1000 * 60)) / 1000);
+          setCountdown(`${h}h ${m}m ${s}s`);
+        }
+      }, 1000);
 
       return () => clearInterval(interval);
     } catch (error) {
@@ -80,6 +120,7 @@ const interval = setInterval(() => {
       ...rows,
       {
         id: rows.length + 1,
+        btkn: '',
         namn: '',
         telefon: '',
         anordning: '',
@@ -92,11 +133,15 @@ const interval = setInterval(() => {
     ]);
   };
 
-const handleKeyDown = (e) => {
-  if (e.key === 'Enter') {
-    setEditingRow(null); // Sparar (dvs avslutar redigering)
-  }
-};
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      setEditingRow(null);
+    }
+  };
+
+  const toggleColumn = (col) => {
+    setVisibleColumns((prev) => ({ ...prev, [col]: !prev[col] }));
+  };
 
   const getSharedContacts = () => {
     const firstRow = rows[0];
@@ -107,139 +152,166 @@ const handleKeyDown = (e) => {
   };
 
   const samrad = getSharedContacts();
+  const filteredRows = filterValue === 'all' ? rows : rows.filter(row => row.namn === filterValue);
 
-  if (!project) return <div className="p-6">Inget projekt hittades.</div>;
+  if (!project) return <Box p={6}>Inget projekt hittades.</Box>;
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
- <Header />
+    <Box bg="gray.100" minH="100vh" py={10} px={[4, 8]}>
+      <Header />
+      <Box maxW="1600px" mx="auto" mt={24}>
+        <Flex bg="white" p={6} borderRadius="lg" boxShadow="xl" justify="space-between" mb={6}>
+          <Box>
+            <Heading size="lg" mb={2}>Projektnamn: {project.name}</Heading>
+            <Text><strong>Plats:</strong> {project.plats}</Text>
+            <Text><strong>Startdatum:</strong> {project.startDate} {project.startTime}</Text>
+            <Text><strong>Slutdatum:</strong> {project.endDate} {project.endTime}</Text>
+            <Text><strong>FJTKL:</strong> {project.namn} ({project.telefonnummer})</Text>
+            <Text><strong>Beteckningar:</strong> {project.beteckningar.map(b => b.value).join(', ')}</Text>
+          </Box>
+          <Box textAlign="right">
+            <Text fontWeight="bold">Dispositionsarbetsplan avslutas:</Text>
+            <Text fontSize="2xl" fontWeight="bold" color="blue.500">{countdown}</Text>
+          </Box>
+        </Flex>
 
-<div className="p-6 max-w-[1600px] w-full mx-auto mt-24">
-        <div className="bg-white rounded shadow-md p-6 flex justify-between items-start">
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold mb-2">Projektnamn: {project.name}</h2>
-            <p><strong>Plats:</strong> {project.plats}</p>
-            <p><strong>Startdatum:</strong> {project.startDate} <b>{project.startTime}</b></p>
-            <p><strong>Slutdatum:</strong> {project.endDate} <b>{project.endTime}</b></p>
-            <p><strong>FJTKL:</strong> {project.namn} ({project.telefonnummer})</p>
-            <p><strong>Beteckningar:</strong> {project.beteckningar.map(b => b.value).join(', ')}</p>
-          </div>
-          <div className="text-right">
-            <h2 className="text-lg font-semibold mb-2">Dispositionsarbetsplan avslutas:</h2>
-            <div className="text-xl font-bold text-blue-600">{countdown}</div>
-          </div>
-        </div>
- <div className="mt-4 flex gap-4">
-  <button
-    onClick={async () => {
-      if (!window.confirm('Är du säker på att du vill ta bort detta projekt?')) return;
+        <Flex gap={4} mb={4} align="center">
+          <Button colorScheme="red" onClick={async () => {
+            if (!window.confirm('Är du säker på att du vill ta bort detta projekt?')) return;
+            try {
+              const tokenData = localStorage.getItem('user');
+              const token = tokenData ? JSON.parse(tokenData).token : null;
+              await axios.delete(`https://railworker-production.up.railway.app/api/project/${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              window.location.href = '/dashboard';
+            } catch (err) {
+              console.error('Kunde inte ta bort projekt:', err);
+            }
+          }}>Ta bort projekt</Button>
 
-      try {
-        const tokenData = localStorage.getItem('user');
-        const token = tokenData ? JSON.parse(tokenData).token : null;
-        await axios.delete(`https://railworker-production.up.railway.app/api/project/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        window.location.href = '/dashboard';
-      } catch (err) {
-        console.error('Kunde inte ta bort projekt:', err);
-      }
-    }}
-    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-  >
-    Ta bort projekt
-  </button>
+          <Button colorScheme="blue" onClick={() => toast({ title: 'Redigering', description: 'Redigeringsfunktion kommer snart!', status: 'info', duration: 3000, isClosable: true })}>
+            Redigera projekt
+          </Button>
+          </Flex>
 
-  <button
-    onClick={() => alert('Redigeringsfunktion kommer snart!')}
-    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-  >
-    Redigera projekt
-  </button>
-</div>
-<div className="mt-6 w-full flex gap-6 max-w-[1900px] mx-auto">
-<div className="flex-1">
-  <table className="w-full border mt-4">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="border px-4 py-2">#</th>
-                  <th className="border px-4 py-2">Namn</th>
-                  <th className="border px-4 py-2">Telefon</th>
-                  <th className="border px-4 py-2">Anordning</th>
-                  {project.sections.map((sec, idx) => (
-                    <th key={idx} className="border px-2 py-2 min-w-[90px]">
-                      <input className="text-center w-full h-[40px] border mb-1" placeholder="Signal" value={sec.signal} readOnly />
-                      {sec.type} {String.fromCharCode(65 + idx)}
-                    </th>
-                  ))}
-                  <th className="border px-4 py-2">Starttid</th>
-                  <th className="border px-4 py-2">Begärd till</th>
-                  <th className="border px-4 py-2">Avslutat</th>
-                  <th className="border px-4 py-2">Anteckning</th>
+<Flex gap={2} align="center">
+  <Text fontWeight="semibold">Filter</Text>
 
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row, rowIndex) => (
-<tr
-  key={row.id}
-  onClick={(e) => {
-    // Förhindra att klick på input eller checkbox stänger redigering
-    if (['INPUT', 'TEXTAREA', 'SELECT', 'LABEL'].includes(e.target.tagName)) return;
+          <Menu closeOnSelect={false}>
+            <MenuButton as={IconButton} icon={<ChevronDownIcon />}>
+              Kolumner
+            </MenuButton>
+            <MenuList>
+              {Object.keys(visibleColumns).map((col) => (
+                <MenuItem key={col}>
+                  <Checkbox isChecked={visibleColumns[col]} onChange={() => toggleColumn(col)}>
+                    {col.charAt(0).toUpperCase() + col.slice(1)}
+                  </Checkbox>
+                </MenuItem>
+              ))}
+            </MenuList>
+          </Menu>
+        </Flex>
 
-    setEditingRow(editingRow === rowIndex ? null : rowIndex);
+        <Flex gap={6} align="start" overflowX="auto">
+          <Box minW="1200px">
+            <TableContainer bg="white" p={4} borderRadius="lg" boxShadow="md">
+              <Table variant="simple" size="sm">
+                <Thead bg="gray.200">
+                  <Tr>
+                    <Th>BTKN</Th>
+                    {visibleColumns.namn && <Th>Namn</Th>}
+                    {visibleColumns.telefon && <Th>Telefon</Th>}
+                    {visibleColumns.anordning && <Th>Anordning</Th>}
+                    {project.sections.map((sec, idx) => (
+                      <Th key={idx} minW="90px" bg={idx % 2 === 0 ? 'yellow.100' : 'transparent'}>
+                        <Flex direction="column" align="center">
+                       <Textarea
+  value={sec.signal}
+  onChange={(e) => {
+    const updatedSections = [...project.sections];
+    updatedSections[idx].signal = e.target.value;
+    setProject({ ...project, sections: updatedSections });
   }}
-  className="cursor-pointer hover:bg-blue-50"
->
-                    <td className="border px-2 py-1 text-center">{row.id}</td>
-                    <td className="border px-2 py-1">
-                      <input disabled={editingRow !== rowIndex} value={row.namn} onChange={(e) => handleChange(rowIndex, 'namn', e.target.value)} onKeyDown={handleKeyDown}  className={`w-[200px] px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`} />
-                    </td>
-                    <td className="border px-2 py-1">
-                      <input disabled={editingRow !== rowIndex} value={row.telefon} onChange={(e) => handleChange(rowIndex, 'telefon', e.target.value)}  onKeyDown={handleKeyDown} className={`w-[140px] px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`} />
-                    </td>
-                    <td className="border px-2 py-1">
-                      <input disabled={editingRow !== rowIndex} value={row.anordning} onChange={(e) => handleChange(rowIndex, 'anordning', e.target.value)}  onKeyDown={handleKeyDown} className={`w-full px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`} />
-                    </td>
-                    {project.sections.map((_, sectionIdx) => (
-                      <td key={sectionIdx} className="border text-center">
-                        <input type="checkbox" checked={row.selections[sectionIdx]} onChange={(e) => handleCheckboxChange(rowIndex, sectionIdx, e.target.checked)} />
-                      </td>
+  resize="none"
+  rows={2}
+  textAlign="center"
+  fontWeight="bold"
+  fontSize="xs"
+   borderColor="gray.300"
+  mb={1}
+  px={1}
+  py={1}
+/>
+                          <Text fontSize="sm">{sec.type} {String.fromCharCode(65 + idx)}</Text>
+                        </Flex>
+                      </Th>
                     ))}
-                    <td className="border px-2 py-1">
-                      <input disabled={editingRow !== rowIndex} type="time" value={row.starttid} onChange={(e) => handleChange(rowIndex, 'starttid', e.target.value)}  onKeyDown={handleKeyDown} className={`w-full px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`} />
-                    </td>
-                    <td className="border px-2 py-1">
-                      <input disabled={editingRow !== rowIndex} type="time" value={row.begard} onChange={(e) => handleChange(rowIndex, 'begard', e.target.value)}  onKeyDown={handleKeyDown} className={`w-full px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`} />
-                    </td>
-                    <td className="border px-2 py-1">
-                      <input disabled={editingRow !== rowIndex} type="time" value={row.avslutat} onChange={(e) => handleChange(rowIndex, 'avslutat', e.target.value)}  onKeyDown={handleKeyDown} className={`w-full px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`} />
-                    </td>
-                    <td className="border px-2 py-1">
-                      <input disabled={editingRow !== rowIndex} value={row.anteckning} onChange={(e) => handleChange(rowIndex, 'anteckning', e.target.value)}  onKeyDown={handleKeyDown} className={`w-full px-2 py-1 rounded ${editingRow === rowIndex ? 'border bg-white' : 'bg-transparent'}`} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <button onClick={addRow} className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">+ Lägg till rad</button>
-          </div>
+                    {visibleColumns.starttid && <Th>Starttid</Th>}
+                    {visibleColumns.begard && <Th>Begärd till</Th>}
+                    {visibleColumns.avslutat && <Th>Avslutat</Th>}
+                    {visibleColumns.anteckning && <Th>Anteckning</Th>}
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {filteredRows.map((row, rowIndex) => (
+                    <Tr
+                      key={row.id}
+                      onClick={(e) => {
+                        if (["INPUT", "TEXTAREA", "SELECT", "LABEL"].includes(e.target.tagName)) return;
+                        setEditingRow(editingRow === rowIndex ? null : rowIndex);
+                      }}
+                      _hover={{ bg: 'blue.50' }}
+                      cursor="pointer"
+                    >
+                      <Td>
+  <Input
+    size="sm"
+    value={row.btkn || ''}
+    isDisabled={editingRow !== rowIndex}
+    onChange={(e) => handleChange(rowIndex, 'btkn', e.target.value)}
+    onKeyDown={handleKeyDown}
+     width="80px"
+  />
+</Td>
+                      {visibleColumns.namn && <Td minW="180px"><Input size="sm" value={row.namn} isDisabled={editingRow !== rowIndex} onChange={(e) => handleChange(rowIndex, 'namn', e.target.value)} onKeyDown={handleKeyDown} /></Td>}
+                      {visibleColumns.telefon && <Td minW="145px"><Input size="sm" value={row.telefon} isDisabled={editingRow !== rowIndex} onChange={(e) => handleChange(rowIndex, 'telefon', e.target.value)} onKeyDown={handleKeyDown} /></Td>}
+                      {visibleColumns.anordning && <Td><Input size="sm" value={row.anordning} isDisabled={editingRow !== rowIndex} onChange={(e) => handleChange(rowIndex, 'anordning', e.target.value)} onKeyDown={handleKeyDown} /></Td>}
+                      {project.sections.map((_, secIdx) => (
+                        <Td key={secIdx} bg={secIdx % 2 === 0 ? 'yellow.50' : 'transparent'}>
+                          <Flex justify="center">
+                          <Checkbox isChecked={row.selections[secIdx]} onChange={(e) => handleCheckboxChange(rowIndex, secIdx, e.target.checked)} />
+                            </Flex>
+                        </Td>
+                      ))}
+                      {visibleColumns.starttid && <Td><Input size="sm" type="time" value={row.starttid} isDisabled={editingRow !== rowIndex} onChange={(e) => handleChange(rowIndex, 'starttid', e.target.value)} onKeyDown={handleKeyDown} /></Td>}
+                      {visibleColumns.begard && <Td><Input size="sm" type="time" value={row.begard} isDisabled={editingRow !== rowIndex} onChange={(e) => handleChange(rowIndex, 'begard', e.target.value)} onKeyDown={handleKeyDown} /></Td>}
+                      {visibleColumns.avslutat && <Td><Input size="sm" type="time" value={row.avslutat} isDisabled={editingRow !== rowIndex} onChange={(e) => handleChange(rowIndex, 'avslutat', e.target.value)} onKeyDown={handleKeyDown} /></Td>}
+                      {visibleColumns.anteckning && <Td minW="250px"><Input size="sm" value={row.anteckning} isDisabled={editingRow !== rowIndex} onChange={(e) => handleChange(rowIndex, 'anteckning', e.target.value)} onKeyDown={handleKeyDown} /></Td>}
+                    </Tr>
+                  ))}
+                </Tbody>
+              </Table>
+              <Button onClick={addRow} colorScheme="blue" mt={4}>+ Lägg till rad</Button>
+            </TableContainer>
+          </Box>
 
-          <div className="w-80 bg-white p-6 rounded shadow-md">
-            <h2 className="text-lg font-semibold mb-4">Mina samråd</h2>
+          <Box w="320px" bg="white" p={6} borderRadius="lg" boxShadow="md">
+            <Heading size="md" mb={4}>Mina samråd</Heading>
             {samrad.length === 0 ? (
-              <p className="italic text-gray-500">(tom)</p>
+              <Text fontStyle="italic" color="gray.500">(tom)</Text>
             ) : (
-              <ul className="space-y-2">
+              <Stack spacing={2}>
                 {samrad.map((r) => (
-                  <li key={r.id} className="text-sm">{r.namn} ({r.telefon})</li>
+                  <Text key={r.id} fontSize="sm">{r.namn} ({r.telefon})</Text>
                 ))}
-              </ul>
+              </Stack>
             )}
-          </div>
-        </div>
-      </div>
-    </div>
+          </Box>
+        </Flex>
+      </Box>
+    </Box>
   );
 };
 
