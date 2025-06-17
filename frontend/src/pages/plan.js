@@ -26,8 +26,15 @@ import {
   MenuList,
   MenuItem,
   IconButton,
-  CheckboxGroup,
   Textarea,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalCloseButton,
+  ModalFooter,
+  useDisclosure,
 } from '@chakra-ui/react';
 import { ChevronDownIcon } from '@chakra-ui/icons';
 import Header from '../components/Header';
@@ -49,6 +56,9 @@ const Plan = () => {
     anteckning: true,
   });
   const toast = useToast();
+
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [selectedRow, setSelectedRow] = useState(null);
 
   useEffect(() => {
     fetchProject();
@@ -133,14 +143,20 @@ const Plan = () => {
     ]);
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      setEditingRow(null);
-    }
-  };
-
   const toggleColumn = (col) => {
     setVisibleColumns((prev) => ({ ...prev, [col]: !prev[col] }));
+  };
+
+  const handleRowClick = (row, rowIndex) => {
+    setSelectedRow({ ...row, index: rowIndex });
+    onOpen();
+  };
+
+  const handleModalChange = (field, value) => {
+    const updated = [...rows];
+    updated[selectedRow.index][field] = value;
+    setRows(updated);
+    setSelectedRow((prev) => ({ ...prev, [field]: value }));
   };
 
   const getSharedContacts = () => {
@@ -153,8 +169,7 @@ const Plan = () => {
 
   const samrad = getSharedContacts();
   const filteredRows = filterValue === 'all' ? rows : rows.filter(row => row.namn === filterValue);
-
-  if (!project) return <Box p={6}>Inget projekt hittades.</Box>;
+    if (!project) return <Box p={6}>Inget projekt hittades.</Box>;
 
   return (
     <Box bg="gray.100" minH="100vh" py={10} px={[4, 8]}>
@@ -190,14 +205,19 @@ const Plan = () => {
             }
           }}>Ta bort projekt</Button>
 
-          <Button colorScheme="blue" onClick={() => toast({ title: 'Redigering', description: 'Redigeringsfunktion kommer snart!', status: 'info', duration: 3000, isClosable: true })}>
+          <Button colorScheme="blue" onClick={() => toast({
+            title: 'Redigering',
+            description: 'Redigeringsfunktion kommer snart!',
+            status: 'info',
+            duration: 3000,
+            isClosable: true,
+          })}>
             Redigera projekt
           </Button>
-          </Flex>
+        </Flex>
 
-<Flex gap={2} align="center">
-  <Text fontWeight="semibold">Filter</Text>
-
+        <Flex gap={2} align="center">
+          <Text fontWeight="semibold">Filter</Text>
           <Menu closeOnSelect={false}>
             <MenuButton as={IconButton} icon={<ChevronDownIcon />}>
               Kolumner
@@ -213,10 +233,10 @@ const Plan = () => {
             </MenuList>
           </Menu>
         </Flex>
-
-        <Flex gap={6} align="start" overflowX="auto">
-          <Box minW="1200px">
-            <TableContainer bg="white" p={4} borderRadius="lg" boxShadow="md">
+<Flex gap={6} align="start" overflowX="auto">
+  <Box overflowX="auto" w="100%">
+    <Box transform="scale(0.65)" transformOrigin="top left" minW="2500px">
+      <TableContainer bg="white" p={4} borderRadius="lg" boxShadow="md">
               <Table variant="simple" size="sm">
                 <Thead bg="gray.200">
                   <Tr>
@@ -227,23 +247,23 @@ const Plan = () => {
                     {project.sections.map((sec, idx) => (
                       <Th key={idx} minW="90px" bg={idx % 2 === 0 ? 'yellow.100' : 'transparent'}>
                         <Flex direction="column" align="center">
-                       <Textarea
-  value={sec.signal}
-  onChange={(e) => {
-    const updatedSections = [...project.sections];
-    updatedSections[idx].signal = e.target.value;
-    setProject({ ...project, sections: updatedSections });
-  }}
-  resize="none"
-  rows={2}
-  textAlign="center"
-  fontWeight="bold"
-  fontSize="xs"
-   borderColor="gray.300"
-  mb={1}
-  px={1}
-  py={1}
-/>
+                          <Textarea
+                            value={sec.signal}
+                            onChange={(e) => {
+                              const updatedSections = [...project.sections];
+                              updatedSections[idx].signal = e.target.value;
+                              setProject({ ...project, sections: updatedSections });
+                            }}
+                            resize="none"
+                            rows={2}
+                            textAlign="center"
+                            fontWeight="bold"
+                            fontSize="xs"
+                            borderColor="gray.300"
+                            mb={1}
+                            px={1}
+                            py={1}
+                          />
                           <Text fontSize="sm">{sec.type} {String.fromCharCode(65 + idx)}</Text>
                         </Flex>
                       </Th>
@@ -259,42 +279,41 @@ const Plan = () => {
                     <Tr
                       key={row.id}
                       onClick={(e) => {
-                        if (["INPUT", "TEXTAREA", "SELECT", "LABEL"].includes(e.target.tagName)) return;
-                        setEditingRow(editingRow === rowIndex ? null : rowIndex);
+                        if (["INPUT", "TEXTAREA", "SELECT", "LABEL", "BUTTON"].includes(e.target.tagName)) return;
+                        handleRowClick(row, rowIndex);
                       }}
                       _hover={{ bg: 'blue.50' }}
                       cursor="pointer"
                     >
                       <Td>
-  <Input
-    size="sm"
-    value={row.btkn || ''}
-    isDisabled={editingRow !== rowIndex}
-    onChange={(e) => handleChange(rowIndex, 'btkn', e.target.value)}
-    onKeyDown={handleKeyDown}
-     width="80px"
-  />
-</Td>
-                      {visibleColumns.namn && <Td minW="180px"><Input size="sm" value={row.namn} isDisabled={editingRow !== rowIndex} onChange={(e) => handleChange(rowIndex, 'namn', e.target.value)} onKeyDown={handleKeyDown} /></Td>}
-                      {visibleColumns.telefon && <Td minW="145px"><Input size="sm" value={row.telefon} isDisabled={editingRow !== rowIndex} onChange={(e) => handleChange(rowIndex, 'telefon', e.target.value)} onKeyDown={handleKeyDown} /></Td>}
-                      {visibleColumns.anordning && <Td><Input size="sm" value={row.anordning} isDisabled={editingRow !== rowIndex} onChange={(e) => handleChange(rowIndex, 'anordning', e.target.value)} onKeyDown={handleKeyDown} /></Td>}
+                        <Input
+                          size="sm"
+                          value={row.btkn || ''}
+                          isDisabled
+                          width="80px"
+                        />
+                      </Td>
+                      {visibleColumns.namn && <Td minW="180px"><Input size="sm" value={row.namn} isDisabled /></Td>}
+                      {visibleColumns.telefon && <Td minW="145px"><Input size="sm" value={row.telefon} isDisabled /></Td>}
+                      {visibleColumns.anordning && <Td><Input size="sm" value={row.anordning} isDisabled /></Td>}
                       {project.sections.map((_, secIdx) => (
                         <Td key={secIdx} bg={secIdx % 2 === 0 ? 'yellow.50' : 'transparent'}>
                           <Flex justify="center">
-                          <Checkbox isChecked={row.selections[secIdx]} onChange={(e) => handleCheckboxChange(rowIndex, secIdx, e.target.checked)} />
-                            </Flex>
+                            <Checkbox isChecked={row.selections[secIdx]} isDisabled />
+                          </Flex>
                         </Td>
                       ))}
-                      {visibleColumns.starttid && <Td><Input size="sm" type="time" value={row.starttid} isDisabled={editingRow !== rowIndex} onChange={(e) => handleChange(rowIndex, 'starttid', e.target.value)} onKeyDown={handleKeyDown} /></Td>}
-                      {visibleColumns.begard && <Td><Input size="sm" type="time" value={row.begard} isDisabled={editingRow !== rowIndex} onChange={(e) => handleChange(rowIndex, 'begard', e.target.value)} onKeyDown={handleKeyDown} /></Td>}
-                      {visibleColumns.avslutat && <Td><Input size="sm" type="time" value={row.avslutat} isDisabled={editingRow !== rowIndex} onChange={(e) => handleChange(rowIndex, 'avslutat', e.target.value)} onKeyDown={handleKeyDown} /></Td>}
-                      {visibleColumns.anteckning && <Td minW="250px"><Input size="sm" value={row.anteckning} isDisabled={editingRow !== rowIndex} onChange={(e) => handleChange(rowIndex, 'anteckning', e.target.value)} onKeyDown={handleKeyDown} /></Td>}
+                      {visibleColumns.starttid && <Td><Input size="sm" type="time" value={row.starttid} isDisabled /></Td>}
+                      {visibleColumns.begard && <Td><Input size="sm" type="time" value={row.begard} isDisabled /></Td>}
+                      {visibleColumns.avslutat && <Td><Input size="sm" type="time" value={row.avslutat} isDisabled /></Td>}
+                      {visibleColumns.anteckning && <Td minW="250px"><Input size="sm" value={row.anteckning} isDisabled /></Td>}
                     </Tr>
                   ))}
                 </Tbody>
               </Table>
               <Button onClick={addRow} colorScheme="blue" mt={4}>+ Lägg till rad</Button>
             </TableContainer>
+          </Box>
           </Box>
 
           <Box w="320px" bg="white" p={6} borderRadius="lg" boxShadow="md">
@@ -311,6 +330,32 @@ const Plan = () => {
           </Box>
         </Flex>
       </Box>
+
+      {/* Modal för redigering */}
+      <Modal isOpen={isOpen} onClose={onClose} size="xl">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Redigera rad</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            {selectedRow && (
+              <Stack spacing={3}>
+                <Input placeholder="BTKN" value={selectedRow.btkn} onChange={(e) => handleModalChange('btkn', e.target.value)} />
+                <Input placeholder="Namn" value={selectedRow.namn} onChange={(e) => handleModalChange('namn', e.target.value)} />
+                <Input placeholder="Telefon" value={selectedRow.telefon} onChange={(e) => handleModalChange('telefon', e.target.value)} />
+                <Input placeholder="Anordning" value={selectedRow.anordning} onChange={(e) => handleModalChange('anordning', e.target.value)} />
+                <Input placeholder="Starttid" type="time" value={selectedRow.starttid} onChange={(e) => handleModalChange('starttid', e.target.value)} />
+                <Input placeholder="Begärd till" type="time" value={selectedRow.begard} onChange={(e) => handleModalChange('begard', e.target.value)} />
+                <Input placeholder="Avslutat" type="time" value={selectedRow.avslutat} onChange={(e) => handleModalChange('avslutat', e.target.value)} />
+                <Textarea placeholder="Anteckning" value={selectedRow.anteckning} onChange={(e) => handleModalChange('anteckning', e.target.value)} />
+              </Stack>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button onClick={onClose}>Stäng</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 };
