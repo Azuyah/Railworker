@@ -35,6 +35,9 @@ import {
   ModalCloseButton,
   ModalFooter,
   useDisclosure,
+  SimpleGrid,
+  FormControl,
+  FormLabel,
 } from '@chakra-ui/react';
 import { ChevronDownIcon } from '@chakra-ui/icons';
 import Header from '../components/Header';
@@ -389,19 +392,49 @@ onChange={(e) => {
   <ModalContent>
     <ModalHeader>Redigera rad</ModalHeader>
     <ModalCloseButton />
-    <ModalBody>
-      {selectedRow && (
-        <Stack spacing={3}>
-          <Input placeholder="BTKN" value={selectedRow.btkn} onChange={(e) => handleModalChange('btkn', e.target.value)} />
-          <Input placeholder="Namn" value={selectedRow.namn} onChange={(e) => handleModalChange('namn', e.target.value)} />
-          <Input placeholder="Telefon" value={selectedRow.telefon} onChange={(e) => handleModalChange('telefon', e.target.value)} />
-          <Input placeholder="Anordning" value={selectedRow.anordning} onChange={(e) => handleModalChange('anordning', e.target.value)} />
-          <Input placeholder="Starttid" type="time" value={selectedRow.starttid} onChange={(e) => handleModalChange('starttid', e.target.value)} />
-          <Input placeholder="Begärd till" type="time" value={selectedRow.begard} onChange={(e) => handleModalChange('begard', e.target.value)} />
-          <Input placeholder="Avslutat" type="time" value={selectedRow.avslutat} onChange={(e) => handleModalChange('avslutat', e.target.value)} />
-          <Textarea placeholder="Anteckning" value={selectedRow.anteckning} onChange={(e) => handleModalChange('anteckning', e.target.value)} />
-        </Stack>
-      )}
+<ModalBody>
+  {selectedRow && (
+    <Stack spacing={4}>
+      <SimpleGrid columns={2} spacing={4}>
+        <FormControl>
+          <FormLabel>BTKN</FormLabel>
+          <Input value={selectedRow.btkn} onChange={(e) => handleModalChange('btkn', e.target.value)} />
+        </FormControl>
+        <FormControl>
+          <FormLabel>Anordning</FormLabel>
+          <Input value={selectedRow.anordning} onChange={(e) => handleModalChange('anordning', e.target.value)} />
+        </FormControl>
+        <FormControl>
+          <FormLabel>Namn</FormLabel>
+          <Input value={selectedRow.namn} onChange={(e) => handleModalChange('namn', e.target.value)} />
+        </FormControl>
+        <FormControl>
+          <FormLabel>Telefon</FormLabel>
+          <Input value={selectedRow.telefon} onChange={(e) => handleModalChange('telefon', e.target.value)} />
+        </FormControl>
+      </SimpleGrid>
+
+      <SimpleGrid columns={3} spacing={4}>
+        <FormControl>
+          <FormLabel>Starttid</FormLabel>
+          <Input type="time" value={selectedRow.starttid} onChange={(e) => handleModalChange('starttid', e.target.value)} />
+        </FormControl>
+        <FormControl>
+          <FormLabel>Begärd till</FormLabel>
+          <Input type="time" value={selectedRow.begard} onChange={(e) => handleModalChange('begard', e.target.value)} />
+        </FormControl>
+        <FormControl>
+          <FormLabel>Avslutat</FormLabel>
+          <Input type="time" value={selectedRow.avslutat} onChange={(e) => handleModalChange('avslutat', e.target.value)} />
+        </FormControl>
+      </SimpleGrid>
+
+      <FormControl>
+        <FormLabel>Anteckning</FormLabel>
+        <Textarea value={selectedRow.anteckning} onChange={(e) => handleModalChange('anteckning', e.target.value)} />
+      </FormControl>
+    </Stack>
+  )}
 </ModalBody>
 <ModalFooter>
   <Button colorScheme="blue" mr={3} onClick={handleModalSave}>Spara</Button>
