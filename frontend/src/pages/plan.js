@@ -76,6 +76,18 @@ const sparaProjekt = async () => {
     const tokenData = localStorage.getItem('user');
     const token = tokenData ? JSON.parse(tokenData).token : null;
 
+    if (!currentProject || !currentProject.id) {
+  console.error('❌ currentProject är null eller saknar id');
+  toast({
+    title: 'Fel',
+    description: 'Ingen giltig projektdata att spara.',
+    status: 'error',
+    duration: 3000,
+    isClosable: true,
+  });
+  return;
+}
+
 const updatedProject = {
   id: currentProject?.id || null,
   name: currentProject?.name || '',
@@ -149,23 +161,23 @@ const updatedProject = {
 
       const current = response.data;
       setProject(current);
-      setRows([
-        {
-          id: 1,
-          btkn: '',
-          namn: '',
-          telefon: '',
-          anordning: '',
-          bt: '',
-          linje: '',
-          starttid: '',
-          begard: '',
-          avslutat: '',
-          avslutadRad: false,
-          anteckning: '',
-          selections: current.sections.map(() => false),
-        },
-      ]);
+setRows(current.rows && current.rows.length > 0 ? current.rows : [
+  {
+    id: 1,
+    btkn: '',
+    namn: '',
+    telefon: '',
+    anordning: '',
+    bt: '',
+    linje: '',
+    starttid: '',
+    begard: '',
+    avslutat: '',
+    avslutadRad: false,
+    anteckning: '',
+    selections: current.sections.map(() => false),
+  },
+]);
 
       const interval = setInterval(() => {
         const target = new Date(`${current.endDate}T${current.endTime}`);
