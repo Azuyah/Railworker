@@ -49,6 +49,11 @@ const Plan = () => {
   const [editingRow, setEditingRow] = useState(null);
   const [countdown, setCountdown] = useState('');
   const [filterValue, setFilterValue] = useState('all');
+  const [showAvslutade, setShowAvslutade] = useState(false);
+  const [avslutadeModalOpen, setAvslutadeModalOpen] = useState(false);
+const [avslutadeRows, setAvslutadeRows] = useState([]);
+const { isOpen: isAvslutadeOpen, onOpen: onOpenAvslutade, onClose: onCloseAvslutade } = useDisclosure();
+const [searchQuery, setSearchQuery] = useState('');
   const [avklaradSamrad, setAvklaradSamrad] = useState({});
   const [visibleColumns, setVisibleColumns] = useState({
     namn: true,
@@ -65,9 +70,60 @@ const Plan = () => {
   const [selectedRow, setSelectedRow] = useState(null);
   const [selectedAreas, setSelectedAreas] = useState([]);
 
+    const sparaProjekt = async () => {
+  try {
+    const tokenData = localStorage.getItem('user');
+    const token = tokenData ? JSON.parse(tokenData).token : null;
+
+    const updatedProject = {
+      ...project,
+      rows,
+    };
+await axios.patch(`https://railworker-production.up.railway.app/api/project/${id}`, updatedProject, {
+  headers: { Authorization: `Bearer ${token}` },
+});
+
+    toast({
+      title: 'Projekt sparat',
+      description: 'Alla ändringar har sparats.',
+      status: 'success',
+      duration: 3000,
+      isClosable: true,
+    });
+} catch (error) {
+  console.error('Fel vid sparning:', error);
+  if (error.response) {
+    console.error('Statuskod:', error.response.status);
+    console.error('Svar:', error.response.data);
+  } else if (error.request) {
+    console.error('Ingen respons mottagen:', error.request);
+  } else {
+    console.error('Felmeddelande:', error.message);
+  }
+
+  toast({
+    title: 'Fel',
+    description: 'Kunde inte spara projektet.',
+    status: 'error',
+    duration: 3000,
+    isClosable: true,
+  });
+}
+};
+
   useEffect(() => {
     fetchProject();
   }, []);
+  useEffect(() => {
+  if (!rows || selectedRow === null) return;
+
+  const shared = rows.filter((row, i) => {
+    if (i === selectedRow.index) return false;
+    return selectedAreas.some((area) => row.selections[area]);
+  });
+
+  setSamrad(shared);
+}, [selectedAreas, rows, selectedRow]);
 
   const fetchProject = async () => {
     try {
@@ -94,6 +150,7 @@ const Plan = () => {
           starttid: '',
           begard: '',
           avslutat: '',
+          avslutadRad: false,
           anteckning: '',
           selections: current.sections.map(() => false),
         },
@@ -146,6 +203,7 @@ const Plan = () => {
         starttid: '',
         begard: '',
         avslutat: '',
+        avslutadRad: false,
         anteckning: '',
         selections: project.sections.map(() => false),
       },
@@ -192,8 +250,16 @@ const getSharedContacts = () => {
   });
 };
 
-const samrad = getSharedContacts();
-  const filteredRows = filterValue === 'all' ? rows : rows.filter(row => row.namn === filterValue);
+const [samrad, setSamrad] = useState([]);
+const filteredRows = rows
+  .filter((row) => !row.avslutad) // Visa inte avslutade i huvudtabellen
+  .filter((row) =>
+    filterValue === 'all' || row.namn.toLowerCase() === filterValue.toLowerCase()
+  )
+  .filter((row) =>
+    row.namn.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    row.telefon?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 const { dpOptions, linjeOptions } = useMemo(() => {
   const dp = [];
   const linje = [];
@@ -220,6 +286,7 @@ const { dpOptions, linjeOptions } = useMemo(() => {
 const handleModalSave = () => {
   const updatedRows = [...rows];
   const current = updatedRows[selectedRow.index];
+  current.avslutadRad = selectedRow?.avslutadRad || false;
 
   // Nollställ först
   current.selections = current.selections.map(() => false);
@@ -282,23 +349,38 @@ const handleModalSave = () => {
           </Button>
         </Flex>
 
-        <Flex gap={2} align="center">
-          <Text fontWeight="semibold">Filter</Text>
-          <Menu closeOnSelect={false}>
-            <MenuButton as={IconButton} icon={<ChevronDownIcon />}>
-              Kolumner
-            </MenuButton>
-            <MenuList>
-              {Object.keys(visibleColumns).map((col) => (
-                <MenuItem key={col}>
-                  <Checkbox isChecked={visibleColumns[col]} onChange={() => toggleColumn(col)}>
-                    {col.charAt(0).toUpperCase() + col.slice(1)}
-                  </Checkbox>
-                </MenuItem>
-              ))}
-            </MenuList>
-          </Menu>
-        </Flex>
+<Flex justify="space-between" align="center" mb={4}>
+  {/* Vänster: Filter + Sökfält */}
+  <HStack spacing={4}>
+    <Flex gap={2} align="center">
+      <Text fontWeight="semibold">Filter</Text>
+      <Menu closeOnSelect={false}>
+        <MenuButton as={IconButton} icon={<ChevronDownIcon />}>
+          Kolumner
+        </MenuButton>
+        <MenuList>
+          {Object.keys(visibleColumns).map((col) => (
+            <MenuItem key={col}>
+              <Checkbox isChecked={visibleColumns[col]} onChange={() => toggleColumn(col)}>
+                {col.charAt(0).toUpperCase() + col.slice(1)}
+              </Checkbox>
+            </MenuItem>
+          ))}
+        </MenuList>
+      </Menu>
+    </Flex>
+
+    <Input
+      placeholder="Sök namn eller telefon..."
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      width="250px"
+    />
+  </HStack>
+
+  {/* Höger: Avslutade-knapp */}
+<Button onClick={() => setAvslutadeModalOpen(true)}>Avslutade</Button>
+</Flex>
 <Flex gap={6} align="start" overflowX="auto">
   <Box overflowX="auto" w="100%">
     <Box transform="scale(0.65)" transformOrigin="top left" minW="2400px">
@@ -341,7 +423,9 @@ const handleModalSave = () => {
             </Tr>
           </Thead>
 <Tbody>
-  {filteredRows.map((row, rowIndex) => (
+{filteredRows
+  .filter((row) => !row.avslutadRad)
+  .map((row, rowIndex) => (
     <Tr
       key={row.id}
 onClick={(e) => {
@@ -440,6 +524,9 @@ onChange={(e) => {
 </Tbody>
         </Table>
         <Button onClick={addRow} colorScheme="blue" mt={4}>+ Lägg till rad</Button>
+        <Button onClick={sparaProjekt} colorScheme="blue" mt={4} ml={4}>
+  Spara
+</Button>
       </TableContainer>
     </Box>
   </Box>
@@ -504,6 +591,14 @@ onChange={(e) => {
     </MenuList>
   </Menu>
 </FormControl>
+<FormControl mt={6}>
+  <Checkbox
+    isChecked={selectedRow?.avslutadRad || false}
+    onChange={(e) => handleModalChange('avslutadRad', e.target.checked)}
+  >
+    Avslutad
+  </Checkbox>
+</FormControl>
             </SimpleGrid>
 
             <SimpleGrid columns={3} spacing={4}>
@@ -567,8 +662,43 @@ onChange={(e) => {
     </ModalFooter>
   </ModalContent>
 </Modal>
+<Modal isOpen={avslutadeModalOpen} onClose={() => setAvslutadeModalOpen(false)} size="lg">
+  <ModalOverlay />
+  <ModalContent>
+    <ModalHeader>Avslutade poster</ModalHeader>
+    <ModalCloseButton />
+    <ModalBody>
+      <Stack spacing={4}>
+        {rows
+          .filter((row) => row.avslutadRad)
+          .map((row, index) => (
+            <Box key={index} p={3} border="1px solid #ccc" borderRadius="md">
+              <Text><strong>Namn:</strong> {row.namn}</Text>
+              <Text><strong>Telefon:</strong> {row.telefon}</Text>
+              <Button
+                mt={2}
+                size="sm"
+                onClick={() => {
+                  const updatedRows = [...rows];
+                  updatedRows[index].avslutadRad = false;
+                  setRows(updatedRows);
+                }}
+              >
+                Återställ
+              </Button>
+            </Box>
+          ))}
+      </Stack>
+    </ModalBody>
+    <ModalFooter>
+      <Button onClick={() => setAvslutadeModalOpen(false)}>Stäng</Button>
+    </ModalFooter>
+  </ModalContent>
+</Modal>
     </Box>
     </Box>
+
+    
   );
 };
 

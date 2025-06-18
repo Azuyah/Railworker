@@ -23,28 +23,28 @@ model User {
 }
 
 model Project {
-  id            Int          @id @default(autoincrement())
+  id            Int      @id @default(autoincrement())
   name          String
-  description   String?
-  startDate     String? // eller DateTime? om du föredrar det
-  startTime     String?
-  endDate       String?
-  endTime       String?
-  plats         String?
-  namn          String?
-  telefonnummer String?
   userId        Int?
-  user          User?        @relation(fields: [userId], references: [id])
-  createdAt     DateTime     @default(now())
-  sections      Section[]
-  beteckningar  Beteckning[]
+  user          User?    @relation(fields: [userId], references: [id])
+  createdAt     DateTime @default(now())
+  startDate     String
+  startTime     String
+  endDate       String
+  endTime       String
+  plats         String
+  namn          String
+  telefonnummer String
+
+  sections     Section[]
+  beteckningar Beteckning[]
+  rows         Json?
 }
 
 model Section {
   id        Int     @id @default(autoincrement())
   name      String
   type      String
-  signal    String?
   project   Project @relation(fields: [projectId], references: [id])
   projectId Int
 }

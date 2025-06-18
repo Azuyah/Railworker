@@ -133,7 +133,8 @@ exports.Prisma.UserScalarFieldEnum = {
 exports.Prisma.ProjectScalarFieldEnum = {
   id: 'id',
   name: 'name',
-  description: 'description',
+  userId: 'userId',
+  createdAt: 'createdAt',
   startDate: 'startDate',
   startTime: 'startTime',
   endDate: 'endDate',
@@ -141,15 +142,13 @@ exports.Prisma.ProjectScalarFieldEnum = {
   plats: 'plats',
   namn: 'namn',
   telefonnummer: 'telefonnummer',
-  userId: 'userId',
-  createdAt: 'createdAt'
+  rows: 'rows'
 };
 
 exports.Prisma.SectionScalarFieldEnum = {
   id: 'id',
   name: 'name',
   type: 'type',
-  signal: 'signal',
   projectId: 'projectId'
 };
 
@@ -164,6 +163,11 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull
+};
+
 exports.Prisma.QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
@@ -172,6 +176,12 @@ exports.Prisma.QueryMode = {
 exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
+};
+
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
 };
 
 

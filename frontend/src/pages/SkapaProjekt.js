@@ -230,13 +230,13 @@ const SkapaProjekt = () => {
     try {
 const newProject = {
   name: projektNamn,
-  startDate: startDate || null,
-  startTime: startTime || null,
-  endDate: endDate || null,
-  endTime: endTime || null,
-  plats: plats || null,
-  namn: namn || null,
-  telefonnummer: telefonnummer || null,
+  startDate: startDate || '',
+  startTime: startTime || '',
+  endDate: endDate || '',
+  endTime: endTime || '',
+  plats: plats || '',
+  namn: namn || '',
+  telefonnummer: telefonnummer || '',
   beteckningar,
   sections,
 };

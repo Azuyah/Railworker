@@ -85,7 +85,6 @@ app.post('/api/projects', async (req, res) => {
     const project = await prisma.project.create({
       data: {
         name,
-        description,
         startDate,
         startTime,
         endDate,
@@ -203,6 +202,36 @@ app.delete('/api/project/:id', async (req, res) => {
   } catch (error) {
     console.error('❌ Fel vid borttagning:', error);
     res.status(500).json({ error: 'Kunde inte ta bort projekt' });
+  }
+});
+
+// Uppdatera ett projekt (inklusive rader)
+app.put('/api/project/:id', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Ingen token angiven' });
+  }
+
+  try {
+    const token = authHeader.split(' ')[1];
+    jwt.verify(token, JWT_SECRET); // Validera användare
+
+    const projectId = parseInt(req.params.id, 10);
+    const { rows } = req.body;
+
+    const updatedProject = await prisma.project.update({
+      where: { id: projectId },
+      data: {
+        rows: {
+          set: rows || [],
+        },
+      },
+    });
+
+    res.json(updatedProject);
+  } catch (error) {
+    console.error('❌ Kunde inte uppdatera projekt:', error);
+    res.status(500).json({ error: 'Kunde inte uppdatera projekt' });
   }
 });
 
