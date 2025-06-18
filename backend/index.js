@@ -251,6 +251,7 @@ app.put('/api/projects/:id', async (req, res) => {
         type: sec.type,
         projectId: updatedProject.id,
       }));
+      console.log('🔧 Sections som kommer att sparas:', newSections);
 
       await prisma.section.createMany({
         data: newSections,
