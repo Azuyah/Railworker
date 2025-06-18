@@ -49,6 +49,7 @@ const Plan = () => {
   const [editingRow, setEditingRow] = useState(null);
   const [countdown, setCountdown] = useState('');
   const [filterValue, setFilterValue] = useState('all');
+  const [avklaradSamrad, setAvklaradSamrad] = useState({});
   const [visibleColumns, setVisibleColumns] = useState({
     namn: true,
     telefon: true,
@@ -149,6 +150,7 @@ const Plan = () => {
         selections: project.sections.map(() => false),
       },
     ]);
+    setSelectedAreas([]);
   };
 
   const toggleColumn = (col) => {
@@ -162,6 +164,7 @@ const handleRowClick = (row, rowIndex) => {
     dp: row.dp || '',
     linje: row.linje || ''
   });
+  setSelectedAreas(row.selectedAreas || []);
   onOpen();
 };
 
@@ -225,6 +228,9 @@ const handleModalSave = () => {
   selectedAreas.forEach((idx) => {
     current.selections[idx] = true;
   });
+
+  // Spara valda områden i raden
+  current.selectedAreas = selectedAreas;
 
   updatedRows[selectedRow.index] = current;
   setRows(updatedRows);
@@ -526,12 +532,27 @@ onChange={(e) => {
             <Text fontWeight="bold" mb={2}>Samråd</Text>
             {samrad.length > 0 ? (
               <Stack spacing={2}>
-                {samrad.map((row, idx) => (
-                  <Box key={idx} p={2} border="1px solid #ddd" borderRadius="md" bg="white">
-                    <Text fontSize="sm"><strong>Namn:</strong> {row.namn}</Text>
-                    <Text fontSize="sm"><strong>Telefon:</strong> {row.telefon}</Text>
-                  </Box>
-                ))}
+{samrad.map((row, idx) => (
+  <Box key={idx} p={2} border="1px solid #ddd" borderRadius="md" bg="white">
+    <Flex justify="space-between" align="center">
+      <Box>
+        <Text fontSize="sm"><strong>Namn:</strong> {row.namn}</Text>
+        <Text fontSize="sm"><strong>Telefon:</strong> {row.telefon}</Text>
+      </Box>
+      <Checkbox
+        isChecked={avklaradSamrad[row.id] || false}
+        onChange={() =>
+          setAvklaradSamrad((prev) => ({
+            ...prev,
+            [row.id]: !prev[row.id],
+          }))
+        }
+      >
+        Avklarad
+      </Checkbox>
+    </Flex>
+  </Box>
+))}
               </Stack>
             ) : (
               <Text fontSize="sm" color="gray.500">Inga samråd.</Text>
