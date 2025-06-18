@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/Header';
+import LoadingScreen from '../components/LoadingScreen';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -19,20 +20,23 @@ const Dashboard = () => {
       fetchAllProjects();
     }
   }, []);
+  const [loading, setLoading] = useState(true);
 
-  const fetchAllProjects = async () => {
-    try {
-      const response = await axios.get('https://railworker-production.up.railway.app/api/projects', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setProjects(response.data);
-    } catch (error) {
-      console.error('Kunde inte hämta projekt:', error);
-      setProjects([]);
-    }
-  };
+const fetchAllProjects = async () => {
+  try {
+    const response = await axios.get('https://railworker-production.up.railway.app/api/projects', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    setProjects(response.data);
+  } catch (error) {
+    console.error('Kunde inte hämta projekt:', error);
+    setProjects([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -52,35 +56,39 @@ const Dashboard = () => {
           </button>
         </div>
 
-        {/* Lista med projekt */}
-        <div className="bg-white p-6 rounded shadow-md">
-          <h2 className="text-lg font-semibold mb-4">Mina projekt</h2>
-          {projects.length === 0 ? (
-            <p className="text-gray-500">Inga projekt hittades.</p>
-          ) : (
-            <ul className="space-y-4">
-              {projects.map((project) => (
-                <li
-                  key={project.id}
-                  className="border rounded p-4 flex justify-between items-center"
-                >
-                  <div>
-                    <h3 className="font-semibold">{project.name}</h3>
-                    {project.description && (
-                      <p className="text-sm text-gray-600">{project.plats}</p>
-                    )}
-                  </div>
-<button
-  onClick={() => navigate(`/plan/${project.id}`)}
-  className="text-blue-600 hover:underline"
->
-  Visa projekt
-</button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+{/* Lista med projekt */}
+<div className="bg-white p-6 rounded shadow-md">
+  <h2 className="text-lg font-semibold mb-4">Mina projekt</h2>
+  {loading ? (
+    <div className="flex justify-center items-center py-8">
+      <div className="flex flex-col items-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-blue-600 border-solid"></div>
+        <p className="mt-3 text-gray-600">Hämtar projekt...</p>
+      </div>
+    </div>
+  ) : projects.length === 0 ? (
+    <p className="text-gray-500">Inga projekt hittades.</p>
+  ) : (
+    <ul className="space-y-4">
+      {projects.map((project) => (
+        <li key={project.id} className="border rounded p-4 flex justify-between items-center">
+          <div>
+            <h3 className="font-semibold">{project.name}</h3>
+            {project.plats && (
+              <p className="text-sm text-gray-600">{project.plats}</p>
+            )}
+          </div>
+          <button
+            onClick={() => navigate(`/plan/${project.id}`)}
+            className="text-blue-600 hover:underline"
+          >
+            Visa projekt
+          </button>
+        </li>
+      ))}
+    </ul>
+  )}
+</div>
       </div>
     </div>
   );

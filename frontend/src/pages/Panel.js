@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/Header';
+import LoadingScreen from '../components/LoadingScreen';
 
 export default function Panel() {
   const [projects, setProjects] = useState([]);

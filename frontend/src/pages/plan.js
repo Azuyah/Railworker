@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
+import LoadingScreen from '../components/LoadingScreen';
 import {
   Box,
   Button,
@@ -56,6 +57,7 @@ const { isOpen: isAvslutadeOpen, onOpen: onOpenAvslutade, onClose: onCloseAvslut
 const [searchQuery, setSearchQuery] = useState('');
 const [currentProject, setCurrentProject] = useState(null);
   const [avklaradSamrad, setAvklaradSamrad] = useState({});
+  const [loading, setLoading] = useState(true);
   const [visibleColumns, setVisibleColumns] = useState({
     namn: true,
     telefon: true,
@@ -150,6 +152,8 @@ const sparaProjekt = async () => {
 
   const fetchProject = async () => {
     try {
+       setLoading(true);
+
       const tokenData = localStorage.getItem('user');
       const token = tokenData ? JSON.parse(tokenData).token : null;
 
@@ -197,6 +201,8 @@ setRows(current.rows && current.rows.length > 0 ? current.rows : [
       return () => clearInterval(interval);
     } catch (error) {
       console.error('Kunde inte hämta projekt:', error);
+    } finally {
+    setLoading(false);
     }
   };
 
@@ -302,8 +308,8 @@ const { dpOptions, linjeOptions } = useMemo(() => {
 
   return { dpOptions: dp, linjeOptions: linje };
 }, [project]);
-    if (!project) {
-  return <Box p={6}>Laddar projektdata...</Box>;
+if (loading || !project) {
+  return <LoadingScreen text="Hämtar projekt..." />;
 }
 
 const handleModalSave = () => {
@@ -373,7 +379,9 @@ const handleModalSave = () => {
         </Flex>
 
 <Flex justify="space-between" align="center" mb={4}>
+
   {/* Vänster: Filter + Sökfält */}
+
   <HStack spacing={4}>
     <Flex gap={2} align="center">
       <Text fontWeight="semibold">Filter</Text>
@@ -406,7 +414,7 @@ const handleModalSave = () => {
 </Flex>
 <Flex gap={6} align="start" overflowX="auto">
   <Box overflowX="auto" w="100%">
-    <Box transform="scale(0.65)" transformOrigin="top left" minW="2400px">
+    <Box minW="fit-content" w="full">
       <TableContainer bg="white" p={4} borderRadius="lg" boxShadow="md">
         <Table variant="simple" size="sm">
           <Thead bg="gray.200">
@@ -442,7 +450,6 @@ const handleModalSave = () => {
               {visibleColumns.starttid && <Th>Starttid</Th>}
               {visibleColumns.begard && <Th>Begärd till</Th>}
               {visibleColumns.avslutat && <Th>Avslutat</Th>}
-              {visibleColumns.anteckning && <Th>Anteckning</Th>}
             </Tr>
           </Thead>
 <Tbody>
@@ -465,8 +472,8 @@ onClick={(e) => {
       </Td>
 
       {visibleColumns.namn && (
-        <Td maxW="150px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
-          <Text color="black" fontSize="md" w="170px" isTruncated>
+        <Td minW="130px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
+          <Text color="black" fontSize="md" w="130px" isTruncated>
             {row.namn}
           </Text>
         </Td>
@@ -534,14 +541,6 @@ onChange={(e) => {
           </Text>
         </Td>
       )}
-
-      {visibleColumns.anteckning && (
-        <Td minW="250px">
-          <Text color="black" fontSize="md" w="250px" isTruncated>
-            {row.anteckning}
-          </Text>
-        </Td>
-      )}
     </Tr>
   ))}
 </Tbody>
@@ -563,6 +562,7 @@ onChange={(e) => {
     <ModalBody>
       {selectedRow && (
         <SimpleGrid columns={2} spacing={6}>
+
           {/* Vänsterkolumn: formulärfält */}
           <Stack spacing={4}>
             <SimpleGrid columns={2} spacing={4}>
