@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import LoadingScreen from '../components/LoadingScreen';
+import { Tooltip } from '@chakra-ui/react';
 import {
   Box,
   Button,
@@ -72,6 +73,7 @@ const [currentProject, setCurrentProject] = useState(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedRow, setSelectedRow] = useState(null);
   const [selectedAreas, setSelectedAreas] = useState([]);
+
 
 const sparaProjekt = async () => {
   try {
@@ -165,6 +167,7 @@ const sparaProjekt = async () => {
 
       const current = response.data;
       setProject(current);
+      
 setRows(current.rows && current.rows.length > 0 ? current.rows : [
   {
     id: 1,
@@ -180,8 +183,10 @@ setRows(current.rows && current.rows.length > 0 ? current.rows : [
     avslutadRad: false,
     anteckning: '',
     selections: current.sections.map(() => false),
+    samrad: [],
   },
 ]);
+
 
       const interval = setInterval(() => {
         const target = new Date(`${current.endDate}T${current.endTime}`);
@@ -204,18 +209,7 @@ setRows(current.rows && current.rows.length > 0 ? current.rows : [
     } finally {
     setLoading(false);
     }
-  };
 
-  const handleChange = (index, field, value) => {
-    const updated = [...rows];
-    updated[index][field] = value;
-    setRows(updated);
-  };
-
-  const handleCheckboxChange = (rowIndex, sectionIndex, value) => {
-    const updated = [...rows];
-    updated[rowIndex].selections[sectionIndex] = value;
-    setRows(updated);
   };
 
   const addRow = () => {
@@ -314,21 +308,23 @@ if (loading || !project) {
 
 const handleModalSave = () => {
   const updatedRows = [...rows];
-  const current = updatedRows[selectedRow.index];
-  current.avslutadRad = selectedRow?.avslutadRad || false;
+  const index = selectedRow.index;
 
-  // Nollställ först
-  current.selections = current.selections.map(() => false);
+  updatedRows[index] = {
+    ...updatedRows[index],
+    ...selectedRow, // Kopiera över namn, anteckning, telefon etc.
+    selections: Array(project.sections.length).fill(false),
+    selectedAreas: [...selectedAreas],
+  };
 
-  // Markera valda
+  // Markera valda områden
   selectedAreas.forEach((idx) => {
-    current.selections[idx] = true;
+    updatedRows[index].selections[idx] = true;
   });
+  updatedRows[index].samrad = samrad.filter((s) =>
+  selectedAreas.some((idx) => s.selections?.[idx])
+);
 
-  // Spara valda områden i raden
-  current.selectedAreas = selectedAreas;
-
-  updatedRows[selectedRow.index] = current;
   setRows(updatedRows);
   onClose();
 };
@@ -471,13 +467,51 @@ onClick={(e) => {
         </Text>
       </Td>
 
-      {visibleColumns.namn && (
-        <Td minW="130px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
-          <Text color="black" fontSize="md" w="130px" isTruncated>
-            {row.namn}
-          </Text>
-        </Td>
+{visibleColumns.namn && (
+  <Td minW="130px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
+<Tooltip
+  label={
+    <Box p={2} maxW="300px">
+      <Text fontWeight="bold" mb={1}>Anteckningar:</Text>
+      {row.anteckning ? (
+        <Text fontSize="sm">{row.anteckning}</Text>
+      ) : (
+        <Text fontSize="sm" color="gray.500">Inga anteckningar</Text>
       )}
+
+      <Text fontWeight="bold" mt={3} mb={1}>Samråd:</Text>
+    {row.samrad && row.samrad.length > 0 ? (
+  <Stack spacing={0.5} align="start">
+    {row.samrad.map((r, idx) => (
+      <Text key={idx} fontSize="sm">{r.namn}</Text>
+    ))}
+  </Stack>
+) : (
+  <Text fontSize="sm" color="gray.500">Inga samråd</Text>
+)}
+    </Box>
+  }
+  hasArrow
+  placement="top"
+  bg="white"
+  color="black"
+  border="1px solid #ccc"
+  borderRadius="md"
+  shadow="md"
+  p={3}
+>
+  <Text
+    color="black"
+    fontSize="md"
+    w="130px"
+    isTruncated
+    cursor="help"
+  >
+    {row.namn}
+  </Text>
+</Tooltip>
+  </Td>
+)}
 
       {visibleColumns.telefon && (
         <Td maxW="115px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
