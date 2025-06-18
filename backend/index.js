@@ -231,7 +231,7 @@ app.put('/api/projects/:id', async (req, res) => {
 
     res.json(project);
   } catch (error) {
-    console.error('❌ Update project error:', error);
+    console.error('❌ Update project error:', error); // <--- DENNA loggar det riktiga felet
     res.status(500).json({ error: 'Kunde inte uppdatera projekt' });
   }
 });
