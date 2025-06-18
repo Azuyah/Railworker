@@ -76,34 +76,34 @@ const sparaProjekt = async () => {
     const tokenData = localStorage.getItem('user');
     const token = tokenData ? JSON.parse(tokenData).token : null;
 
-    if (!currentProject || !currentProject.id) {
-  console.error('❌ currentProject är null eller saknar id');
-  toast({
-    title: 'Fel',
-    description: 'Ingen giltig projektdata att spara.',
-    status: 'error',
-    duration: 3000,
-    isClosable: true,
-  });
-  return;
-}
+    if (!project || !project.id) {
+      console.error('❌ Projekt är null eller saknar id');
+      toast({
+        title: 'Fel',
+        description: 'Ingen giltig projektdata att spara.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
 
-const updatedProject = {
-  id: currentProject?.id || null,
-  name: currentProject?.name || '',
-  startDate: currentProject?.startDate || '',
-  startTime: currentProject?.startTime || '',
-  endDate: currentProject?.endDate || '',
-  endTime: currentProject?.endTime || '',
-  plats: currentProject?.plats || '',
-  namn: currentProject?.namn || '',
-  telefonnummer: currentProject?.telefonnummer || '',
-  sections: currentProject?.sections || [],
-  rows: rows || [],
-};
+    const updatedProject = {
+      id: project.id,
+      name: project.name || '',
+      startDate: project.startDate || '',
+      startTime: project.startTime || '',
+      endDate: project.endDate || '',
+      endTime: project.endTime || '',
+      plats: project.plats || '',
+      namn: project.namn || '',
+      telefonnummer: project.telefonnummer || '',
+      sections: project.sections || [],
+      rows: rows || [],
+    };
 
     await axios.put(
-      `https://railworker-production.up.railway.app/api/projects/${currentProject.id}`,
+      `https://railworker-production.up.railway.app/api/projects/${project.id}`,
       updatedProject,
       {
         headers: { Authorization: `Bearer ${token}` },
