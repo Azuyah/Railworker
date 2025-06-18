@@ -79,7 +79,7 @@ const [searchQuery, setSearchQuery] = useState('');
       ...project,
       rows,
     };
-await axios.patch(`https://railworker-production.up.railway.app/api/projects/${id}`, updatedProject, {
+await axios.put(`https://railworker-production.up.railway.app/api/projects/${id}`, updatedProject, {
   headers: { Authorization: `Bearer ${token}` },
 });
 
