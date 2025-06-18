@@ -76,8 +76,17 @@ const [searchQuery, setSearchQuery] = useState('');
     const token = tokenData ? JSON.parse(tokenData).token : null;
 
     const updatedProject = {
-      ...project,
-      rows,
+        id: currentProject.id,
+  name: currentProject.name,
+  startDate: currentProject.startDate,
+  startTime: currentProject.startTime,
+  endDate: currentProject.endDate,
+  endTime: currentProject.endTime,
+  plats: currentProject.plats,
+  namn: currentProject.namn,
+  telefonnummer: currentProject.telefonnummer,
+  sections: currentProject.sections,
+  rows: rows,
     };
 await axios.put(`https://railworker-production.up.railway.app/api/projects/${id}`, updatedProject, {
   headers: { Authorization: `Bearer ${token}` },
