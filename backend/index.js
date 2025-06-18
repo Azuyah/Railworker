@@ -221,16 +221,13 @@ app.put('/api/projects/:id', async (req, res) => {
   } = req.body;
 
   try {
-    console.log('📦 Incoming rows data:', rows);
-
-    // Validera att rows är serialiserbar JSON
-    JSON.stringify(rows); // Kommer kasta error om rows innehåller något ogiltigt
 
     await prisma.section.deleteMany({
       where: {
         projectId: parseInt(id),
       },
     });
+
 
     const updatedProject = await prisma.project.update({
       where: { id: parseInt(id) },
@@ -243,9 +240,10 @@ app.put('/api/projects/:id', async (req, res) => {
         plats,
         namn,
         telefonnummer,
-        rows, // ✅ detta är korrekt nu
+        rows: data.rows
       },
     });
+
 
     if (Array.isArray(sections)) {
       const newSections = sections.map((sec) => ({
