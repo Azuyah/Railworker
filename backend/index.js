@@ -207,39 +207,59 @@ app.delete('/api/project/:id', async (req, res) => {
 
 app.put('/api/projects/:id', async (req, res) => {
   const { id } = req.params;
-  const updatedProject = req.body;
+  const {
+    name,
+    startDate,
+    startTime,
+    endDate,
+    endTime,
+    plats,
+    namn,
+    telefonnummer,
+    rows,
+    sections = [],
+  } = req.body;
 
   try {
-    console.log('🔧 Inkommande update-data:', updatedProject); // 👈 Lägg till detta
-    const project = await prisma.project.update({
-      where: { id: parseInt(id) },
-      data: {
-        name: updatedProject.name,
-        startDate: updatedProject.startDate,
-        startTime: updatedProject.startTime,
-        endDate: updatedProject.endDate,
-        endTime: updatedProject.endTime,
-        plats: updatedProject.plats,
-        namn: updatedProject.namn,
-        telefonnummer: updatedProject.telefonnummer,
-        sections: {
-          deleteMany: {},
-          create: updatedProject.sections || [],
-        },
-        beteckningar: {
-          deleteMany: {},
-          create: updatedProject.beteckningar || [],
-        },
-      },
-      include: {
-        sections: true,
-        beteckningar: true,
+
+    await prisma.section.deleteMany({
+      where: {
+        projectId: parseInt(id),
       },
     });
 
-    res.json(project);
+
+    const updatedProject = await prisma.project.update({
+      where: { id: parseInt(id) },
+      data: {
+        name,
+        startDate,
+        startTime,
+        endDate,
+        endTime,
+        plats,
+        namn,
+        telefonnummer,
+        rows,
+      },
+    });
+
+
+    if (Array.isArray(sections)) {
+      const newSections = sections.map((sec) => ({
+        name: sec.name,
+        type: sec.type,
+        projectId: updatedProject.id,
+      }));
+
+      await prisma.section.createMany({
+        data: newSections,
+      });
+    }
+
+    res.status(200).json(updatedProject);
   } catch (error) {
-    console.error('❌ FEL VID UPDATE:', error); // 👈 Viktig logg
+    console.error('❌ Fel vid uppdatering av projekt:', error);
     res.status(500).json({ error: 'Kunde inte uppdatera projekt' });
   }
 });
