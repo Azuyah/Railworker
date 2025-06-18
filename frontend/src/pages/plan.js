@@ -62,6 +62,7 @@ const Plan = () => {
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedAreas, setSelectedAreas] = useState([]);
 
   useEffect(() => {
     fetchProject();
@@ -217,14 +218,13 @@ const handleModalSave = () => {
   const updatedRows = [...rows];
   const current = updatedRows[selectedRow.index];
 
+  // Nollställ först
   current.selections = current.selections.map(() => false);
 
-  if (selectedRow.dp !== undefined && selectedRow.dp !== null) {
-    current.selections[selectedRow.dp] = true;
-  }
-  if (selectedRow.linje !== undefined && selectedRow.linje !== null) {
-    current.selections[selectedRow.linje] = true;
-  }
+  // Markera valda
+  selectedAreas.forEach((idx) => {
+    current.selections[idx] = true;
+  });
 
   updatedRows[selectedRow.index] = current;
   setRows(updatedRows);
@@ -469,28 +469,35 @@ onChange={(e) => {
             </SimpleGrid>
 
             <SimpleGrid columns={2} spacing={4}>
-              <FormControl>
-                <FormLabel>DP</FormLabel>
-                <Select value={selectedRow.dp || ''} onChange={(e) => handleModalChange('dp', parseInt(e.target.value))}>
-                  <option value="">Välj DP</option>
-                  {dpOptions.map((dp, idx) => (
-                    <option key={idx} value={dp.letterIndex}>
-                      {dp.label}
-                    </option>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl>
-                <FormLabel>Linje</FormLabel>
-                <Select value={selectedRow.linje || ''} onChange={(e) => handleModalChange('linje', parseInt(e.target.value))}>
-                  <option value="">Välj Linje</option>
-                  {linjeOptions.map((linje, idx) => (
-                    <option key={idx} value={linje.letterIndex}>
-                      {linje.label}
-                    </option>
-                  ))}
-                </Select>
-              </FormControl>
+<FormControl>
+  <FormLabel>Delområde</FormLabel>
+  <Menu closeOnSelect={false}>
+    <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
+      {selectedAreas.length > 0
+        ? `${selectedAreas.length} valda`
+        : 'Välj delområden'}
+    </MenuButton>
+    <MenuList maxHeight="300px" overflowY="auto">
+      {project.sections.map((sec, idx) => (
+        <MenuItem key={idx}>
+          <Checkbox
+            isChecked={selectedAreas.includes(idx)}
+            onChange={(e) => {
+              const isChecked = e.target.checked;
+              setSelectedAreas((prev) =>
+                isChecked
+                  ? [...prev, idx]
+                  : prev.filter((i) => i !== idx)
+              );
+            }}
+          >
+            {sec.type} {String.fromCharCode(65 + idx)}
+          </Checkbox>
+        </MenuItem>
+      ))}
+    </MenuList>
+  </Menu>
+</FormControl>
             </SimpleGrid>
 
             <SimpleGrid columns={3} spacing={4}>
