@@ -240,7 +240,7 @@ app.put('/api/projects/:id', async (req, res) => {
         plats,
         namn,
         telefonnummer,
-        rows: data.rows
+        rows,
       },
     });
 
