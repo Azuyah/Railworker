@@ -77,16 +77,17 @@ const sparaProjekt = async () => {
     const token = tokenData ? JSON.parse(tokenData).token : null;
 
 const updatedProject = {
-  name: currentProject.name,
-  startDate: currentProject.startDate,
-  startTime: currentProject.startTime,
-  endDate: currentProject.endDate,
-  endTime: currentProject.endTime,
-  plats: currentProject.plats,
-  namn: currentProject.namn,
-  telefonnummer: currentProject.telefonnummer,
+  id: currentProject?.id || null,
+  name: currentProject?.name || '',
+  startDate: currentProject?.startDate || '',
+  startTime: currentProject?.startTime || '',
+  endDate: currentProject?.endDate || '',
+  endTime: currentProject?.endTime || '',
+  plats: currentProject?.plats || '',
+  namn: currentProject?.namn || '',
+  telefonnummer: currentProject?.telefonnummer || '',
+  sections: currentProject?.sections || [],
   rows: rows || [],
-  sections: currentProject.sections,
 };
 
     await axios.put(
