@@ -70,54 +70,27 @@ const [searchQuery, setSearchQuery] = useState('');
   const [selectedRow, setSelectedRow] = useState(null);
   const [selectedAreas, setSelectedAreas] = useState([]);
 
-  function getAllRows() {
-  const rows = [];
-  const rowElements = document.querySelectorAll('tr[data-index]');
-
-  rowElements.forEach((row) => {
-    const index = row.getAttribute('data-index');
-
-    rows.push({
-      btkn: row.querySelector(`#btkn-${index}`)?.value || '',
-      telefon: row.querySelector(`#telefon-${index}`)?.value || '',
-      anordning: row.querySelector(`#anordning-${index}`)?.value || '',
-      bt: row.querySelector(`#bt-${index}`)?.value || '',
-      linje: row.querySelector(`#linje-${index}`)?.value || '',
-      starttid: row.querySelector(`#starttid-${index}`)?.value || '',
-      begard: row.querySelector(`#begard-${index}`)?.value || '',
-      avslutat: row.querySelector(`#avslutat-${index}`)?.value || '',
-      anteckning: row.querySelector(`#anteckning-${index}`)?.value || '',
-      avslutadRad: row.querySelector(`#avslutadRad-${index}`)?.checked || false,
-      selections: [], // Lägg till om du använder dessa
-      selectedAreas: [],
-    });
-  });
-
-  return rows;
-}
-
-const sparaProjekt = async () => {
+    const sparaProjekt = async () => {
   try {
     const tokenData = localStorage.getItem('user');
     const token = tokenData ? JSON.parse(tokenData).token : null;
 
     const updatedProject = {
-      id: currentProject.id,
-      name: currentProject.name,
-      startDate: currentProject.startDate,
-      startTime: currentProject.startTime,
-      endDate: currentProject.endDate,
-      endTime: currentProject.endTime,
-      plats: currentProject.plats,
-      namn: currentProject.namn,
-      telefonnummer: currentProject.telefonnummer,
-      sections: currentProject.sections,
-      rows: getAllRowsFromTable(), // 🔧 Viktigt: hämta direkt från DOM
+        id: currentProject.id,
+  name: currentProject.name,
+  startDate: currentProject.startDate,
+  startTime: currentProject.startTime,
+  endDate: currentProject.endDate,
+  endTime: currentProject.endTime,
+  plats: currentProject.plats,
+  namn: currentProject.namn,
+  telefonnummer: currentProject.telefonnummer,
+  sections: currentProject.sections,
+  rows: rows,
     };
-
-    await axios.put(`https://railworker-production.up.railway.app/api/projects/${id}`, updatedProject, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+await axios.put(`https://railworker-production.up.railway.app/api/projects/${id}`, updatedProject, {
+  headers: { Authorization: `Bearer ${token}` },
+});
 
     toast({
       title: 'Projekt sparat',
@@ -126,25 +99,25 @@ const sparaProjekt = async () => {
       duration: 3000,
       isClosable: true,
     });
-  } catch (error) {
-    console.error('Fel vid sparning:', error);
-    if (error.response) {
-      console.error('Statuskod:', error.response.status);
-      console.error('Svar:', error.response.data);
-    } else if (error.request) {
-      console.error('Ingen respons mottagen:', error.request);
-    } else {
-      console.error('Felmeddelande:', error.message);
-    }
-
-    toast({
-      title: 'Fel',
-      description: 'Kunde inte spara projektet.',
-      status: 'error',
-      duration: 3000,
-      isClosable: true,
-    });
+} catch (error) {
+  console.error('Fel vid sparning:', error);
+  if (error.response) {
+    console.error('Statuskod:', error.response.status);
+    console.error('Svar:', error.response.data);
+  } else if (error.request) {
+    console.error('Ingen respons mottagen:', error.request);
+  } else {
+    console.error('Felmeddelande:', error.message);
   }
+
+  toast({
+    title: 'Fel',
+    description: 'Kunde inte spara projektet.',
+    status: 'error',
+    duration: 3000,
+    isClosable: true,
+  });
+}
 };
 
   useEffect(() => {
