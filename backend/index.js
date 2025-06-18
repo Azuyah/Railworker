@@ -210,10 +210,18 @@ app.put('/api/projects/:id', async (req, res) => {
   const updatedProject = req.body;
 
   try {
+    console.log('🔧 Inkommande update-data:', updatedProject); // 👈 Lägg till detta
     const project = await prisma.project.update({
       where: { id: parseInt(id) },
       data: {
-        ...updatedProject,
+        name: updatedProject.name,
+        startDate: updatedProject.startDate,
+        startTime: updatedProject.startTime,
+        endDate: updatedProject.endDate,
+        endTime: updatedProject.endTime,
+        plats: updatedProject.plats,
+        namn: updatedProject.namn,
+        telefonnummer: updatedProject.telefonnummer,
         sections: {
           deleteMany: {},
           create: updatedProject.sections || [],
@@ -231,7 +239,7 @@ app.put('/api/projects/:id', async (req, res) => {
 
     res.json(project);
   } catch (error) {
-    console.error('❌ Update project error:', error); // <--- DENNA loggar det riktiga felet
+    console.error('❌ FEL VID UPDATE:', error); // 👈 Viktig logg
     res.status(500).json({ error: 'Kunde inte uppdatera projekt' });
   }
 });
