@@ -216,7 +216,7 @@ app.put('/api/projects/:id', async (req, res) => {
     plats,
     namn,
     telefonnummer,
-    rows,
+    rows = [],
     sections = [],
   } = req.body;
 
@@ -240,7 +240,7 @@ app.put('/api/projects/:id', async (req, res) => {
         plats,
         namn,
         telefonnummer,
-        rows,
+        rows: rows || [],
       },
     });
 

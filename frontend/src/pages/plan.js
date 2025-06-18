@@ -54,6 +54,7 @@ const Plan = () => {
 const [avslutadeRows, setAvslutadeRows] = useState([]);
 const { isOpen: isAvslutadeOpen, onOpen: onOpenAvslutade, onClose: onCloseAvslutade } = useDisclosure();
 const [searchQuery, setSearchQuery] = useState('');
+const [currentProject, setCurrentProject] = useState(null);
   const [avklaradSamrad, setAvklaradSamrad] = useState({});
   const [visibleColumns, setVisibleColumns] = useState({
     namn: true,
@@ -70,13 +71,12 @@ const [searchQuery, setSearchQuery] = useState('');
   const [selectedRow, setSelectedRow] = useState(null);
   const [selectedAreas, setSelectedAreas] = useState([]);
 
-    const sparaProjekt = async () => {
+const sparaProjekt = async () => {
   try {
     const tokenData = localStorage.getItem('user');
     const token = tokenData ? JSON.parse(tokenData).token : null;
 
-    const updatedProject = {
-        id: currentProject.id,
+const updatedProject = {
   name: currentProject.name,
   startDate: currentProject.startDate,
   startTime: currentProject.startTime,
@@ -85,12 +85,17 @@ const [searchQuery, setSearchQuery] = useState('');
   plats: currentProject.plats,
   namn: currentProject.namn,
   telefonnummer: currentProject.telefonnummer,
+  rows: rows || [],
   sections: currentProject.sections,
-  rows: rows,
-    };
-await axios.put(`https://railworker-production.up.railway.app/api/projects/${id}`, updatedProject, {
-  headers: { Authorization: `Bearer ${token}` },
-});
+};
+
+    await axios.put(
+      `https://railworker-production.up.railway.app/api/projects/${currentProject.id}`,
+      updatedProject,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
 
     toast({
       title: 'Projekt sparat',
@@ -99,25 +104,21 @@ await axios.put(`https://railworker-production.up.railway.app/api/projects/${id}
       duration: 3000,
       isClosable: true,
     });
-} catch (error) {
-  console.error('Fel vid sparning:', error);
-  if (error.response) {
-    console.error('Statuskod:', error.response.status);
-    console.error('Svar:', error.response.data);
-  } else if (error.request) {
-    console.error('Ingen respons mottagen:', error.request);
-  } else {
-    console.error('Felmeddelande:', error.message);
-  }
+  } catch (error) {
+    console.error('Fel vid sparning:', error);
+    if (error.response) {
+      console.error('Statuskod:', error.response.status);
+      console.error('Svar:', error.response.data);
+    }
 
-  toast({
-    title: 'Fel',
-    description: 'Kunde inte spara projektet.',
-    status: 'error',
-    duration: 3000,
-    isClosable: true,
-  });
-}
+    toast({
+      title: 'Fel',
+      description: 'Kunde inte spara projektet.',
+      status: 'error',
+      duration: 3000,
+      isClosable: true,
+    });
+  }
 };
 
   useEffect(() => {
