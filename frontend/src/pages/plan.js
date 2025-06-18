@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import {
@@ -87,6 +87,8 @@ const Plan = () => {
           namn: '',
           telefon: '',
           anordning: '',
+          bt: '',
+          linje: '',
           starttid: '',
           begard: '',
           avslutat: '',
@@ -137,6 +139,8 @@ const Plan = () => {
         namn: '',
         telefon: '',
         anordning: '',
+        bt: '',
+        linje: '',
         starttid: '',
         begard: '',
         avslutat: '',
@@ -150,33 +154,81 @@ const Plan = () => {
     setVisibleColumns((prev) => ({ ...prev, [col]: !prev[col] }));
   };
 
-  const handleRowClick = (row, rowIndex) => {
-    setSelectedRow({ ...row, index: rowIndex });
-    onOpen();
-  };
+const handleRowClick = (row, rowIndex) => {
+  setSelectedRow({
+    ...row,
+    index: rowIndex,
+    dp: row.dp || '',
+    linje: row.linje || ''
+  });
+  onOpen();
+};
 
-  const handleModalChange = (field, value) => {
-    const updated = [...rows];
-    updated[selectedRow.index][field] = value;
-    setRows(updated);
-    setSelectedRow((prev) => ({ ...prev, [field]: value }));
-  };
+const handleModalChange = (field, value) => {
+  const updated = [...rows];
+  const index = selectedRow.index;
 
-  const getSharedContacts = () => {
-    const firstRow = rows[0];
-    return rows.filter((row, i) => {
-      if (i === 0) return false;
-      return row.selections.some((val, idx) => val && firstRow.selections[idx]);
-    });
-  };
+  if (field === 'dp' || field === 'linje') {
+    value = parseInt(value);
+  }
 
-  const samrad = getSharedContacts();
+  updated[index][field] = value;
+  setRows(updated);
+  setSelectedRow((prev) => ({ ...prev, [field]: value }));
+};
+
+const getSharedContacts = () => {
+  if (!selectedRow) return [];
+
+  return rows.filter((row) => {
+    if (row.id === selectedRow.id) return false;
+    return row.selections?.some(
+      (val, idx) => val && selectedRow.selections?.[idx]
+    );
+  });
+};
+
+const samrad = getSharedContacts();
   const filteredRows = filterValue === 'all' ? rows : rows.filter(row => row.namn === filterValue);
-    if (!project) return <Box p={6}>Inget projekt hittades.</Box>;
+const { dpOptions, linjeOptions } = useMemo(() => {
+  const dp = [];
+  const linje = [];
+  let letterIndex = 0;
 
-    const handleModalSave = () => {
-  setRows([...rows]); // Trigger en re-render med uppdaterade rader
-  onClose(); // Stänger modalen
+  if (project?.sections) {
+    project.sections.forEach((sec) => {
+      const letter = String.fromCharCode(65 + letterIndex);
+      const labeledSection = { ...sec, label: `${sec.type} ${letter}`, letterIndex };
+
+      if (sec.type === 'DP') dp.push(labeledSection);
+      else if (sec.type === 'Linje') linje.push(labeledSection);
+
+      letterIndex++;
+    });
+  }
+
+  return { dpOptions: dp, linjeOptions: linje };
+}, [project]);
+    if (!project) {
+  return <Box p={6}>Laddar projektdata...</Box>;
+}
+
+const handleModalSave = () => {
+  const updatedRows = [...rows];
+  const current = updatedRows[selectedRow.index];
+
+  current.selections = current.selections.map(() => false);
+
+  if (selectedRow.dp !== undefined && selectedRow.dp !== null) {
+    current.selections[selectedRow.dp] = true;
+  }
+  if (selectedRow.linje !== undefined && selectedRow.linje !== null) {
+    current.selections[selectedRow.linje] = true;
+  }
+
+  updatedRows[selectedRow.index] = current;
+  setRows(updatedRows);
+  onClose();
 };
 
   return (
@@ -256,7 +308,7 @@ const Plan = () => {
                 <Th key={idx} minW="40px" maxW="40" bg={idx % 2 === 0 ? 'yellow.100' : 'transparent'}>
                   <Flex direction="column" align="center">
                     <Textarea
-                      value={sec.signal}
+                      value={sec.signal ?? ''}
                       onChange={(e) => {
                         const updatedSections = [...project.sections];
                         updatedSections[idx].signal = e.target.value;
@@ -387,61 +439,106 @@ onChange={(e) => {
   </Box>
 </Flex>
 
-<Modal isOpen={isOpen} onClose={onClose} size="xl">
+<Modal isOpen={isOpen} onClose={onClose} size="4xl">
   <ModalOverlay />
   <ModalContent>
     <ModalHeader>Redigera rad</ModalHeader>
     <ModalCloseButton />
-<ModalBody>
-  {selectedRow && (
-    <Stack spacing={4}>
-      <SimpleGrid columns={2} spacing={4}>
-        <FormControl>
-          <FormLabel>BTKN</FormLabel>
-          <Input value={selectedRow.btkn} onChange={(e) => handleModalChange('btkn', e.target.value)} />
-        </FormControl>
-        <FormControl>
-          <FormLabel>Anordning</FormLabel>
-          <Input value={selectedRow.anordning} onChange={(e) => handleModalChange('anordning', e.target.value)} />
-        </FormControl>
-        <FormControl>
-          <FormLabel>Namn</FormLabel>
-          <Input value={selectedRow.namn} onChange={(e) => handleModalChange('namn', e.target.value)} />
-        </FormControl>
-        <FormControl>
-          <FormLabel>Telefon</FormLabel>
-          <Input value={selectedRow.telefon} onChange={(e) => handleModalChange('telefon', e.target.value)} />
-        </FormControl>
-      </SimpleGrid>
+    <ModalBody>
+      {selectedRow && (
+        <SimpleGrid columns={2} spacing={6}>
+          {/* Vänsterkolumn: formulärfält */}
+          <Stack spacing={4}>
+            <SimpleGrid columns={2} spacing={4}>
+              <FormControl>
+                <FormLabel>BTKN</FormLabel>
+                <Input value={selectedRow.btkn} onChange={(e) => handleModalChange('btkn', e.target.value)} />
+              </FormControl>
+              <FormControl>
+                <FormLabel>Anordning</FormLabel>
+                <Input value={selectedRow.anordning} onChange={(e) => handleModalChange('anordning', e.target.value)} />
+              </FormControl>
+              <FormControl>
+                <FormLabel>Namn</FormLabel>
+                <Input value={selectedRow.namn} onChange={(e) => handleModalChange('namn', e.target.value)} />
+              </FormControl>
+              <FormControl>
+                <FormLabel>Telefon</FormLabel>
+                <Input value={selectedRow.telefon} onChange={(e) => handleModalChange('telefon', e.target.value)} />
+              </FormControl>
+            </SimpleGrid>
 
-      <SimpleGrid columns={3} spacing={4}>
-        <FormControl>
-          <FormLabel>Starttid</FormLabel>
-          <Input type="time" value={selectedRow.starttid} onChange={(e) => handleModalChange('starttid', e.target.value)} />
-        </FormControl>
-        <FormControl>
-          <FormLabel>Begärd till</FormLabel>
-          <Input type="time" value={selectedRow.begard} onChange={(e) => handleModalChange('begard', e.target.value)} />
-        </FormControl>
-        <FormControl>
-          <FormLabel>Avslutat</FormLabel>
-          <Input type="time" value={selectedRow.avslutat} onChange={(e) => handleModalChange('avslutat', e.target.value)} />
-        </FormControl>
-      </SimpleGrid>
+            <SimpleGrid columns={2} spacing={4}>
+              <FormControl>
+                <FormLabel>DP</FormLabel>
+                <Select value={selectedRow.dp || ''} onChange={(e) => handleModalChange('dp', parseInt(e.target.value))}>
+                  <option value="">Välj DP</option>
+                  {dpOptions.map((dp, idx) => (
+                    <option key={idx} value={dp.letterIndex}>
+                      {dp.label}
+                    </option>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl>
+                <FormLabel>Linje</FormLabel>
+                <Select value={selectedRow.linje || ''} onChange={(e) => handleModalChange('linje', parseInt(e.target.value))}>
+                  <option value="">Välj Linje</option>
+                  {linjeOptions.map((linje, idx) => (
+                    <option key={idx} value={linje.letterIndex}>
+                      {linje.label}
+                    </option>
+                  ))}
+                </Select>
+              </FormControl>
+            </SimpleGrid>
 
-      <FormControl>
-        <FormLabel>Anteckning</FormLabel>
-        <Textarea value={selectedRow.anteckning} onChange={(e) => handleModalChange('anteckning', e.target.value)} />
-      </FormControl>
-    </Stack>
-  )}
-</ModalBody>
-<ModalFooter>
-  <Button colorScheme="blue" mr={3} onClick={handleModalSave}>Spara</Button>
-  <Button onClick={onClose}>Stäng</Button>
-</ModalFooter>
-        </ModalContent>
-      </Modal>
+            <SimpleGrid columns={3} spacing={4}>
+              <FormControl>
+                <FormLabel>Starttid</FormLabel>
+                <Input type="time" value={selectedRow.starttid} onChange={(e) => handleModalChange('starttid', e.target.value)} />
+              </FormControl>
+              <FormControl>
+                <FormLabel>Begärd till</FormLabel>
+                <Input type="time" value={selectedRow.begard} onChange={(e) => handleModalChange('begard', e.target.value)} />
+              </FormControl>
+              <FormControl>
+                <FormLabel>Avslutat</FormLabel>
+                <Input type="time" value={selectedRow.avslutat} onChange={(e) => handleModalChange('avslutat', e.target.value)} />
+              </FormControl>
+            </SimpleGrid>
+
+            <FormControl>
+              <FormLabel>Anteckning</FormLabel>
+              <Textarea value={selectedRow?.anteckning ?? ''} onChange={(e) => handleModalChange('anteckning', e.target.value)} />
+            </FormControl>
+          </Stack>
+
+          {/* Högerkolumn: Mina samråd */}
+          <Box bg="gray.50" p={4} borderRadius="md" maxW="400px" border="1px solid #ccc" height="100%">
+            <Text fontWeight="bold" mb={2}>Samråd</Text>
+            {samrad.length > 0 ? (
+              <Stack spacing={2}>
+                {samrad.map((row, idx) => (
+                  <Box key={idx} p={2} border="1px solid #ddd" borderRadius="md" bg="white">
+                    <Text fontSize="sm"><strong>Namn:</strong> {row.namn}</Text>
+                    <Text fontSize="sm"><strong>Telefon:</strong> {row.telefon}</Text>
+                  </Box>
+                ))}
+              </Stack>
+            ) : (
+              <Text fontSize="sm" color="gray.500">Inga samråd.</Text>
+            )}
+          </Box>
+        </SimpleGrid>
+      )}
+    </ModalBody>
+    <ModalFooter>
+      <Button colorScheme="blue" mr={3} onClick={handleModalSave}>Spara</Button>
+      <Button onClick={onClose}>Stäng</Button>
+    </ModalFooter>
+  </ModalContent>
+</Modal>
     </Box>
     </Box>
   );
