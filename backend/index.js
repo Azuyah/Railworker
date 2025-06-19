@@ -40,6 +40,38 @@ app.post('/api/register', async (req, res) => {
   res.status(201).json({ message: 'User created', user: { id: user.id, email: user.email, role: user.role } });
 });
 
+app.get('/api/user', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Ingen token angiven' });
+  }
+
+  try {
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const userId = decoded.userId;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+        company: true,
+        role: true
+      }
+    });
+
+    if (!user) return res.status(404).json({ error: 'Användare hittades inte' });
+
+    res.json(user);
+  } catch (error) {
+    console.error('❌ Fel vid hämtning av användare:', error);
+    res.status(500).json({ error: 'Kunde inte hämta användare' });
+  }
+});
+
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
 
