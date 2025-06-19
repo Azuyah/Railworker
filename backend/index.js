@@ -69,7 +69,6 @@ app.post('/api/projects', async (req, res) => {
     namn,
     telefonnummer,
     sections = [],
-    beteckningar = [],
   } = req.body;
 
   try {
@@ -107,16 +106,6 @@ app.post('/api/projects', async (req, res) => {
       });
     }
 
-    // Skapa beteckningar
-    for (const b of beteckningar) {
-      await prisma.beteckning.create({
-        data: {
-          label: b.value,
-          projectId: project.id,
-        },
-      });
-    }
-
     res.status(201).json(project);
   } catch (error) {
     console.error('❌ Create project error:', error);
@@ -139,7 +128,6 @@ app.get('/api/projects', async (req, res) => {
       where: { userId },
       include: {
         sections: true,
-        beteckningar: true,
       },
     });
 
@@ -165,7 +153,6 @@ app.get('/api/project/:id', async (req, res) => {
       where: { id: parseInt(req.params.id, 10) },
       include: {
         sections: true,
-        beteckningar: true,
       },
     });
 
@@ -194,7 +181,6 @@ app.delete('/api/project/:id', async (req, res) => {
 
     // Radera sektioner & beteckningar först om du inte har ON DELETE CASCADE
     await prisma.section.deleteMany({ where: { projectId } });
-    await prisma.beteckning.deleteMany({ where: { projectId } });
 
     await prisma.project.delete({ where: { id: projectId } });
 
@@ -253,10 +239,10 @@ app.put('/api/projects/:id', async (req, res) => {
     });
 
     res.json(updatedProject);
-  } catch (error) {
-    console.error('Kunde inte uppdatera projekt:', error);
-    res.status(500).json({ error: 'Något gick fel vid uppdatering av projektet' });
-  }
+} catch (error) {
+  console.error('❌ Detaljerat fel vid uppdatering av projektet:', error.message, error.stack, error);
+  res.status(500).json({ error: 'Något gick fel vid uppdatering av projektet' });
+}
 });
 
 // Start server

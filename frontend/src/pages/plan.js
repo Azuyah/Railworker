@@ -208,8 +208,6 @@ const sparaProjekt = async () => {
       plats: project.plats || '',
       namn: project.namn || '',
       telefonnummer: project.telefonnummer || '',
-  beteckningar: beteckningar.map(b => ({
-    label: b.value || '', })),
       sections: project.sections || [],
       rows: rows || [],
     };
@@ -930,10 +928,14 @@ onChange={(e) => {
         onChange={(e) => setSearchQuery(e.target.value)}
       />
       <Stack spacing={4}>
-        {filteredRows.length === 0 ? (
-          <Text color="gray.500">Inga träffar.</Text>
-        ) : (
-          filteredRows.map((row, index) => (
+        {rows
+          .filter(
+            (row) =>
+              row.avslutadRad === true &&
+              (row.namn.toLowerCase().includes(searchQuery.toLowerCase()) ||
+               row.telefon.toLowerCase().includes(searchQuery.toLowerCase()))
+          )
+          .map((row, index) => (
             <Box key={index} p={3} border="1px solid #ccc" borderRadius="md">
               <Text><strong>Namn:</strong> {row.namn}</Text>
               <Text><strong>Telefon:</strong> {row.telefon}</Text>
@@ -953,11 +955,51 @@ onChange={(e) => {
               </Button>
             </Box>
           ))
+        }
+
+        {rows.filter(
+          (row) =>
+            row.avslutadRad === true &&
+            (row.namn.toLowerCase().includes(searchQuery.toLowerCase()) ||
+             row.telefon.toLowerCase().includes(searchQuery.toLowerCase()))
+        ).length === 0 && (
+          <Text color="gray.500">Inga träffar.</Text>
         )}
       </Stack>
     </ModalBody>
-    <ModalFooter>
+    <ModalFooter justifyContent="space-between">
       <Button onClick={() => setAvslutadeModalOpen(false)}>Stäng</Button>
+      <Button
+        colorScheme="blue"
+        onClick={async () => {
+          try {
+            const token = JSON.parse(localStorage.getItem('user'))?.token;
+            if (!token) {
+              alert('Du är inte inloggad.');
+              return;
+            }
+
+            await fetch(`https://railworker-production.up.railway.app/api/projects/${id}`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                ...project,
+                rows, // inkluderar uppdaterade avslutade rader
+              }),
+            });
+
+            setAvslutadeModalOpen(false);
+          } catch (error) {
+            console.error('❌ Kunde inte spara ändringar:', error);
+            alert('Något gick fel vid sparandet.');
+          }
+        }}
+      >
+        Spara ändringar
+      </Button>
     </ModalFooter>
   </ModalContent>
 </Modal>
