@@ -185,19 +185,15 @@ app.get('/api/projects', authMiddleware, async (req, res) => {
   }
 });
 
-// Hämta ett specifikt projekt med ID (alla roller kan se)
-app.get('/api/project/:id', async (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Ingen token angiven' });
-  }
-
+app.get('/api/project/:id', authMiddleware, async (req, res) => {
   try {
-    const token = authHeader.split(' ')[1];
-    jwt.verify(token, JWT_SECRET); // Vi verifierar endast token, men struntar i rollen
+    const projectId = parseInt(req.params.id, 10);
+    if (isNaN(projectId)) {
+      return res.status(400).json({ error: 'Ogiltigt projekt-ID' });
+    }
 
     const project = await prisma.project.findUnique({
-      where: { id: parseInt(req.params.id, 10) },
+      where: { id: projectId },
       include: {
         sections: true,
       },
@@ -209,7 +205,7 @@ app.get('/api/project/:id', async (req, res) => {
 
     res.json(project);
   } catch (error) {
-    console.error('❌ Fel vid hämtning av projekt:', error);
+    console.error('❌ Fel vid hämtning av projekt:', error.message, error.stack);
     res.status(500).json({ error: 'Kunde inte hämta projekt' });
   }
 });
