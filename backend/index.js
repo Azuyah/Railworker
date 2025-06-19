@@ -90,14 +90,21 @@ app.post('/api/login', async (req, res) => {
   const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, {
     expiresIn: '7d',
   });
-  res.json({
-    token,
-    role: user.role,
-    name: user.name,
-    email: user.email,
-    phone: user.phone,
-    company: user.company
-  });
+res.cookie('token', token, {
+  httpOnly: true,
+  secure: true,
+  sameSite: 'None',
+  maxAge: 7 * 24 * 60 * 60 * 1000 // 7 dagar
+});
+
+res.json({
+  message: 'Login successful',
+  role: user.role,
+  name: user.name,
+  email: user.email,
+  phone: user.phone,
+  company: user.company
+});
 });
 
 app.post('/api/projects', async (req, res) => {
