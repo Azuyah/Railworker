@@ -86,6 +86,43 @@ const [namn, setNamn] = useState(project?.namn || '');
 const [telefonnummer, setTelefonnummer] = useState(project?.telefonnummer || '');
 const [editSections, setEditSections] = useState(project?.sections || []);
 
+const calculateSamrad = (rows) => {
+  const newSamradList = [];
+  const newAvklarad = {};
+
+  const exclusionSet = ['A-S', 'L-S', 'S-S', 'E-S'];
+
+  rows.forEach((row, i) => {
+    const rowAreas = row.selections || [];
+    const rowAnordningar = String(row.anordning || '').split(',').map(a => a.trim());
+
+    for (let j = i + 1; j < rows.length; j++) {
+      const compareRow = rows[j];
+      const compareAreas = compareRow.selections || [];
+      const compareAnordningar = String(compareRow.anordning || '').split(',').map(a => a.trim());
+
+      // Hitta gemensamma delområden
+      const sharedAreas = rowAreas.some((selected, index) => selected && compareAreas[index]);
+
+      if (sharedAreas) {
+        const allExcludedA = rowAnordningar.every(an => exclusionSet.includes(an));
+        const allExcludedB = compareAnordningar.every(an => exclusionSet.includes(an));
+
+        // Hoppa över om båda endast innehåller uteslutna anordningar
+        if (allExcludedA && allExcludedB) continue;
+
+        // Lägg till samråd för båda raderna
+        newSamradList.push({ from: i, to: j });
+        newSamradList.push({ from: j, to: i });
+        newAvklarad[`${i}-${j}`] = false;
+        newAvklarad[`${j}-${i}`] = false;
+      }
+    }
+  });
+
+  return { samradList: newSamradList, avklaradMap: newAvklarad };
+};
+
 const addEditDP = () => {
   const newDP = { type: 'DP', name: '' }; // ändrat signal ➜ name
   setEditSections([...editSections, newDP]);
@@ -229,16 +266,19 @@ const sparaProjekt = async () => {
   }, []);
   useEffect(() => {
 }, [project]);
-  useEffect(() => {
+useEffect(() => {
   if (!rows || selectedRow === null) return;
 
-  const shared = rows.filter((row, i) => {
-    if (i === selectedRow.index) return false;
-    return selectedAreas.some((area) => row.selections[area]);
-  });
+  const currentRowIndex = selectedRow.index;
+  const { samradList, avklaradMap } = calculateSamrad(rows);
 
-  setSamrad(shared);
-}, [selectedAreas, rows, selectedRow]);
+  const related = samradList
+    .filter((entry) => entry.from === currentRowIndex)
+    .map((entry) => rows[entry.to]);
+
+  setSamrad(related);
+  setAvklaradSamrad(avklaradMap);
+}, [rows, selectedRow]);
 
   const fetchProject = async () => {
     try {
