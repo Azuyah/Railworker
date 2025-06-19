@@ -497,6 +497,7 @@ const handleModalSave = () => {
         <Table variant="simple" size="sm">
           <Thead bg="gray.200">
             <Tr>
+              <Th width="40px" textAlign="center">#</Th>
               <Th>BTKN</Th>
               {visibleColumns.namn && <Th>Namn</Th>}
               {visibleColumns.telefon && <Th>Telefon</Th>}
@@ -543,6 +544,12 @@ onClick={(e) => {
       _hover={{ bg: 'blue.50' }}
       cursor="pointer"
     >
+<Td width="40px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
+  <Text color="black" fontSize="md" w="40px" textAlign="center">
+    {rowIndex + 1}
+  </Text>
+</Td>
+
       <Td width="80px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
         <Text color="black" fontSize="md" w="80px" isTruncated>
           {row.btkn}
@@ -596,20 +603,20 @@ onClick={(e) => {
 )}
 
       {visibleColumns.telefon && (
-        <Td maxW="115px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
-          <Text color="black" fontSize="md" w="160px" isTruncated>
+        <Td maxW="145px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
+          <Text color="black" fontSize="md" w="145px" isTruncated>
             {row.telefon}
           </Text>
         </Td>
       )}
 
-      {visibleColumns.anordning && (
-        <Td maxW="100px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
-          <Text color="black" fontSize="md" w="100px" isTruncated>
-            {row.anordning}
-          </Text>
-        </Td>
-      )}
+{visibleColumns.anordning && (
+  <Td maxW="100px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
+    <Text color="black" fontSize="md" w="100px" isTruncated>
+      {Array.isArray(row.anordning) ? row.anordning.join(', ') : row.anordning}
+    </Text>
+  </Td>
+)}
 {project.sections.map((_, secIdx) => (
   <Td
     key={secIdx}
@@ -767,10 +774,36 @@ onChange={(e) => {
                 <FormLabel>BTKN</FormLabel>
                 <Input value={selectedRow.btkn} onChange={(e) => handleModalChange('btkn', e.target.value)} />
               </FormControl>
-              <FormControl>
-                <FormLabel>Anordning</FormLabel>
-                <Input value={selectedRow.anordning} onChange={(e) => handleModalChange('anordning', e.target.value)} />
-              </FormControl>
+<FormControl>
+  <FormLabel>Anordning</FormLabel>
+  <Menu closeOnSelect={false}>
+    <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
+      {Array.isArray(selectedRow.anordning) && selectedRow.anordning.length > 0
+        ? `${selectedRow.anordning.length} valda`
+        : 'Välj anordning(ar)'}
+    </MenuButton>
+    <MenuList maxHeight="300px" overflowY="auto">
+      {['A-S', 'L-S', 'S-S', 'E-S', 'Spf', 'Vxl'].map((option) => (
+        <MenuItem key={option}>
+          <Checkbox
+            isChecked={selectedRow.anordning?.includes(option)}
+            onChange={(e) => {
+              const isChecked = e.target.checked;
+              handleModalChange(
+                'anordning',
+                isChecked
+                  ? [...(selectedRow.anordning || []), option]
+                  : selectedRow.anordning.filter((val) => val !== option)
+              );
+            }}
+          >
+            {option}
+          </Checkbox>
+        </MenuItem>
+      ))}
+    </MenuList>
+  </Menu>
+</FormControl>
               <FormControl>
                 <FormLabel>Namn</FormLabel>
                 <Input value={selectedRow.namn} onChange={(e) => handleModalChange('namn', e.target.value)} />
