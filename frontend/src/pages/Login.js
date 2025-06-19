@@ -9,24 +9,12 @@ export default function Login() {
 
 const handleLogin = async () => {
   try {
-const response = await axios.post('https://railworker-production.up.railway.app/api/login', {
-  email,
-  password
-}, { withCredentials: true });
+    await axios.post('https://railworker-production.up.railway.app/api/login', {
+      email,
+      password
+    }, { withCredentials: true });
 
-    const { token, role, foretag, namn, telefon, email: userEmail, losenord } = response.data;
-
-    localStorage.setItem('user', JSON.stringify({
-      token,
-      role,
-      foretag,
-      namn,
-      telefon,
-      email: userEmail,
-      losenord,
-    }));
-
-    navigate('/dashboard'); // ✅ Always go here, role check is done in App.js
+    navigate('/dashboard');
   } catch (error) {
     alert('Invalid credentials');
     console.error('Login error:', error);
