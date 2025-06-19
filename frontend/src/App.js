@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Panel from './pages/Panel';
@@ -12,40 +13,107 @@ import Profil from './pages/profil';
 function AppRoutes() {
   const location = useLocation();
 
-  const storedUser = localStorage.getItem('user');
-  const role = storedUser ? JSON.parse(storedUser).role : null;
-
   return (
     <Routes location={location}>
       <Route path="/" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      <Route path="/panel" element={<Panel />} />
-      <Route path="/htsmpanel" element={<HtsmPanel />} />
-      <Route path="/skapa-projekt" element={<SkapaProjekt />} />
-      <Route path="/projekt/:id" element={<ProjektVisa />} />
-      <Route path="/profil" element={<Profil />} />
 
-      {/* Här styr vi mellan Plan och PlanTSM baserat på rollen */}
-<Route
-  path="/plan/:id"
-  element={role === 'TSM' ? <PlanTSM /> : <Plan />}
-/>
-
-      {/* Dashboard redirect */}
+      {/* Skyddade routes - inlogg krävs */}
+      <Route
+        path="/panel"
+        element={
+          <ProtectedRoute allowedRoles={['TSM']}>
+            <Panel />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/htsmpanel"
+        element={
+          <ProtectedRoute allowedRoles={['HTSM']}>
+            <HtsmPanel />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/skapa-projekt"
+        element={
+          <ProtectedRoute allowedRoles={['HTSM']}>
+            <SkapaProjekt />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/projekt/:id"
+        element={
+          <ProtectedRoute allowedRoles={['HTSM', 'TSM']}>
+            <ProjektVisa />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/plan/:id"
+        element={
+          <ProtectedRoute allowedRoles={['HTSM', 'TSM']}>
+            {/* Inuti Plan visar vi rätt komponent baserat på roll */}
+            <RoleBasedPlan />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profil"
+        element={
+          <ProtectedRoute allowedRoles={['HTSM', 'TSM']}>
+            <Profil />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/dashboard"
         element={
-          role === 'HTSM' ? (
-            <Navigate to="/htsmpanel" replace />
-          ) : role === 'TSM' ? (
-            <Navigate to="/panel" replace />
-          ) : (
-            <Navigate to="/" replace />
-          )
+          <ProtectedRoute allowedRoles={['HTSM', 'TSM']}>
+            <DashboardRedirect />
+          </ProtectedRoute>
         }
       />
     </Routes>
   );
+}
+
+function DashboardRedirect() {
+  const [role, setRole] = useState(null);
+
+  useEffect(() => {
+    axios
+      .get('https://railworker-production.up.railway.app/api/user', { withCredentials: true })
+      .then((res) => setRole(res.data.role))
+      .catch(() => setRole(''));
+  }, []);
+
+  if (!role) return <p>Laddar...</p>;
+
+  return role === 'HTSM' ? (
+    <Navigate to="/htsmpanel" replace />
+  ) : role === 'TSM' ? (
+    <Navigate to="/panel" replace />
+  ) : (
+    <Navigate to="/" replace />
+  );
+}
+
+function RoleBasedPlan() {
+  const [role, setRole] = useState(null);
+
+  useEffect(() => {
+    axios
+      .get('https://railworker-production.up.railway.app/api/user', { withCredentials: true })
+      .then((res) => setRole(res.data.role))
+      .catch(() => setRole(''));
+  }, []);
+
+  if (!role) return <p>Laddar...</p>;
+
+  return role === 'TSM' ? <PlanTSM /> : <Plan />;
 }
 
 export default function App() {
