@@ -48,16 +48,13 @@ const Plan = () => {
   const { id } = useParams();
   const [project, setProject] = useState(null);
   const [rows, setRows] = useState([]);
-  const [editingRow, setEditingRow] = useState(null);
   const [countdown, setCountdown] = useState('');
   const [filterValue, setFilterValue] = useState('all');
-  const [showAvslutade, setShowAvslutade] = useState(false);
   const [avslutadeModalOpen, setAvslutadeModalOpen] = useState(false);
-const [avslutadeRows, setAvslutadeRows] = useState([]);
-const { isOpen: isAvslutadeOpen, onOpen: onOpenAvslutade, onClose: onCloseAvslutade } = useDisclosure();
 const [searchQuery, setSearchQuery] = useState('');
-const [currentProject, setCurrentProject] = useState(null);
+const [selectedAnordning, setSelectedAnordning] = useState('');
   const [avklaradSamrad, setAvklaradSamrad] = useState({});
+  const [samradData, setSamradData] = useState({ samradList: [], avklaradMap: {} });
   const [loading, setLoading] = useState(true);
   const [visibleColumns, setVisibleColumns] = useState({
     namn: true,
@@ -101,17 +98,14 @@ const calculateSamrad = (rows) => {
       const compareAreas = compareRow.selections || [];
       const compareAnordningar = String(compareRow.anordning || '').split(',').map(a => a.trim());
 
-      // Hitta gemensamma delområden
       const sharedAreas = rowAreas.some((selected, index) => selected && compareAreas[index]);
 
       if (sharedAreas) {
         const allExcludedA = rowAnordningar.every(an => exclusionSet.includes(an));
         const allExcludedB = compareAnordningar.every(an => exclusionSet.includes(an));
 
-        // Hoppa över om båda endast innehåller uteslutna anordningar
         if (allExcludedA && allExcludedB) continue;
 
-        // Lägg endast till samråd från senare rad (i) till tidigare (j)
         newSamradList.push({ from: i, to: j });
         newAvklarad[`${i}-${j}`] = false;
       }
@@ -157,7 +151,7 @@ const openEditProjectModal = () => {
   setEndTime(project.endTime);
   setNamn(project.namn);
   setTelefonnummer(project.telefonnummer);
-  setEditSections(project.sections || []);          // ← detta behövs
+  setEditSections(project.sections || []);
   setEditModalOpen(true);
 };
 
@@ -259,23 +253,54 @@ const sparaProjekt = async () => {
   }
 };
 
-  useEffect(() => {
-    fetchProject();
-  }, []);
-  useEffect(() => {
-}, [project]);
+
 useEffect(() => {
-  if (!rows || selectedRow === null) return;
+  fetchProject();
+}, []);
 
-  const currentRowIndex = selectedRow.index;
-  const { samradList } = calculateSamrad(rows);
+useEffect(() => {
+  if (!rows || rows.length === 0) return;
 
-  const related = samradList
-    .filter((entry) => entry.from === currentRowIndex)
-    .map((entry) => rows[entry.to]);
+  const result = calculateSamrad(rows);
+  setSamradData(result);
+}, [rows]);
+
+useEffect(() => {
+  const hasValidAnordning =
+    Array.isArray(selectedRow?.anordning) &&
+    selectedRow.anordning.length > 0;
+
+  const hasValidAreas =
+    Array.isArray(selectedAreas) &&
+    selectedAreas.length > 0;
+
+  if (!hasValidAnordning || !hasValidAreas || !rows || !selectedRow || selectedRow.index === undefined) {
+    setSamrad([]);
+    return;
+  }
+
+  // Skapa temporär rad med användarens aktuella val
+  const tempRow = {
+    ...selectedRow,
+    selections: Array(project.sections.length).fill(false),
+    anordning: selectedRow.anordning,
+  };
+
+  selectedAreas.forEach((idx) => {
+    tempRow.selections[idx] = true;
+  });
+
+  const tempRows = [...rows];
+  tempRows[selectedRow.index] = tempRow;
+
+  const result = calculateSamrad(tempRows);
+
+  const related = result.samradList
+    .filter((entry) => entry.from === selectedRow.index)
+    .map((entry) => tempRows[entry.to]);
 
   setSamrad(related);
-}, [rows, selectedRow]);
+}, [selectedAreas, selectedRow, rows, project]);
 
   const fetchProject = async () => {
     try {
@@ -338,27 +363,39 @@ setRows(current.rows && current.rows.length > 0 ? current.rows : [
 
   };
 
-  const addRow = () => {
-    setRows([
-      ...rows,
-      {
-        id: rows.length + 1,
-        btkn: '',
-        namn: '',
-        telefon: '',
-        anordning: '',
-        bt: '',
-        linje: '',
-        starttid: '',
-        begard: '',
-        avslutat: '',
-        avslutadRad: false,
-        anteckning: '',
-        selections: project.sections.map(() => false),
-      },
-    ]);
-    setSelectedAreas([]);
+const addRow = () => {
+  const newRow = {
+    id: rows.length + 1,
+    btkn: '',
+    namn: '',
+    telefon: '',
+    anordning: '',
+    bt: '',
+    linje: '',
+    starttid: '',
+    begard: '',
+    avslutat: '',
+    avslutadRad: false,
+    anteckning: '',
+    selections: project.sections.map(() => false),
+    selectedAreas: [],
   };
+
+  const updatedRows = [...rows, newRow];
+  setRows(updatedRows);
+
+  // Markera nya raden som vald och öppna modalen
+  setSelectedRow({
+    ...newRow,
+    index: updatedRows.length - 1,
+    dp: '',
+    linje: '',
+  });
+
+  setSelectedAreas([]);
+  setSelectedAnordning('');
+  onOpen();
+};
 
   const toggleColumn = (col) => {
     setVisibleColumns((prev) => ({ ...prev, [col]: !prev[col] }));
@@ -371,7 +408,9 @@ const handleRowClick = (row, rowIndex) => {
     dp: row.dp || '',
     linje: row.linje || ''
   });
+
   setSelectedAreas(row.selectedAreas || []);
+  setSelectedAnordning(row.anordning || ''); // ← Lägg till denna rad
   onOpen();
 };
 
@@ -705,7 +744,16 @@ onChange={(e) => {
   ))}
 </Tbody>
         </Table>
-        <Button onClick={addRow} colorScheme="blue" mt={4}>+ Lägg till rad</Button>
+        <Button
+  onClick={() => {
+    addRow();
+    onOpen(); // öppnar modalen direkt
+  }}
+  colorScheme="blue"
+  mt={4}
+>
+  + Lägg till rad
+</Button>
         <Button onClick={sparaProjekt} colorScheme="blue" mt={4} ml={4}>
   Spara
 </Button>
