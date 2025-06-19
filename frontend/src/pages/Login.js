@@ -10,9 +10,9 @@ export default function Login() {
 const handleLogin = async () => {
   try {
 const response = await axios.post('https://railworker-production.up.railway.app/api/login', {
-      email,
-      password,
-    });
+  email,
+  password
+}, { withCredentials: true });
 
     const { token, role, foretag, namn, telefon, email: userEmail, losenord } = response.data;
 

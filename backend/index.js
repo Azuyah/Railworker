@@ -12,7 +12,10 @@ app.use(cookieParser());
 const app = express();
 const prisma = new PrismaClient();
 
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:3000', 'https://railworker.vercel.app'],
+  credentials: true
+}));
 app.use(express.json());
 
 const JWT_SECRET = process.env.JWT_SECRET;
