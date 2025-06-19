@@ -6,6 +6,9 @@ const cors = require('cors');
 const { PrismaClient } = require('./generated/prisma/client');
 require('dotenv').config();
 
+const cookieParser = require('cookie-parser');
+app.use(cookieParser());
+
 const app = express();
 const prisma = new PrismaClient();
 
@@ -41,13 +44,12 @@ app.post('/api/register', async (req, res) => {
 });
 
 app.get('/api/user', async (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Ingen token angiven' });
+  const token = req.cookies.token;
+  if (!token) {
+    return res.status(401).json({ error: 'Ingen token i cookie' });
   }
 
   try {
-    const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, JWT_SECRET);
     const userId = decoded.userId;
 
@@ -83,7 +85,14 @@ app.post('/api/login', async (req, res) => {
   const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, {
     expiresIn: '7d',
   });
-res.json({ token, role: user.role });
+  res
+    .cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'Strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dagar
+    })
+    .json({ role: user.role });
 });
 
 app.post('/api/projects', async (req, res) => {

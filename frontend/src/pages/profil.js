@@ -9,31 +9,11 @@ const Profil = () => {
   const [error, setError] = useState('');
 
 useEffect(() => {
-  const fetchUser = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('https://railworker-production.up.railway.app/api/user', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) throw new Error('Fel vid hämtning av användare');
-      const data = await res.json();
-
-      setUser({
-        foretag: data.company || '',
-        namn: data.name || '',
-        telefon: data.phone || '',
-        email: data.email || '',
-        losenord: '', // tomt, vi visar aldrig lösenordet
-      });
-    } catch (err) {
-      console.error('❌ Fel vid hämtning av användare:', err);
-    }
-  };
-
-  fetchUser();
+  axios.get('https://railworker-production.up.railway.app/api/user', {
+    withCredentials: true // 🔑 så cookien följer med
+  })
+  .then(res => setUser(res.data))
+  .catch(err => console.error('❌ Kunde inte hämta användare:', err));
 }, []);
 
   const handleChange = (field, value) => {
