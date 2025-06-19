@@ -17,7 +17,6 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
