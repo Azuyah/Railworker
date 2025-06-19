@@ -9,10 +9,21 @@ export default function Login() {
 
 const handleLogin = async () => {
   try {
-    await axios.post('https://railworker-production.up.railway.app/api/login', {
+    const response = await axios.post('https://railworker-production.up.railway.app/api/login', {
       email,
       password
-    }, { withCredentials: true });
+    });
+
+    const { token, role, name, phone, company, email: userEmail } = response.data;
+
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify({
+      role,
+      name,
+      phone,
+      company,
+      email: userEmail,
+    }));
 
     navigate('/dashboard');
   } catch (error) {
