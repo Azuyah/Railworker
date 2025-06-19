@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import LoadingScreen from '../components/LoadingScreen';
 import axios from 'axios';
 
 export default function ProtectedRoute({ children, allowedRoles }) {
@@ -23,7 +24,7 @@ export default function ProtectedRoute({ children, allowedRoles }) {
       });
   }, []);
 
-  if (loading) return <p>⏳ Kontrollerar behörighet...</p>;
+if (loading) return <LoadingScreen />;
 
   // 👇 Om vi är på "/dashboard" så redirectar vi direkt baserat på roll
   if (location.pathname === '/dashboard') {
