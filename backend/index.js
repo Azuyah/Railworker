@@ -216,19 +216,11 @@ app.put('/api/projects/:id', async (req, res) => {
     plats,
     namn,
     telefonnummer,
-    rows = [],
+    rows,
     sections = [],
   } = req.body;
 
   try {
-
-    await prisma.section.deleteMany({
-      where: {
-        projectId: parseInt(id),
-      },
-    });
-
-
     const updatedProject = await prisma.project.update({
       where: { id: parseInt(id) },
       data: {
@@ -240,28 +232,30 @@ app.put('/api/projects/:id', async (req, res) => {
         plats,
         namn,
         telefonnummer,
-        rows: rows || [],
+        beteckningar,
+        sections: updatedSections,
+        rows,
       },
     });
 
+    // Ta bort gamla sektioner
+    await prisma.section.deleteMany({
+      where: { projectId: parseInt(id) },
+    });
 
-    if (Array.isArray(sections)) {
-      const newSections = sections.map((sec) => ({
-        name: sec.name,
-        type: sec.type,
+    // Lägg till nya sektioner
+    await prisma.section.createMany({
+      data: sections.map((section) => ({
+        name: section.name,
+        type: section.type,
         projectId: updatedProject.id,
-      }));
-      console.log('🔧 Sections som kommer att sparas:', newSections);
+      })),
+    });
 
-      await prisma.section.createMany({
-        data: newSections,
-      });
-    }
-
-    res.status(200).json(updatedProject);
+    res.json(updatedProject);
   } catch (error) {
-    console.error('❌ Fel vid uppdatering av projekt:', error);
-    res.status(500).json({ error: 'Kunde inte uppdatera projekt' });
+    console.error('Kunde inte uppdatera projekt:', error);
+    res.status(500).json({ error: 'Något gick fel vid uppdatering av projektet' });
   }
 });
 

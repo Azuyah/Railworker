@@ -74,6 +74,112 @@ const [currentProject, setCurrentProject] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [selectedAreas, setSelectedAreas] = useState([]);
 
+  const [editModalOpen, setEditModalOpen] = useState(false);
+
+const [projektNamn, setProjektNamn] = useState(project?.name || '');
+const [plats, setPlats] = useState(project?.plats || '');
+const [startDate, setStartDate] = useState(project?.startDate || '');
+const [startTime, setStartTime] = useState(project?.startTime || '');
+const [endDate, setEndDate] = useState(project?.endDate || '');
+const [endTime, setEndTime] = useState(project?.endTime || '');
+const [namn, setNamn] = useState(project?.namn || '');
+const [telefonnummer, setTelefonnummer] = useState(project?.telefonnummer || '');
+const [beteckningar, setBeteckningar] = useState(() => {
+  if (project?.beteckningar?.length) {
+    return project.beteckningar.map((b) => ({
+      value: b?.value ?? '',
+    }));
+  }
+  return [{ value: '' }];
+});
+const [editSections, setEditSections] = useState(project?.sections || []);
+
+const addBeteckning = () => {
+  setBeteckningar([...beteckningar, { value: '' }]);
+};
+
+const handleBeteckningChange = (index, value) => {
+  const updated = [...beteckningar];
+  updated[index].value = value;
+  setBeteckningar(updated);
+};
+
+const addEditDP = () => {
+  const newDP = { type: 'DP', name: '' }; // ändrat signal ➜ name
+  setEditSections([...editSections, newDP]);
+};
+
+const addEditLinje = () => {
+  const indexToInsert =
+    editSections.findIndex(
+      (sec) =>
+        sec.type === 'DP' &&
+        !editSections.some(
+          (s, i) => i > editSections.indexOf(sec) && s.type === 'Linje'
+        )
+    ) + 1;
+
+  const updated = [...editSections];
+  updated.splice(indexToInsert, 0, { type: 'Linje', name: '' });
+  setEditSections(updated);
+};
+
+const handleEditSignalChange = (index, value) => {
+  const updated = [...editSections];
+  updated[index].name = value;
+  setEditSections(updated);
+};
+
+
+const openEditProjectModal = () => {
+  setProjektNamn(project.name);
+  setPlats(project.plats);
+  setStartDate(project.startDate);
+  setStartTime(project.startTime);
+  setEndDate(project.endDate);
+  setEndTime(project.endTime);
+  setNamn(project.namn);
+  setTelefonnummer(project.telefonnummer);
+  setBeteckningar(project.beteckningar || []);      // ← detta behövs
+  setEditSections(project.sections || []);          // ← detta behövs
+  setEditModalOpen(true);
+};
+
+const updateProject = async () => {
+  const updated = {
+    name: projektNamn,
+    plats,
+    startDate,
+    startTime,
+    endDate,
+    endTime,
+    namn,
+    telefonnummer,
+    beteckningar,
+    sections: editSections,
+    rows,
+  };
+
+  const token = JSON.parse(localStorage.getItem('user'))?.token;
+  if (!token) return alert('Ingen token.');
+
+  try {
+    await axios.put(
+      `https://railworker-production.up.railway.app/api/projects/${id}`,
+      updated,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    window.location.reload();
+  } catch (error) {
+    console.error('Kunde inte uppdatera projekt:', error);
+    alert('Fel vid uppdatering.');
+  }
+};
+
 
 const sparaProjekt = async () => {
   try {
@@ -81,7 +187,7 @@ const sparaProjekt = async () => {
     const token = tokenData ? JSON.parse(tokenData).token : null;
 
     if (!project || !project.id) {
-      console.error('❌ Projekt är null eller saknar id');
+      console.error('Projekt är null eller saknar id');
       toast({
         title: 'Fel',
         description: 'Ingen giltig projektdata att spara.',
@@ -102,6 +208,8 @@ const sparaProjekt = async () => {
       plats: project.plats || '',
       namn: project.namn || '',
       telefonnummer: project.telefonnummer || '',
+  beteckningar: beteckningar.map(b => ({
+    label: b.value || '', })),
       sections: project.sections || [],
       rows: rows || [],
     };
@@ -142,6 +250,8 @@ const sparaProjekt = async () => {
     fetchProject();
   }, []);
   useEffect(() => {
+}, [project]);
+  useEffect(() => {
   if (!rows || selectedRow === null) return;
 
   const shared = rows.filter((row, i) => {
@@ -167,6 +277,7 @@ const sparaProjekt = async () => {
 
       const current = response.data;
       setProject(current);
+      
       
 setRows(current.rows && current.rows.length > 0 ? current.rows : [
   {
@@ -363,15 +474,9 @@ const handleModalSave = () => {
             }
           }}>Ta bort projekt</Button>
 
-          <Button colorScheme="blue" onClick={() => toast({
-            title: 'Redigering',
-            description: 'Redigeringsfunktion kommer snart!',
-            status: 'info',
-            duration: 3000,
-            isClosable: true,
-          })}>
-            Redigera projekt
-          </Button>
+<Button colorScheme="blue" onClick={() => openEditProjectModal(true)}>
+  Redigera projekt
+</Button>
         </Flex>
 
 <Flex justify="space-between" align="center" mb={4}>
@@ -588,6 +693,99 @@ onChange={(e) => {
   </Box>
 </Flex>
 
+      <Modal isOpen={editModalOpen} onClose={() => setEditModalOpen(false)} size="xl">
+  <ModalOverlay />
+  <ModalContent>
+    <ModalHeader>Redigera projekt</ModalHeader>
+    <ModalCloseButton />
+    <ModalBody>
+      <Stack spacing={4}>
+        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+          <FormControl>
+            <FormLabel>Projektnamn</FormLabel>
+            <Input value={projektNamn} onChange={(e) => setProjektNamn(e.target.value)} />
+          </FormControl>
+          <FormControl>
+            <FormLabel>Plats</FormLabel>
+            <Input value={plats} onChange={(e) => setPlats(e.target.value)} />
+          </FormControl>
+          <FormControl>
+            <FormLabel>Startdatum</FormLabel>
+            <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+          </FormControl>
+          <FormControl>
+            <FormLabel>Starttid</FormLabel>
+            <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+          </FormControl>
+          <FormControl>
+            <FormLabel>Slutdatum</FormLabel>
+            <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+          </FormControl>
+          <FormControl>
+            <FormLabel>Sluttid</FormLabel>
+            <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+          </FormControl>
+          <FormControl>
+            <FormLabel>FJTKL Namn</FormLabel>
+            <Input value={namn} onChange={(e) => setNamn(e.target.value)} />
+          </FormControl>
+          <FormControl>
+            <FormLabel>FJTKL Telefonnummer</FormLabel>
+            <Input value={telefonnummer} onChange={(e) => setTelefonnummer(e.target.value)} />
+          </FormControl>
+        </SimpleGrid>
+
+        <Box>
+          <FormLabel>Beteckningar</FormLabel>
+{beteckningar.map((b, i) => (
+  <FormControl key={i}>
+    <FormLabel>Beteckning {i + 1}</FormLabel>
+    <Input
+      value={b.value ?? ''}
+      onChange={(e) => handleBeteckningChange(i, e.target.value)}
+    />
+  </FormControl>
+))}
+<Button onClick={addBeteckning} size="sm" mt={2}>
+  + Lägg till beteckning
+</Button>
+        </Box>
+
+<Box>
+  <FormLabel>Delområden (DP / Linje)</FormLabel>
+  <Flex mb={4} gap={4}>
+    <Button colorScheme="blue" onClick={addEditDP}>
+      + Lägg till DP
+    </Button>
+    <Button colorScheme="green" onClick={addEditLinje}>
+      + Lägg till Linje
+    </Button>
+  </Flex>
+
+  {editSections.map((sec, i) => (
+    <Box key={i} mb={3} p={3} bg="gray.50" borderRadius="md" borderWidth="1px">
+      <Text mb={1} fontWeight="semibold">
+        {sec.type} {String.fromCharCode(65 + i)}
+      </Text>
+      <Input
+        value={sec.signal}
+        onChange={(e) => handleEditSignalChange(i, e.target.value)}
+        placeholder="Signal"
+      />
+    </Box>
+  ))}
+</Box>
+      </Stack>
+    </ModalBody>
+    <ModalFooter>
+      <Button colorScheme="blue" mr={3} onClick={updateProject}>
+        Spara ändringar
+      </Button>
+      <Button onClick={() => setEditModalOpen(false)}>Stäng</Button>
+    </ModalFooter>
+  </ModalContent>
+</Modal>
+
 <Modal isOpen={isOpen} onClose={onClose} size="4xl">
   <ModalOverlay />
   <ModalContent>
@@ -725,10 +923,17 @@ onChange={(e) => {
     <ModalHeader>Avslutade poster</ModalHeader>
     <ModalCloseButton />
     <ModalBody>
+      <Input
+        placeholder="Sök efter namn eller telefon..."
+        mb={4}
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+      />
       <Stack spacing={4}>
-        {rows
-          .filter((row) => row.avslutadRad)
-          .map((row, index) => (
+        {filteredRows.length === 0 ? (
+          <Text color="gray.500">Inga träffar.</Text>
+        ) : (
+          filteredRows.map((row, index) => (
             <Box key={index} p={3} border="1px solid #ccc" borderRadius="md">
               <Text><strong>Namn:</strong> {row.namn}</Text>
               <Text><strong>Telefon:</strong> {row.telefon}</Text>
@@ -737,14 +942,18 @@ onChange={(e) => {
                 size="sm"
                 onClick={() => {
                   const updatedRows = [...rows];
-                  updatedRows[index].avslutadRad = false;
+                  const actualIndex = rows.findIndex(
+                    (r) => r.id === row.id
+                  );
+                  updatedRows[actualIndex].avslutadRad = false;
                   setRows(updatedRows);
                 }}
               >
                 Återställ
               </Button>
             </Box>
-          ))}
+          ))
+        )}
       </Stack>
     </ModalBody>
     <ModalFooter>
@@ -754,9 +963,10 @@ onChange={(e) => {
 </Modal>
     </Box>
     </Box>
-
     
   );
 };
+
+
 
 export default Plan;
