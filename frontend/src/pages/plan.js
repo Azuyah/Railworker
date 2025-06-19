@@ -449,7 +449,6 @@ const handleModalSave = () => {
             <Text><strong>Startdatum:</strong> {project.startDate} {project.startTime}</Text>
             <Text><strong>Slutdatum:</strong> {project.endDate} {project.endTime}</Text>
             <Text><strong>FJTKL:</strong> {project.namn} ({project.telefonnummer})</Text>
-            <Text><strong>Beteckningar:</strong> {project.beteckningar.map(b => b.value).join(', ')}</Text>
           </Box>
           <Box textAlign="right">
             <Text fontWeight="bold">Dispositionsarbetsplan avslutas:</Text>
