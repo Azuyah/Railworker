@@ -218,7 +218,6 @@ app.put('/api/projects/:id', async (req, res) => {
         plats,
         namn,
         telefonnummer,
-        beteckningar,
         sections: updatedSections,
         rows,
       },

@@ -84,25 +84,7 @@ const [endDate, setEndDate] = useState(project?.endDate || '');
 const [endTime, setEndTime] = useState(project?.endTime || '');
 const [namn, setNamn] = useState(project?.namn || '');
 const [telefonnummer, setTelefonnummer] = useState(project?.telefonnummer || '');
-const [beteckningar, setBeteckningar] = useState(() => {
-  if (project?.beteckningar?.length) {
-    return project.beteckningar.map((b) => ({
-      value: b?.value ?? '',
-    }));
-  }
-  return [{ value: '' }];
-});
 const [editSections, setEditSections] = useState(project?.sections || []);
-
-const addBeteckning = () => {
-  setBeteckningar([...beteckningar, { value: '' }]);
-};
-
-const handleBeteckningChange = (index, value) => {
-  const updated = [...beteckningar];
-  updated[index].value = value;
-  setBeteckningar(updated);
-};
 
 const addEditDP = () => {
   const newDP = { type: 'DP', name: '' }; // ändrat signal ➜ name
@@ -140,7 +122,6 @@ const openEditProjectModal = () => {
   setEndTime(project.endTime);
   setNamn(project.namn);
   setTelefonnummer(project.telefonnummer);
-  setBeteckningar(project.beteckningar || []);      // ← detta behövs
   setEditSections(project.sections || []);          // ← detta behövs
   setEditModalOpen(true);
 };
@@ -155,7 +136,6 @@ const updateProject = async () => {
     endTime,
     namn,
     telefonnummer,
-    beteckningar,
     sections: editSections,
     rows,
   };
@@ -734,18 +714,6 @@ onChange={(e) => {
 
         <Box>
           <FormLabel>Beteckningar</FormLabel>
-{beteckningar.map((b, i) => (
-  <FormControl key={i}>
-    <FormLabel>Beteckning {i + 1}</FormLabel>
-    <Input
-      value={b.value ?? ''}
-      onChange={(e) => handleBeteckningChange(i, e.target.value)}
-    />
-  </FormControl>
-))}
-<Button onClick={addBeteckning} size="sm" mt={2}>
-  + Lägg till beteckning
-</Button>
         </Box>
 
 <Box>
