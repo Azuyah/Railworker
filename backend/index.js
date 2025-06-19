@@ -1,4 +1,5 @@
 // backend/index.js
+import axios from 'axios';
 axios.defaults.withCredentials = true;
 const express = require('express');
 const bcrypt = require('bcrypt');
