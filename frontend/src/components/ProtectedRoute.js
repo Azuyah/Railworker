@@ -7,19 +7,35 @@ export default function ProtectedRoute({ children, allowedRoles }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('🔄 Hämtar användarroll från /api/user...');
     axios
-      .get('https://railworker-production.up.railway.app/api/user', { withCredentials: true })
-      .then((res) => {
-        setRole(res.data.role);
-        setLoading(false);
+      .get('https://railworker-production.up.railway.app/api/user', {
+        withCredentials: true,
       })
-      .catch(() => {
+      .then((res) => {
+        console.log('✅ API response från /api/user:', res.data);
+        setRole(res.data.role);
+      })
+      .catch((err) => {
+        console.warn('❌ Misslyckades med /api/user:', err);
         setRole(null);
+      })
+      .finally(() => {
         setLoading(false);
       });
   }, []);
 
-  if (loading) return <p>🔒 Kontrollerar behörighet...</p>;
+  if (loading) {
+    console.log('⏳ Väntar på rollinformation...');
+    return <p>🔒 Kontrollerar behörighet...</p>;
+  }
 
-  return allowedRoles.includes(role) ? children : <Navigate to="/" replace />;
+  console.log('🔐 Kontrollerar roll:', role);
+  const isAllowed = allowedRoles.includes(role);
+
+  if (!isAllowed) {
+    console.warn('🚫 Åtkomst nekad för roll:', role);
+  }
+
+  return isAllowed ? children : <Navigate to="/" replace />;
 }
