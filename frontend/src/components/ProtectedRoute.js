@@ -1,29 +1,25 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import axios from 'axios';
 
-const ProtectedRoute = ({ children, allowedRoles }) => {
-  const navigate = useNavigate();
-  const [authorized, setAuthorized] = useState(false);
-  const [checking, setChecking] = useState(true);
+export default function ProtectedRoute({ children, allowedRoles }) {
+  const [role, setRole] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     axios
       .get('https://railworker-production.up.railway.app/api/user', { withCredentials: true })
       .then((res) => {
-        if (allowedRoles.includes(res.data.role)) {
-          setAuthorized(true);
-        } else {
-          navigate('/');
-        }
+        setRole(res.data.role);
+        setLoading(false);
       })
-      .catch(() => navigate('/login'))
-      .finally(() => setChecking(false));
-  }, [navigate, allowedRoles]);
+      .catch(() => {
+        setRole(null);
+        setLoading(false);
+      });
+  }, []);
 
-  if (checking) return <p>Laddar...</p>;
+  if (loading) return <p>🔒 Kontrollerar behörighet...</p>;
 
-  return authorized ? children : null;
-};
-
-export default ProtectedRoute;
+  return allowedRoles.includes(role) ? children : <Navigate to="/" replace />;
+}
