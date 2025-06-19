@@ -6,6 +6,11 @@ const cors = require('cors');
 const { PrismaClient } = require('./generated/prisma/client');
 require('dotenv').config();
 
+const app = express();
+const prisma = new PrismaClient();
+
+app.use(express.json());
+
 const corsOptions = {
   origin: ['http://localhost:3000', 'https://railworker.vercel.app'],
   credentials: true,
@@ -13,11 +18,6 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
-
-const app = express();
-const prisma = new PrismaClient();
-
-app.use(express.json());
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
