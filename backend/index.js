@@ -6,9 +6,6 @@ const cors = require('cors');
 const { PrismaClient } = require('./generated/prisma/client');
 require('dotenv').config();
 
-const cookieParser = require('cookie-parser');
-app.use(cookieParser());
-
 const app = express();
 const prisma = new PrismaClient();
 
@@ -17,6 +14,13 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+app.use(cookieParser());
+const cookieParser = require('cookie-parser');
+
+app.options('*', cors({
+  origin: ['http://localhost:3000', 'https://railworker.vercel.app'],
+  credentials: true,
+}));
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
