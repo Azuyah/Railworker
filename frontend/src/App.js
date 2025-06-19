@@ -70,14 +70,15 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute allowedRoles={['HTSM', 'TSM']}>
-            <DashboardRedirect />
-          </ProtectedRoute>
-        }
-      />
+<Route
+  path="/dashboard"
+  element={
+    <ProtectedRoute allowedRoles={['HTSM', 'TSM']}>
+      {/* Ingen komponent behövs längre */}
+      <p>⏳ Redirectar...</p>
+    </ProtectedRoute>
+  }
+/>
     </Routes>
   );
 }
