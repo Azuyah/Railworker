@@ -96,7 +96,7 @@ const calculateSamrad = (rows) => {
     const rowAreas = row.selections || [];
     const rowAnordningar = String(row.anordning || '').split(',').map(a => a.trim());
 
-    for (let j = i + 1; j < rows.length; j++) {
+    for (let j = 0; j < i; j++) {
       const compareRow = rows[j];
       const compareAreas = compareRow.selections || [];
       const compareAnordningar = String(compareRow.anordning || '').split(',').map(a => a.trim());
@@ -111,11 +111,9 @@ const calculateSamrad = (rows) => {
         // Hoppa över om båda endast innehåller uteslutna anordningar
         if (allExcludedA && allExcludedB) continue;
 
-        // Lägg till samråd för båda raderna
+        // Lägg endast till samråd från senare rad (i) till tidigare (j)
         newSamradList.push({ from: i, to: j });
-        newSamradList.push({ from: j, to: i });
         newAvklarad[`${i}-${j}`] = false;
-        newAvklarad[`${j}-${i}`] = false;
       }
     }
   });
@@ -270,14 +268,13 @@ useEffect(() => {
   if (!rows || selectedRow === null) return;
 
   const currentRowIndex = selectedRow.index;
-  const { samradList, avklaradMap } = calculateSamrad(rows);
+  const { samradList } = calculateSamrad(rows);
 
   const related = samradList
     .filter((entry) => entry.from === currentRowIndex)
     .map((entry) => rows[entry.to]);
 
   setSamrad(related);
-  setAvklaradSamrad(avklaradMap);
 }, [rows, selectedRow]);
 
   const fetchProject = async () => {
