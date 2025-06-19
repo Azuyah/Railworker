@@ -1,6 +1,7 @@
 // backend/index.js
 const express = require('express');
 const bcrypt = require('bcrypt');
+const authMiddleware = require('./middleware/auth');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
@@ -166,16 +167,9 @@ app.post('/api/projects', async (req, res) => {
   }
 });
 
-app.get('/api/projects', async (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Ingen token angiven' });
-  }
-
+app.get('/api/projects', authMiddleware, async (req, res) => {
   try {
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const userId = decoded.userId;
+    const userId = req.user.userId;
 
     const projects = await prisma.project.findMany({
       where: { userId },

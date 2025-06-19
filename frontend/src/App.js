@@ -83,27 +83,6 @@ function AppRoutes() {
   );
 }
 
-function DashboardRedirect() {
-  const [role, setRole] = useState(null);
-
-  useEffect(() => {
-    axios
-      .get('https://railworker-production.up.railway.app/api/user', { withCredentials: true })
-      .then((res) => setRole(res.data.role))
-      .catch(() => setRole(''));
-  }, []);
-
-  if (!role) return <p>Laddar...</p>;
-
-  return role === 'HTSM' ? (
-    <Navigate to="/htsmpanel" replace />
-  ) : role === 'TSM' ? (
-    <Navigate to="/panel" replace />
-  ) : (
-    <Navigate to="/" replace />
-  );
-}
-
 function RoleBasedPlan() {
   const [role, setRole] = useState(null);
 
