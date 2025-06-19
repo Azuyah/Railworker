@@ -9,25 +9,23 @@ export default function Login() {
 
 const handleLogin = async () => {
   try {
-    const response = await axios.post('https://railworker-production.up.railway.app/api/login', {
-      email,
-      password
-    });
+    await axios.post(
+      'https://railworker-production.up.railway.app/api/login',
+      { email, password },
+      { withCredentials: true } // ✅ Viktigt!
+    );
 
-    const { token, role, name, phone, company, email: userEmail } = response.data;
+    // ✅ Direkt efter inloggning – hämta användarinformation
+    const response = await axios.get(
+      'https://railworker-production.up.railway.app/api/user',
+      { withCredentials: true }
+    );
 
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify({
-      role,
-      name,
-      phone,
-      company,
-      email: userEmail,
-    }));
+    console.log('✅ Inloggad som:', response.data); // valfritt
 
     navigate('/dashboard');
   } catch (error) {
-    alert('Invalid credentials');
+    alert('Fel användaruppgifter eller inloggning misslyckades');
     console.error('Login error:', error);
   }
 };
