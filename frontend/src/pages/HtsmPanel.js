@@ -1,5 +1,3 @@
-// src/pages/Dashboard.js
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -18,32 +16,29 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const tokenData = localStorage.getItem('user');
-  const token = tokenData ? JSON.parse(tokenData).token : null;
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    if (!token) {
-      navigate('/');
-    } else {
-      fetchAllProjects();
-    }
+    fetchUserAndProjects();
   }, []);
 
-  const fetchAllProjects = async () => {
+  const fetchUserAndProjects = async () => {
     try {
-      const response = await axios.get(
+      const userRes = await axios.get('https://railworker-production.up.railway.app/api/user', {
+        withCredentials: true,
+      });
+      setUser(userRes.data);
+
+      const projectRes = await axios.get(
         'https://railworker-production.up.railway.app/api/projects',
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          withCredentials: true,
         }
       );
-      setProjects(response.data);
+      setProjects(projectRes.data);
     } catch (error) {
-      console.error('Kunde inte hämta projekt:', error);
-      setProjects([]);
+      console.error('Kunde inte hämta användare eller projekt:', error);
+      navigate('/'); // Tillbaka till login vid fel
     } finally {
       setLoading(false);
     }
