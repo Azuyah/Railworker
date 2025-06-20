@@ -15,6 +15,17 @@ import Profil from './pages/profil';
 function AppRoutes() {
   const location = useLocation();
 
+  // Kontrollera om användaren redan är inloggad
+  const user = JSON.parse(localStorage.getItem('user'));
+
+  if (
+    location.pathname === '/' &&
+    user?.token &&
+    (user.role === 'TSM' || user.role === 'HTSM')
+  ) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return (
     <Routes location={location}>
       <Route path="/" element={<Login />} />
