@@ -28,21 +28,23 @@ useEffect(() => {
       Authorization: `Bearer ${token}`,
     },
   })
-    .then((res) => {
-      if (isMounted) {
-        console.log('✅ API response:', res.data);
-        setRole(res.data.role);
-        setLoading(false);
-      }
-    })
-    .catch((err) => {
-      if (isMounted) {
-        console.warn('❌ Kunde inte hämta användare:', err);
-        localStorage.removeItem('user');
-        setRole(null);
-        setLoading(false);
-      }
-    });
+.then((res) => {
+  if (isMounted) {
+    console.log('✅ API response:', res.data);
+    setRole(res.data.role);
+    setLoading(false);
+    setIsReady(true); // ✅ Lägg till detta
+  }
+})
+.catch((err) => {
+  if (isMounted) {
+    console.warn('❌ Kunde inte hämta användare:', err);
+    localStorage.removeItem('user');
+    setRole(null);
+    setLoading(false);
+    setIsReady(true); // ✅ Lägg till detta även här
+  }
+});
 
   return () => {
     isMounted = false;
