@@ -203,16 +203,12 @@ app.get('/api/project/:id', async (req, res) => {
 
   try {
     const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, JWT_SECRET);
-
-    console.log('🔐 Token decoded:', decoded);
+    jwt.verify(token, JWT_SECRET); // Du behöver inte userId här, men verifierar token
 
     const projectId = parseInt(req.params.id, 10);
     if (isNaN(projectId)) {
       return res.status(400).json({ error: 'Ogiltigt projekt-ID' });
     }
-
-    console.log('🔎 Hämtar projekt med ID:', projectId);
 
     const project = await prisma.project.findUnique({
       where: { id: projectId },
@@ -220,8 +216,6 @@ app.get('/api/project/:id', async (req, res) => {
         sections: true,
       },
     });
-
-    console.log('✅ Hittat projekt:', project);
 
     if (!project) {
       return res.status(404).json({ error: 'Projekt hittades inte' });
