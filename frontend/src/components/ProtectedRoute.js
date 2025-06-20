@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import LoadingScreen from '../components/LoadingScreen';
-import axios from 'axios';
+import axios from '../api/axios';
 
 export default function ProtectedRoute({ children, allowedRoles }) {
   const [role, setRole] = useState(null);
