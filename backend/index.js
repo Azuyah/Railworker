@@ -85,12 +85,22 @@ app.get('/api/user', async (req, res) => {
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
 
+  console.log('▶️ Inloggning:', email, password); // Logga vad klienten skickar
+
   try {
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+
+    if (!user) {
+      console.log('❌ Ingen användare hittades med mejl:', email);
+      return res.status(400).json({ error: 'Invalid credentials' });
+    }
 
     const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) return res.status(400).json({ error: 'Invalid credentials' });
+
+    if (!passwordMatch) {
+      console.log('❌ Fel lösenord:', password, 'för:', email);
+      return res.status(400).json({ error: 'Invalid credentials' });
+    }
 
     const token = jwt.sign(
       { userId: user.id, role: user.role },
@@ -98,7 +108,8 @@ app.post('/api/login', async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    // Skicka endast token och användardata – ingen cookie
+    console.log('✅ Inloggning lyckades för:', email);
+
     res.json({
       message: 'Login successful',
       token,
