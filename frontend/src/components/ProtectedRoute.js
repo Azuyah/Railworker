@@ -11,7 +11,8 @@ export default function ProtectedRoute({ children, allowedRoles }) {
 
   useEffect(() => {
     try {
-      const token = localStorage.getItem('token');
+const user = JSON.parse(localStorage.getItem('user'));
+const token = user?.token;
       if (!token) {
         setRole(null);
         setLoading(false);
@@ -26,7 +27,7 @@ export default function ProtectedRoute({ children, allowedRoles }) {
         })
         .then((res) => {
           console.log('✅ API response:', res.data);
-          setRole(res.data.role);
+setRole(user?.role || res.data.role);
           setLoading(false);
         })
         .catch((err) => {

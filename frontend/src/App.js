@@ -16,7 +16,8 @@ function AppRoutes() {
   const location = useLocation();
 
   // Kontrollera om användaren redan är inloggad
-  const user = JSON.parse(localStorage.getItem('user'));
+const user = JSON.parse(localStorage.getItem('user'));
+const token = user?.token;
 
   if (
     location.pathname === '/' &&
