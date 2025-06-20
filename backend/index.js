@@ -3,7 +3,6 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const authMiddleware = require('./middleware/auth');
 const jwt = require('jsonwebtoken');
-const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const { PrismaClient } = require('./generated/prisma/client');
 require('dotenv').config();
@@ -12,7 +11,6 @@ const app = express();
 const prisma = new PrismaClient();
 
 app.use(express.json());
-app.use(cookieParser());
 
 const corsOptions = {
   origin: ['http://localhost:3000', 'https://railworker.vercel.app'],
@@ -90,11 +88,13 @@ app.post('/api/login', async (req, res) => {
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) return res.status(400).json({ error: 'Invalid credentials' });
 
-    const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, {
-      expiresIn: '7d',
-    });
+    const token = jwt.sign(
+      { userId: user.id, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
 
-    // Skicka tokenen i JSON-svar (ingen cookie)
+    // Skicka endast token och användardata – ingen cookie
     res.json({
       message: 'Login successful',
       token,
