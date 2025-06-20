@@ -10,14 +10,16 @@ require('dotenv').config();
 const app = express();
 const prisma = new PrismaClient();
 
-app.use(express.json());
-
 const corsOptions = {
   origin: ['http://localhost:3000', 'https://railworker.vercel.app'],
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
 app.use(cors(corsOptions));
+
+app.use(express.json());
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -112,7 +114,7 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-app.post('/api/projects', async (req, res) => {
+app.post('/api/projects', authMiddleware, async (req, res) => {
   console.log('POST /api/projects');
   console.log('Inkommande req.body:', req.body);
 
