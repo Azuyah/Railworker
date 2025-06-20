@@ -1,17 +1,12 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
+import useUser from '../hooks/useUser';
 
 export default function DashboardRedirect() {
-  const navigate = useNavigate();
+  const { user, loading } = useUser();
 
-  useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    const role = user?.role;
+  if (loading) return <p>Laddar...</p>;
 
-    if (role === 'HTSM') navigate('/htsmpanel');
-    else if (role === 'TSM') navigate('/panel');
-    else navigate('/');
-  }, []);
-
-  return null; // Inget UI behövs, den bara redirectar
+  if (user?.role === 'HTSM') return <Navigate to="/htsmpanel" replace />;
+  if (user?.role === 'TSM') return <Navigate to="/panel" replace />;
+  return <Navigate to="/" replace />;
 }
