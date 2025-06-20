@@ -6,36 +6,41 @@ import axios from 'axios';
 export default function ProtectedRoute({ children, allowedRoles }) {
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isReady, setIsReady] = useState(false); // ✅ viktigt
   const location = useLocation();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setRole(null);
-      setLoading(false);
-      return;
-    }
-
-    axios
-      .get('https://railworker-production.up.railway.app/api/user', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .then((res) => {
-        console.log('✅ API response:', res.data);
-        setRole(res.data.role);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.warn('❌ Kunde inte hämta användare:', err);
-        localStorage.removeItem('token'); // Städa upp
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
         setRole(null);
         setLoading(false);
-      });
+        return;
+      }
+
+      axios
+        .get('https://railworker-production.up.railway.app/api/user', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        .then((res) => {
+          console.log('✅ API response:', res.data);
+          setRole(res.data.role);
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.warn('❌ Kunde inte hämta användare:', err);
+          localStorage.removeItem('token');
+          setRole(null);
+          setLoading(false);
+        });
+    } finally {
+      setIsReady(true); // ✅ bara när localStorage är läst
+    }
   }, []);
 
-  if (loading) return <LoadingScreen />;
+  if (!isReady || loading) return <LoadingScreen />;
 
   // 👇 Om vi är på "/dashboard" så redirectar vi direkt baserat på roll
   if (location.pathname === '/dashboard') {
