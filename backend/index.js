@@ -211,13 +211,22 @@ app.get('/api/project/:id', async (req, res) => {
     if (isNaN(projectId)) {
       return res.status(400).json({ error: 'Ogiltigt projekt-ID' });
     }
-
-    const project = await prisma.project.findUnique({
-      where: { id: projectId },
-      include: {
-        sections: true,
-      },
-    });
+const project = await prisma.project.findUnique({
+  where: { id: projectId },
+  select: {
+    id: true,
+    name: true,
+    startDate: true,
+    startTime: true,
+    endDate: true,
+    endTime: true,
+    plats: true,
+    namn: true,
+    telefonnummer: true,
+    rows: true, // 👈 DETTA ÄR DET SOM SAKNAS
+    sections: true,
+  },
+});
 
     if (!project) {
       return res.status(404).json({ error: 'Projekt hittades inte' });
