@@ -83,7 +83,14 @@ const token = user?.token;
           </ProtectedRoute>
         }
       />
-<Route path="/dashboard" element={<DashboardRedirect />} />
+<Route
+  path="/dashboard"
+  element={
+    <ProtectedRoute allowedRoles={['HTSM', 'TSM']}>
+      <div>Laddar...</div>
+    </ProtectedRoute>
+  }
+/>
     </Routes>
   );
 }
