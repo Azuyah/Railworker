@@ -7,7 +7,6 @@ import Register from './pages/Register';
 import Panel from './pages/Panel';
 import HtsmPanel from './pages/HtsmPanel';
 import SkapaProjekt from './pages/SkapaProjekt';
-import DashboardRedirect from './pages/DashboardRedirect';
 import ProjektVisa from './pages/ProjektVisa';
 import Plan from './pages/plan';
 import PlanTSM from './pages/PlanTSM';
@@ -19,14 +18,6 @@ function AppRoutes() {
   // Kontrollera om användaren redan är inloggad
 const user = JSON.parse(localStorage.getItem('user'));
 const token = user?.token;
-
-  if (
-    location.pathname === '/' &&
-    user?.token &&
-    (user.role === 'TSM' || user.role === 'HTSM')
-  ) {
-    return <Navigate to="/dashboard" replace />;
-  }
 
   return (
     <Routes location={location}>
