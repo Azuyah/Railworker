@@ -108,9 +108,9 @@ res.json({
 });
 });
 
-app.post('/api/projects', async (req, res) => {
-    console.log('📥 POST /api/projects');              
-  console.log('🧾 Inkommande req.body:', req.body);  
+app.post('/api/projects', authMiddleware, async (req, res) => {
+  console.log('POST /api/projects');
+  console.log('Inkommande req.body:', req.body);
 
   const {
     name,
@@ -126,14 +126,7 @@ app.post('/api/projects', async (req, res) => {
   } = req.body;
 
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'No token provided' });
-    }
-
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const userId = decoded.userId;
+    const userId = req.user.userId; // Hämtas från middleware
 
     const project = await prisma.project.create({
       data: {
@@ -210,16 +203,10 @@ app.get('/api/project/:id', authMiddleware, async (req, res) => {
   }
 });
 
-app.delete('/api/project/:id', async (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Ingen token angiven' });
-  }
+const authMiddleware = require('./auth'); // Se till att detta importeras i toppen om det inte redan är gjort
 
+app.delete('/api/project/:id', authMiddleware, async (req, res) => {
   try {
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, JWT_SECRET);
-
     const projectId = parseInt(req.params.id, 10);
 
     // Radera sektioner & beteckningar först om du inte har ON DELETE CASCADE
@@ -234,7 +221,7 @@ app.delete('/api/project/:id', async (req, res) => {
   }
 });
 
-app.put('/api/projects/:id', async (req, res) => {
+app.put('/api/projects/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;
   const {
     name,
