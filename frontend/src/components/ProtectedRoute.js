@@ -6,59 +6,53 @@ import axios from 'axios';
 export default function ProtectedRoute({ children, allowedRoles }) {
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isReady, setIsReady] = useState(false); // ✅ viktigt
   const location = useLocation();
 
-useEffect(() => {
-  let isMounted = true; // 👈 skyddar mot onödiga anrop vid re-renders
+  useEffect(() => {
+    let isMounted = true;
 
-  const user = JSON.parse(localStorage.getItem('user'));
-  const token = user?.token;
-
-  if (!token) {
-    if (isMounted) {
+    const token = localStorage.getItem('token');
+    if (!token) {
       setRole(null);
       setLoading(false);
+      return;
     }
-    return;
-  }
 
-  axios.get('https://railworker-production.up.railway.app/api/user', {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-    .then((res) => {
-      if (isMounted) {
-        console.log('✅ API response:', res.data);
-        setRole(res.data.role);
-        setLoading(false);
-      }
+    axios.get('https://railworker-production.up.railway.app/api/user', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     })
-    .catch((err) => {
-      if (isMounted) {
-        console.warn('❌ Kunde inte hämta användare:', err);
-        localStorage.removeItem('user');
-        setRole(null);
-        setLoading(false);
-      }
-    });
+      .then((res) => {
+        if (isMounted) {
+          setRole(res.data.role);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          console.warn('❌ Kunde inte hämta användare:', err);
+          localStorage.removeItem('token');
+          setRole(null);
+          setLoading(false);
+        }
+      });
 
-  return () => {
-    isMounted = false;
-  };
-}, []); // 👈 mycket viktigt – se till att dependency arrayen är tom
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
-  if (!isReady || loading) return <LoadingScreen />;
+  if (loading) return <LoadingScreen />;
 
-  // 👇 Om vi är på "/dashboard" så redirectar vi direkt baserat på roll
+  // Hantera redirect från "/dashboard"
   if (location.pathname === '/dashboard') {
     if (role === 'HTSM') return <Navigate to="/htsmpanel" replace />;
     if (role === 'TSM') return <Navigate to="/panel" replace />;
     return <Navigate to="/" replace />;
   }
 
-  // 👇 Annars, kolla om användaren har behörighet till denna route
+  // Hantera tillgång till skyddad route
   return allowedRoles.includes(role)
     ? children
     : <Navigate to="/" replace />;
