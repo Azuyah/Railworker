@@ -15,8 +15,18 @@ const handleLogin = async () => {
     });
 
     const token = res.data.token;
+
     if (token) {
-      localStorage.setItem('token', token);
+
+      localStorage.setItem('user', JSON.stringify({
+        token: res.data.token,
+        role: res.data.role,
+        name: res.data.name,
+        email: res.data.email,
+        phone: res.data.phone,
+        company: res.data.company,
+      }));
+
       navigate('/dashboard');
     } else {
       alert('Inloggning misslyckades: ingen token mottagen');
