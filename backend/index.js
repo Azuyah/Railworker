@@ -48,12 +48,13 @@ app.post('/api/register', async (req, res) => {
 });
 
 app.get('/api/user', async (req, res) => {
-  const token = req.cookies.token;
-  if (!token) {
-    return res.status(401).json({ error: 'Ingen token i cookie' });
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Ingen token angiven' });
   }
 
   try {
+    const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, JWT_SECRET);
     const userId = decoded.userId;
 
@@ -65,11 +66,13 @@ app.get('/api/user', async (req, res) => {
         name: true,
         phone: true,
         company: true,
-        role: true
-      }
+        role: true,
+      },
     });
 
-    if (!user) return res.status(404).json({ error: 'Användare hittades inte' });
+    if (!user) {
+      return res.status(404).json({ error: 'Användare hittades inte' });
+    }
 
     res.json(user);
   } catch (error) {
@@ -77,7 +80,6 @@ app.get('/api/user', async (req, res) => {
     res.status(500).json({ error: 'Kunde inte hämta användare' });
   }
 });
-
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
 
