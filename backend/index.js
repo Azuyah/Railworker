@@ -11,7 +11,7 @@ const app = express();
 const prisma = new PrismaClient();
 
 const corsOptions = {
-  origin: ['http://localhost:3000', 'https://railworker.vercel.app'],
+origin: ['http://localhost:3000', 'https://railworker.vercel.app', 'https://railworker-production.up.railway.app'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -23,7 +23,7 @@ app.use(express.json());
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
-  throw new Error('❌ JWT_SECRET is not defined in your .env file');
+  throw new Error('JWT_SECRET is not defined in your .env file');
 }
 // Register user
 app.post('/api/register', async (req, res) => {
