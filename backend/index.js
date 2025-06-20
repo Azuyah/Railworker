@@ -83,41 +83,60 @@ app.get('/api/user', async (req, res) => {
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
 
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+  try {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return res.status(400).json({ error: 'Invalid credentials' });
 
-  const passwordMatch = await bcrypt.compare(password, user.password);
-  if (!passwordMatch) return res.status(400).json({ error: 'Invalid credentials' });
-  const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, {
-    expiresIn: '7d',
-  });
-res.cookie('token', token, {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
-  maxAge: 7 * 24 * 60 * 60 * 1000
-});
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) return res.status(400).json({ error: 'Invalid credentials' });
+
+    const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, {
+      expiresIn: '7d',
+    });
+
+    // Skicka tokenen i JSON-svar (ingen cookie)
+    res.json({
+      message: 'Login successful',
+      token,
+      role: user.role,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      company: user.company,
+    });
+  } catch (error) {
+    console.error('❌ Fel vid inloggning:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
-app.post('/api/projects', authMiddleware, async (req, res) => {
+app.post('/api/projects', async (req, res) => {
   console.log('POST /api/projects');
   console.log('Inkommande req.body:', req.body);
 
-  const {
-    name,
-    description,
-    startDate,
-    startTime,
-    endDate,
-    endTime,
-    plats,
-    namn,
-    telefonnummer,
-    sections = [],
-  } = req.body;
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Ingen token angiven' });
+  }
+
+  const token = authHeader.split(' ')[1];
 
   try {
-    const userId = req.user.userId; // Hämtas från middleware
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const userId = decoded.userId;
+
+    const {
+      name,
+      description,
+      startDate,
+      startTime,
+      endDate,
+      endTime,
+      plats,
+      namn,
+      telefonnummer,
+      sections = [],
+    } = req.body;
 
     const project = await prisma.project.create({
       data: {
@@ -133,7 +152,6 @@ app.post('/api/projects', authMiddleware, async (req, res) => {
       },
     });
 
-    // Skapa sektioner
     for (const sec of sections) {
       await prisma.section.create({
         data: {
@@ -151,9 +169,17 @@ app.post('/api/projects', authMiddleware, async (req, res) => {
   }
 });
 
-app.get('/api/projects', authMiddleware, async (req, res) => {
+app.get('/api/projects', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Ingen token angiven' });
+  }
+
+  const token = authHeader.split(' ')[1];
+
   try {
-    const userId = req.user.userId;
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const userId = decoded.userId;
 
     const projects = await prisma.project.findMany({
       where: { userId },
@@ -169,8 +195,16 @@ app.get('/api/projects', authMiddleware, async (req, res) => {
   }
 });
 
-app.get('/api/project/:id', authMiddleware, async (req, res) => {
+app.get('/api/project/:id', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Ingen token angiven' });
+  }
+
   try {
+    const token = authHeader.split(' ')[1];
+    jwt.verify(token, JWT_SECRET); // Du behöver inte userId här, men verifierar token
+
     const projectId = parseInt(req.params.id, 10);
     if (isNaN(projectId)) {
       return res.status(400).json({ error: 'Ogiltigt projekt-ID' });
@@ -194,13 +228,19 @@ app.get('/api/project/:id', authMiddleware, async (req, res) => {
   }
 });
 
-app.delete('/api/project/:id', authMiddleware, async (req, res) => {
+app.delete('/api/project/:id', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Ingen token angiven' });
+  }
+
   try {
+    const token = authHeader.split(' ')[1];
+    jwt.verify(token, JWT_SECRET); // Verifiering av token
+
     const projectId = parseInt(req.params.id, 10);
 
-    // Radera sektioner & beteckningar först om du inte har ON DELETE CASCADE
     await prisma.section.deleteMany({ where: { projectId } });
-
     await prisma.project.delete({ where: { id: projectId } });
 
     res.json({ message: 'Projekt raderat' });
@@ -210,22 +250,31 @@ app.delete('/api/project/:id', authMiddleware, async (req, res) => {
   }
 });
 
-app.put('/api/projects/:id', authMiddleware, async (req, res) => {
-  const { id } = req.params;
-  const {
-    name,
-    startDate,
-    startTime,
-    endDate,
-    endTime,
-    plats,
-    namn,
-    telefonnummer,
-    rows,
-    sections = [],
-  } = req.body;
+app.put('/api/projects/:id', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Ingen token angiven' });
+  }
+
+  const token = authHeader.split(' ')[1];
 
   try {
+    jwt.verify(token, JWT_SECRET); // Token verifieras, men userId behövs ej här
+
+    const { id } = req.params;
+    const {
+      name,
+      startDate,
+      startTime,
+      endDate,
+      endTime,
+      plats,
+      namn,
+      telefonnummer,
+      rows,
+      sections = [],
+    } = req.body;
+
     const updatedProject = await prisma.project.update({
       where: { id: parseInt(id) },
       data: {
@@ -241,12 +290,10 @@ app.put('/api/projects/:id', authMiddleware, async (req, res) => {
       },
     });
 
-    // Ta bort gamla sektioner
     await prisma.section.deleteMany({
       where: { projectId: parseInt(id) },
     });
 
-    // Lägg till nya sektioner
     await prisma.section.createMany({
       data: sections.map((section) => ({
         name: section.name,
@@ -256,10 +303,10 @@ app.put('/api/projects/:id', authMiddleware, async (req, res) => {
     });
 
     res.json(updatedProject);
-} catch (error) {
-  console.error('❌ Detaljerat fel vid uppdatering av projektet:', error.message, error.stack, error);
-  res.status(500).json({ error: 'Något gick fel vid uppdatering av projektet' });
-}
+  } catch (error) {
+    console.error('❌ Detaljerat fel vid uppdatering av projektet:', error.message, error.stack, error);
+    res.status(500).json({ error: 'Något gick fel vid uppdatering av projektet' });
+  }
 });
 
 // Start server

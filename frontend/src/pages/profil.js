@@ -9,9 +9,11 @@ const Profil = () => {
   const [error, setError] = useState('');
 
 useEffect(() => {
-  axios.get('https://railworker-production.up.railway.app/api/user', {
-    withCredentials: true // 🔑 så cookien följer med
-  })
+axios.get('https://railworker-production.up.railway.app/api/user', {
+  headers: {
+    Authorization: `Bearer ${localStorage.getItem('token')}`
+  }
+})
   .then(res => setUser(res.data))
   .catch(err => console.error('❌ Kunde inte hämta användare:', err));
 }, []);

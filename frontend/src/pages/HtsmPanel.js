@@ -22,27 +22,37 @@ const Dashboard = () => {
     fetchUserAndProjects();
   }, []);
 
-  const fetchUserAndProjects = async () => {
-    try {
-      const userRes = await axios.get('https://railworker-production.up.railway.app/api/user', {
-        withCredentials: true,
-      });
-      setUser(userRes.data);
+const fetchUserAndProjects = async () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    navigate('/');
+    return;
+  }
 
-      const projectRes = await axios.get(
-        'https://railworker-production.up.railway.app/api/projects',
-        {
-          withCredentials: true,
-        }
-      );
-      setProjects(projectRes.data);
-    } catch (error) {
-      console.error('Kunde inte hämta användare eller projekt:', error);
-      navigate('/'); // Tillbaka till login vid fel
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    const userRes = await axios.get('https://railworker-production.up.railway.app/api/user', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    setUser(userRes.data);
+
+    const projectRes = await axios.get(
+      'https://railworker-production.up.railway.app/api/projects',
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    setProjects(projectRes.data);
+  } catch (error) {
+    console.error('Kunde inte hämta användare eller projekt:', error);
+    navigate('/'); // Tillbaka till login vid fel
+  } finally {
+    setLoading(false);
+  }
+};
 
   const boxBg = useColorModeValue('white', 'gray.700');
 

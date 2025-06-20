@@ -87,8 +87,18 @@ function RoleBasedPlan() {
   const [role, setRole] = useState(null);
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setRole('');
+      return;
+    }
+
     axios
-      .get('https://railworker-production.up.railway.app/api/user', { withCredentials: true })
+      .get('https://railworker-production.up.railway.app/api/user', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
       .then((res) => setRole(res.data.role))
       .catch(() => setRole(''));
   }, []);

@@ -9,9 +9,19 @@ export default function ProtectedRoute({ children, allowedRoles }) {
   const location = useLocation();
 
   useEffect(() => {
-    console.log('🔄 Hämtar användarroll från /api/user...');
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setRole(null);
+      setLoading(false);
+      return;
+    }
+
     axios
-      .get('https://railworker-production.up.railway.app/api/user', { withCredentials: true })
+      .get('https://railworker-production.up.railway.app/api/user', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
       .then((res) => {
         console.log('✅ API response:', res.data);
         setRole(res.data.role);
@@ -19,12 +29,13 @@ export default function ProtectedRoute({ children, allowedRoles }) {
       })
       .catch((err) => {
         console.warn('❌ Kunde inte hämta användare:', err);
+        localStorage.removeItem('token'); // Städa upp
         setRole(null);
         setLoading(false);
       });
   }, []);
 
-if (loading) return <LoadingScreen />;
+  if (loading) return <LoadingScreen />;
 
   // 👇 Om vi är på "/dashboard" så redirectar vi direkt baserat på roll
   if (location.pathname === '/dashboard') {
