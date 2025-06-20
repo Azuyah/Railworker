@@ -84,7 +84,12 @@ const token = user?.token;
       />
 <Route
   path="/dashboard"
-  element={<DashboardRedirect />}
+  element={
+    <ProtectedRoute allowedRoles={['HTSM', 'TSM']}>
+      {/* Ingen komponent behövs längre */}
+      <p>⏳ Redirectar...</p>
+    </ProtectedRoute>
+  }
 />
     </Routes>
   );
@@ -113,39 +118,6 @@ function RoleBasedPlan() {
   if (!role) return <p>Laddar...</p>;
 
   return role === 'TSM' ? <PlanTSM /> : <Plan />;
-}
-
-function DashboardRedirect() {
-  const [role, setRole] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      navigate('/', { replace: true });
-      return;
-    }
-
-    axios.get('https://railworker-production.up.railway.app/api/user', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => {
-        setRole(res.data.role);
-        setLoading(false);
-        if (res.data.role === 'HTSM') navigate('/htsmpanel', { replace: true });
-        else if (res.data.role === 'TSM') navigate('/panel', { replace: true });
-        else navigate('/', { replace: true });
-      })
-      .catch(() => {
-        localStorage.removeItem('token');
-        navigate('/', { replace: true });
-      });
-  }, []);
-
-  return <p>⏳ Redirectar...</p>;
 }
 
 export default function App() {
