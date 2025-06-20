@@ -17,9 +17,11 @@ const handleLogin = async () => {
     const token = res.data.token;
 
     if (token) {
+      // 🔑 SPARA TOKEN BÅDE I user-objektet OCH som separat key
+      localStorage.setItem('token', token); // ✅ detta saknas
 
       localStorage.setItem('user', JSON.stringify({
-        token: res.data.token,
+        token,
         role: res.data.role,
         name: res.data.name,
         email: res.data.email,
