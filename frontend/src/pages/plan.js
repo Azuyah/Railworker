@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from '../api/axios';
+import axios from 'axios';
 import LoadingScreen from '../components/LoadingScreen';
 import { Tooltip } from '@chakra-ui/react';
 import {

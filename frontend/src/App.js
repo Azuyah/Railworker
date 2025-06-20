@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axios from './api/axios';
+import axios from 'axios';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';

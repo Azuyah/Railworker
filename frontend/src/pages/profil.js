@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
-import axios from '../api/axios';
+import axios from 'axios';
 
 const Profil = () => {
   const [editing, setEditing] = useState(false);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import Header from '../components/Header';
-import axios from '../api/axios';
+import axios from 'axios';
 
 const PlanTSM = () => {
   const { id } = useParams();

@@ -11,9 +11,9 @@ const app = express();
 const prisma = new PrismaClient();
 
 const corsOptions = {
-origin: ['http://localhost:3000', 'https://railworker.vercel.app', 'https://railworker-production.up.railway.app'],
+  origin: true,
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
@@ -324,4 +324,4 @@ app.put('/api/projects/:id', async (req, res) => {
 
 // Start server
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`✅ Backend running on port ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`✅ Server running on port ${PORT}`));
