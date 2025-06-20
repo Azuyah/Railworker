@@ -203,8 +203,6 @@ app.get('/api/project/:id', authMiddleware, async (req, res) => {
   }
 });
 
-const authMiddleware = require('./auth'); // Se till att detta importeras i toppen om det inte redan är gjort
-
 app.delete('/api/project/:id', authMiddleware, async (req, res) => {
   try {
     const projectId = parseInt(req.params.id, 10);
