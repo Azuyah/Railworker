@@ -52,14 +52,6 @@ useEffect(() => {
 }, []); // 👈 mycket viktigt – se till att dependency arrayen är tom
 
   if (!isReady || loading) return <LoadingScreen />;
-
-  // 👇 Om vi är på "/dashboard" så redirectar vi direkt baserat på roll
-  if (location.pathname === '/dashboard') {
-    if (role === 'HTSM') return <Navigate to="/htsmpanel" replace />;
-    if (role === 'TSM') return <Navigate to="/panel" replace />;
-    return <Navigate to="/" replace />;
-  }
-
   // 👇 Annars, kolla om användaren har behörighet till denna route
   return allowedRoles.includes(role)
     ? children
