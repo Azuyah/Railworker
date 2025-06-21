@@ -83,6 +83,18 @@ const [namn, setNamn] = useState(project?.namn || '');
 const [telefonnummer, setTelefonnummer] = useState(project?.telefonnummer || '');
 const [editSections, setEditSections] = useState(project?.sections || []);
 
+const updateRow = (updatedRow) => {
+  setRows((prevRows) =>
+    prevRows.map((row) =>
+      row.id === updatedRow.id ? updatedRow : row
+    )
+  );
+};
+
+const deleteRow = (id) => {
+  setRows((prevRows) => prevRows.filter((row) => row.id !== id));
+};
+
 const calculateSamrad = (rows) => {
   const newSamradList = [];
   const newAvklarad = {};
@@ -427,16 +439,6 @@ const handleModalChange = (field, value) => {
   setSelectedRow((prev) => ({ ...prev, [field]: value }));
 };
 
-const getSharedContacts = () => {
-  if (!selectedRow) return [];
-
-  return rows.filter((row) => {
-    if (row.id === selectedRow.id) return false;
-    return row.selections?.some(
-      (val, idx) => val && selectedRow.selections?.[idx]
-    );
-  });
-};
 
 const [samrad, setSamrad] = useState([]);
 const filteredRows = rows
@@ -573,7 +575,7 @@ const handleModalSave = () => {
         <Table variant="simple" size="sm">
           <Thead bg="gray.200">
             <Tr>
-              <Th width="40px" textAlign="center">#</Th>
+              <Th width="40px" textAlign="center" py={3}>#</Th>
               <Th>BTKN</Th>
               {visibleColumns.namn && <Th>Namn</Th>}
               {visibleColumns.telefon && <Th>Telefon</Th>}
@@ -581,24 +583,7 @@ const handleModalSave = () => {
               {project.sections.map((sec, idx) => (
                 <Th key={idx} minW="40px" maxW="40" bg={idx % 2 === 0 ? 'yellow.100' : 'transparent'}>
                   <Flex direction="column" align="center">
-                    <Textarea
-                      value={sec.signal ?? ''}
-                      onChange={(e) => {
-                        const updatedSections = [...project.sections];
-                        updatedSections[idx].signal = e.target.value;
-                        setProject({ ...project, sections: updatedSections });
-                      }}
-                      resize="none"
-                      rows={2}
-                      textAlign="center"
-                      fontWeight="bold"
-                      fontSize="xs"
-                      borderColor="gray.300"
-                      mb={1}
-                      px={1}
-                      py={1}
-                    />
-                    <Text fontSize="sm">{sec.type} {String.fromCharCode(65 + idx)}</Text>
+                    <Text fontSize="sm">{String.fromCharCode(65 + idx)}</Text>
                   </Flex>
                 </Th>
               ))}
@@ -611,15 +596,16 @@ const handleModalSave = () => {
 {filteredRows
   .filter((row) => !row.avslutadRad)
   .map((row, rowIndex) => (
-    <Tr
-      key={row.id}
-onClick={(e) => {
-  if (e.target.closest('input[type="checkbox"], textarea, select, label, button, input[type="text"]')) return;
-  handleRowClick(row, rowIndex);
-}}
-      _hover={{ bg: 'blue.50' }}
-      cursor="pointer"
-    >
+<Tr
+  key={row.id}
+  bg={rowIndex % 2 === 0 ? 'white' : 'gray.100'}
+  onClick={(e) => {
+    if (e.target.closest('input[type="checkbox"], textarea, select, label, button, input[type="text"]')) return;
+    handleRowClick(row, rowIndex);
+  }}
+  _hover={{ bg: 'blue.50' }}
+  cursor="pointer"
+>
 <Td width="40px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
   <Text color="black" fontSize="md" w="40px" textAlign="center">
     {rowIndex + 1}
@@ -929,14 +915,6 @@ onChange={(e) => {
     </MenuList>
   </Menu>
 </FormControl>
-<FormControl mt={6}>
-  <Checkbox
-    isChecked={selectedRow?.avslutadRad || false}
-    onChange={(e) => handleModalChange('avslutadRad', e.target.checked)}
-  >
-    Avslutad
-  </Checkbox>
-</FormControl>
             </SimpleGrid>
 
             <SimpleGrid columns={3} spacing={4}>
@@ -994,10 +972,44 @@ onChange={(e) => {
         </SimpleGrid>
       )}
     </ModalBody>
-    <ModalFooter>
-      <Button colorScheme="blue" mr={3} onClick={handleModalSave}>Spara</Button>
-      <Button onClick={onClose}>Stäng</Button>
-    </ModalFooter>
+<ModalFooter justifyContent="space-between" width="100%">
+  {/* Vänstersida: Avsluta och Ta bort */}
+  <Flex gap={2}>
+    <Button
+      colorScheme="red"
+      onClick={() => {
+        const confirmed = window.confirm('Vill du ta bort denna raden permanent?');
+        if (confirmed) {
+          deleteRow(selectedRow.id);
+          onClose();
+        }
+      }}
+    >
+      Ta bort
+    </Button>
+    <Button
+      colorScheme="blue"
+      onClick={() => {
+        const confirmed = window.confirm('Vill du avsluta denna raden?');
+        if (confirmed) {
+          const updated = { ...selectedRow, avslutadRad: true };
+          updateRow(updated);
+          onClose();
+        }
+      }}
+    >
+      Avsluta
+    </Button>
+  </Flex>
+
+  {/* Högersida: Spara och Stäng */}
+  <Flex gap={2}>
+    <Button colorScheme="blue" onClick={handleModalSave}>
+      Spara
+    </Button>
+    <Button onClick={onClose}>Stäng</Button>
+  </Flex>
+</ModalFooter>
   </ModalContent>
 </Modal>
 <Modal isOpen={avslutadeModalOpen} onClose={() => setAvslutadeModalOpen(false)} size="lg">
