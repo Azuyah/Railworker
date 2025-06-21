@@ -776,77 +776,82 @@ onChange={(e) => {
   </Box>
 </Flex>
 
-      <Modal isOpen={editModalOpen} onClose={() => setEditModalOpen(false)} size="xl">
+  <Modal isOpen={editModalOpen} onClose={() => setEditModalOpen(false)} size="4xl">
   <ModalOverlay />
   <ModalContent>
     <ModalHeader>Redigera projekt</ModalHeader>
     <ModalCloseButton />
     <ModalBody>
-      <Stack spacing={4}>
-        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-          <FormControl>
-            <FormLabel>Projektnamn</FormLabel>
-            <Input value={projektNamn} onChange={(e) => setProjektNamn(e.target.value)} />
-          </FormControl>
-          <FormControl>
-            <FormLabel>Plats</FormLabel>
-            <Input value={plats} onChange={(e) => setPlats(e.target.value)} />
-          </FormControl>
-          <FormControl>
-            <FormLabel>Startdatum</FormLabel>
-            <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-          </FormControl>
-          <FormControl>
-            <FormLabel>Starttid</FormLabel>
-            <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-          </FormControl>
-          <FormControl>
-            <FormLabel>Slutdatum</FormLabel>
-            <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-          </FormControl>
-          <FormControl>
-            <FormLabel>Sluttid</FormLabel>
-            <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
-          </FormControl>
-          <FormControl>
-            <FormLabel>FJTKL Namn</FormLabel>
-            <Input value={namn} onChange={(e) => setNamn(e.target.value)} />
-          </FormControl>
-          <FormControl>
-            <FormLabel>FJTKL Telefonnummer</FormLabel>
-            <Input value={telefonnummer} onChange={(e) => setTelefonnummer(e.target.value)} />
-          </FormControl>
-        </SimpleGrid>
+      <Flex direction={{ base: "column", md: "row" }} gap={8} align="start">
+        {/* Vänsterkolumn: Fält + knappar */}
+        <Box flex={2}>
+          <Stack spacing={4}>
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+              <FormControl>
+                <FormLabel>Projektnamn</FormLabel>
+                <Input value={projektNamn} onChange={(e) => setProjektNamn(e.target.value)} />
+              </FormControl>
+              <FormControl>
+                <FormLabel>Plats</FormLabel>
+                <Input value={plats} onChange={(e) => setPlats(e.target.value)} />
+              </FormControl>
+              <FormControl>
+                <FormLabel>Startdatum</FormLabel>
+                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+              </FormControl>
+              <FormControl>
+                <FormLabel>Starttid</FormLabel>
+                <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+              </FormControl>
+              <FormControl>
+                <FormLabel>Slutdatum</FormLabel>
+                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              </FormControl>
+              <FormControl>
+                <FormLabel>Sluttid</FormLabel>
+                <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+              </FormControl>
+              <FormControl>
+                <FormLabel>FJTKL Namn</FormLabel>
+                <Input value={namn} onChange={(e) => setNamn(e.target.value)} />
+              </FormControl>
+              <FormControl>
+                <FormLabel>FJTKL Telefonnummer</FormLabel>
+                <Input value={telefonnummer} onChange={(e) => setTelefonnummer(e.target.value)} />
+              </FormControl>
+            </SimpleGrid>
 
-        <Box>
-          <FormLabel>Beteckningar</FormLabel>
+            {/* Flyttade knappar */}
+            <Box>
+              <FormLabel>Delområden (DP / Linje)</FormLabel>
+              <Flex gap={4}>
+                <Button colorScheme="blue" onClick={addEditDP}>
+                  + Lägg till DP
+                </Button>
+                <Button colorScheme="green" onClick={addEditLinje}>
+                  + Lägg till Linje
+                </Button>
+              </Flex>
+            </Box>
+          </Stack>
         </Box>
 
-<Box>
-  <FormLabel>Delområden (DP / Linje)</FormLabel>
-  <Flex mb={4} gap={4}>
-    <Button colorScheme="blue" onClick={addEditDP}>
-      + Lägg till DP
-    </Button>
-    <Button colorScheme="green" onClick={addEditLinje}>
-      + Lägg till Linje
-    </Button>
-  </Flex>
-
-  {editSections.map((sec, i) => (
-    <Box key={i} mb={3} p={3} bg="gray.50" borderRadius="md" borderWidth="1px">
-      <Text mb={1} fontWeight="semibold">
-        {sec.type} {String.fromCharCode(65 + i)}
-      </Text>
-      <Input
-        value={sec.signal}
-        onChange={(e) => handleEditSignalChange(i, e.target.value)}
-        placeholder="Signal"
-      />
-    </Box>
-  ))}
-</Box>
-      </Stack>
+        {/* Högerkolumn: DP / Linje lista */}
+        <Box flex={2}>
+          {editSections.map((sec, i) => (
+            <Box key={i} mb={3} p={3} bg="gray.50" borderRadius="md" borderWidth="1px">
+              <Text mb={1} fontWeight="semibold">
+                {sec.type} {String.fromCharCode(65 + i)}
+              </Text>
+              <Input
+                value={sec.signal}
+                onChange={(e) => handleEditSignalChange(i, e.target.value)}
+                placeholder="Signal"
+              />
+            </Box>
+          ))}
+        </Box>
+      </Flex>
     </ModalBody>
     <ModalFooter>
       <Button colorScheme="blue" mr={3} onClick={updateProject}>
