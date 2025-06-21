@@ -56,6 +56,9 @@ const [selectedAnordning, setSelectedAnordning] = useState('');
   const [avklaradSamrad, setAvklaradSamrad] = useState({});
   const [samradData, setSamradData] = useState({ samradList: [], avklaradMap: {} });
   const [loading, setLoading] = useState(true);
+  const [isProjectInfoOpen, setIsProjectInfoOpen] = useState(false);
+const openProjectInfoModal = () => setIsProjectInfoOpen(true);
+const closeProjectInfoModal = () => setIsProjectInfoOpen(false);
   const [visibleColumns, setVisibleColumns] = useState({
     namn: true,
     telefon: true,
@@ -500,22 +503,40 @@ const handleModalSave = () => {
     <Box bg="gray.100" minH="100vh" py={10} px={[4, 8]}>
       <Header />
       <Box maxW="1600px" mx="auto" mt={24}>
-        <Flex bg="white" p={6} borderRadius="lg" boxShadow="xl" justify="space-between" mb={6}>
-          <Box>
-            <Heading size="lg" mb={2}>Projektnamn: {project.name}</Heading>
-            <Text><strong>Plats:</strong> {project.plats}</Text>
-            <Text><strong>Startdatum:</strong> {project.startDate} {project.startTime}</Text>
-            <Text><strong>Slutdatum:</strong> {project.endDate} {project.endTime}</Text>
-            <Text><strong>FJTKL:</strong> {project.namn} ({project.telefonnummer})</Text>
-          </Box>
-          <Box textAlign="right">
-            <Text fontWeight="bold">Dispositionsarbetsplan avslutas:</Text>
-            <Text fontSize="2xl" fontWeight="bold" color="blue.500">{countdown}</Text>
-          </Box>
-        </Flex>
 
-        <Flex gap={4} mb={4} align="center">
-          <Button colorScheme="red" onClick={async () => {
+<Modal isOpen={isProjectInfoOpen} onClose={() => setIsProjectInfoOpen(false)} size="xl">
+  <ModalOverlay />
+  <ModalContent>
+    <ModalHeader>
+      <Flex justify="space-between" align="center">
+        <Text fontSize="xl" fontWeight="bold">Projektinformation</Text>
+        <Box textAlign="right">
+          <Text fontSize="sm" fontWeight="semibold">Dispositionsarbetsplan avslutas:</Text>
+          <Text fontSize="lg" fontWeight="bold" color="blue.500">{countdown}</Text>
+        </Box>
+      </Flex>
+    </ModalHeader>
+
+    <ModalCloseButton />
+
+    <ModalBody>
+      <Box>
+        <Text><strong>Projektnamn:</strong> {project.name}</Text>
+        <Text><strong>Plats:</strong> {project.plats}</Text>
+        <Text><strong>Startdatum:</strong> {project.startDate} {project.startTime}</Text>
+        <Text><strong>Slutdatum:</strong> {project.endDate} {project.endTime}</Text>
+        <Text><strong>FJTKL:</strong> {project.namn} ({project.telefonnummer})</Text>
+      </Box>
+    </ModalBody>
+
+    <ModalFooter justifyContent="space-between">
+      <HStack spacing={3}>
+                <Button colorScheme="blue" onClick={() => openEditProjectModal(true)}>
+          Redigera projekt
+        </Button>
+        <Button
+          colorScheme="red"
+          onClick={async () => {
             if (!window.confirm('Är du säker på att du vill ta bort detta projekt?')) return;
             try {
               const tokenData = localStorage.getItem('user');
@@ -527,18 +548,25 @@ const handleModalSave = () => {
             } catch (err) {
               console.error('Kunde inte ta bort projekt:', err);
             }
-          }}>Ta bort projekt</Button>
+          }}
+        >
+          Ta bort projekt
+        </Button>
+        </HStack>
 
-<Button colorScheme="blue" onClick={() => openEditProjectModal(true)}>
-  Redigera projekt
-</Button>
-        </Flex>
+      <Button variant="ghost" onClick={() => setIsProjectInfoOpen(false)}>
+        Stäng
+      </Button>
+    </ModalFooter>
+  </ModalContent>
+</Modal>
 
 <Flex justify="space-between" align="center" mb={4}>
-
-  {/* Vänster: Filter + Sökfält */}
-
+  {/* Vänster sida: Visa projekt + Filter */}
   <HStack spacing={4}>
+    <Button colorScheme="blue" onClick={() => setIsProjectInfoOpen(true)}>
+      Visa projekt
+    </Button>
     <Flex gap={2} align="center">
       <Text fontWeight="semibold">Filter</Text>
       <Menu closeOnSelect={false}>
