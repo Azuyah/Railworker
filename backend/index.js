@@ -78,7 +78,7 @@ app.get('/api/user', async (req, res) => {
 
     res.json(user);
   } catch (error) {
-    console.error('❌ Fel vid hämtning av användare:', error);
+    console.error('Fel vid hämtning av användare:', error);
     res.status(500).json({ error: 'Kunde inte hämta användare' });
   }
 });
@@ -91,14 +91,14 @@ app.post('/api/login', async (req, res) => {
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
-      console.log('❌ Ingen användare hittades med mejl:', email);
+      console.log('Ingen användare hittades med mejl:', email);
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
     const passwordMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordMatch) {
-      console.log('❌ Fel lösenord:', password, 'för:', email);
+      console.log(' Fel lösenord:', password, 'för:', email);
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
@@ -108,7 +108,7 @@ app.post('/api/login', async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    console.log('✅ Inloggning lyckades för:', email);
+    console.log('Inloggning lyckades för:', email);
 
     res.json({
       message: 'Login successful',
@@ -120,8 +120,38 @@ app.post('/api/login', async (req, res) => {
       company: user.company,
     });
   } catch (error) {
-    console.error('❌ Fel vid inloggning:', error);
+    console.error('Fel vid inloggning:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.put('/api/user', authMiddleware, async (req, res) => {
+  const { name, email, phone, company, password } = req.body;
+  const userId = req.user.userId;
+
+  try {
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        name,
+        email,
+        phone,
+        company,
+        ...(password ? { password: await bcrypt.hash(password, 10) } : {})
+      },
+    });
+
+    res.json({
+      id: updatedUser.id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      phone: updatedUser.phone,
+      company: updatedUser.company,
+      role: updatedUser.role
+    });
+  } catch (error) {
+    console.error('Fel vid uppdatering av användare:', error);
+    res.status(500).json({ error: 'Kunde inte uppdatera användaren' });
   }
 });
 
@@ -179,7 +209,7 @@ app.post('/api/projects', authMiddleware, async (req, res) => {
 
     res.status(201).json(project);
   } catch (error) {
-    console.error('❌ Create project error:', error);
+    console.error(' Create project error:', error);
     res.status(500).json({ error: 'Could not create project' });
   }
 });
@@ -205,7 +235,7 @@ app.get('/api/projects', async (req, res) => {
 
     res.json(projects);
   } catch (err) {
-    console.error('❌ Fel vid hämtning av projekt:', err);
+    console.error('Fel vid hämtning av projekt:', err);
     res.status(500).json({ error: 'Kunde inte hämta projekt' });
   }
 });
@@ -247,7 +277,7 @@ const project = await prisma.project.findUnique({
 
     res.json(project);
   } catch (error) {
-    console.error('❌ Fel vid hämtning av projekt:', error.message, error.stack);
+    console.error('Fel vid hämtning av projekt:', error.message, error.stack);
     res.status(500).json({ error: 'Kunde inte hämta projekt' });
   }
 });
@@ -269,7 +299,7 @@ app.delete('/api/project/:id', async (req, res) => {
 
     res.json({ message: 'Projekt raderat' });
   } catch (error) {
-    console.error('❌ Fel vid borttagning:', error);
+    console.error('Fel vid borttagning:', error);
     res.status(500).json({ error: 'Kunde inte ta bort projekt' });
   }
 });
@@ -328,7 +358,7 @@ app.put('/api/projects/:id', async (req, res) => {
 
     res.json(updatedProject);
   } catch (error) {
-    console.error('❌ Detaljerat fel vid uppdatering av projektet:', error.message, error.stack, error);
+    console.error('Detaljerat fel vid uppdatering av projektet:', error.message, error.stack, error);
     res.status(500).json({ error: 'Något gick fel vid uppdatering av projektet' });
   }
 });

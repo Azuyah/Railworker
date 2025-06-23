@@ -1,34 +1,50 @@
 import React, { useState, useEffect } from 'react';
-import Header from '../components/Header';
+import {
+  Box, Button, Input, FormControl, FormLabel,
+  VStack, useDisclosure, Modal, ModalOverlay, ModalContent,
+  ModalHeader, ModalCloseButton, ModalBody, ModalFooter, Text
+} from '@chakra-ui/react';
 import axios from 'axios';
+import Header from '../components/Header';
 
 const Profil = () => {
   const [editing, setEditing] = useState(false);
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [localUser, setLocalUser] = useState(null);
   const [error, setError] = useState('');
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
-useEffect(() => {
-axios.get('https://railworker-production.up.railway.app/api/user', {
-  headers: {
-    Authorization: `Bearer ${localStorage.getItem('token')}`
-  }
-})
-  .then(res => setUser(res.data))
-  .catch(err => console.error('❌ Kunde inte hämta användare:', err));
-}, []);
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await axios.get('https://railworker-production.up.railway.app/api/user', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        setUser(res.data);
+        setLocalUser(res.data);
+      } catch (err) {
+        console.error('❌ Kunde inte hämta användare:', err);
+        setError('Fel vid hämtning av användare');
+      }
+    };
+    fetchUser();
+  }, []);
 
   const handleChange = (field, value) => {
-    setUser(prev => ({ ...prev, [field]: value }));
+    setLocalUser(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSave = async () => {
     try {
-      await axios.put('https://railworker-production.up.railway.app/api/user', user);
+      await axios.put('https://railworker-production.up.railway.app/api/user', localUser, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      setUser(localUser);
       setEditing(false);
+      onClose();
     } catch (err) {
-      console.error('Kunde inte spara användarinfo:', err);
-      setError('Fel vid sparande av användare');
+      console.error('❌ Fel vid sparande:', err);
+      setError('Kunde inte spara användarinfo');
     }
   };
 
@@ -40,49 +56,59 @@ axios.get('https://railworker-production.up.railway.app/api/user', {
     password: 'Lösenord',
   };
 
-  if (loading) return <div className="p-10">Laddar användardata...</div>;
-  if (error) return <div className="p-10 text-red-500">{error}</div>;
-
   return (
-    <div className="min-h-screen bg-gray-100">
+    <Box minH="100vh" bg="gray.100">
       <Header />
-      <div className="pt-28 p-6 max-w-2xl mx-auto">
-        <div className="bg-white rounded shadow-md p-8">
-          <h2 className="text-2xl font-bold mb-6">Min profil</h2>
+      <Box pt="120px" px={6} maxW="lg" mx="auto">
+        <Box bg="white" p={8} rounded="md" shadow="md">
+          <Text fontSize="2xl" fontWeight="bold" mb={6}>Min profil</Text>
 
-          {Object.keys(labels).map((field) => (
-            <div key={field} className="mb-4">
-              <label className="block font-semibold mb-1">{labels[field]}</label>
-              <input
-                type={field === 'password' ? 'password' : 'text'}
-                value={user?.[field] || ''}
-                onChange={(e) => handleChange(field, e.target.value)}
-                disabled={!editing}
-                className={`w-full px-4 py-2 rounded border ${editing ? 'bg-white' : 'bg-gray-100'}`}
-              />
-            </div>
-          ))}
+          <VStack spacing={4} align="stretch">
+            {Object.keys(labels).map((field) => (
+              <FormControl key={field}>
+                <FormLabel>{labels[field]}</FormLabel>
+                <Input
+                  type={field === 'password' ? 'password' : 'text'}
+                  value={localUser?.[field] || ''}
+                  onChange={(e) => handleChange(field, e.target.value)}
+                  isDisabled={!editing && field !== 'password'}
+                />
+              </FormControl>
+            ))}
+          </VStack>
 
-          <div className="flex justify-center mt-6">
+          <Box mt={6} textAlign="center">
             {!editing ? (
-              <button
-                onClick={() => setEditing(true)}
-                className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
-              >
+              <Button colorScheme="blue" onClick={() => setEditing(true)}>
                 Ändra uppgifter
-              </button>
+              </Button>
             ) : (
-              <button
-                onClick={handleSave}
-                className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
-              >
+              <Button colorScheme="green" onClick={onOpen}>
                 Spara ändringar
-              </button>
+              </Button>
             )}
-          </div>
-        </div>
-      </div>
-    </div>
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Modal */}
+      <Modal isOpen={isOpen} onClose={onClose} isCentered>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Bekräfta ändringar</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            Är du säker på att du vill spara ändringarna?
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="green" mr={3} onClick={handleSave}>
+              Ja, spara
+            </Button>
+            <Button onClick={onClose}>Avbryt</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </Box>
   );
 };
 
