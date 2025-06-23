@@ -87,16 +87,26 @@ const [namn, setNamn] = useState(project?.namn || '');
 const [telefonnummer, setTelefonnummer] = useState(project?.telefonnummer || '');
 const [editSections, setEditSections] = useState(project?.sections || []);
 
-const updateRow = (updatedRow) => {
-  setRows((prevRows) =>
-    prevRows.map((row) =>
-      row.id === updatedRow.id ? updatedRow : row
-    )
-  );
+const updateRow = async (updatedRow) => {
+  return new Promise((resolve) => {
+    setRows((prevRows) => {
+      const updatedRows = prevRows.map((row) =>
+        row.id === updatedRow.id ? updatedRow : row
+      );
+      resolve(); // signalerar att setRows är klar
+      return updatedRows;
+    });
+  });
 };
 
-const deleteRow = (id) => {
-  setRows((prevRows) => prevRows.filter((row) => row.id !== id));
+const deleteRow = async (id) => {
+  return new Promise((resolve) => {
+    setRows((prevRows) => {
+      const updated = prevRows.filter((row) => row.id !== id);
+      resolve();
+      return updated;
+    });
+  });
 };
 
 const calculateSamrad = (rows) => {
@@ -1008,10 +1018,12 @@ onChange={(e) => {
   <Flex gap={2}>
     <Button
       colorScheme="red"
-      onClick={() => {
+      onClick={ async() => {
         const confirmed = window.confirm('Vill du ta bort denna raden permanent?');
         if (confirmed) {
-          deleteRow(selectedRow.id);
+          await deleteRow(selectedRow.id);
+          await new Promise((resolve) => setTimeout(resolve, 0));
+          await sparaProjekt();
           onClose();
         }
       }}
@@ -1020,11 +1032,13 @@ onChange={(e) => {
     </Button>
     <Button
       colorScheme="blue"
-      onClick={() => {
+      onClick={ async() => {
         const confirmed = window.confirm('Vill du avsluta denna raden?');
         if (confirmed) {
           const updated = { ...selectedRow, avslutadRad: true };
-          updateRow(updated);
+          await updateRow(updated);
+          await new Promise((resolve) => setTimeout(resolve, 0));
+          await sparaProjekt();
           onClose();
         }
       }}
@@ -1035,9 +1049,15 @@ onChange={(e) => {
 
   {/* Högersida: Spara och Stäng */}
   <Flex gap={2}>
-    <Button colorScheme="blue" onClick={handleModalSave}>
-      Spara
-    </Button>
+<Button
+  colorScheme="blue"
+  onClick={async () => {
+    await sparaProjekt(); // Vänta på sparande
+    onClose(); // Stäng modalen
+  }}
+>
+  Spara
+</Button>
     <Button onClick={onClose}>Stäng</Button>
   </Flex>
 </ModalFooter>
