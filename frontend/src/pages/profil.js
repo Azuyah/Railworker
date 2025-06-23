@@ -154,8 +154,12 @@ const Profil = () => {
             ) : (
               employees.map(emp => (
                 <Box key={emp.id} p={3} borderWidth={1} rounded="md">
-                  <Text><strong>Namn:</strong> {emp.name || 'Okänd'}</Text>
-                  <Text><strong>E-post:</strong> {emp.email}</Text>
+<Text>
+  Namn: {emp.employee?.name || 'Okänd'}
+</Text>
+<Text>
+  E-post: {emp.employee?.email || 'Okänd'}
+</Text>
                 </Box>
               ))
             )}

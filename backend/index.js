@@ -198,22 +198,19 @@ app.post('/api/employees', authMiddleware, async (req, res) => {
 });
 
 app.get('/api/employees', authMiddleware, async (req, res) => {
-  const employerId = req.user.userId;
+  const userId = req.user.userId;
 
   try {
     const employees = await prisma.employee.findMany({
-      where: { employerId },
+      where: { employerId: userId },
       include: {
-        employee: {
-          select: { id: true, name: true, email: true }
-        }
+        employee: true // inkluderar användarinfo för varje anställd
       }
     });
 
-    const formatted = employees.map(e => e.employee);
-    res.json(formatted);
-  } catch (err) {
-    console.error('Fel vid hämtning av anställda:', err);
+    res.json(employees);
+  } catch (error) {
+    console.error('Fel vid hämtning av anställda:', error);
     res.status(500).json({ error: 'Kunde inte hämta anställda' });
   }
 });
