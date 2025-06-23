@@ -72,6 +72,7 @@ const closeProjectInfoModal = () => setIsProjectInfoOpen(false);
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedRowIndex, setSelectedRowIndex] = useState(null);
   const [selectedAreas, setSelectedAreas] = useState([]);
 
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -399,17 +400,15 @@ const addRow = () => {
   const updatedRows = [...rows, newRow];
   setRows(updatedRows);
 
-  // Markera nya raden som vald och öppna modalen
-  setSelectedRow({
-    ...newRow,
-    index: updatedRows.length - 1,
-    dp: '',
-    linje: '',
-  });
-
-  setSelectedAreas([]);
-  setSelectedAnordning('');
-  onOpen();
+setSelectedRow({
+  ...newRow,
+  dp: '',
+  linje: '',
+});
+setSelectedRowIndex(updatedRows.length - 1);
+setSelectedAreas([]);
+setSelectedAnordning('');
+onOpen();
 };
 
   const toggleColumn = (col) => {
@@ -419,25 +418,24 @@ const addRow = () => {
 const handleRowClick = (row, rowIndex) => {
   setSelectedRow({
     ...row,
-    index: rowIndex,
     dp: row.dp || '',
     linje: row.linje || ''
   });
-
+  setSelectedRowIndex(rowIndex);
   setSelectedAreas(row.selectedAreas || []);
-  setSelectedAnordning(row.anordning || ''); // ← Lägg till denna rad
+  setSelectedAnordning(row.anordning || '');
   onOpen();
 };
 
 const handleModalChange = (field, value) => {
   const updated = [...rows];
-  const index = selectedRow.index;
+  if (selectedRowIndex === null) return;
 
   if (field === 'dp' || field === 'linje') {
     value = parseInt(value);
   }
 
-  updated[index][field] = value;
+  updated[selectedRowIndex][field] = value;
   setRows(updated);
   setSelectedRow((prev) => ({ ...prev, [field]: value }));
 };
