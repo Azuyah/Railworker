@@ -12,14 +12,16 @@ datasource db {
 }
 
 model User {
-  id       Int       @id @default(autoincrement())
-  email    String    @unique
-  password String
-  name     String?
-  phone    String?
-  company  String?
-  role     String    @default("TSM")
-  projects Project[] // ✅ relation till Project
+  id         Int        @id @default(autoincrement())
+  email      String     @unique
+  password   String
+  name       String?
+  phone      String?
+  company    String?
+  role       String     @default("TSM")
+  projects   Project[]
+  employees  Employee[] @relation("Employer")
+  employerOf Employee[] @relation("Employee")
 }
 
 model Project {
@@ -54,4 +56,14 @@ model Beteckning {
   label     String
   project   Project @relation(fields: [projectId], references: [id])
   projectId Int
+}
+
+model Employee {
+  id         Int  @id @default(autoincrement())
+  employer   User @relation("Employer", fields: [employerId], references: [id])
+  employerId Int
+  employee   User @relation("Employee", fields: [employeeId], references: [id])
+  employeeId Int
+
+  @@unique([employerId, employeeId])
 }

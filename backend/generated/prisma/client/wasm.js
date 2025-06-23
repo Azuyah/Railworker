@@ -158,6 +158,12 @@ exports.Prisma.BeteckningScalarFieldEnum = {
   projectId: 'projectId'
 };
 
+exports.Prisma.EmployeeScalarFieldEnum = {
+  id: 'id',
+  employerId: 'employerId',
+  employeeId: 'employeeId'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -189,7 +195,8 @@ exports.Prisma.ModelName = {
   User: 'User',
   Project: 'Project',
   Section: 'Section',
-  Beteckning: 'Beteckning'
+  Beteckning: 'Beteckning',
+  Employee: 'Employee'
 };
 
 /**

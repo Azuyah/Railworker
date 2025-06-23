@@ -155,6 +155,69 @@ app.put('/api/user', authMiddleware, async (req, res) => {
   }
 });
 
+app.post('/api/employees', authMiddleware, async (req, res) => {
+  const { email } = req.body;
+  const employerId = req.user.userId;
+
+  try {
+    const employee = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!employee) {
+      return res.status(404).json({ error: 'Ingen användare med den e-postadressen hittades' });
+    }
+
+    if (employee.id === employerId) {
+      return res.status(400).json({ error: 'Du kan inte lägga till dig själv som anställd' });
+    }
+
+    const alreadyAdded = await prisma.employee.findFirst({
+      where: {
+        employerId,
+        employeeId: employee.id
+      }
+    });
+
+    if (alreadyAdded) {
+      return res.status(400).json({ error: 'Användaren är redan anställd' });
+    }
+
+    await prisma.employee.create({
+      data: {
+        employerId,
+        employeeId: employee.id
+      }
+    });
+
+    res.json({ message: 'Anställd tillagd' });
+  } catch (err) {
+    console.error('Fel vid tillägg av anställd:', err);
+    res.status(500).json({ error: 'Kunde inte lägga till anställd' });
+  }
+});
+
+app.get('/api/employees', authMiddleware, async (req, res) => {
+  const employerId = req.user.userId;
+
+  try {
+    const employees = await prisma.employee.findMany({
+      where: { employerId },
+      include: {
+        employee: {
+          select: { id: true, name: true, email: true }
+        }
+      }
+    });
+
+    const formatted = employees.map(e => e.employee);
+    res.json(formatted);
+  } catch (err) {
+    console.error('Fel vid hämtning av anställda:', err);
+    res.status(500).json({ error: 'Kunde inte hämta anställda' });
+  }
+});
+
 app.post('/api/projects', authMiddleware, async (req, res) => {
   console.log('POST /api/projects');
   console.log('Inkommande req.body:', req.body);
