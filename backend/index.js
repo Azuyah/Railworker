@@ -215,6 +215,28 @@ app.get('/api/employees', authMiddleware, async (req, res) => {
   }
 });
 
+app.delete('/api/employees/:id', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.userId;
+
+  try {
+    const employee = await prisma.employee.findUnique({
+      where: { id: parseInt(id) }
+    });
+
+    if (!employee || employee.employerId !== userId) {
+      return res.status(403).json({ error: 'Obehörig eller ogiltig anställd' });
+    }
+
+    await prisma.employee.delete({ where: { id: parseInt(id) } });
+
+    res.json({ message: 'Anställd borttagen' });
+  } catch (error) {
+    console.error('Fel vid borttagning:', error);
+    res.status(500).json({ error: 'Kunde inte ta bort anställd' });
+  }
+});
+
 app.post('/api/projects', authMiddleware, async (req, res) => {
   console.log('POST /api/projects');
   console.log('Inkommande req.body:', req.body);

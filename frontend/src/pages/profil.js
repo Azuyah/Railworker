@@ -52,6 +52,17 @@ const Profil = () => {
     setLocalUser(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleDeleteEmployee = async (employeeId) => {
+  try {
+    await axios.delete(`https://railworker-production.up.railway.app/api/employees/${employeeId}`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    });
+    setEmployees(prev => prev.filter(emp => emp.id !== employeeId));
+  } catch (err) {
+    console.error('Kunde inte ta bort anställd:', err);
+  }
+};
+
   const handleSave = async () => {
     try {
       await axios.put('https://railworker-production.up.railway.app/api/user', localUser, {
@@ -153,14 +164,30 @@ const Profil = () => {
               <Text>Inga anställda ännu.</Text>
             ) : (
               employees.map(emp => (
-                <Box key={emp.id} p={3} borderWidth={1} rounded="md">
-<Text>
-  Namn: {emp.employee?.name || 'Okänd'}
-</Text>
-<Text>
-  E-post: {emp.employee?.email || 'Okänd'}
-</Text>
-                </Box>
+<Box
+  borderWidth="1px"
+  borderRadius="md"
+  p={4}
+  mb={4}
+  bg="gray.50"
+  display="flex"
+  justifyContent="space-between"
+  alignItems="center"
+>
+  <Box>
+    <Text> Namn: <strong>{emp.employee?.name || 'Okänd'}</strong> </Text>
+    <Text> Telefon: <strong>{emp.employee?.phone || 'Okänd'}</strong> </Text>
+    <Text> E-post: <strong>{emp.employee?.email || 'Okänd'}</strong> </Text>
+  </Box>
+
+  <Button
+    colorScheme="red"
+    size="sm"
+    onClick={() => handleDeleteEmployee(emp.id)}
+  >
+    Ta bort
+  </Button>
+</Box>
               ))
             )}
           </VStack>
