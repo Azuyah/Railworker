@@ -87,26 +87,18 @@ const [namn, setNamn] = useState(project?.namn || '');
 const [telefonnummer, setTelefonnummer] = useState(project?.telefonnummer || '');
 const [editSections, setEditSections] = useState(project?.sections || []);
 
-const updateRow = async (updatedRow) => {
-  return new Promise((resolve) => {
-    setRows((prevRows) => {
-      const updatedRows = prevRows.map((row) =>
-        row.id === updatedRow.id ? updatedRow : row
-      );
-      resolve(); // signalerar att setRows är klar
-      return updatedRows;
-    });
-  });
+const updateRow = (updatedRow) => {
+  const updatedRows = rows.map((row) =>
+    row.id === updatedRow.id ? updatedRow : row
+  );
+  setRows(updatedRows);
+  return updatedRows; // Returnera nya rows
 };
 
-const deleteRow = async (id) => {
-  return new Promise((resolve) => {
-    setRows((prevRows) => {
-      const updated = prevRows.filter((row) => row.id !== id);
-      resolve();
-      return updated;
-    });
-  });
+const deleteRow = (id) => {
+  const updatedRows = rows.filter((row) => row.id !== id);
+  setRows(updatedRows);
+  return updatedRows; // Returnera nya rows
 };
 
 const calculateSamrad = (rows) => {
@@ -116,11 +108,15 @@ const calculateSamrad = (rows) => {
   const exclusionSet = ['A-S', 'L-S', 'S-S', 'E-S'];
 
   rows.forEach((row, i) => {
+    if (row.avslutadRad) return;
+
     const rowAreas = row.selections || [];
     const rowAnordningar = String(row.anordning || '').split(',').map(a => a.trim());
 
     for (let j = 0; j < i; j++) {
       const compareRow = rows[j];
+      if (compareRow.avslutadRad) continue;
+
       const compareAreas = compareRow.selections || [];
       const compareAnordningar = String(compareRow.anordning || '').split(',').map(a => a.trim());
 
@@ -216,13 +212,12 @@ const updateProject = async () => {
 };
 
 
-const sparaProjekt = async () => {
+const sparaProjekt = async (customRows = rows) => {
   try {
     const tokenData = localStorage.getItem('user');
     const token = tokenData ? JSON.parse(tokenData).token : null;
 
     if (!project || !project.id) {
-      console.error('Projekt är null eller saknar id');
       toast({
         title: 'Fel',
         description: 'Ingen giltig projektdata att spara.',
@@ -244,7 +239,7 @@ const sparaProjekt = async () => {
       namn: project.namn || '',
       telefonnummer: project.telefonnummer || '',
       sections: project.sections || [],
-      rows: rows || [],
+      rows: customRows || [],
     };
 
     await axios.put(
@@ -264,11 +259,6 @@ const sparaProjekt = async () => {
     });
   } catch (error) {
     console.error('Fel vid sparning:', error);
-    if (error.response) {
-      console.error('Statuskod:', error.response.status);
-      console.error('Svar:', error.response.data);
-    }
-
     toast({
       title: 'Fel',
       description: 'Kunde inte spara projektet.',
@@ -283,14 +273,35 @@ const sparaProjekt = async () => {
 useEffect(() => {
   fetchProject();
 }, []);
-
 useEffect(() => {
   if (!rows || rows.length === 0) return;
 
-  const result = calculateSamrad(rows);
-  setSamradData(result);
-}, [rows]);
+  const updated = rows.map((row, index) => {
+    if (
+      !row.anordning ||
+      (!row.anordning.includes('Spf') && !row.anordning.includes('Vxl'))
+    ) {
+      return { ...row, samrad: [] };
+    }
 
+    const matching = rows.slice(0, index).filter((prevRow) => {
+      return (
+        !prevRow.avslutadRad && // Exkludera avslutade rader
+        prevRow.anordning &&
+        (prevRow.anordning.includes('Dp') || prevRow.anordning.includes('Linje')) &&
+        prevRow.dp === row.dp &&
+        prevRow.linje === row.linje
+      );
+    });
+
+    return {
+      ...row,
+      samrad: matching.map((match) => match.id),
+    };
+  });
+
+  setRows(updated);
+}, [rows.length]);
 useEffect(() => {
   const hasValidAnordning =
     Array.isArray(selectedRow?.anordning) &&
@@ -389,9 +400,10 @@ setRows(current.rows && current.rows.length > 0 ? current.rows : [
 
   };
 
-const addRow = () => {
-  const newRow = {
-    id: rows.length + 1,
+const createNewRow = (rows, project) => {
+  const nextId = rows.length > 0 ? Math.max(...rows.map(r => r.id)) + 1 : 1;
+  return {
+    id: nextId,
     btkn: '',
     namn: '',
     telefon: '',
@@ -406,19 +418,23 @@ const addRow = () => {
     selections: project.sections.map(() => false),
     selectedAreas: [],
   };
+};
+
+const addRow = () => {
+  const newRow = createNewRow(rows, project); // ⬅️ använder den nya funktionen
 
   const updatedRows = [...rows, newRow];
   setRows(updatedRows);
 
-setSelectedRow({
-  ...newRow,
-  dp: '',
-  linje: '',
-});
-setSelectedRowIndex(updatedRows.length - 1);
-setSelectedAreas([]);
-setSelectedAnordning('');
-onOpen();
+  setSelectedRow({
+    ...newRow,
+    dp: '',
+    linje: '',
+  });
+  setSelectedRowIndex(updatedRows.length - 1);
+  setSelectedAreas([]);
+  setSelectedAnordning('');
+  onOpen();
 };
 
   const toggleColumn = (col) => {
@@ -776,9 +792,6 @@ onChange={(e) => {
 >
   + Lägg till rad
 </Button>
-        <Button onClick={sparaProjekt} colorScheme="blue" mt={4} ml={4}>
-  Spara
-</Button>
       </TableContainer>
     </Box>
   </Box>
@@ -1015,37 +1028,36 @@ onChange={(e) => {
     </ModalBody>
 <ModalFooter justifyContent="space-between" width="100%">
   {/* Vänstersida: Avsluta och Ta bort */}
-  <Flex gap={2}>
-    <Button
-      colorScheme="red"
-      onClick={ async() => {
-        const confirmed = window.confirm('Vill du ta bort denna raden permanent?');
-        if (confirmed) {
-          await deleteRow(selectedRow.id);
-          await new Promise((resolve) => setTimeout(resolve, 0));
-          await sparaProjekt();
-          onClose();
-        }
-      }}
-    >
-      Ta bort
-    </Button>
-    <Button
-      colorScheme="blue"
-      onClick={ async() => {
-        const confirmed = window.confirm('Vill du avsluta denna raden?');
-        if (confirmed) {
-          const updated = { ...selectedRow, avslutadRad: true };
-          await updateRow(updated);
-          await new Promise((resolve) => setTimeout(resolve, 0));
-          await sparaProjekt();
-          onClose();
-        }
-      }}
-    >
-      Avsluta
-    </Button>
-  </Flex>
+<Flex gap={2}>
+  <Button
+    colorScheme="red"
+    onClick={async () => {
+      const confirmed = window.confirm('Vill du ta bort denna raden permanent?');
+      if (confirmed) {
+        const updated = deleteRow(selectedRow.id);
+        await sparaProjekt(updated);
+        onClose();
+      }
+    }}
+  >
+    Ta bort
+  </Button>
+
+  <Button
+    colorScheme="blue"
+    onClick={async () => {
+      const confirmed = window.confirm('Vill du avsluta denna raden?');
+      if (confirmed) {
+        const updatedRow = { ...selectedRow, avslutadRad: true };
+        const updated = updateRow(updatedRow);
+        await sparaProjekt(updated);
+        onClose();
+      }
+    }}
+  >
+    Avsluta
+  </Button>
+</Flex>
 
   {/* Högersida: Spara och Stäng */}
   <Flex gap={2}>
@@ -1116,38 +1128,22 @@ onChange={(e) => {
       </Stack>
     </ModalBody>
     <ModalFooter justifyContent="space-between">
-      <Button onClick={() => setAvslutadeModalOpen(false)}>Stäng</Button>
-      <Button
-        colorScheme="blue"
-        onClick={async () => {
-          try {
-            const token = JSON.parse(localStorage.getItem('user'))?.token;
-            if (!token) {
-              alert('Du är inte inloggad.');
-              return;
-            }
+<Button onClick={() => setAvslutadeModalOpen(false)}>Stäng</Button>
 
-            await fetch(`https://railworker-production.up.railway.app/api/projects/${id}`, {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({
-                ...project,
-                rows, // inkluderar uppdaterade avslutade rader
-              }),
-            });
-
-            setAvslutadeModalOpen(false);
-          } catch (error) {
-            console.error('❌ Kunde inte spara ändringar:', error);
-            alert('Något gick fel vid sparandet.');
-          }
-        }}
-      >
-        Spara ändringar
-      </Button>
+<Button
+  colorScheme="blue"
+  onClick={async () => {
+    try {
+      await sparaProjekt(); // Återanvänd befintlig sparfunktion
+      setAvslutadeModalOpen(false); // Stäng modalen efter sparande
+    } catch (error) {
+      console.error('❌ Kunde inte spara ändringar:', error);
+      alert('Något gick fel vid sparandet.');
+    }
+  }}
+>
+  Spara ändringar
+</Button>
     </ModalFooter>
   </ModalContent>
 </Modal>
