@@ -228,6 +228,36 @@ const sparaProjekt = async (customRows = rows) => {
       return;
     }
 
+    // Steg 1: Uppdatera varje rad med selections från selectedAreas om det finns
+    const updatedRows = [...customRows].map((row) => {
+      const newSelections = Array(project.sections.length).fill(false);
+
+      if (Array.isArray(row.selectedAreas)) {
+        row.selectedAreas.forEach((idx) => {
+          newSelections[idx] = true;
+        });
+      }
+
+      return {
+        ...row,
+        selections: newSelections,
+      };
+    });
+
+    // Steg 2: Beräkna samråd
+    const samradResult = calculateSamrad(updatedRows);
+    const rowsWithSamrad = updatedRows.map((row, idx) => {
+      const matched = samradResult.samradList
+        .filter((entry) => entry.from === idx)
+        .map((entry) => updatedRows[entry.to].id); // Vi sparar ID:n
+
+      return {
+        ...row,
+        samrad: matched,
+      };
+    });
+
+    // Spara till backend
     const updatedProject = {
       id: project.id,
       name: project.name || '',
@@ -239,7 +269,7 @@ const sparaProjekt = async (customRows = rows) => {
       namn: project.namn || '',
       telefonnummer: project.telefonnummer || '',
       sections: project.sections || [],
-      rows: customRows || [],
+      rows: rowsWithSamrad || [],
     };
 
     await axios.put(
@@ -249,6 +279,9 @@ const sparaProjekt = async (customRows = rows) => {
         headers: { Authorization: `Bearer ${token}` },
       }
     );
+
+    // Uppdatera i UI
+    setRows(rowsWithSamrad);
 
     toast({
       title: 'Projekt sparat',
@@ -269,10 +302,10 @@ const sparaProjekt = async (customRows = rows) => {
   }
 };
 
-
 useEffect(() => {
   fetchProject();
 }, []);
+
 useEffect(() => {
   if (!rows || rows.length === 0) return;
 
@@ -286,22 +319,67 @@ useEffect(() => {
 
     const matching = rows.slice(0, index).filter((prevRow) => {
       return (
-        !prevRow.avslutadRad && // Exkludera avslutade rader
+        !prevRow.avslutadRad &&
         prevRow.anordning &&
         (prevRow.anordning.includes('Dp') || prevRow.anordning.includes('Linje')) &&
         prevRow.dp === row.dp &&
-        prevRow.linje === row.linje
+        prevRow.linje === row.linje &&
+        typeof prevRow.namn === 'string'
       );
     });
 
+    const samradList = matching.map((match) => ({
+      id: match.id,
+      namn: match.namn,
+      dp: match.dp,
+      linje: match.linje,
+    }));
+
     return {
       ...row,
-      samrad: matching.map((match) => match.id),
+      samrad: samradList,
     };
   });
 
   setRows(updated);
 }, [rows.length]);
+
+useEffect(() => {
+  if (!rows || rows.length === 0 || !project?.sections) return;
+
+  // Kontroll: vänta tills alla rader har ett namn
+  const allHaveNames = rows.every(row => typeof row.namn === 'string' && row.namn.trim() !== '');
+  if (!allHaveNames) return; // Vänta tills namn är laddade
+
+  const result = calculateSamrad(rows);
+
+  const updated = rows.map((row, index) => {
+    const related = result.samradList
+      .filter((entry) => entry.from === index)
+      .map((entry) => {
+        const match = rows[entry.to];
+        return {
+          id: match?.id,
+          namn: match?.namn && match.namn.trim() !== '' ? match.namn : 'Okänt namn',
+        };
+      });
+
+    return {
+      ...row,
+      samrad: related,
+    };
+  });
+
+  // Endast uppdatera om något faktiskt ändrats
+  const changed = updated.some((row, i) =>
+    JSON.stringify(row.samrad) !== JSON.stringify(rows[i].samrad)
+  );
+
+  if (changed) {
+    setRows(updated);
+  }
+}, [project]);
+
 useEffect(() => {
   const hasValidAnordning =
     Array.isArray(selectedRow?.anordning) &&
@@ -499,30 +577,6 @@ const { dpOptions, linjeOptions } = useMemo(() => {
 if (loading || !project) {
   return <LoadingScreen text="Hämtar projekt..." />;
 }
-
-const handleModalSave = () => {
-  const updatedRows = [...rows];
-  const index = selectedRow.index;
-
-  updatedRows[index] = {
-    ...updatedRows[index],
-    ...selectedRow, // Kopiera över namn, anteckning, telefon etc.
-    selections: Array(project.sections.length).fill(false),
-    selectedAreas: [...selectedAreas],
-  };
-
-  // Markera valda områden
-  selectedAreas.forEach((idx) => {
-    updatedRows[index].selections[idx] = true;
-  });
-  updatedRows[index].samrad = samrad.filter((s) =>
-  selectedAreas.some((idx) => s.selections?.[idx])
-);
-
-  setRows(updatedRows);
-  onClose();
-};
-
   return (
     <Box bg="gray.100" minH="100vh" py={10} px={[4, 8]}>
       <Header />
@@ -671,7 +725,7 @@ const handleModalSave = () => {
       </Td>
 
 {visibleColumns.namn && (
-  <Td minW="130px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
+  <Td minW="140px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
 <Tooltip
   label={
     <Box p={2} maxW="300px">
@@ -682,15 +736,19 @@ const handleModalSave = () => {
         <Text fontSize="sm" color="gray.500">Inga anteckningar</Text>
       )}
 
-      <Text fontWeight="bold" mt={3} mb={1}>Samråd:</Text>
-    {row.samrad && row.samrad.length > 0 ? (
+<Text fontWeight="bold" mt={3} mb={1}>Samråd:</Text>
+{row.samrad && row.samrad.length > 0 ? (
   <Stack spacing={0.5} align="start">
-    {row.samrad.map((r, idx) => (
-      <Text key={idx} fontSize="sm">{r.namn}</Text>
+    {row.samrad.map((entry, idx) => (
+      <Text key={idx} fontSize="sm">
+        {entry.namn || 'Okänt namn'}
+      </Text>
     ))}
   </Stack>
 ) : (
-  <Text fontSize="sm" color="gray.500">Inga samråd</Text>
+  <Text fontSize="sm" color="gray.500">
+    Inga samråd
+  </Text>
 )}
     </Box>
   }
@@ -706,7 +764,7 @@ const handleModalSave = () => {
   <Text
     color="black"
     fontSize="md"
-    w="130px"
+    w="140px"
     isTruncated
     cursor="help"
   >

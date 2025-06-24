@@ -78,7 +78,6 @@ const token = user?.token;
   path="/dashboard"
   element={
     <ProtectedRoute allowedRoles={['HTSM', 'TSM']}>
-      <div>Laddar...</div>
     </ProtectedRoute>
   }
 />
@@ -106,7 +105,7 @@ function RoleBasedPlan() {
       .catch(() => setRole(''));
   }, []);
 
-  if (!role) return <p>Laddar...</p>;
+  if (!role) return null;
 
   return role === 'TSM' ? <PlanTSM /> : <Plan />;
 }
