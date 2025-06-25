@@ -220,46 +220,51 @@ const SkapaProjekt = () => {
       <div className="mt-8">
         <center>
 <button
-  onClick={async () => {
-    const token = JSON.parse(localStorage.getItem('user'))?.token;
-    if (!token) {
-      alert('Du är inte inloggad.');
-      return;
+onClick={async () => {
+  const token = JSON.parse(localStorage.getItem('user'))?.token;
+  if (!token) {
+    alert('Du är inte inloggad.');
+    return;
+  }
+
+  try {
+    const newProject = {
+      name: projektNamn,
+      startDate: startDate || '',
+      startTime: startTime || '',
+      endDate: endDate || '',
+      endTime: endTime || '',
+      plats: plats || '',
+      namn: namn || '',
+      telefonnummer: telefonnummer || '',
+      beteckningar: beteckningar.map((b) => ({ value: b.value })),
+      sections,
+    };
+
+    console.log('🔁 Skickar projekt:', newProject);
+
+    const response = await fetch('https://railworker-production.up.railway.app/api/projects', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(newProject),
+    });
+
+    if (!response.ok) {
+      throw new Error('Kunde inte skapa projekt');
     }
 
-    try {
-const newProject = {
-  name: projektNamn,
-  startDate: startDate || '',
-  startTime: startTime || '',
-  endDate: endDate || '',
-  endTime: endTime || '',
-  plats: plats || '',
-  namn: namn || '',
-  telefonnummer: telefonnummer || '',
-  beteckningar,
-  sections,
-};
+const data = await response.json();
+console.log('✅ Projekt skapat med beteckningar:', data.beteckningar);
 
-      const response = await fetch('https://railworker-production.up.railway.app/api/projects', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(newProject),
-      });
-
-      if (!response.ok) {
-        throw new Error('Kunde inte skapa projekt');
-      }
-
-      navigate('/dashboard');
-    } catch (err) {
-      console.error('Fel vid projekt-skapande:', err);
-      alert('Något gick fel. Försök igen.');
-    }
-  }}
+    navigate('/dashboard');
+  } catch (err) {
+    console.error('Fel vid projekt-skapande:', err);
+    alert('Något gick fel. Försök igen.');
+  }
+}}
   className="bg-blue-700 text-white px-6 py-3 rounded shadow hover:bg-blue-800 transition"
 >
   Skapa projekt

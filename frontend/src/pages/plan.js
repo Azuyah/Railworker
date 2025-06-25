@@ -470,7 +470,10 @@ useEffect(() => {
       });
 
       const current = response.data;
-      setProject(current);
+    setProject({
+      ...current,
+      beteckningar: current.beteckningar || [],
+    });
       
       
 const enrichedRows = (current.rows || []).map((row) => {
@@ -645,15 +648,20 @@ if (loading || !project) {
 
     <ModalCloseButton />
 
-    <ModalBody>
-      <Box>
-        <Text><strong>Projektnamn:</strong> {project.name}</Text>
-        <Text><strong>Plats:</strong> {project.plats}</Text>
-        <Text><strong>Startdatum:</strong> {project.startDate} {project.startTime}</Text>
-        <Text><strong>Slutdatum:</strong> {project.endDate} {project.endTime}</Text>
-        <Text><strong>FJTKL:</strong> {project.namn} ({project.telefonnummer})</Text>
-      </Box>
-    </ModalBody>
+<ModalBody>
+  <Box>
+    <Text><strong>Projektnamn:</strong> {project.name}</Text>
+    <Text><strong>Plats:</strong> {project.plats}</Text>
+    <Text><strong>Startdatum:</strong> {project.startDate} {project.startTime}</Text>
+    <Text><strong>Slutdatum:</strong> {project.endDate} {project.endTime}</Text>
+    <Text><strong>FJTKL:</strong> {project.namn} ({project.telefonnummer})</Text>
+    {console.log('📦 Beteckningar:', project.beteckningar)}
+<Text>
+  <strong>Beteckningar:</strong>{' '}
+  {project.beteckningar.map((b) => b.label).join(', ')}
+</Text>
+  </Box>
+</ModalBody>
 
     <ModalFooter justifyContent="space-between">
       <HStack spacing={3}>

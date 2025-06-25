@@ -254,7 +254,6 @@ app.post('/api/projects', authMiddleware, async (req, res) => {
 
     const {
       name,
-      description,
       startDate,
       startTime,
       endDate,
@@ -263,8 +262,19 @@ app.post('/api/projects', authMiddleware, async (req, res) => {
       namn,
       telefonnummer,
       sections = [],
+      beteckningar = [],
     } = req.body;
 
+    // 🔎 Mappa och validera beteckningar
+    const filteredBeteckningar = Array.isArray(beteckningar)
+      ? beteckningar
+          .filter((b) => typeof b.value === 'string' && b.value.trim() !== '')
+          .map((b) => ({ label: b.value.trim() }))
+      : [];
+
+    console.log('➡️ Beteckningar som skickas till Prisma:', filteredBeteckningar);
+
+    // 🔧 Skapa projektet
     const project = await prisma.project.create({
       data: {
         name,
@@ -276,23 +286,32 @@ app.post('/api/projects', authMiddleware, async (req, res) => {
         namn,
         telefonnummer,
         user: { connect: { id: userId } },
+
+        // 🔥 Koppla in direkt
+        beteckningar: {
+          create: filteredBeteckningar,
+        },
+
+        sections: {
+          create: sections.map((sec) => ({
+            name: sec.signal || '',
+            type: sec.type,
+          })),
+        },
+      },
+      include: {
+        beteckningar: true,
+        sections: true,
       },
     });
 
-    for (const sec of sections) {
-      await prisma.section.create({
-        data: {
-          name: sec.signal || '',
-          type: sec.type,
-          projectId: project.id,
-        },
-      });
-    }
+    console.log('✅ Projekt skapat med ID:', project.id);
+    console.log('📥 Skapade beteckningar:', project.beteckningar);
 
     res.status(201).json(project);
   } catch (error) {
-    console.error(' Create project error:', error);
-    res.status(500).json({ error: 'Could not create project' });
+    console.error('❌ Create project error:', error);
+    res.status(500).json({ error: 'Kunde inte skapa projekt' });
   }
 });
 
@@ -312,6 +331,7 @@ app.get('/api/projects', async (req, res) => {
       where: { userId },
       include: {
         sections: true,
+        beteckningar: true,
       },
     });
 
@@ -348,8 +368,9 @@ const project = await prisma.project.findUnique({
     plats: true,
     namn: true,
     telefonnummer: true,
-    rows: true, // 👈 DETTA ÄR DET SOM SAKNAS
+    rows: true,
     sections: true,
+    beteckningar: true,
   },
 });
 
@@ -411,20 +432,31 @@ app.put('/api/projects/:id', async (req, res) => {
       sections = [],
     } = req.body;
 
-    const updatedProject = await prisma.project.update({
-      where: { id: parseInt(id) },
-      data: {
-        name,
-        startDate,
-        startTime,
-        endDate,
-        endTime,
-        plats,
-        namn,
-        telefonnummer,
-        rows,
+const updatedProject = await prisma.project.update({
+  where: { id: parseInt(id) },
+  data: {
+    name,
+    startDate,
+    startTime,
+    endDate,
+    endTime,
+    plats,
+    namn,
+    telefonnummer,
+    rows,
+    beteckningar: {
+      deleteMany: {},
+      createMany: {
+        data: req.body.beteckningar.map((b) => ({
+          label: b.value,
+        })),
       },
-    });
+    },
+  },
+  include: {
+    beteckningar: true,
+  },
+});
 
     await prisma.section.deleteMany({
       where: { projectId: parseInt(id) },
