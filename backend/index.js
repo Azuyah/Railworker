@@ -85,20 +85,16 @@ app.get('/api/user', async (req, res) => {
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
 
-  console.log('▶️ Inloggning:', email, password); // Logga vad klienten skickar
-
   try {
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
-      console.log('Ingen användare hittades med mejl:', email);
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
     const passwordMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordMatch) {
-      console.log(' Fel lösenord:', password, 'för:', email);
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
@@ -107,8 +103,6 @@ app.post('/api/login', async (req, res) => {
       JWT_SECRET,
       { expiresIn: '7d' }
     );
-
-    console.log('Inloggning lyckades för:', email);
 
     res.json({
       message: 'Login successful',
@@ -238,8 +232,6 @@ app.delete('/api/employees/:id', authMiddleware, async (req, res) => {
 });
 
 app.post('/api/projects', authMiddleware, async (req, res) => {
-  console.log('POST /api/projects');
-  console.log('Inkommande req.body:', req.body);
 
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
@@ -272,8 +264,6 @@ app.post('/api/projects', authMiddleware, async (req, res) => {
           .map((b) => ({ label: b.value.trim() }))
       : [];
 
-    console.log('➡️ Beteckningar som skickas till Prisma:', filteredBeteckningar);
-
     // 🔧 Skapa projektet
     const project = await prisma.project.create({
       data: {
@@ -304,9 +294,6 @@ app.post('/api/projects', authMiddleware, async (req, res) => {
         sections: true,
       },
     });
-
-    console.log('✅ Projekt skapat med ID:', project.id);
-    console.log('📥 Skapade beteckningar:', project.beteckningar);
 
     res.status(201).json(project);
   } catch (error) {

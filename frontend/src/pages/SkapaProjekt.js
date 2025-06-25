@@ -241,8 +241,6 @@ onClick={async () => {
       sections,
     };
 
-    console.log('🔁 Skickar projekt:', newProject);
-
     const response = await fetch('https://railworker-production.up.railway.app/api/projects', {
       method: 'POST',
       headers: {
@@ -257,7 +255,6 @@ onClick={async () => {
     }
 
 const data = await response.json();
-console.log('✅ Projekt skapat med beteckningar:', data.beteckningar);
 
     navigate('/dashboard');
   } catch (err) {

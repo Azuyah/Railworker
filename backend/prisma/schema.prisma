@@ -37,23 +37,22 @@ model Project {
   plats         String
   namn          String
   telefonnummer String
-
   sections      Section[]     
-  beteckningar  Beteckning[]
+  beteckningar  Beteckning[] 
   rows          Json?
 }
 model Section {
   id        Int      @id @default(autoincrement())
   name      String
   type      String
-  project   Project  @relation(fields: [projectId], references: [id])
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId Int
 }
 
 model Beteckning {
   id        Int      @id @default(autoincrement())
   label     String
-  project   Project  @relation(fields: [projectId], references: [id])
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId Int
 }
 
