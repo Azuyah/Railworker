@@ -655,7 +655,6 @@ if (loading || !project) {
     <Text><strong>Startdatum:</strong> {project.startDate} {project.startTime}</Text>
     <Text><strong>Slutdatum:</strong> {project.endDate} {project.endTime}</Text>
     <Text><strong>FJTKL:</strong> {project.namn} ({project.telefonnummer})</Text>
-    {console.log('📦 Beteckningar:', project.beteckningar)}
 <Text>
   <strong>Beteckningar:</strong>{' '}
   {project.beteckningar.map((b) => b.label).join(', ')}
