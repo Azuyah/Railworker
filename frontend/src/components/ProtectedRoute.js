@@ -6,11 +6,11 @@ import axios from 'axios';
 export default function ProtectedRoute({ children, allowedRoles }) {
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isReady, setIsReady] = useState(false); // ✅ viktigt
+  const [isReady, setIsReady] = useState(false);
   const location = useLocation();
 
 useEffect(() => {
-  let isMounted = true; // 👈 skyddar mot onödiga anrop vid re-renders
+  let isMounted = true; // skyddar mot onödiga anrop vid re-renders
 
   const user = JSON.parse(localStorage.getItem('user'));
   const token = user?.token;
@@ -30,7 +30,6 @@ useEffect(() => {
   })
 .then((res) => {
   if (isMounted) {
-    console.log('✅ API response:', res.data);
     setRole(res.data.role);
     setLoading(false);
     setIsReady(true); // ✅ Lägg till detta
@@ -38,7 +37,7 @@ useEffect(() => {
 })
 .catch((err) => {
   if (isMounted) {
-    console.warn('❌ Kunde inte hämta användare:', err);
+    console.warn('Kunde inte hämta användare:', err);
     localStorage.removeItem('user');
     setRole(null);
     setLoading(false);

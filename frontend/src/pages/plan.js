@@ -228,16 +228,20 @@ const sparaProjekt = async (customRows = rows) => {
       return;
     }
 
-    // ✅ Flytta detta upp hit – innan updatedRows skapas
-    if (selectedRow?.index !== undefined && Array.isArray(selectedAreas)) {
-      customRows[selectedRow.index] = {
-        ...customRows[selectedRow.index],
-        selectedAreas: [...selectedAreas],
-      };
-    }
+    // Skapa en kopia av raderna
+    const preparedRows = [...customRows];
 
-    // ✅ Uppdatera selections från selectedAreas (per rad)
-    const updatedRows = customRows.map((row) => {
+// Kopiera aktuell rad
+const current = preparedRows[selectedRow.index];
+
+// Skapa ny version med rätt selectedAreas direkt från state
+preparedRows[selectedRow.index] = {
+  ...current,
+  selectedAreas: [...selectedAreas], // <- detta fångar aktuell state korrekt
+};
+
+    // Uppdatera varje rad med selections från selectedAreas (om den finns)
+    const updatedRows = preparedRows.map((row) => {
       let selections = Array(project.sections.length).fill(false);
 
       if (Array.isArray(row.selectedAreas)) {
@@ -253,13 +257,21 @@ const sparaProjekt = async (customRows = rows) => {
       return {
         ...row,
         selections,
+        selectedAreas: Array.isArray(row.selectedAreas)
+          ? [...row.selectedAreas]
+          : row.selections
+          ? row.selections
+              .map((selected, i) => (selected ? i : null))
+              .filter((i) => i !== null)
+          : [],
       };
     });
 
-    // ✅ Samrådsberäkning
-    const samradResult = calculateSamrad(updatedRows);
+    // Räkna ut samråd
+    const result = calculateSamrad(updatedRows);
+
     const rowsWithSamrad = updatedRows.map((row, idx) => {
-      const matched = samradResult.samradList
+      const matched = result.samradList
         .filter((entry) => entry.from === idx)
         .map((entry) => updatedRows[entry.to].id);
 
@@ -269,31 +281,24 @@ const sparaProjekt = async (customRows = rows) => {
       };
     });
 
-    // ✅ Projektstruktur
+    // Uppdatera projektet
     const updatedProject = {
-      id: project.id,
-      name: project.name || '',
-      startDate: project.startDate || '',
-      startTime: project.startTime || '',
-      endDate: project.endDate || '',
-      endTime: project.endTime || '',
-      plats: project.plats || '',
-      namn: project.namn || '',
-      telefonnummer: project.telefonnummer || '',
-      sections: project.sections || [],
+      ...project,
       rows: rowsWithSamrad,
     };
 
-    // ✅ Skicka till backend
-    await axios.put(
-      `https://railworker-production.up.railway.app/api/projects/${project.id}`,
-      updatedProject,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+rowsWithSamrad.forEach((row, index) => {
+});
 
-    // ✅ Uppdatera i UI
+// ✅ Skicka till backend
+await axios.put(
+  `https://railworker-production.up.railway.app/api/projects/${project.id}`,
+  updatedProject,
+  {
+    headers: { Authorization: `Bearer ${token}` },
+  }
+);
+
     setRows(rowsWithSamrad);
 
     toast({
@@ -318,6 +323,25 @@ const sparaProjekt = async (customRows = rows) => {
 useEffect(() => {
   fetchProject();
 }, []);
+
+useEffect(() => {
+  if (project?.rows?.length && (!rows || rows.length === 0)) {
+    const restoredRows = project.rows.map((row) => {
+      const selectedAreas = Array.isArray(row.selections)
+        ? row.selections
+            .map((value, index) => (value ? index : null))
+            .filter((v) => v !== null)
+        : [];
+
+      return {
+        ...row,
+        selectedAreas,
+      };
+    });
+
+    setRows(restoredRows);
+  }
+}, [project]);
 
 useEffect(() => {
   if (!rows || rows.length === 0) return;
@@ -449,27 +473,7 @@ useEffect(() => {
       setProject(current);
       
       
-const enrichedRows = (current.rows && current.rows.length > 0
-  ? current.rows
-  : [
-      {
-        id: 1,
-        btkn: '',
-        namn: '',
-        telefon: '',
-        anordning: '',
-        bt: '',
-        linje: '',
-        starttid: '',
-        begard: '',
-        avslutat: '',
-        avslutadRad: false,
-        anteckning: '',
-        selections: current.sections.map(() => false),
-        samrad: [],
-      },
-    ]
-).map((row) => {
+const enrichedRows = (current.rows || []).map((row) => {
   const selectedAreas = Array.isArray(row.selections)
     ? row.selections.map((val, idx) => (val ? idx : null)).filter((i) => i !== null)
     : [];
@@ -525,18 +529,29 @@ const createNewRow = (rows, project) => {
 };
 
 const addRow = () => {
-  const newRow = createNewRow(rows, project); // ⬅️ använder den nya funktionen
+  const newRow = createNewRow(rows, project);
 
   const updatedRows = [...rows, newRow];
+  const newIndex = updatedRows.length - 1;
+
   setRows(updatedRows);
 
   setSelectedRow({
     ...newRow,
     dp: '',
     linje: '',
+    index: newIndex, 
   });
-  setSelectedRowIndex(updatedRows.length - 1);
-  setSelectedAreas([]);
+
+  setSelectedRowIndex(newIndex);
+
+  //  Fyll selectedAreas från selections (om de finns)
+  setSelectedAreas(
+    newRow.selections
+      ?.map((selected, index) => (selected ? index : null))
+      .filter(index => index !== null) || []
+  );
+
   setSelectedAnordning('');
   onOpen();
 };
@@ -549,11 +564,18 @@ const handleRowClick = (row, rowIndex) => {
   setSelectedRow({
     ...row,
     dp: row.dp || '',
-    linje: row.linje || ''
+    linje: row.linje || '',
+    index: rowIndex,
   });
-  setSelectedRowIndex(rowIndex);
-  setSelectedAreas(row.selectedAreas || []);
-  setSelectedAnordning(row.anordning || '');
+
+  // Sätt rätt delområden från selections
+  setSelectedAreas(
+    row.selections?.map((val, idx) => (val ? idx : null)).filter((v) => v !== null) || []
+  );
+
+  // Sätt rätt anordning-array
+  setSelectedAnordning(Array.isArray(row.anordning) ? row.anordning : []);
+
   onOpen();
 };
 
