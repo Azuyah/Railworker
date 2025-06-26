@@ -608,22 +608,26 @@ const createNewRow = (rows, project) => {
 };
 
 const addRow = () => {
-  const newRowBase = {
+  const newRow = {
     ...createNewRow(rows, project),
-    id: Date.now(), // unikt ID
+    id: Date.now(),
     dp: '',
     linje: '',
     anordning: [],
+    selectedAreas: [],
   };
 
-  // 🔍 Räkna ut samråd direkt vid skapande
+  // 🧠 Räkna ut samråd direkt
+  const sameDP = newRow.dp;
+  const sameLinje = newRow.linje;
   const isRelevant = ['Spf', 'Vxl'].includes(
-    Array.isArray(newRowBase.anordning) ? newRowBase.anordning[0] : ''
+    Array.isArray(newRow.anordning) ? newRow.anordning[0] : ''
   );
 
   const matching = rows.filter((r) => {
-    const matchDP = r.dp === newRowBase.dp;
-    const matchLinje = r.linje === newRowBase.linje;
+    if (r.id === newRow.id) return false;
+    const matchDP = r.dp === sameDP;
+    const matchLinje = r.linje === sameLinje;
     return isRelevant && (matchDP || matchLinje);
   });
 
@@ -634,23 +638,18 @@ const addRow = () => {
     linje: match.linje,
   }));
 
-  const newRow = {
-    ...newRowBase,
-    samrad: samradList, // 💡 Lägg till direkt
+  const newRowWithSamrad = {
+    ...newRow,
+    samrad: samradList,
   };
 
-  const updatedRows = [...rows, newRow];
+  const updatedRows = [...rows, newRowWithSamrad];
   setRows(updatedRows);
-  setSelectedRow(newRow);
-  setSelectedRowId(newRow.id);
+  setSelectedRow(newRowWithSamrad);
+  setSelectedRowId(newRowWithSamrad.id);
 
-  setSelectedAreas(
-    newRow.selections
-      ?.map((selected, index) => (selected ? index : null))
-      .filter((index) => index !== null) || []
-  );
-
-  setSelectedAnordning('');
+  setSelectedAreas([]);
+  setSelectedAnordning([]);
   onOpen();
 };
 
@@ -742,7 +741,7 @@ const handleModalChange = (field, value) => {
 
   setRows(updatedRows);
 setSelectedRow((prev) => ({ ...prev, [field]: value }));
-updateSamradForSelectedRow(rows, { ...selectedRow, anordning: updatedValue }, setSelectedRow);
+updateSamradForSelectedRow(rows, { ...selectedRow, [field]: value }, setSelectedRow);
 
   if (['dp', 'linje', 'anordning'].includes(field)) {
     setSamradTrigger((prev) => prev + 1);
