@@ -376,7 +376,7 @@ useEffect(() => {
     ...prev,
     samrad: samradList,
   }));
-}, [samradTrigger, rows]); // 🔁 Byt till detta
+}, [samradTrigger, rows]);
 
 useEffect(() => {
   if (!selectedRowId) return;
