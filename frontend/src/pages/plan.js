@@ -378,6 +378,11 @@ useEffect(() => {
   });
 
   setRows(updated);
+
+  const updatedRow = updated.find((r) => r.id === selectedRowId);
+  if (updatedRow) {
+    setSelectedRow(updatedRow);
+  }
 }, [selectedAreas, selectedRowId]);
 
 useEffect(() => {
