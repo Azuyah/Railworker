@@ -658,6 +658,35 @@ const toggleColumn = (col) => {
   setVisibleColumns((prev) => ({ ...prev, [col]: !prev[col] }));
 };
 
+const updateSamradForSelectedRow = (rows, selectedRow, setSelectedRow) => {
+  if (!selectedRow) return;
+
+  const isRelevant = ['Spf', 'Vxl'].includes(
+    Array.isArray(selectedRow.anordning) ? selectedRow.anordning[0] : ''
+  );
+
+  const matching = rows.filter((r) => {
+    if (r.id === selectedRow.id) return false;
+
+    const sameDP = r.dp === selectedRow.dp;
+    const sameLinje = r.linje === selectedRow.linje;
+
+    return isRelevant && (sameDP || sameLinje);
+  });
+
+  const samradList = matching.map((match) => ({
+    id: match.id,
+    namn: match.namn,
+    dp: match.dp,
+    linje: match.linje,
+  }));
+
+  setSelectedRow((prev) => ({
+    ...prev,
+    samrad: samradList,
+  }));
+};
+
 const handleRowClick = (row, rowIndex) => {
   const sameDP = row.dp;
   const sameLinje = row.linje;
@@ -712,7 +741,8 @@ const handleModalChange = (field, value) => {
   );
 
   setRows(updatedRows);
-  setSelectedRow((prev) => ({ ...prev, [field]: value }));
+setSelectedRow((prev) => ({ ...prev, [field]: value }));
+updateSamradForSelectedRow(rows, { ...selectedRow, anordning: updatedValue }, setSelectedRow);
 
   if (['dp', 'linje', 'anordning'].includes(field)) {
     setSamradTrigger((prev) => prev + 1);
@@ -1196,13 +1226,12 @@ onChange={(e) => {
     ? [...selectedAreas, idx]
     : selectedAreas.filter((i) => i !== idx);
 
-  setSelectedAreas(updatedAreas);
-
-  // Uppdatera även selectedRow direkt
-  setSelectedRow((prev) => ({
-    ...prev,
-    selectedAreas: updatedAreas,
-  }));
+setSelectedAreas(updatedAreas);
+setSelectedRow((prev) => ({
+  ...prev,
+  selectedAreas: updatedAreas,
+}));
+updateSamradForSelectedRow(rows, { ...selectedRow, selectedAreas: updatedAreas }, setSelectedRow);
   setSamradTrigger((prev) => prev + 1);
 }}
           >
