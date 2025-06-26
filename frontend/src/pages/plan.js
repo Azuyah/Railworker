@@ -215,6 +215,10 @@ const updateProject = async () => {
 
 const sparaProjekt = async (customRows = rows) => {
   try {
+
+console.log('🎯 Sparar selectedRow.id:', selectedRow?.id);
+console.log('🎯 selectedRow.selectedAreas:', selectedRow?.selectedAreas);
+console.log('🎯 selectedAreas (state):', selectedAreas);
     const tokenData = localStorage.getItem('user');
     const token = tokenData ? JSON.parse(tokenData).token : null;
 
@@ -1063,14 +1067,20 @@ onChange={(e) => {
         <MenuItem key={idx}>
           <Checkbox
             isChecked={selectedAreas.includes(idx)}
-            onChange={(e) => {
-              const isChecked = e.target.checked;
-              setSelectedAreas((prev) =>
-                isChecked
-                  ? [...prev, idx]
-                  : prev.filter((i) => i !== idx)
-              );
-            }}
+onChange={(e) => {
+  const isChecked = e.target.checked;
+  const updatedAreas = isChecked
+    ? [...selectedAreas, idx]
+    : selectedAreas.filter((i) => i !== idx);
+
+  setSelectedAreas(updatedAreas);
+
+  // Uppdatera även selectedRow direkt
+  setSelectedRow((prev) => ({
+    ...prev,
+    selectedAreas: updatedAreas,
+  }));
+}}
           >
             {sec.type} {String.fromCharCode(65 + idx)}
           </Checkbox>
