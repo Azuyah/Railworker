@@ -613,11 +613,9 @@ const addRow = () => {
     id: Date.now(),
     dp: '',
     linje: '',
-    anordning: [],
-    selectedAreas: [],
   };
 
-  // 🧠 Räkna ut samråd direkt
+  // 🔍 Hämta samråd direkt vid skapande
   const sameDP = newRow.dp;
   const sameLinje = newRow.linje;
   const isRelevant = ['Spf', 'Vxl'].includes(
@@ -638,18 +636,20 @@ const addRow = () => {
     linje: match.linje,
   }));
 
-  const newRowWithSamrad = {
+  // 💾 Lägg till ny rad
+  const updatedRows = [...rows, newRow];
+  setRows(updatedRows);
+
+  // 🎯 Sätt selectedRow med samråd direkt
+  setSelectedRow({
     ...newRow,
     samrad: samradList,
-  };
+  });
 
-  const updatedRows = [...rows, newRowWithSamrad];
-  setRows(updatedRows);
-  setSelectedRow(newRowWithSamrad);
-  setSelectedRowId(newRowWithSamrad.id);
+  setSelectedRowId(newRow.id);
 
   setSelectedAreas([]);
-  setSelectedAnordning([]);
+  setSelectedAnordning('');
   onOpen();
 };
 
