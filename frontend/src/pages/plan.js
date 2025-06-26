@@ -56,6 +56,7 @@ const [selectedAnordning, setSelectedAnordning] = useState('');
   const [avklaradSamrad, setAvklaradSamrad] = useState({});
   const [samradData, setSamradData] = useState({ samradList: [], avklaradMap: {} });
   const [loading, setLoading] = useState(true);
+const [selectedRowId, setSelectedRowId] = useState(null);
   const [isProjectInfoOpen, setIsProjectInfoOpen] = useState(false);
 const openProjectInfoModal = () => setIsProjectInfoOpen(true);
 const closeProjectInfoModal = () => setIsProjectInfoOpen(false);
@@ -532,66 +533,61 @@ const createNewRow = (rows, project) => {
 };
 
 const addRow = () => {
-  const newRow = createNewRow(rows, project);
-
-  const updatedRows = [...rows, newRow];
-  const newIndex = updatedRows.length - 1;
-
-  setRows(updatedRows);
-
-  setSelectedRow({
-    ...newRow,
+  const newRow = {
+    ...createNewRow(rows, project),
+    id: Date.now() + Math.random(), // se till att varje rad får unikt ID
     dp: '',
     linje: '',
-    index: newIndex, 
-  });
+  };
 
-  setSelectedRowIndex(newIndex);
+  const updatedRows = [...rows, newRow];
+  setRows(updatedRows);
+  setSelectedRow(newRow);
+  setSelectedRowId(newRow.id);
 
-  //  Fyll selectedAreas från selections (om de finns)
   setSelectedAreas(
     newRow.selections
       ?.map((selected, index) => (selected ? index : null))
-      .filter(index => index !== null) || []
+      .filter((index) => index !== null) || []
   );
 
   setSelectedAnordning('');
   onOpen();
 };
 
-  const toggleColumn = (col) => {
-    setVisibleColumns((prev) => ({ ...prev, [col]: !prev[col] }));
-  };
+const toggleColumn = (col) => {
+  setVisibleColumns((prev) => ({ ...prev, [col]: !prev[col] }));
+};
 
-const handleRowClick = (row, rowIndex) => {
+const handleRowClick = (row) => {
   setSelectedRow({
     ...row,
     dp: row.dp || '',
     linje: row.linje || '',
-    index: rowIndex,
   });
+  setSelectedRowId(row.id);
 
-  // Sätt rätt delområden från selections
   setSelectedAreas(
     row.selections?.map((val, idx) => (val ? idx : null)).filter((v) => v !== null) || []
   );
 
-  // Sätt rätt anordning-array
   setSelectedAnordning(Array.isArray(row.anordning) ? row.anordning : []);
-
   onOpen();
 };
 
+
 const handleModalChange = (field, value) => {
-  const updated = [...rows];
-  if (selectedRowIndex === null) return;
+  if (!selectedRowId) return;
 
   if (field === 'dp' || field === 'linje') {
     value = parseInt(value);
   }
 
-  updated[selectedRowIndex][field] = value;
-  setRows(updated);
+  const updatedRows = rows.map((r) =>
+    r.id === selectedRowId ? { ...r, [field]: value } : r
+  );
+
+  setRows(updatedRows);
   setSelectedRow((prev) => ({ ...prev, [field]: value }));
 };
 
