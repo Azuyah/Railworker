@@ -770,10 +770,14 @@ if (loading || !project) {
 <Tr
   key={row.id}
   bg={rowIndex % 2 === 0 ? 'white' : 'gray.100'}
-  onClick={(e) => {
-    if (e.target.closest('input[type="checkbox"], textarea, select, label, button, input[type="text"]')) return;
-    handleRowClick(row, rowIndex);
-  }}
+onClick={(e) => {
+  if (
+    e.target.closest('input[type="checkbox"], textarea, select, label, button, input[type="text"]')
+  ) return;
+
+  const actualIndex = rows.findIndex((r) => r.id === row.id);
+  handleRowClick(row, actualIndex);
+}}
   _hover={{ bg: 'blue.50' }}
   cursor="pointer"
 >
