@@ -350,6 +350,34 @@ useEffect(() => {
 }, [project]);
 
 useEffect(() => {
+  if (!selectedRow) return;
+
+  const matching = rows.filter((r) => {
+    if (r.id === selectedRow.id) return false;
+
+    const sameDP = r.dp === selectedRow.dp;
+    const sameLinje = r.linje === selectedRow.linje;
+    const isRelevant = ['Spf', 'Vxl'].includes(
+      Array.isArray(selectedRow.anordning) ? selectedRow.anordning[0] : ''
+    );
+
+    return isRelevant && (sameDP || sameLinje);
+  });
+
+  const samradList = matching.map((match) => ({
+    id: match.id,
+    namn: match.namn,
+    dp: match.dp,
+    linje: match.linje,
+  }));
+
+  setSelectedRow((prev) => ({
+    ...prev,
+    samrad: samradList,
+  }));
+}, [selectedRow?.dp, selectedRow?.linje, selectedRow?.anordning, selectedAreas, rows]);
+
+useEffect(() => {
   if (!selectedRowId) return;
 
   const updated = rows.map((row) => {
@@ -378,11 +406,6 @@ useEffect(() => {
   });
 
   setRows(updated);
-
-  const updatedRow = updated.find((r) => r.id === selectedRowId);
-  if (updatedRow) {
-    setSelectedRow(updatedRow);
-  }
 }, [selectedAreas, selectedRowId]);
 
 useEffect(() => {
