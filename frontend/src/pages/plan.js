@@ -532,6 +532,18 @@ useEffect(() => {
   setSamrad(related);
 }, [selectedAreas, selectedRow, rows, project]);
 
+useEffect(() => {
+  if (selectedRowId == null) return;
+
+  const matchingRow = rows.find((r) => r.id === selectedRowId);
+  if (matchingRow) {
+    setSelectedRow((prev) => ({
+      ...prev,
+      samrad: matchingRow.samrad || [],
+    }));
+  }
+}, [rows, selectedRowId]);
+
   const fetchProject = async () => {
     try {
        setLoading(true);
