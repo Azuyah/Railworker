@@ -389,6 +389,15 @@ return {
 }, [rows.length]);
 
 useEffect(() => {
+  if (selectedRow?.id) {
+    setSelectedRow((prev) => ({
+      ...prev,
+      selectedAreas: [...selectedAreas],
+    }));
+  }
+}, [selectedAreas]);
+
+useEffect(() => {
   if (!rows || rows.length === 0 || !project?.sections) return;
 
   // Kontroll: vänta tills alla rader har ett namn
