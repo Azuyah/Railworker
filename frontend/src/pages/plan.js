@@ -608,11 +608,35 @@ const createNewRow = (rows, project) => {
 };
 
 const addRow = () => {
-  const newRow = {
+  const newRowBase = {
     ...createNewRow(rows, project),
-    id: Date.now(), // se till att varje rad får unikt ID
+    id: Date.now(), // unikt ID
     dp: '',
     linje: '',
+    anordning: [],
+  };
+
+  // 🔍 Räkna ut samråd direkt vid skapande
+  const isRelevant = ['Spf', 'Vxl'].includes(
+    Array.isArray(newRowBase.anordning) ? newRowBase.anordning[0] : ''
+  );
+
+  const matching = rows.filter((r) => {
+    const matchDP = r.dp === newRowBase.dp;
+    const matchLinje = r.linje === newRowBase.linje;
+    return isRelevant && (matchDP || matchLinje);
+  });
+
+  const samradList = matching.map((match) => ({
+    id: match.id,
+    namn: match.namn,
+    dp: match.dp,
+    linje: match.linje,
+  }));
+
+  const newRow = {
+    ...newRowBase,
+    samrad: samradList, // 💡 Lägg till direkt
   };
 
   const updatedRows = [...rows, newRow];
