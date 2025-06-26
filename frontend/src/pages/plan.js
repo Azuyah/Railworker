@@ -192,9 +192,6 @@ const updateProject = async () => {
     rows,
   };
 
-  console.log('🚀 PUT-request skickas med:', updated);
-
-
   const token = JSON.parse(localStorage.getItem('user'))?.token;
   if (!token) return alert('Ingen token.');
 
@@ -217,11 +214,6 @@ const updateProject = async () => {
 
 
 const sparaProjekt = async (customRows = rows) => {
-  console.log('➡️ SPARAR PROJEKT...');
-  console.log('✅ selectedRowIndex:', selectedRowIndex);
-  console.log('✅ selectedRow:', selectedRow);
-  console.log('✅ selectedAreas:', selectedAreas);
-  console.log('✅ rows innan spara:', customRows);
   try {
     const tokenData = localStorage.getItem('user');
     const token = tokenData ? JSON.parse(tokenData).token : null;
@@ -240,13 +232,14 @@ const sparaProjekt = async (customRows = rows) => {
     // Skapa en kopia av raderna
     const preparedRows = [...customRows];
 
-if (selectedRowIndex !== null && preparedRows[selectedRowIndex]) {
-  const current = preparedRows[selectedRowIndex];
-  preparedRows[selectedRowIndex] = {
-    ...current,
-    selectedAreas: [...selectedAreas],
-  };
-}
+// Kopiera aktuell rad
+const current = preparedRows[selectedRow.index];
+
+// Skapa ny version med rätt selectedAreas direkt från state
+preparedRows[selectedRow.index] = {
+  ...current,
+  selectedAreas: [...selectedAreas], // <- detta fångar aktuell state korrekt
+};
 
     // Uppdatera varje rad med selections från selectedAreas (om den finns)
     const updatedRows = preparedRows.map((row) => {
@@ -567,8 +560,6 @@ const toggleColumn = (col) => {
 };
 
 const handleRowClick = (row) => {
-  console.log('🖱️ Klickade på rad index:', rowIndex);
-  console.log('🖱️ Row data:', row);
   setSelectedRow({
     ...row,
     dp: row.dp || '',
