@@ -461,32 +461,31 @@ useEffect(() => {
 useEffect(() => {
   if (!rows || rows.length === 0 || !project?.sections) return;
 
-  const updated = rows.map((row) => {
-    // Matchande samrådsrader
-    const matching = rows.filter((r) => {
-      if (r.id === row.id) return false;
+  // Kontroll: vänta tills alla rader har ett namn
+  const allHaveNames = rows.every(row => typeof row.namn === 'string' && row.namn.trim() !== '');
+  if (!allHaveNames) return; // Vänta tills namn är laddade
 
-      const sameDP = r.dp === row.dp;
-      const sameLinje = r.linje === row.linje;
-      const isRelevant = ['Spf', 'Vxl'].includes(
-        Array.isArray(row.anordning) ? row.anordning[0] : ''
-      );
+  const result = calculateSamrad(rows);
 
-      return isRelevant && (sameDP || sameLinje);
-    });
+  const updated = rows.map((row, index) => {
+    const related = result.samradList
+      .filter((entry) => entry.from === index)
+      .map((entry) => {
+        const match = rows[entry.to];
+        return {
+          id: match?.id,
+          namn: match?.namn && match.namn.trim() !== '' ? match.namn : 'Okänt namn',
+        };
+      });
 
-    const related = matching.map((r) => ({
-      id: r.id,
-      namn: typeof r.namn === 'string' && r.namn.trim() !== '' ? r.namn : 'Okänt namn',
-    }));
-
-    return {
-      ...row,
-      samrad: related,
-      selections: row.selections || Array(project.sections.length).fill(false),
-    };
+return {
+  ...row,
+  samrad: related,
+  selections: row.selections || Array(project.sections.length).fill(false),
+};
   });
 
+  // Endast uppdatera om något faktiskt ändrats
   const changed = updated.some((row, i) =>
     JSON.stringify(row.samrad) !== JSON.stringify(rows[i].samrad)
   );
