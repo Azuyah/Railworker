@@ -236,12 +236,14 @@ console.log('🎯 selectedAreas (state):', selectedAreas);
     // Skapa en kopia av raderna
     const preparedRows = [...customRows];
 
-if (selectedRowIndex !== null && preparedRows[selectedRowIndex]) {
-  const current = preparedRows[selectedRowIndex];
-  preparedRows[selectedRowIndex] = {
-    ...current,
-    selectedAreas: [...selectedAreas],
-  };
+if (selectedRow && selectedRow.id) {
+  const index = preparedRows.findIndex((r) => r.id === selectedRow.id);
+  if (index !== -1) {
+    preparedRows[index] = {
+      ...preparedRows[index],
+      selectedAreas: [...selectedAreas],
+    };
+  }
 }
 
     // Uppdatera varje rad med selections från selectedAreas (om den finns)
