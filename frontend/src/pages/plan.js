@@ -192,6 +192,9 @@ const updateProject = async () => {
     rows,
   };
 
+  console.log('🚀 PUT-request skickas med:', updated);
+
+
   const token = JSON.parse(localStorage.getItem('user'))?.token;
   if (!token) return alert('Ingen token.');
 
@@ -214,6 +217,11 @@ const updateProject = async () => {
 
 
 const sparaProjekt = async (customRows = rows) => {
+  console.log('➡️ SPARAR PROJEKT...');
+  console.log('✅ selectedRowIndex:', selectedRowIndex);
+  console.log('✅ selectedRow:', selectedRow);
+  console.log('✅ selectedAreas:', selectedAreas);
+  console.log('✅ rows innan spara:', customRows);
   try {
     const tokenData = localStorage.getItem('user');
     const token = tokenData ? JSON.parse(tokenData).token : null;
@@ -559,6 +567,8 @@ const toggleColumn = (col) => {
 };
 
 const handleRowClick = (row) => {
+  console.log('🖱️ Klickade på rad index:', rowIndex);
+  console.log('🖱️ Row data:', row);
   setSelectedRow({
     ...row,
     dp: row.dp || '',
