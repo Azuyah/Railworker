@@ -350,6 +350,37 @@ useEffect(() => {
 }, [project]);
 
 useEffect(() => {
+  if (!selectedRowId) return;
+
+  const updated = rows.map((row) => {
+    if (row.id !== selectedRowId) return row;
+
+    const matching = rows.filter((r) => {
+      if (r.id === row.id) return false;
+      const hasSameDP = r.dp === row.dp;
+      const hasSameLinje = r.linje === row.linje;
+      const isRelevant = ['Spf', 'Vxl'].includes(row.anordning?.[0]); // Anpassa om du har flera anordningar
+      return isRelevant && (hasSameDP || hasSameLinje);
+    });
+
+    const samradList = matching.map((match) => ({
+      id: match.id,
+      namn: match.namn,
+      dp: match.dp,
+      linje: match.linje,
+    }));
+
+    return {
+      ...row,
+      samrad: samradList,
+      selectedAreas: [...selectedAreas], // uppdatera samtidigt
+    };
+  });
+
+  setRows(updated);
+}, [selectedAreas, selectedRowId]);
+
+useEffect(() => {
   if (!rows || rows.length === 0) return;
 
   const updated = rows.map((row, index) => {
