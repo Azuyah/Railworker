@@ -598,13 +598,13 @@ const handleModalChange = (field, value) => {
 
 const [samrad, setSamrad] = useState([]);
 const filteredRows = rows
-  .filter((row) => !row.avslutad) // Visa inte avslutade i huvudtabellen
+  .filter((row) => !row.avslutad)
   .filter((row) =>
-    filterValue === 'all' || row.namn.toLowerCase() === filterValue.toLowerCase()
+    filterValue === 'all' || (row.namn || '').toLowerCase() === filterValue.toLowerCase()
   )
   .filter((row) =>
-    row.namn.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    row.telefon?.toLowerCase().includes(searchQuery.toLowerCase())
+    (row.namn || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (row.telefon || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 const { dpOptions, linjeOptions } = useMemo(() => {
   const dp = [];
@@ -1204,9 +1204,9 @@ onChange={(e) => {
         {rows
           .filter(
             (row) =>
-              row.avslutadRad === true &&
-              (row.namn.toLowerCase().includes(searchQuery.toLowerCase()) ||
-               row.telefon.toLowerCase().includes(searchQuery.toLowerCase()))
+row.avslutadRad === true &&
+((row.namn || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+ (row.telefon || '').toLowerCase().includes(searchQuery.toLowerCase()))
           )
           .map((row, index) => (
             <Box key={index} p={3} border="1px solid #ccc" borderRadius="md">
@@ -1233,8 +1233,8 @@ onChange={(e) => {
         {rows.filter(
           (row) =>
             row.avslutadRad === true &&
-            (row.namn.toLowerCase().includes(searchQuery.toLowerCase()) ||
-             row.telefon.toLowerCase().includes(searchQuery.toLowerCase()))
+              ((row.namn || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+              (row.telefon || '').toLowerCase().includes(searchQuery.toLowerCase()))
         ).length === 0 && (
           <Text color="gray.500">Inga träffar.</Text>
         )}
