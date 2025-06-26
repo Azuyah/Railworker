@@ -417,7 +417,14 @@ app.put('/api/projects/:id', async (req, res) => {
       telefonnummer,
       rows,
       sections = [],
+      beteckningar = [],
     } = req.body;
+        
+    const filteredBeteckningar = Array.isArray(beteckningar)
+      ? beteckningar
+          .filter((b) => typeof b.value === 'string' && b.value.trim() !== '')
+          .map((b) => ({ label: b.value.trim() }))
+      : [];
 
 const updatedProject = await prisma.project.update({
   where: { id: parseInt(id) },
@@ -431,19 +438,15 @@ const updatedProject = await prisma.project.update({
     namn,
     telefonnummer,
     rows,
-    beteckningar: {
-      deleteMany: {},
-      createMany: {
-        data: req.body.beteckningar.map((b) => ({
-          label: b.value,
-        })),
+        beteckningar: {
+          deleteMany: {},
+          create: filteredBeteckningar,
+        },
       },
-    },
-  },
-  include: {
-    beteckningar: true,
-  },
-});
+      include: {
+        beteckningar: true,
+      },
+    });
 
     await prisma.section.deleteMany({
       where: { projectId: parseInt(id) },
