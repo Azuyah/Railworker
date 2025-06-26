@@ -351,34 +351,6 @@ useEffect(() => {
 }, [project]);
 
 useEffect(() => {
-  if (!selectedRow) return;
-
-  const matching = rows.filter((r) => {
-    if (r.id === selectedRow.id) return false;
-
-    const sameDP = r.dp === selectedRow.dp;
-    const sameLinje = r.linje === selectedRow.linje;
-    const isRelevant = ['Spf', 'Vxl'].includes(
-      Array.isArray(selectedRow.anordning) ? selectedRow.anordning[0] : ''
-    );
-
-    return isRelevant && (sameDP || sameLinje);
-  });
-
-  const samradList = matching.map((match) => ({
-    id: match.id,
-    namn: match.namn,
-    dp: match.dp,
-    linje: match.linje,
-  }));
-
-  setSelectedRow((prev) => ({
-    ...prev,
-    samrad: samradList,
-  }));
-}, [samradTrigger, rows]);
-
-useEffect(() => {
   if (!selectedRowId) return;
 
   const updated = rows.map((row) => {
@@ -634,20 +606,43 @@ const toggleColumn = (col) => {
 };
 
 const handleRowClick = (row, rowIndex) => {
+  const sameDP = row.dp;
+  const sameLinje = row.linje;
+  const isRelevant = ['Spf', 'Vxl'].includes(
+    Array.isArray(row.anordning) ? row.anordning[0] : ''
+  );
+
+  const matching = rows.filter((r) => {
+    if (r.id === row.id) return false;
+    const matchDP = r.dp === sameDP;
+    const matchLinje = r.linje === sameLinje;
+    return isRelevant && (matchDP || matchLinje);
+  });
+
+  const samradList = matching.map((match) => ({
+    id: match.id,
+    namn: match.namn,
+    dp: match.dp,
+    linje: match.linje,
+  }));
+
   setSelectedRow({
     ...row,
     dp: row.dp || '',
     linje: row.linje || '',
     index: rowIndex,
+    samrad: samradList, 
   });
 
   setSelectedRowIndex(rowIndex);
   setSelectedRowId(row.id);
+
   setSelectedAreas(
     row.selections?.map((val, idx) => (val ? idx : null)).filter((v) => v !== null) || []
   );
 
   setSelectedAnordning(Array.isArray(row.anordning) ? row.anordning : []);
+
   onOpen();
 };
 
