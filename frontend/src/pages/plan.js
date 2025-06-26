@@ -562,16 +562,18 @@ const addRow = () => {
   onOpen();
 };
 
-const handleRowClick = (row, rowIndex) => {
+const toggleColumn = (col) => {
+  setVisibleColumns((prev) => ({ ...prev, [col]: !prev[col] }));
+};
+
+const handleRowClick = (row) => {
   console.log('🖱️ Klickade på rad index:', rowIndex);
   console.log('🖱️ Row data:', row);
-
   setSelectedRow({
     ...row,
     dp: row.dp || '',
     linje: row.linje || '',
   });
-
   setSelectedRowId(row.id);
 
   setSelectedAreas(
@@ -596,13 +598,6 @@ const handleModalChange = (field, value) => {
 
   setRows(updatedRows);
   setSelectedRow((prev) => ({ ...prev, [field]: value }));
-};
-
-const toggleColumn = (col) => {
-  setVisibleColumns((prev) => ({
-    ...prev,
-    [col]: !prev[col],
-  }));
 };
 
 
@@ -770,14 +765,10 @@ if (loading || !project) {
 <Tr
   key={row.id}
   bg={rowIndex % 2 === 0 ? 'white' : 'gray.100'}
-onClick={(e) => {
-  if (
-    e.target.closest('input[type="checkbox"], textarea, select, label, button, input[type="text"]')
-  ) return;
-
-  const actualIndex = rows.findIndex((r) => r.id === row.id);
-  handleRowClick(row, actualIndex);
-}}
+  onClick={(e) => {
+    if (e.target.closest('input[type="checkbox"], textarea, select, label, button, input[type="text"]')) return;
+    handleRowClick(row, rowIndex);
+  }}
   _hover={{ bg: 'blue.50' }}
   cursor="pointer"
 >
