@@ -351,6 +351,35 @@ useEffect(() => {
 }, [project]);
 
 useEffect(() => {
+  if (!selectedRow) return;
+
+  const sameDP = selectedRow.dp;
+  const sameLinje = selectedRow.linje;
+  const isRelevant = ['Spf', 'Vxl'].includes(
+    Array.isArray(selectedRow.anordning) ? selectedRow.anordning[0] : ''
+  );
+
+  const matching = rows.filter((r) => {
+    if (r.id === selectedRow.id) return false;
+    const matchDP = r.dp === sameDP;
+    const matchLinje = r.linje === sameLinje;
+    return isRelevant && (matchDP || matchLinje);
+  });
+
+  const samradList = matching.map((match) => ({
+    id: match.id,
+    namn: match.namn,
+    dp: match.dp,
+    linje: match.linje,
+  }));
+
+  setSelectedRow((prev) => ({
+    ...prev,
+    samrad: samradList,
+  }));
+}, [selectedRow?.dp, selectedRow?.linje, selectedRow?.anordning, rows]);
+
+useEffect(() => {
   if (!selectedRowId) return;
 
   const updated = rows.map((row) => {
