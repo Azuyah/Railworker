@@ -671,32 +671,24 @@ const toggleColumn = (col) => {
 };
 
 const handleRowClick = (row, rowIndex) => {
-  const sameDP = row.dp;
-  const sameLinje = row.linje;
-  const isRelevant = ['Spf', 'Vxl'].includes(
-    Array.isArray(row.anordning) ? row.anordning[0] : ''
-  );
+  const result = calculateSamrad(rows);
 
-  const matching = rows.filter((r) => {
-    if (r.id === row.id) return false;
-    const matchDP = r.dp === sameDP;
-    const matchLinje = r.linje === sameLinje;
-    return isRelevant && (matchDP || matchLinje);
-  });
-
-  const samradList = matching.map((match) => ({
-    id: match.id,
-    namn: match.namn,
-    dp: match.dp,
-    linje: match.linje,
-  }));
+  const matching = result.samradList
+    .filter((entry) => entry.from === rowIndex)
+    .map((entry) => {
+      const match = rows[entry.to];
+      return {
+        id: match?.id,
+        namn: match?.namn && match.namn.trim() !== '' ? match.namn : 'Okänt namn',
+      };
+    });
 
   setSelectedRow({
     ...row,
     dp: row.dp || '',
     linje: row.linje || '',
     index: rowIndex,
-    samrad: samradList, 
+    samrad: matching,
   });
 
   setSelectedRowIndex(rowIndex);
