@@ -558,7 +558,7 @@ const toggleColumn = (col) => {
   setVisibleColumns((prev) => ({ ...prev, [col]: !prev[col] }));
 };
 
-const handleRowClick = (row) => {
+const handleRowClick = (row, rowIndex) => {
   setSelectedRow({
     ...row,
     dp: row.dp || '',
