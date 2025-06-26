@@ -56,6 +56,7 @@ const [selectedAnordning, setSelectedAnordning] = useState('');
   const [avklaradSamrad, setAvklaradSamrad] = useState({});
   const [samradData, setSamradData] = useState({ samradList: [], avklaradMap: {} });
   const [loading, setLoading] = useState(true);
+  const [samradTrigger, setSamradTrigger] = useState(0);
 const [selectedRowId, setSelectedRowId] = useState(null);
   const [isProjectInfoOpen, setIsProjectInfoOpen] = useState(false);
 const openProjectInfoModal = () => setIsProjectInfoOpen(true);
@@ -375,7 +376,7 @@ useEffect(() => {
     ...prev,
     samrad: samradList,
   }));
-}, [selectedRow?.dp, selectedRow?.linje, selectedRow?.anordning, selectedAreas, rows]);
+}, [samradTrigger, rows]); // 🔁 Byt till detta
 
 useEffect(() => {
   if (!selectedRowId) return;
@@ -664,6 +665,10 @@ const handleModalChange = (field, value) => {
 
   setRows(updatedRows);
   setSelectedRow((prev) => ({ ...prev, [field]: value }));
+
+  if (['dp', 'linje', 'anordning'].includes(field)) {
+    setSamradTrigger((prev) => prev + 1);
+  }
 };
 
 
@@ -1150,6 +1155,7 @@ onChange={(e) => {
     ...prev,
     selectedAreas: updatedAreas,
   }));
+  setSamradTrigger((prev) => prev + 1);
 }}
           >
             {sec.type} {String.fromCharCode(65 + idx)}
