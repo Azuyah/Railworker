@@ -608,24 +608,22 @@ const createNewRow = (rows, project) => {
 };
 
 const addRow = () => {
-  const newRow = {
+  const newRowBase = {
     ...createNewRow(rows, project),
-    id: Date.now(),
+    id: Date.now(), // unikt ID
     dp: '',
     linje: '',
+    anordning: [],
   };
 
-  // 🔍 Hämta samråd direkt vid skapande
-  const sameDP = newRow.dp;
-  const sameLinje = newRow.linje;
+  // 🔍 Räkna ut samråd direkt vid skapande
   const isRelevant = ['Spf', 'Vxl'].includes(
-    Array.isArray(newRow.anordning) ? newRow.anordning[0] : ''
+    Array.isArray(newRowBase.anordning) ? newRowBase.anordning[0] : ''
   );
 
   const matching = rows.filter((r) => {
-    if (r.id === newRow.id) return false;
-    const matchDP = r.dp === sameDP;
-    const matchLinje = r.linje === sameLinje;
+    const matchDP = r.dp === newRowBase.dp;
+    const matchLinje = r.linje === newRowBase.linje;
     return isRelevant && (matchDP || matchLinje);
   });
 
@@ -636,54 +634,28 @@ const addRow = () => {
     linje: match.linje,
   }));
 
-  // 💾 Lägg till ny rad
+  const newRow = {
+    ...newRowBase,
+    samrad: samradList, // 💡 Lägg till direkt
+  };
+
   const updatedRows = [...rows, newRow];
   setRows(updatedRows);
-
-  // 🎯 Sätt selectedRow med samråd direkt
-  setSelectedRow({
-    ...newRow,
-    samrad: samradList,
-  });
-
+  setSelectedRow(newRow);
   setSelectedRowId(newRow.id);
 
-  setSelectedAreas([]);
+  setSelectedAreas(
+    newRow.selections
+      ?.map((selected, index) => (selected ? index : null))
+      .filter((index) => index !== null) || []
+  );
+
   setSelectedAnordning('');
   onOpen();
 };
 
 const toggleColumn = (col) => {
   setVisibleColumns((prev) => ({ ...prev, [col]: !prev[col] }));
-};
-
-const updateSamradForSelectedRow = (rows, selectedRow, setSelectedRow) => {
-  if (!selectedRow) return;
-
-  const isRelevant = ['Spf', 'Vxl'].includes(
-    Array.isArray(selectedRow.anordning) ? selectedRow.anordning[0] : ''
-  );
-
-  const matching = rows.filter((r) => {
-    if (r.id === selectedRow.id) return false;
-
-    const sameDP = r.dp === selectedRow.dp;
-    const sameLinje = r.linje === selectedRow.linje;
-
-    return isRelevant && (sameDP || sameLinje);
-  });
-
-  const samradList = matching.map((match) => ({
-    id: match.id,
-    namn: match.namn,
-    dp: match.dp,
-    linje: match.linje,
-  }));
-
-  setSelectedRow((prev) => ({
-    ...prev,
-    samrad: samradList,
-  }));
 };
 
 const handleRowClick = (row, rowIndex) => {
@@ -735,38 +707,16 @@ const handleModalChange = (field, value) => {
     value = parseInt(value);
   }
 
-  // Uppdatera raden i listan
   const updatedRows = rows.map((r) =>
     r.id === selectedRowId ? { ...r, [field]: value } : r
   );
+
   setRows(updatedRows);
+  setSelectedRow((prev) => ({ ...prev, [field]: value }));
 
-  // Uppdatera selectedRow
-  const updatedSelectedRow = { ...selectedRow, [field]: value };
-
-  // ✅ Direkt: Beräkna samråd för det nya värdet
-  const matching = updatedRows.filter((r) => {
-    if (r.id === updatedSelectedRow.id) return false;
-    const sameDP = r.dp === updatedSelectedRow.dp;
-    const sameLinje = r.linje === updatedSelectedRow.linje;
-    const isRelevant = ['Spf', 'Vxl'].includes(
-      Array.isArray(updatedSelectedRow.anordning)
-        ? updatedSelectedRow.anordning[0]
-        : ''
-    );
-    return isRelevant && (sameDP || sameLinje);
-  });
-
-  const samradList = matching.map((match) => ({
-    id: match.id,
-    namn: match.namn,
-    dp: match.dp,
-    linje: match.linje,
-  }));
-
-  updatedSelectedRow.samrad = samradList;
-
-  setSelectedRow(updatedSelectedRow);
+  if (['dp', 'linje', 'anordning'].includes(field)) {
+    setSamradTrigger((prev) => prev + 1);
+  }
 };
 
 
@@ -1246,12 +1196,13 @@ onChange={(e) => {
     ? [...selectedAreas, idx]
     : selectedAreas.filter((i) => i !== idx);
 
-setSelectedAreas(updatedAreas);
-setSelectedRow((prev) => ({
-  ...prev,
-  selectedAreas: updatedAreas,
-}));
-updateSamradForSelectedRow(rows, { ...selectedRow, selectedAreas: updatedAreas }, setSelectedRow);
+  setSelectedAreas(updatedAreas);
+
+  // Uppdatera även selectedRow direkt
+  setSelectedRow((prev) => ({
+    ...prev,
+    selectedAreas: updatedAreas,
+  }));
   setSamradTrigger((prev) => prev + 1);
 }}
           >
