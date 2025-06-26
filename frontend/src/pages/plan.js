@@ -562,18 +562,16 @@ const addRow = () => {
   onOpen();
 };
 
-const toggleColumn = (col) => {
-  setVisibleColumns((prev) => ({ ...prev, [col]: !prev[col] }));
-};
-
-const handleRowClick = (row) => {
+const handleRowClick = (row, rowIndex) => {
   console.log('🖱️ Klickade på rad index:', rowIndex);
   console.log('🖱️ Row data:', row);
+
   setSelectedRow({
     ...row,
     dp: row.dp || '',
     linje: row.linje || '',
   });
+
   setSelectedRowId(row.id);
 
   setSelectedAreas(
@@ -598,6 +596,13 @@ const handleModalChange = (field, value) => {
 
   setRows(updatedRows);
   setSelectedRow((prev) => ({ ...prev, [field]: value }));
+};
+
+const toggleColumn = (col) => {
+  setVisibleColumns((prev) => ({
+    ...prev,
+    [col]: !prev[col],
+  }));
 };
 
 
