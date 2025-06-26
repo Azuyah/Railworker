@@ -735,17 +735,38 @@ const handleModalChange = (field, value) => {
     value = parseInt(value);
   }
 
+  // Uppdatera raden i listan
   const updatedRows = rows.map((r) =>
     r.id === selectedRowId ? { ...r, [field]: value } : r
   );
-
   setRows(updatedRows);
-setSelectedRow((prev) => ({ ...prev, [field]: value }));
-updateSamradForSelectedRow(rows, { ...selectedRow, [field]: value }, setSelectedRow);
 
-  if (['dp', 'linje', 'anordning'].includes(field)) {
-    setSamradTrigger((prev) => prev + 1);
-  }
+  // Uppdatera selectedRow
+  const updatedSelectedRow = { ...selectedRow, [field]: value };
+
+  // ✅ Direkt: Beräkna samråd för det nya värdet
+  const matching = updatedRows.filter((r) => {
+    if (r.id === updatedSelectedRow.id) return false;
+    const sameDP = r.dp === updatedSelectedRow.dp;
+    const sameLinje = r.linje === updatedSelectedRow.linje;
+    const isRelevant = ['Spf', 'Vxl'].includes(
+      Array.isArray(updatedSelectedRow.anordning)
+        ? updatedSelectedRow.anordning[0]
+        : ''
+    );
+    return isRelevant && (sameDP || sameLinje);
+  });
+
+  const samradList = matching.map((match) => ({
+    id: match.id,
+    namn: match.namn,
+    dp: match.dp,
+    linje: match.linje,
+  }));
+
+  updatedSelectedRow.samrad = samradList;
+
+  setSelectedRow(updatedSelectedRow);
 };
 
 
