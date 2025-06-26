@@ -232,14 +232,13 @@ const sparaProjekt = async (customRows = rows) => {
     // Skapa en kopia av raderna
     const preparedRows = [...customRows];
 
-// Kopiera aktuell rad
-const current = preparedRows[selectedRow.index];
-
-// Skapa ny version med rätt selectedAreas direkt från state
-preparedRows[selectedRow.index] = {
-  ...current,
-  selectedAreas: [...selectedAreas], // <- detta fångar aktuell state korrekt
-};
+if (selectedRowIndex !== null && preparedRows[selectedRowIndex]) {
+  const current = preparedRows[selectedRowIndex];
+  preparedRows[selectedRowIndex] = {
+    ...current,
+    selectedAreas: [...selectedAreas],
+  };
+}
 
     // Uppdatera varje rad med selections från selectedAreas (om den finns)
     const updatedRows = preparedRows.map((row) => {
@@ -535,7 +534,7 @@ const createNewRow = (rows, project) => {
 const addRow = () => {
   const newRow = {
     ...createNewRow(rows, project),
-    id: Date.now() + Math.random(), // se till att varje rad får unikt ID
+    id: Date.now(), // se till att varje rad får unikt ID
     dp: '',
     linje: '',
   };
@@ -564,9 +563,11 @@ const handleRowClick = (row) => {
     ...row,
     dp: row.dp || '',
     linje: row.linje || '',
+    index: rowIndex,
   });
-  setSelectedRowId(row.id);
 
+  setSelectedRowIndex(rowIndex);
+  setSelectedRowId(row.id);
   setSelectedAreas(
     row.selections?.map((val, idx) => (val ? idx : null)).filter((v) => v !== null) || []
   );
