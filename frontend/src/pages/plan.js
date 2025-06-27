@@ -672,9 +672,14 @@ const toggleColumn = (col) => {
 
 const handleRowClick = (row, rowIndex) => {
   const result = calculateSamrad(rows);
+  console.log('🔍 calculateSamrad result:', result);
 
-  const matching = result.samradList
-    .filter((entry) => entry.from === rowIndex)
+  // ✅ Identifiera korrekt index baserat på ID
+  const fromIndex = rows.findIndex(r => r.id === row.id);
+  console.log(`➡️ Riktig fromIndex för ${row.namn}:`, fromIndex);
+
+  const matched = result.samradList
+    .filter((entry) => entry.from === fromIndex)
     .map((entry) => {
       const match = rows[entry.to];
       return {
@@ -683,12 +688,14 @@ const handleRowClick = (row, rowIndex) => {
       };
     });
 
+  console.log(`📌 Samråd för rad ${fromIndex} (${row.namn}):`, matched);
+
   setSelectedRow({
     ...row,
     dp: row.dp || '',
     linje: row.linje || '',
     index: rowIndex,
-    samrad: matching,
+    samrad: matched,
   });
 
   setSelectedRowIndex(rowIndex);
@@ -699,6 +706,14 @@ const handleRowClick = (row, rowIndex) => {
   );
 
   setSelectedAnordning(Array.isArray(row.anordning) ? row.anordning : []);
+
+  console.log('🧾 selectedRow som skickas till modalen:', {
+  ...row,
+  dp: row.dp || '',
+  linje: row.linje || '',
+  index: rowIndex,
+  samrad: matched,
+});
 
   onOpen();
 };
@@ -1243,9 +1258,9 @@ onChange={(e) => {
           {/* Högerkolumn: Mina samråd */}
           <Box bg="gray.50" p={4} borderRadius="md" maxW="400px" border="1px solid #ccc" height="100%">
             <Text fontWeight="bold" mb={2}>Samråd</Text>
-            {samrad.length > 0 ? (
-              <Stack spacing={2}>
-{samrad.map((row, idx) => (
+{selectedRow?.samrad?.length > 0 ? (
+  <Stack spacing={2}>
+    {selectedRow.samrad.map((row, idx) => (
   <Box key={idx} p={2} border="1px solid #ddd" borderRadius="md" bg="white">
     <Flex justify="space-between" align="center">
       <Box>
