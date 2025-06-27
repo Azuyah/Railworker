@@ -129,7 +129,13 @@ const calculateSamrad = (rows) => {
         const allExcludedB = compareAnordningar.every(an => exclusionSet.includes(an));
         if (allExcludedA && allExcludedB) continue;
 
-        newSamradList.push({ from: i, to: j });
+        newSamradList.push({
+  from: i,
+  to: j,
+  id: rows[j].id,
+  namn: rows[j].namn,
+  telefon: rows[j].telefon, // 👈 lägg till detta
+});
         newAvklarad[`${i}-${j}`] = false;
       }
     }
@@ -1295,27 +1301,32 @@ onChange={(e) => {
             <Text fontWeight="bold" mb={2}>Samråd</Text>
 {selectedRow?.samrad?.length > 0 ? (
   <Stack spacing={2}>
-    {selectedRow.samrad.map((row, idx) => (
-  <Box key={idx} p={2} border="1px solid #ddd" borderRadius="md" bg="white">
-    <Flex justify="space-between" align="center">
-      <Box>
-        <Text fontSize="sm"><strong>Namn:</strong> {row.namn}</Text>
-        <Text fontSize="sm"><strong>Telefon:</strong> {row.telefon}</Text>
-      </Box>
-      <Checkbox
-        isChecked={avklaradSamrad[row.id] || false}
-        onChange={() =>
-          setAvklaradSamrad((prev) => ({
-            ...prev,
-            [row.id]: !prev[row.id],
-          }))
-        }
-      >
-        Avklarad
-      </Checkbox>
-    </Flex>
-  </Box>
-))}
+{selectedRow.samrad.map((samradItem, idx) => {
+  const person = rows.find((r) => r.id === samradItem.id);
+  if (!person) return null;
+
+  return (
+    <Box key={idx} p={2} border="1px solid #ddd" borderRadius="md" bg="white">
+      <Flex justify="space-between" align="center">
+        <Box>
+          <Text fontSize="sm"><strong>Namn:</strong> {person.namn}</Text>
+          <Text fontSize="sm"><strong>Telefon:</strong> {person.telefon}</Text>
+        </Box>
+        <Checkbox
+          isChecked={avklaradSamrad[person.id] || false}
+          onChange={() =>
+            setAvklaradSamrad((prev) => ({
+              ...prev,
+              [person.id]: !prev[person.id],
+            }))
+          }
+        >
+          Avklarad
+        </Checkbox>
+      </Flex>
+    </Box>
+  );
+})}
               </Stack>
             ) : (
               <Text fontSize="sm" color="gray.500">Inga samråd.</Text>
