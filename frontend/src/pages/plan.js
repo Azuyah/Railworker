@@ -127,7 +127,6 @@ const calculateSamrad = (rows) => {
       if (sharedAreas) {
         const allExcludedA = rowAnordningar.every(an => exclusionSet.includes(an));
         const allExcludedB = compareAnordningar.every(an => exclusionSet.includes(an));
-
         if (allExcludedA && allExcludedB) continue;
 
         newSamradList.push({ from: i, to: j });
@@ -620,22 +619,23 @@ const createNewRow = (rows, project) => {
 };
 
 const addRow = () => {
-  const newRowBase = {
+  const newRow = {
     ...createNewRow(rows, project),
-    id: Date.now(), // unikt ID
+    id: Date.now(),
     dp: '',
     linje: '',
-    anordning: [],
   };
 
-  // 🔍 Räkna ut samråd direkt vid skapande
+  const sameDP = newRow.dp;
+  const sameLinje = newRow.linje;
   const isRelevant = ['Spf', 'Vxl'].includes(
-    Array.isArray(newRowBase.anordning) ? newRowBase.anordning[0] : ''
+    Array.isArray(newRow.anordning) ? newRow.anordning[0] : ''
   );
 
   const matching = rows.filter((r) => {
-    const matchDP = r.dp === newRowBase.dp;
-    const matchLinje = r.linje === newRowBase.linje;
+    if (r.id === newRow.id) return false;
+    const matchDP = r.dp === sameDP;
+    const matchLinje = r.linje === sameLinje;
     return isRelevant && (matchDP || matchLinje);
   });
 
@@ -644,22 +644,21 @@ const addRow = () => {
     namn: match.namn,
     dp: match.dp,
     linje: match.linje,
+    telefon: match.telefon || '',
   }));
 
-  const newRow = {
-    ...newRowBase,
-    samrad: samradList, // 💡 Lägg till direkt
+  const newRowWithSamrad = {
+    ...newRow,
+    samrad: samradList,
   };
 
-  const updatedRows = [...rows, newRow];
+  const updatedRows = [...rows, newRowWithSamrad];
   setRows(updatedRows);
-  setSelectedRow(newRow);
-  setSelectedRowId(newRow.id);
+  setSelectedRow(newRowWithSamrad);
+  setSelectedRowId(newRowWithSamrad.id);
 
   setSelectedAreas(
-    newRow.selections
-      ?.map((selected, index) => (selected ? index : null))
-      .filter((index) => index !== null) || []
+    newRow.selections?.map((selected, index) => (selected ? index : null)).filter((index) => index !== null) || []
   );
 
   setSelectedAnordning('');
@@ -671,7 +670,18 @@ const toggleColumn = (col) => {
 };
 
 const handleRowClick = (row, rowIndex) => {
-  const result = calculateSamrad(rows);
+  // 🔁 Skapa en temporärt uppdaterad lista där aktuell rad speglar vad som syns i modalen
+const tempRows = rows.map((r) =>
+  r.id === row.id
+    ? {
+        ...r,
+        selectedAreas: selectedAreas,
+        anordning: Array.isArray(row.anordning) ? row.anordning : [],
+      }
+    : r
+);
+
+const result = calculateSamrad(tempRows);
   console.log('🔍 calculateSamrad result:', result);
 
   // ✅ Identifiera korrekt index baserat på ID
@@ -701,9 +711,11 @@ const handleRowClick = (row, rowIndex) => {
   setSelectedRowIndex(rowIndex);
   setSelectedRowId(row.id);
 
-  setSelectedAreas(
-    row.selections?.map((val, idx) => (val ? idx : null)).filter((v) => v !== null) || []
-  );
+ setSelectedAreas(
+  row.selections
+    ?.map((selected, index) => (selected === true ? index : null))
+    .filter((index) => index !== null) || []
+);
 
   setSelectedAnordning(Array.isArray(row.anordning) ? row.anordning : []);
 
@@ -1206,28 +1218,51 @@ onChange={(e) => {
     </MenuButton>
     <MenuList maxHeight="300px" overflowY="auto">
       {project.sections.map((sec, idx) => (
-        <MenuItem key={idx}>
-          <Checkbox
-            isChecked={selectedAreas.includes(idx)}
-onChange={(e) => {
-  const isChecked = e.target.checked;
-  const updatedAreas = isChecked
-    ? [...selectedAreas, idx]
-    : selectedAreas.filter((i) => i !== idx);
+<MenuItem key={idx}>
+<Checkbox
+  isChecked={selectedAreas.includes(Number(idx))}
+  onChange={(e) => {
+    const isChecked = e.target.checked;
 
-  setSelectedAreas(updatedAreas);
+    const updatedAreas = isChecked
+      ? [...new Set([...selectedAreas, Number(idx)])].sort((a, b) => a - b)
+      : selectedAreas.filter((i) => i !== Number(idx));
 
-  // Uppdatera även selectedRow direkt
-  setSelectedRow((prev) => ({
-    ...prev,
-    selectedAreas: updatedAreas,
-  }));
-  setSamradTrigger((prev) => prev + 1);
-}}
-          >
-            {sec.type} {String.fromCharCode(65 + idx)}
-          </Checkbox>
-        </MenuItem>
+    const updatedSelections = Array(10)
+      .fill(false)
+      .map((_, i) => updatedAreas.includes(i));
+
+    const newSelectedRow = {
+      ...selectedRow,
+      selectedAreas: updatedAreas,
+      selections: updatedSelections,
+    };
+
+    setSelectedAreas(updatedAreas);
+    setSelectedRow(newSelectedRow);
+
+    const newRows = Array.isArray(rows)
+      ? rows.map((row) =>
+          row.id === selectedRowId
+            ? {
+                ...row,
+                selectedAreas: updatedAreas,
+                selections: updatedSelections,
+              }
+            : row
+        )
+      : [];
+
+    setRows(newRows);
+
+    const result = calculateSamrad(newRows);
+    setSamrad(result.samradList);
+    setSamradTrigger((prev) => prev + 1);
+  }}
+>
+  {sec.type} {String.fromCharCode(65 + idx)}
+</Checkbox>
+</MenuItem>
       ))}
     </MenuList>
   </Menu>
