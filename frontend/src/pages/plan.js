@@ -1313,13 +1313,16 @@ onChange={(e) => {
           <Text fontSize="sm"><strong>Telefon:</strong> {person.telefon}</Text>
         </Box>
         <Checkbox
-          isChecked={avklaradSamrad[person.id] || false}
-          onChange={() =>
-            setAvklaradSamrad((prev) => ({
-              ...prev,
-              [person.id]: !prev[person.id],
-            }))
-          }
+isChecked={avklaradSamrad[selectedRow.id]?.[person.id] || false}
+onChange={() =>
+  setAvklaradSamrad((prev) => ({
+    ...prev,
+    [selectedRow.id]: {
+      ...prev[selectedRow.id],
+      [person.id]: !prev[selectedRow.id]?.[person.id],
+    },
+  }))
+}
         >
           Avklarad
         </Checkbox>
