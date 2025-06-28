@@ -64,13 +64,14 @@ const [editBeteckningar, setEditBeteckningar] = useState([]);
 const openProjectInfoModal = () => setIsProjectInfoOpen(true);
 const closeProjectInfoModal = () => setIsProjectInfoOpen(false);
   const [visibleColumns, setVisibleColumns] = useState({
+    '#': false,
+    btkn: true,
     namn: true,
     telefon: true,
     anordning: true,
     starttid: true,
     begard: true,
     avslutat: true,
-    anteckning: true,
   });
   const toast = useToast();
 
@@ -929,21 +930,21 @@ if (loading || !project) {
         <Table variant="simple" size="sm">
           <Thead bg="gray.200">
             <Tr>
-              <Th width="40px" textAlign="center" py={3}>#</Th>
-              <Th>BTKN</Th>
-              {visibleColumns.namn && <Th>Namn</Th>}
-              {visibleColumns.telefon && <Th>Telefon</Th>}
-              {visibleColumns.anordning && <Th>Anordning</Th>}
+              {visibleColumns['#'] && (<Th width="40px" textAlign="center" py={2}>#</Th>)}
+              {visibleColumns.btkn && (<Th py={2}>BTKN</Th>)}
+              {visibleColumns.namn && <Th py={2}>Namn</Th>}
+              {visibleColumns.telefon && <Th py={2}>Telefon</Th>}
+              {visibleColumns.anordning && <Th py={2}>Anordning</Th>}
               {project.sections.map((sec, idx) => (
-                <Th key={idx} minW="40px" maxW="40" bg={idx % 2 === 0 ? 'yellow.100' : 'transparent'}>
+                <Th key={idx} minW="40px" py={2} maxW="40" bg={idx % 2 === 0 ? 'yellow.100' : 'transparent'}>
                   <Flex direction="column" align="center">
                     <Text fontSize="sm">{String.fromCharCode(65 + idx)}</Text>
                   </Flex>
                 </Th>
               ))}
-              {visibleColumns.starttid && <Th>Starttid</Th>}
-              {visibleColumns.begard && <Th>Begärd till</Th>}
-              {visibleColumns.avslutat && <Th>Avslutat</Th>}
+              {visibleColumns.starttid && <Th py={2}>Starttid</Th>}
+              {visibleColumns.begard && <Th py={2}>Begärd till</Th>}
+              {visibleColumns.avslutat && <Th py={2}>Avslutat</Th>}
             </Tr>
           </Thead>
 <Tbody>
@@ -960,17 +961,20 @@ if (loading || !project) {
   _hover={{ bg: 'blue.50' }}
   cursor="pointer"
 >
-<Td width="40px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
-  <Text color="black" fontSize="md" w="40px" textAlign="center">
-    {rowIndex + 1}
-  </Text>
-</Td>
-
-      <Td width="80px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
-        <Text color="black" fontSize="md" w="80px" isTruncated>
-          {row.btkn}
-        </Text>
-      </Td>
+{visibleColumns['#'] && (
+  <Td width="40px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
+    <Text color="black" fontSize="md" w="40px" textAlign="center">
+      {rowIndex + 1}
+    </Text>
+  </Td>
+)}
+{visibleColumns.btkn && (
+  <Td width="80px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
+    <Text color="black" fontSize="md" w="80px" isTruncated>
+      {row.btkn}
+    </Text>
+  </Td>
+)}
 
 {visibleColumns.namn && (
   <Td maxWidth="150px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
