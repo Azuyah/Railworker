@@ -52,17 +52,17 @@ const Plan = () => {
   const [countdown, setCountdown] = useState('');
   const [filterValue, setFilterValue] = useState('all');
   const [avslutadeModalOpen, setAvslutadeModalOpen] = useState(false);
-const [searchQuery, setSearchQuery] = useState('');
-const [selectedAnordning, setSelectedAnordning] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedAnordning, setSelectedAnordning] = useState('');
   const [avklaradSamrad, setAvklaradSamrad] = useState({});
   const [samradData, setSamradData] = useState({ samradList: [], avklaradMap: {} });
   const [loading, setLoading] = useState(true);
   const [samradTrigger, setSamradTrigger] = useState(0);
-const [selectedRowId, setSelectedRowId] = useState(null);
-const [editBeteckningar, setEditBeteckningar] = useState([]);
+  const [selectedRowId, setSelectedRowId] = useState(null);
+  const [editBeteckningar, setEditBeteckningar] = useState([]);
   const [isProjectInfoOpen, setIsProjectInfoOpen] = useState(false);
-const openProjectInfoModal = () => setIsProjectInfoOpen(true);
-const closeProjectInfoModal = () => setIsProjectInfoOpen(false);
+  const openProjectInfoModal = () => setIsProjectInfoOpen(true);
+  const closeProjectInfoModal = () => setIsProjectInfoOpen(false);
   const [visibleColumns, setVisibleColumns] = useState({
     '#': false,
     btkn: true,
@@ -74,23 +74,20 @@ const closeProjectInfoModal = () => setIsProjectInfoOpen(false);
     avslutat: true,
   });
   const toast = useToast();
-
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedRow, setSelectedRow] = useState(null);
   const [selectedRowIndex, setSelectedRowIndex] = useState(null);
   const [selectedAreas, setSelectedAreas] = useState([]);
-
   const [editModalOpen, setEditModalOpen] = useState(false);
-
-const [projektNamn, setProjektNamn] = useState(project?.name || '');
-const [plats, setPlats] = useState(project?.plats || '');
-const [startDate, setStartDate] = useState(project?.startDate || '');
-const [startTime, setStartTime] = useState(project?.startTime || '');
-const [endDate, setEndDate] = useState(project?.endDate || '');
-const [endTime, setEndTime] = useState(project?.endTime || '');
-const [namn, setNamn] = useState(project?.namn || '');
-const [telefonnummer, setTelefonnummer] = useState(project?.telefonnummer || '');
-const [editSections, setEditSections] = useState(project?.sections || []);
+  const [projektNamn, setProjektNamn] = useState(project?.name || '');
+  const [plats, setPlats] = useState(project?.plats || '');
+  const [startDate, setStartDate] = useState(project?.startDate || '');
+  const [startTime, setStartTime] = useState(project?.startTime || '');
+  const [endDate, setEndDate] = useState(project?.endDate || '');
+  const [endTime, setEndTime] = useState(project?.endTime || '');
+  const [namn, setNamn] = useState(project?.namn || '');
+  const [telefonnummer, setTelefonnummer] = useState(project?.telefonnummer || '');
+  const [editSections, setEditSections] = useState(project?.sections || []);
 
 function formatDateOnly(datetimeStr) {
   const match = datetimeStr.match(/^(\d{2})\/(\d{2})\/(\d{4})/);

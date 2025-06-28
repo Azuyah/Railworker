@@ -11,6 +11,7 @@ import ProjektVisa from './pages/ProjektVisa';
 import Plan from './pages/plan';
 import PlanTSM from './pages/PlanTSM';
 import Profil from './pages/profil';
+import Preview from "./pages/preview";
 
 function AppRoutes() {
   const location = useLocation();
@@ -81,6 +82,7 @@ const token = user?.token;
     </ProtectedRoute>
   }
 />
+<Route path="/preview" element={<Preview />} />
     </Routes>
   );
 }
