@@ -1107,7 +1107,12 @@ onChange={(e) => {
   <Td maxW="150px" w="90px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
     <Tooltip
       label={
-        row.begardDatum ? (
+        row.begardDatum === 'Tsv' ? (
+          <Box p={2} maxW="100px">
+            <Text fontWeight="bold" mb={1}>Begärd till:</Text>
+            <Text fontSize="sm">Tillsvidare</Text>
+          </Box>
+        ) : row.begardDatum ? (
           <Box p={2} maxW="100px">
             <Text fontWeight="bold" mb={1}>Begärd till:</Text>
             <Text fontSize="sm">{formatDateOnly(row.begardDatum)}</Text>
@@ -1135,7 +1140,7 @@ onChange={(e) => {
         isTruncated={false}
         cursor="help"
       >
-        {row.begard}
+        {row.begard === 'Tsv' ? 'Tsv' : row.begard}
       </Text>
     </Tooltip>
   </Td>
@@ -1431,8 +1436,7 @@ onChange={(e) => {
   <FormControl>
     <FormLabel>Startdatum</FormLabel>
     <Input
-      type="text"
-      placeholder="DD/MM/YYYY"
+      type="date"
       value={selectedRow.startdatum || ''}
       onChange={(e) => handleModalChange('startdatum', e.target.value)}
     />
@@ -1441,26 +1445,38 @@ onChange={(e) => {
     </Button>
   </FormControl>
 
-  {/* Begärd datum */}
-  <FormControl>
-    <FormLabel>Begärd datum</FormLabel>
+  {/* Begärd till datum */}
+<FormControl>
+  <FormLabel>Begärd datum</FormLabel>
+  {selectedRow.begardDatum === 'Tsv' ? (
+    <Input value="Tillsvidare" isReadOnly />
+  ) : (
     <Input
-      type="text"
-      placeholder="DD/MM/YYYY"
+      type="date"
       value={selectedRow.begardDatum || ''}
       onChange={(e) => handleModalChange('begardDatum', e.target.value)}
     />
-    <Button size="xs" mt={1} onClick={() => handleModalChange('begardDatum', getCurrentDate())}>
-      Sätt dagens datum
-    </Button>
-  </FormControl>
+  )}
+  <Button
+    size="xs"
+    mt={1}
+    variant="outline"
+    onClick={() =>
+      handleModalChange(
+        'begardDatum',
+        selectedRow.begardDatum === 'Tsv' ? '' : 'Tsv'
+      )
+    }
+  >
+    Tillsvidare
+  </Button>
+</FormControl>
 
   {/* Avslutat datum */}
   <FormControl>
     <FormLabel>Avslutat datum</FormLabel>
     <Input
-      type="text"
-      placeholder="DD/MM/YYYY"
+      type="date"
       value={selectedRow.avslutatDatum || ''}
       onChange={(e) => handleModalChange('avslutatDatum', e.target.value)}
     />
@@ -1483,17 +1499,28 @@ onChange={(e) => {
   </FormControl>
 
   {/* Begärd till */}
-  <FormControl>
-    <FormLabel>Begärd till</FormLabel>
+<FormControl>
+  <FormLabel>Begärd till</FormLabel>
+  {selectedRow.begard === 'Tsv' ? (
+    <Input value="Tillsvidare" isReadOnly />
+  ) : (
     <Input
       type="time"
       value={selectedRow.begard || ''}
       onChange={(e) => handleModalChange('begard', e.target.value)}
     />
-    <Button size="xs" mt={1} onClick={() => handleModalChange('begard', getCurrentTime())}>
-      Sätt aktuell tid
-    </Button>
-  </FormControl>
+  )}
+  <Button
+    size="xs"
+    mt={1}
+    variant="outline"
+    onClick={() =>
+      handleModalChange('begard', selectedRow.begard === 'Tsv' ? '' : 'Tsv')
+    }
+  >
+    Tillsvidare
+  </Button>
+</FormControl>
 
   {/* Avslutat */}
   <FormControl>
