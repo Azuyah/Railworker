@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import LoadingScreen from '../components/LoadingScreen';
 import { Tooltip } from '@chakra-ui/react';
+import { HiX } from "react-icons/hi";
 import {
   Box,
   Button,
@@ -257,10 +258,6 @@ const getCurrentTime = () => {
 
 const sparaProjekt = async (customRows = rows) => {
   try {
-
-console.log('🎯 Sparar selectedRow.id:', selectedRow?.id);
-console.log('🎯 selectedRow.selectedAreas:', selectedRow?.selectedAreas);
-console.log('🎯 selectedAreas (state):', selectedAreas);
     const tokenData = localStorage.getItem('user');
     const token = tokenData ? JSON.parse(tokenData).token : null;
 
@@ -1046,21 +1043,9 @@ if (loading || !project) {
     width="100px"
     bg={secIdx % 2 === 0 ? 'yellow.50' : 'transparent'}
     borderRight="1px solid rgba(0, 0, 0, 0.1)"
-    onClick={(e) => e.stopPropagation()} // Hindrar att modalen öppnas
   >
     <Flex justify="center">
-      <Checkbox
-        isChecked={row.selections[secIdx]}
-onChange={(e) => {
-  const updatedRows = [...rows];
-  if (!updatedRows[rowIndex]) return;
-
-  const updatedSelections = [...(updatedRows[rowIndex].selections || [])];
-  updatedSelections[secIdx] = e.target.checked;
-  updatedRows[rowIndex].selections = updatedSelections;
-  setRows(updatedRows);
-}}
-      />
+      {row.selections[secIdx] === true && <HiX size={20} color="black" />}
     </Flex>
   </Td>
 ))}
