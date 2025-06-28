@@ -403,7 +403,7 @@ app.put('/api/projects/:id', async (req, res) => {
   const token = authHeader.split(' ')[1];
 
   try {
-    jwt.verify(token, JWT_SECRET); // Token verifieras, men userId behövs ej här
+    jwt.verify(token, JWT_SECRET);           // ✔️ Token OK
 
     const { id } = req.params;
     const {
@@ -419,50 +419,83 @@ app.put('/api/projects/:id', async (req, res) => {
       sections = [],
       beteckningar = [],
     } = req.body;
-        
+
+    const projectId = parseInt(id);
+
+    /* ---------- LOGG 1: inkommande payload ---------- */
+    console.log('👉 INKOMMANDE BETECKNINGAR:', beteckningar);
+    console.log('👉 INKOMMANDE SECTIONS:', sections.length);
+
+    // Filtrera bort tomma / ogiltiga
     const filteredBeteckningar = Array.isArray(beteckningar)
-      ? beteckningar
-          .filter((b) => typeof b.value === 'string' && b.value.trim() !== '')
-          .map((b) => ({ label: b.value.trim() }))
+      ? beteckningar.filter((b) => typeof b.label === 'string' && b.label.trim() !== '')
       : [];
 
-const updatedProject = await prisma.project.update({
-  where: { id: parseInt(id) },
-  data: {
-    name,
-    startDate,
-    startTime,
-    endDate,
-    endTime,
-    plats,
-    namn,
-    telefonnummer,
-    rows,
-        beteckningar: {
-          deleteMany: {},
-          create: filteredBeteckningar,
-        },
-      },
-      include: {
-        beteckningar: true,
+    /* ---------- LOGG 2: filtrerat resultat ---------- */
+    console.log('✅ FILTRERADE BETECKNINGAR:', filteredBeteckningar);
+
+    // Steg 1 – uppdatera basinfo (utan relationstabeller)
+    const updatedProject = await prisma.project.update({
+      where: { id: projectId },
+      data: {
+        name,
+        startDate,
+        startTime,
+        endDate,
+        endTime,
+        plats,
+        namn,
+        telefonnummer,
+        rows,
       },
     });
+    console.log('📝 Basinfo uppdaterad för projekt', projectId);
 
-    await prisma.section.deleteMany({
-      where: { projectId: parseInt(id) },
+    // Steg 2 – rensa gamla beteckningar
+    const delRes = await prisma.beteckning.deleteMany({ where: { projectId } });
+    console.log('🗑️  Raderade beteckningar:', delRes.count);
+
+    // Steg 3 – skapa nya beteckningar om några finns
+    if (filteredBeteckningar.length > 0) {
+      const createRes = await prisma.beteckning.createMany({
+        data: filteredBeteckningar.map((b) => ({
+          label: b.label,
+          projectId,
+        })),
+      });
+      console.log('➕ Skapade beteckningar:', createRes.count);
+    } else {
+      console.log('⚠️  Inga nya beteckningar att skapa');
+    }
+
+    // Steg 4 – rensa och lägg in sections
+    const delSecRes = await prisma.section.deleteMany({ where: { projectId } });
+    console.log('🗑️  Raderade sections:', delSecRes.count);
+
+    if (sections.length > 0) {
+      const createSecRes = await prisma.section.createMany({
+        data: sections.map((section) => ({
+          name: section.name,
+          type: section.type,
+          projectId,
+        })),
+      });
+      console.log('➕ Skapade sections:', createSecRes.count);
+    } else {
+      console.log('⚠️  Inga nya sections att skapa');
+    }
+
+    // Slutligen: hämta och returnera projektet inkl. relationer
+    const result = await prisma.project.findUnique({
+      where: { id: projectId },
+      include: { sections: true, beteckningar: true },
     });
 
-    await prisma.section.createMany({
-      data: sections.map((section) => ({
-        name: section.name,
-        type: section.type,
-        projectId: updatedProject.id,
-      })),
-    });
-
-    res.json(updatedProject);
+    /* ---------- LOGG 3: slutresultat ---------- */
+    console.log('🏁 SLUTRESULTAT BETECKNINGAR:', result.beteckningar);
+    res.json(result);
   } catch (error) {
-    console.error('Detaljerat fel vid uppdatering av projektet:', error.message, error.stack, error);
+    console.error('❌ FEL VID UPPDATERING:', error.message, error.stack);
     res.status(500).json({ error: 'Något gick fel vid uppdatering av projektet' });
   }
 });

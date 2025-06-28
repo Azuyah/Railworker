@@ -255,6 +255,7 @@ onClick={async () => {
     }
 
 const data = await response.json();
+console.log('✅ Projekt skapat med beteckningar:', data.beteckningar);
 
     navigate('/dashboard');
   } catch (err) {

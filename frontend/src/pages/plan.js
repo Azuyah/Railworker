@@ -58,6 +58,7 @@ const [selectedAnordning, setSelectedAnordning] = useState('');
   const [loading, setLoading] = useState(true);
   const [samradTrigger, setSamradTrigger] = useState(0);
 const [selectedRowId, setSelectedRowId] = useState(null);
+const [editBeteckningar, setEditBeteckningar] = useState([]);
   const [isProjectInfoOpen, setIsProjectInfoOpen] = useState(false);
 const openProjectInfoModal = () => setIsProjectInfoOpen(true);
 const closeProjectInfoModal = () => setIsProjectInfoOpen(false);
@@ -182,6 +183,7 @@ const openEditProjectModal = () => {
   setTelefonnummer(project.telefonnummer);
   setEditSections(project.sections || []);
   setEditModalOpen(true);
+  setEditBeteckningar(project.beteckningar?.map(b => b.label) || []);
 };
 
 const updateProject = async () => {
@@ -196,6 +198,7 @@ const updateProject = async () => {
     telefonnummer,
     sections: editSections,
     rows,
+    beteckningar: editBeteckningar.map(b => ({ label: b })),
   };
 
   const token = JSON.parse(localStorage.getItem('user'))?.token;
@@ -1114,7 +1117,32 @@ onChange={(e) => {
                 <FormLabel>FJTKL Telefonnummer</FormLabel>
                 <Input value={telefonnummer} onChange={(e) => setTelefonnummer(e.target.value)} />
               </FormControl>
+              <Box>
+  <FormLabel>Beteckningar</FormLabel>
+  {editBeteckningar.map((b, i) => (
+    <Input
+      key={i}
+      value={b}
+      onChange={(e) => {
+        const updated = [...editBeteckningar];
+        updated[i] = e.target.value;
+        setEditBeteckningar(updated);
+      }}
+      placeholder={`Beteckning ${i + 1}`}
+      mb={2}
+    />
+  ))}
+  <Button
+    onClick={() => setEditBeteckningar([...editBeteckningar, ''])}
+    colorScheme="blue"
+    variant="outline"
+    size="sm"
+  >
+    + Lägg till beteckning
+  </Button>
+</Box>
             </SimpleGrid>
+            
 
             {/* Flyttade knappar */}
             <Box>
