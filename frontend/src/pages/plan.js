@@ -90,6 +90,26 @@ const [namn, setNamn] = useState(project?.namn || '');
 const [telefonnummer, setTelefonnummer] = useState(project?.telefonnummer || '');
 const [editSections, setEditSections] = useState(project?.sections || []);
 
+function formatDateOnly(datetimeStr) {
+  const match = datetimeStr.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  let date;
+
+  if (match) {
+    const [, day, month, year] = match;
+    date = new Date(`${year}-${month}-${day}`);
+  } else {
+    date = new Date(datetimeStr);
+  }
+
+  if (isNaN(date)) return '';
+
+  const d = String(date.getDate()).padStart(2, '0');
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const y = date.getFullYear();
+
+  return `${d}/${m}/${y}`;
+}
+
 const updateRow = (updatedRow) => {
   const updatedRows = rows.map((row) =>
     row.id === updatedRow.id ? updatedRow : row
@@ -219,6 +239,19 @@ const updateProject = async () => {
     console.error('Kunde inte uppdatera projekt:', error);
     alert('Fel vid uppdatering.');
   }
+};
+
+const getCurrentDate = () => {
+  const now = new Date();
+  const day = String(now.getDate()).padStart(2, '0');
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const year = now.getFullYear();
+  return `${day}/${month}/${year}`; // Exempel: "28/06/2025"
+};
+
+const getCurrentTime = () => {
+  const now = new Date();
+  return now.toTimeString().slice(0, 5); // Exempel: "15:12"
 };
 
 
@@ -759,7 +792,6 @@ const handleModalChange = (field, value) => {
   }
 };
 
-
 const [samrad, setSamrad] = useState([]);
 const filteredRows = rows
   .filter((row) => !row.avslutad)
@@ -1032,29 +1064,120 @@ onChange={(e) => {
     </Flex>
   </Td>
 ))}
-      {visibleColumns.starttid && (
-        <Td width="90px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
-          <Text color="black" fontSize="md" w="90px" isTruncated>
-            {row.starttid}
-          </Text>
-        </Td>
-      )}
+{visibleColumns.starttid && (
+  <Td maxW="150px" w="90px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
+    <Tooltip
+      label={
+        row.startdatum ? (
+          <Box p={2} maxW="100px">
+            <Text fontWeight="bold" mb={1}>Startdatum:</Text>
+            <Text fontSize="sm">{formatDateOnly(row.startdatum)}</Text>
+          </Box>
+        ) : (
+          <Box p={2} maxW="100px">
+            <Text fontWeight="bold" mb={1}>Startdatum:</Text>
+            <Text fontSize="sm" color="gray.500">Ej angivet</Text>
+          </Box>
+        )
+      }
+      hasArrow
+      placement="top"
+      bg="white"
+      color="black"
+      border="1px solid #ccc"
+      borderRadius="md"
+      shadow="md"
+      p={3}
+    >
+      <Text
+        color="black"
+        fontSize="md"
+        w="50px"
+        maxW="inherit"
+        isTruncated={false}
+        cursor="help"
+      >
+        {row.starttid}
+      </Text>
+    </Tooltip>
+  </Td>
+)}
 
-      {visibleColumns.begard && (
-        <Td width="90px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
-          <Text color="black" fontSize="md" w="90px" isTruncated>
-            {row.begard}
-          </Text>
-        </Td>
-      )}
+{visibleColumns.begard && (
+  <Td maxW="150px" w="90px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
+    <Tooltip
+      label={
+        row.begardDatum ? (
+          <Box p={2} maxW="100px">
+            <Text fontWeight="bold" mb={1}>Begärd till:</Text>
+            <Text fontSize="sm">{formatDateOnly(row.begardDatum)}</Text>
+          </Box>
+        ) : (
+          <Box p={2} maxW="100px">
+            <Text fontWeight="bold" mb={1}>Begärd till:</Text>
+            <Text fontSize="sm" color="gray.500">Ej angivet</Text>
+          </Box>
+        )
+      }
+      hasArrow
+      placement="top"
+      bg="white"
+      color="black"
+      border="1px solid #ccc"
+      borderRadius="md"
+      shadow="md"
+      p={3}
+    >
+      <Text
+        color="black"
+        fontSize="md"
+        w="50px"
+        isTruncated={false}
+        cursor="help"
+      >
+        {row.begard}
+      </Text>
+    </Tooltip>
+  </Td>
+)}
 
-      {visibleColumns.avslutat && (
-        <Td width="90px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
-          <Text color="black" fontSize="md" w="90px" isTruncated>
-            {row.avslutat}
-          </Text>
-        </Td>
-      )}
+{visibleColumns.avslutat && (
+  <Td maxW="150px" w="90px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
+    <Tooltip
+      label={
+        row.avslutatDatum ? (
+          <Box p={2} maxW="100px">
+            <Text fontWeight="bold" mb={1}>Avslutat:</Text>
+            <Text fontSize="sm">{formatDateOnly(row.avslutatDatum)}</Text>
+          </Box>
+        ) : (
+          <Box p={2} maxW="100px">
+            <Text fontWeight="bold" mb={1}>Avslutat:</Text>
+            <Text fontSize="sm" color="gray.500">Ej angivet</Text>
+          </Box>
+        )
+      }
+      hasArrow
+      placement="top"
+      bg="white"
+      color="black"
+      border="1px solid #ccc"
+      borderRadius="md"
+      shadow="md"
+      p={3}
+    >
+      <Text
+        color="black"
+        fontSize="md"
+        w="50px"
+        isTruncated={false}
+        cursor="help"
+      >
+        {row.avslutat}
+      </Text>
+    </Tooltip>
+  </Td>
+)}
     </Tr>
   ))}
 </Tbody>
@@ -1303,20 +1426,88 @@ onChange={(e) => {
 </FormControl>
             </SimpleGrid>
 
-            <SimpleGrid columns={3} spacing={4}>
-              <FormControl>
-                <FormLabel>Starttid</FormLabel>
-                <Input type="time" value={selectedRow.starttid} onChange={(e) => handleModalChange('starttid', e.target.value)} />
-              </FormControl>
-              <FormControl>
-                <FormLabel>Begärd till</FormLabel>
-                <Input type="time" value={selectedRow.begard} onChange={(e) => handleModalChange('begard', e.target.value)} />
-              </FormControl>
-              <FormControl>
-                <FormLabel>Avslutat</FormLabel>
-                <Input type="time" value={selectedRow.avslutat} onChange={(e) => handleModalChange('avslutat', e.target.value)} />
-              </FormControl>
-            </SimpleGrid>
+<SimpleGrid columns={3} spacing={4}>
+  {/* Startdatum */}
+  <FormControl>
+    <FormLabel>Startdatum</FormLabel>
+    <Input
+      type="text"
+      placeholder="DD/MM/YYYY"
+      value={selectedRow.startdatum || ''}
+      onChange={(e) => handleModalChange('startdatum', e.target.value)}
+    />
+    <Button size="xs" mt={1} onClick={() => handleModalChange('startdatum', getCurrentDate())}>
+      Sätt dagens datum
+    </Button>
+  </FormControl>
+
+  {/* Begärd datum */}
+  <FormControl>
+    <FormLabel>Begärd datum</FormLabel>
+    <Input
+      type="text"
+      placeholder="DD/MM/YYYY"
+      value={selectedRow.begardDatum || ''}
+      onChange={(e) => handleModalChange('begardDatum', e.target.value)}
+    />
+    <Button size="xs" mt={1} onClick={() => handleModalChange('begardDatum', getCurrentDate())}>
+      Sätt dagens datum
+    </Button>
+  </FormControl>
+
+  {/* Avslutat datum */}
+  <FormControl>
+    <FormLabel>Avslutat datum</FormLabel>
+    <Input
+      type="text"
+      placeholder="DD/MM/YYYY"
+      value={selectedRow.avslutatDatum || ''}
+      onChange={(e) => handleModalChange('avslutatDatum', e.target.value)}
+    />
+    <Button size="xs" mt={1} onClick={() => handleModalChange('avslutatDatum', getCurrentDate())}>
+      Sätt dagens datum
+    </Button>
+  </FormControl>
+
+  {/* Starttid */}
+  <FormControl>
+    <FormLabel>Starttid</FormLabel>
+    <Input
+      type="time"
+      value={selectedRow.starttid || ''}
+      onChange={(e) => handleModalChange('starttid', e.target.value)}
+    />
+    <Button size="xs" mt={1} onClick={() => handleModalChange('starttid', getCurrentTime())}>
+      Sätt aktuell tid
+    </Button>
+  </FormControl>
+
+  {/* Begärd till */}
+  <FormControl>
+    <FormLabel>Begärd till</FormLabel>
+    <Input
+      type="time"
+      value={selectedRow.begard || ''}
+      onChange={(e) => handleModalChange('begard', e.target.value)}
+    />
+    <Button size="xs" mt={1} onClick={() => handleModalChange('begard', getCurrentTime())}>
+      Sätt aktuell tid
+    </Button>
+  </FormControl>
+
+  {/* Avslutat */}
+  <FormControl>
+    <FormLabel>Avslutat</FormLabel>
+    <Input
+      type="time"
+      value={selectedRow.avslutat || ''}
+      onChange={(e) => handleModalChange('avslutat', e.target.value)}
+    />
+    <Button size="xs" mt={1} onClick={() => handleModalChange('avslutat', getCurrentTime())}>
+      Sätt aktuell tid
+    </Button>
+  </FormControl>
+</SimpleGrid>
 
             <FormControl>
               <FormLabel>Anteckning</FormLabel>
