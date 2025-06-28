@@ -3,16 +3,6 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import LoadingScreen from '../components/LoadingScreen';
 import { Tooltip } from '@chakra-ui/react';
-import { Tag, TagLabel } from "@chakra-ui/react";
-import {
-  FaUserTie,
-  FaPhone,
-  FaSignal,
-  FaClock,
-  FaCalendarAlt,
-  FaCheckCircle,
-  FaHashtag,
-} from 'react-icons/fa';
 import { HiX } from "react-icons/hi";
 import {
   Box,
@@ -44,7 +34,6 @@ import {
   ModalOverlay,
   ModalContent,
   ModalHeader,
-  Badge,
   ModalBody,
   ModalCloseButton,
   ModalFooter,
@@ -896,34 +885,19 @@ if (loading || !project) {
   </ModalContent>
 </Modal>
 
-<Flex justify="space-between" align="center" mb={6} px={6} py={4} bg="whiteAlpha.800" borderRadius="xl" boxShadow="lg" backdropFilter="blur(8px)">
+<Flex justify="space-between" align="center" mb={4}>
   {/* Vänster sida: Visa projekt + Filter */}
-  <HStack spacing={6}>
-    <Button
-      onClick={() => setIsProjectInfoOpen(true)}
-      bg="linear-gradient(to right, #4e54c8, #8f94fb)"
-      color="white"
-      px={6}
-      py={2}
-      borderRadius="full"
-      _hover={{ opacity: 0.9 }}
-      fontWeight="semibold"
-      boxShadow="md"
-    >
+  <HStack spacing={4}>
+    <Button colorScheme="blue" onClick={() => setIsProjectInfoOpen(true)}>
       Visa projekt
     </Button>
-
     <Flex gap={2} align="center">
-      <Text fontWeight="bold" fontSize="md">Filter</Text>
+      <Text fontWeight="semibold">Filter</Text>
       <Menu closeOnSelect={false}>
-        <MenuButton
-          as={IconButton}
-          icon={<ChevronDownIcon />}
-          variant="outline"
-          borderColor="gray.300"
-          _hover={{ bg: 'gray.100' }}
-        />
-        <MenuList borderRadius="md" shadow="lg">
+        <MenuButton as={IconButton} icon={<ChevronDownIcon />}>
+          Kolumner
+        </MenuButton>
+        <MenuList>
           {Object.keys(visibleColumns).map((col) => (
             <MenuItem key={col}>
               <Checkbox isChecked={visibleColumns[col]} onChange={() => toggleColumn(col)}>
@@ -940,296 +914,144 @@ if (loading || !project) {
       value={searchQuery}
       onChange={(e) => setSearchQuery(e.target.value)}
       width="250px"
-      bg="white"
-      borderRadius="full"
-      px={4}
-      py={2}
-      boxShadow="sm"
-      _focus={{ borderColor: 'blue.400', boxShadow: '0 0 0 1px #90cdf4' }}
     />
   </HStack>
 
   {/* Höger: Avslutade-knapp */}
-  <Button
-    onClick={() => setAvslutadeModalOpen(true)}
-    bg="gray.800"
-    color="white"
-    px={5}
-    py={2}
-    borderRadius="full"
-    _hover={{ bg: 'gray.700' }}
-    boxShadow="md"
-  >
-    Avslutade
-  </Button>
+<Button onClick={() => setAvslutadeModalOpen(true)}>Avslutade</Button>
 </Flex>
-<Flex gap={6} align="start" overflowX="auto" px={6}>
+<Flex gap={6} align="start" overflowX="auto">
   <Box overflowX="auto" w="100%">
     <Box minW="fit-content" w="full">
-      <TableContainer
-        bg="whiteAlpha.800"
-        p={6}
-        borderRadius="2xl"
-        boxShadow="xl"
-        backdropFilter="blur(8px)"
-      >
+      <TableContainer bg="white" p={4} borderRadius="lg" boxShadow="md">
         <Table variant="simple" size="sm">
-<Thead bg="gray.100" borderRadius="xl">
-  <Tr>
-    {visibleColumns['#'] && (
-      <Th
-        width="40px"
-        textAlign="center"
-        py={2}
-        color="gray.700"
-        fontSize="sm"
-        fontWeight="semibold"
-        borderBottom="2px solid #CBD5E0"
-      >
-        #
-      </Th>
-    )}
-    {visibleColumns.btkn && (
-      <Th py={2} fontWeight="semibold" color="gray.700">
-        <Flex align="center" gap={2}>
-          <FaHashtag size={14} />
-          BTKN
-        </Flex>
-      </Th>
-    )}
-    {visibleColumns.namn && (
-      <Th py={2} fontWeight="semibold" color="gray.700">
-        <Flex align="center" gap={2}>
-          <FaUserTie size={14} />
-          Namn
-        </Flex>
-      </Th>
-    )}
-    {visibleColumns.telefon && (
-      <Th py={2} fontWeight="semibold" color="gray.700">
-        <Flex align="center" gap={2}>
-          <FaPhone size={14} />
-          Telefon
-        </Flex>
-      </Th>
-    )}
-    {visibleColumns.anordning && (
-      <Th py={2} fontWeight="semibold" color="gray.700">
-        <Flex align="center" gap={2}>
-          <FaSignal size={14} />
-          Anordning
-        </Flex>
-      </Th>
-    )}
-    {project.sections.map((sec, idx) => (
-      <Th
-        key={idx}
-        minW="40px"
-        py={2}
-        maxW="40"
-        bg={idx % 2 === 0 ? 'blue.50' : 'transparent'}
-        fontSize="sm"
-        fontWeight="semibold"
-        color="gray.700"
-      >
-        <Flex direction="column" align="center">
-          <Text fontSize="xs">{String.fromCharCode(65 + idx)}</Text>
-        </Flex>
-      </Th>
-    ))}
-    {visibleColumns.starttid && (
-      <Th py={2} fontWeight="semibold" color="gray.700">
-        <Flex align="center" gap={2}>
-          <FaClock size={14} />
-          Start
-        </Flex>
-      </Th>
-    )}
-    {visibleColumns.begard && (
-      <Th py={2} fontWeight="semibold" color="gray.700">
-        <Flex align="center" gap={2}>
-          <FaCalendarAlt size={14} />
-          Begärd
-        </Flex>
-      </Th>
-    )}
-    {visibleColumns.avslutat && (
-      <Th py={2} fontWeight="semibold" color="gray.700">
-        <Flex align="center" gap={2}>
-          <FaCheckCircle size={14} />
-          Slut
-        </Flex>
-      </Th>
-    )}
-  </Tr>
-</Thead>
-
-          <Tbody>
-            {filteredRows
-              .filter((row) => !row.avslutadRad)
-              .map((row, rowIndex) => (
-                <Tr
-                  key={row.id}
-                  bg="transparent"
-                  _hover={{ bg: 'gray.100' }}
-                  cursor="pointer"
-                  transition="background 0.2s ease"
-                  onClick={(e) => {
-                    if (
-                      e.target.closest(
-                        'input[type="checkbox"], textarea, select, label, button, input[type="text"]'
-                      )
-                    )
-                      return;
-                    handleRowClick(row, rowIndex);
-                  }}
-                >
-                  {visibleColumns['#'] && (
-                    <Td width="40px" borderRight="1px solid rgba(0, 0, 0, 0.05)">
-                      <Text color="gray.800" fontSize="sm" textAlign="center">
-                        {rowIndex + 1}
-                      </Text>
-                    </Td>
-                  )}
+          <Thead bg="gray.200">
+            <Tr>
+              {visibleColumns['#'] && (<Th width="40px" textAlign="center" py={2}>#</Th>)}
+              {visibleColumns.btkn && (<Th py={2}>BTKN</Th>)}
+              {visibleColumns.namn && <Th py={2}>Namn</Th>}
+              {visibleColumns.telefon && <Th py={2}>Telefon</Th>}
+              {visibleColumns.anordning && <Th py={2}>Anordning</Th>}
+              {project.sections.map((sec, idx) => (
+                <Th key={idx} minW="40px" py={2} maxW="40" bg={idx % 2 === 0 ? 'yellow.100' : 'transparent'}>
+                  <Flex direction="column" align="center">
+                    <Text fontSize="sm">{String.fromCharCode(65 + idx)}</Text>
+                  </Flex>
+                </Th>
+              ))}
+              {visibleColumns.starttid && <Th py={2}>Starttid</Th>}
+              {visibleColumns.begard && <Th py={2}>Begärd till</Th>}
+              {visibleColumns.avslutat && <Th py={2}>Avslutat</Th>}
+            </Tr>
+          </Thead>
+<Tbody>
+{filteredRows
+  .filter((row) => !row.avslutadRad)
+  .map((row, rowIndex) => (
+<Tr
+  key={row.id}
+  bg={rowIndex % 2 === 0 ? 'white' : 'gray.100'}
+  onClick={(e) => {
+    if (e.target.closest('input[type="checkbox"], textarea, select, label, button, input[type="text"]')) return;
+    handleRowClick(row, rowIndex);
+  }}
+  _hover={{ bg: 'blue.50' }}
+  cursor="pointer"
+>
+{visibleColumns['#'] && (
+  <Td width="40px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
+    <Text color="black" fontSize="md" w="40px" textAlign="center">
+      {rowIndex + 1}
+    </Text>
+  </Td>
+)}
 {visibleColumns.btkn && (
   <Td width="80px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
-    <Tag
-      size="md"
-      variant="outline"
-      colorScheme="teal"
-      w="80px"
-      justifyContent="center"
-      borderRadius="md"
-    >
-      <TagLabel isTruncated>{row.btkn}</TagLabel>
-    </Tag>
-  </Td>
-)}
-
-{visibleColumns.namn && (
-  <Td maxW="150px" borderRight="1px solid rgba(0, 0, 0, 0.05)">
-    <Tooltip
-      label={
-        <Box p={2} maxW="300px">
-          <Text fontWeight="bold" mb={1}>Anteckningar:</Text>
-          {row.anteckning ? (
-            <Text fontSize="sm">{row.anteckning}</Text>
-          ) : (
-            <Text fontSize="sm" color="gray.500">Inga anteckningar</Text>
-          )}
-          <Text fontWeight="bold" mt={3} mb={1}>Samråd:</Text>
-          {row.samrad && row.samrad.length > 0 ? (
-            <Stack spacing={0.5} align="start">
-              {row.samrad.map((entry, idx) => (
-                <Text key={idx} fontSize="sm">
-                  {entry.namn || 'Okänt namn'}
-                </Text>
-              ))}
-            </Stack>
-          ) : (
-            <Text fontSize="sm" color="gray.500">
-              Inga samråd
-            </Text>
-          )}
-        </Box>
-      }
-      hasArrow
-      placement="top"
-      bg="white"
-      color="black"
-      border="1px solid #ccc"
-      borderRadius="md"
-      shadow="md"
-      p={3}
-    >
-      <Text
-        color="gray.800"
-        fontSize="sm"
-        w="140px"
-        isTruncated
-        cursor="help"
-      >
-        {row.namn}
-      </Text>
-    </Tooltip>
-  </Td>
-)}
-
-{visibleColumns.telefon && (
-  <Td maxW="145px" borderRight="1px solid rgba(0, 0, 0, 0.05)">
-    <Text color="gray.800" fontSize="sm" w="145px" isTruncated>
-      {row.telefon}
+    <Text color="black" fontSize="md" w="80px" isTruncated>
+      {row.btkn}
     </Text>
   </Td>
 )}
 
-{visibleColumns.anordning && (
-  <Td maxW="160px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
-<Flex gap={1}>
-  {(Array.isArray(row.anordning)
-    ? row.anordning
-    : typeof row.anordning === 'string'
-      ? row.anordning.split(',').map((a) => a.trim())
-      : []
-  ).map((item, idx) => {
-    let color = 'gray';
-    switch (item) {
-      case 'A-S':
-        color = 'blue';      // Klarblå
-        break;
-      case 'L-S':
-        color = 'green';     // Grön istället för teal
-        break;
-      case 'S-S':
-        color = 'orange';    // Orange istället för cyan
-        break;
-      case 'E-S':
-        color = 'red';       // Röd istället för purple
-        break;
-      case 'Spf':
-        color = 'yellow';      // Rosa istället för purple
-        break;
-      case 'Vxl':
-        color = 'purple';    // Behåller lila
-        break;
-      default:
-        color = 'gray';
-    }
+{visibleColumns.namn && (
+  <Td maxWidth="150px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
+<Tooltip
+  label={
+    <Box p={2} maxW="300px">
+      <Text fontWeight="bold" mb={1}>Anteckningar:</Text>
+      {row.anteckning ? (
+        <Text fontSize="sm">{row.anteckning}</Text>
+      ) : (
+        <Text fontSize="sm" color="gray.500">Inga anteckningar</Text>
+      )}
 
-    return (
-      <Badge
-        key={idx}
-        colorScheme={color}
-        variant="subtle"
-        fontSize="xs"
-        px={2}
-        py={0.5}
-        borderRadius="none" // <--- Inga rundade hörn
-        textTransform="none"
-      >
-        {item}
-      </Badge>
-    );
-  })}
-</Flex>
+<Text fontWeight="bold" mt={3} mb={1}>Samråd:</Text>
+{row.samrad && row.samrad.length > 0 ? (
+  <Stack spacing={0.5} align="start">
+    {row.samrad.map((entry, idx) => (
+      <Text key={idx} fontSize="sm">
+        {entry.namn || 'Okänt namn'}
+      </Text>
+    ))}
+  </Stack>
+) : (
+  <Text fontSize="sm" color="gray.500">
+    Inga samråd
+  </Text>
+)}
+    </Box>
+  }
+  hasArrow
+  placement="top"
+  bg="white"
+  color="black"
+  border="1px solid #ccc"
+  borderRadius="md"
+  shadow="md"
+  p={3}
+>
+  <Text
+    color="black"
+    fontSize="md"
+    w="140px"
+    isTruncated
+    cursor="help"
+  >
+    {row.namn}
+  </Text>
+</Tooltip>
   </Td>
 )}
 
+      {visibleColumns.telefon && (
+        <Td maxW="145px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
+          <Text color="black" fontSize="md" w="145px" isTruncated>
+            {row.telefon}
+          </Text>
+        </Td>
+      )}
+
+{visibleColumns.anordning && (
+  <Td maxW="100px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
+    <Text color="black" fontSize="md" w="100px" isTruncated>
+      {Array.isArray(row.anordning) ? row.anordning.join(', ') : row.anordning}
+    </Text>
+  </Td>
+)}
 {project.sections.map((_, secIdx) => (
   <Td
     key={secIdx}
-    width="60px"
-    bg={secIdx % 2 === 0 ? 'blue.50' : 'transparent'}
-    borderRight="1px solid rgba(0, 0, 0, 0.05)"
+    width="100px"
+    bg={secIdx % 2 === 0 ? 'yellow.50' : 'transparent'}
+    borderRight="1px solid rgba(0, 0, 0, 0.1)"
   >
     <Flex justify="center">
-      {row.selections[secIdx] === true && <HiX size={16} color="black" />}
+      {row.selections[secIdx] === true && <HiX size={20} color="black" />}
     </Flex>
   </Td>
 ))}
-
 {visibleColumns.starttid && (
-  <Td maxW="150px" w="90px" borderRight="1px solid rgba(0, 0, 0, 0.05)">
+  <Td maxW="150px" w="90px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
     <Tooltip
       label={
         row.startdatum ? (
@@ -1254,8 +1076,8 @@ if (loading || !project) {
       p={3}
     >
       <Text
-        color="gray.800"
-        fontSize="sm"
+        color="black"
+        fontSize="md"
         w="50px"
         maxW="inherit"
         isTruncated={false}
@@ -1268,7 +1090,7 @@ if (loading || !project) {
 )}
 
 {visibleColumns.begard && (
-  <Td maxW="150px" w="90px" borderRight="1px solid rgba(0, 0, 0, 0.05)">
+  <Td maxW="150px" w="90px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
     <Tooltip
       label={
         row.begardDatum === 'Tsv' ? (
@@ -1298,8 +1120,8 @@ if (loading || !project) {
       p={3}
     >
       <Text
-        color="gray.800"
-        fontSize="sm"
+        color="black"
+        fontSize="md"
         w="50px"
         isTruncated={false}
         cursor="help"
@@ -1311,7 +1133,7 @@ if (loading || !project) {
 )}
 
 {visibleColumns.avslutat && (
-  <Td maxW="150px" w="90px" borderRight="1px solid rgba(0, 0, 0, 0.05)">
+  <Td maxW="150px" w="90px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
     <Tooltip
       label={
         row.avslutatDatum ? (
@@ -1336,8 +1158,8 @@ if (loading || !project) {
       p={3}
     >
       <Text
-        color="gray.800"
-        fontSize="sm"
+        color="black"
+        fontSize="md"
         w="50px"
         isTruncated={false}
         cursor="help"
