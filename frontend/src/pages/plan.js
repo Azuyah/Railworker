@@ -973,7 +973,7 @@ if (loading || !project) {
       </Td>
 
 {visibleColumns.namn && (
-  <Td minW="140px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
+  <Td maxWidth="150px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
 <Tooltip
   label={
     <Box p={2} maxW="300px">
