@@ -929,9 +929,7 @@ if (loading || !project) {
         <MenuButton
           as={IconButton}
           icon={<ChevronDownIcon />}
-          variant="outline"
-          borderColor="gray.300"
-          _hover={{ bg: 'gray.100' }}
+          variant="ghost"
         />
         <MenuList borderRadius="md" shadow="lg">
           {Object.keys(visibleColumns).map((col) => (
@@ -977,7 +975,6 @@ if (loading || !project) {
   <Flex gap={2} align="start" minW="fit-content" w="full">
     <TableContainer
       bg="white"
-      zIndex={5}
       p={6}
       borderRadius="xl"
       boxShadow="2xl"
