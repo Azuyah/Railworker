@@ -52,6 +52,7 @@ import {
   SimpleGrid,
   FormControl,
   FormLabel,
+  useColorModeValue,
 } from '@chakra-ui/react';
 import { ChevronDownIcon } from '@chakra-ui/icons';
 import Header from '../components/Header';
@@ -74,6 +75,7 @@ const Plan = () => {
   const [isProjectInfoOpen, setIsProjectInfoOpen] = useState(false);
   const openProjectInfoModal = () => setIsProjectInfoOpen(true);
   const closeProjectInfoModal = () => setIsProjectInfoOpen(false);
+  const tableBg = useColorModeValue("white", "gray.800");
   const [visibleColumns, setVisibleColumns] = useState({
     '#': false,
     btkn: true,
@@ -831,7 +833,15 @@ if (loading || !project) {
   return <LoadingScreen text="Hämtar projekt..." />;
 }
   return (
-    <Box bg="gray.100" minH="100vh" py={10} px={[4, 8]}>
+<Box
+  bgImage="url('/traintrack.png')"
+  bgSize="cover"
+  bgRepeat="no-repeat"
+  bgPosition="center"
+  minH="100vh"
+  py={10}
+  px={[4, 8]}
+>
       <Header />
       <Box maxW="1600px" mx="auto" mt={24}>
 
@@ -963,19 +973,20 @@ if (loading || !project) {
     Avslutade
   </Button>
 </Flex>
-<Flex gap={6} align="start" overflowX="auto" px={6}>
-  <Box overflowX="auto" w="100%">
-    <Box minW="fit-content" w="full">
-      <TableContainer
-        bg="whiteAlpha.800"
-        p={6}
-        borderRadius="2xl"
-        boxShadow="xl"
-        backdropFilter="blur(8px)"
-      >
-        <Table variant="simple" size="sm">
-<Thead bg="gray.100" borderRadius="xl">
-  <Tr>
+<Box overflowX="visible" px={2}>
+  <Flex gap={2} align="start" minW="fit-content" w="full">
+    <TableContainer
+      bg="white"
+      zIndex={5}
+      p={6}
+      borderRadius="xl"
+      boxShadow="2xl"
+      border="1px solid rgba(255,255,255,0.08)"
+      overflow="visible"
+    >
+      <Table variant="simple" size="sm">
+        <Thead bg="gray.100" borderRadius="xl">
+          <Tr>
     {visibleColumns['#'] && (
       <Th
         width="40px"
@@ -1362,9 +1373,10 @@ if (loading || !project) {
   + Lägg till rad
 </Button>
       </TableContainer>
-    </Box>
-  </Box>
 </Flex>
+</Box>
+
+{/*Slut på table*/}
 
   <Modal isOpen={editModalOpen} onClose={() => setEditModalOpen(false)} size="4xl">
   <ModalOverlay />
