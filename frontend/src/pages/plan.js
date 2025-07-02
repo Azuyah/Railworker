@@ -1831,7 +1831,9 @@ onChange={() =>
       const updatedRow = {
         ...selectedRow,
         avslutadRad: true,
-        avslutadAv: initials, // ✅ endast detta läggs till
+        avslutadAv: initials,
+        startDatum: selectedRow.startDatum,
+        startTid: selectedRow.startTid
       };
 
       const updated = updateRow(updatedRow);
@@ -1958,9 +1960,9 @@ onChange={() =>
 )}
 <Text>
   <strong>Start:</strong>{' '}
-  {row.startDatum && row.startTid ? (
+  {row.startdatum && row.starttid ? (
     <>
-      {formatDateOnly(row.startDatum)} kl. {row.startTid}
+      {formatDateOnly(row.startdatum)} kl. {row.starttid}
     </>
   ) : (
     <span style={{ color: 'gray' }}>Ej angivet</span>
