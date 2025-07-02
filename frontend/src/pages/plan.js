@@ -1951,6 +1951,21 @@ onChange={() =>
     <TagLabel isTruncated>{row.btkn || '–'}</TagLabel>
   </Tag>
 </Flex>
+{row.startDatum && row.startTid && (
+  <Text>
+    <strong>Start:</strong> {formatDateOnly(row.startDatum)} kl. {row.startTid}
+  </Text>
+)}
+<Text>
+  <strong>Start:</strong>{' '}
+  {row.startDatum && row.startTid ? (
+    <>
+      {formatDateOnly(row.startDatum)} kl. {row.startTid}
+    </>
+  ) : (
+    <span style={{ color: 'gray' }}>Ej angivet</span>
+  )}
+</Text>
 
 <Text>
   <strong>Avslutad:</strong>{' '}
