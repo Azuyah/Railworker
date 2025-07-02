@@ -20,14 +20,16 @@ const handleLogin = async () => {
       // 🔑 SPARA TOKEN BÅDE I user-objektet OCH som separat key
       localStorage.setItem('token', token); // ✅ detta saknas
 
-      localStorage.setItem('user', JSON.stringify({
-        token,
-        role: res.data.role,
-        name: res.data.name,
-        email: res.data.email,
-        phone: res.data.phone,
-        company: res.data.company,
-      }));
+localStorage.setItem('user', JSON.stringify({
+  token,
+  role: res.data.role,
+  firstName: res.data.firstName,
+  lastName: res.data.lastName,
+  signature: res.data.signature,
+  email: res.data.email,
+  phone: res.data.phone,
+  company: res.data.company,
+}));
 
       navigate('/dashboard');
     } else {

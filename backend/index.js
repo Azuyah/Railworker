@@ -535,6 +535,45 @@ app.put('/api/projects/:id', async (req, res) => {
   }
 });
 
+app.put('/api/projects/:projectId/rows/:rowId/complete', authMiddleware, async (req, res) => {
+  const { projectId, rowId } = req.params;
+  const userId = req.user.userId;
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
+
+    const project = await prisma.project.findUnique({ where: { id: Number(projectId) } });
+    if (!project || !project.rows) return res.status(404).json({ error: 'Projekt hittades inte' });
+
+    const rows = project.rows;
+    const updatedRows = rows.map((row) => {
+      if (row.id === Number(rowId)) {
+        return {
+          ...row,
+          avslutadRad: true,
+          avslutatDatum: new Date().toISOString(),
+          avslutat: new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' }),
+          avslutadAv: initials
+        };
+      }
+      return row;
+    });
+
+    const updatedProject = await prisma.project.update({
+      where: { id: Number(projectId) },
+      data: { rows: updatedRows }
+    });
+
+    console.log('✔️ Sparade rows med avslutadAv:', updatedRows);
+
+    res.json(updatedProject);
+  } catch (err) {
+    console.error('Fel vid avslut:', err);
+    res.status(500).json({ error: 'Misslyckades med att avsluta rad' });
+  }
+});
+
 // Start server
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, '0.0.0.0', () => console.log(`✅ Server running on port ${PORT}`));

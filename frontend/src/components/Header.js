@@ -112,9 +112,14 @@ const Header = () => {
       </MotionButton>
     </HStack>
 
-    <Text fontSize="sm" color="whiteAlpha.800" whiteSpace="nowrap">
-      Inloggad som: <strong>{user?.name || 'Okänd användare'}</strong>
-    </Text>
+<Text fontSize="sm" color="whiteAlpha.800" whiteSpace="nowrap">
+  Inloggad som:{' '}
+  <strong>
+    {user?.firstName && user?.lastName
+      ? `${user.firstName} ${user.lastName}`
+      : 'Okänd användare'}
+  </strong>
+</Text>
   </Flex> {/* <-- Denna Flex stänger högra sektionen */}
 </Flex> {/* <-- Denna Flex stänger hela headern */}
     </Box>

@@ -1944,16 +1944,22 @@ onChange={() =>
   </Tag>
 </Flex>
 
+<Text>
+  <strong>Avslutad:</strong>{' '}
+  {row.avslutatDatum ? (
+    <>
+      {formatDateOnly(row.avslutatDatum)} kl. {row.avslutat}
+    </>
+  ) : (
+    <span style={{ color: 'gray' }}>Ej angivet</span>
+  )}
+</Text>
+
+{row.avslutadAv && (
   <Text>
-    <strong>Avslutad:</strong>{' '}
-    {row.avslutatDatum ? (
-      <>
-        {formatDateOnly(row.avslutatDatum)} kl. {row.avslutat}
-      </>
-    ) : (
-      <span style={{ color: 'gray' }}>Ej angivet</span>
-    )}
+    <strong>Avslutad av:</strong> {row.avslutadAv}
   </Text>
+)}
 
   <Button
     mt={3}
