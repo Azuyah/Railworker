@@ -1820,20 +1820,28 @@ onChange={() =>
     Ta bort
   </Button>
 
-  <Button
-    colorScheme="blue"
-    onClick={async () => {
-      const confirmed = window.confirm('Vill du avsluta denna raden?');
-      if (confirmed) {
-        const updatedRow = { ...selectedRow, avslutadRad: true };
-        const updated = updateRow(updatedRow);
-        await sparaProjekt(updated);
-        onClose();
-      }
-    }}
-  >
-    Avsluta
-  </Button>
+<Button
+  colorScheme="blue"
+  onClick={async () => {
+    const confirmed = window.confirm('Vill du avsluta denna raden?');
+    if (confirmed) {
+      const currentUser = JSON.parse(localStorage.getItem('user'));
+      const initials = `${currentUser?.firstName?.[0] || ''}${currentUser?.lastName?.[0] || ''}`.toUpperCase();
+
+      const updatedRow = {
+        ...selectedRow,
+        avslutadRad: true,
+        avslutadAv: initials, // ✅ endast detta läggs till
+      };
+
+      const updated = updateRow(updatedRow);
+      await sparaProjekt(updated);
+      onClose();
+    }
+  }}
+>
+  Avsluta
+</Button>
 </Flex>
 
   {/* Högersida: Spara och Stäng */}
