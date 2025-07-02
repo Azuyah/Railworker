@@ -1,186 +1,267 @@
-import React from "react";
+import React, { useState } from 'react';
+import { CheckIcon } from '@chakra-ui/icons';
 import {
-  Box,
+  ChakraProvider,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalCloseButton,
+  ModalBody,
+  ModalFooter,
   Button,
-  Flex,
-  HStack,
-  Table,
-  TableContainer,
-  Tbody,
-  Td,
-  Th,
-  Thead,
-  Tr,
-  Badge,
-  Text,
-  Icon,
-  Divider,
+  FormControl,
+  FormLabel,
+  Input,
+  Textarea,
   Checkbox,
-  Tooltip,
-  useColorModeValue,
-  Avatar,
-  Tag,
-  TagLabel,
-  TagLeftIcon,
-  Spacer,
-} from "@chakra-ui/react";
-import { FaTrain, FaSignal, FaFilter, FaUserTie, FaPhone, FaClock } from "react-icons/fa";
-import { MdLocationOn } from "react-icons/md";
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  SimpleGrid,
+  Stack,
+  Text,
+  Box,
+  Flex,
+  useDisclosure,
+  SlideFade,
+  Icon,
+} from '@chakra-ui/react';
+import { ChevronDownIcon, CalendarIcon, TimeIcon, PhoneIcon, EditIcon, InfoIcon } from '@chakra-ui/icons';
 
-const TestRailworkerUI = () => {
-  const sampleData = [
-    {
-      id: 1,
-      btkn: "MD01",
-      namn: "Lars Nystedt",
-      telefon: "076-115 25 68",
-      anordning: "A-S",
-      dpA: true,
-      linjeB: true,
-      dpC: false,
-      linjeD: true,
-      starttid: "05:00",
-      begard: "05:00",
-      avslutat: true,
-    },
-    {
-      id: 2,
-      btkn: "MA54",
-      namn: "Johansson",
-      telefon: "070-854 06 57",
-      anordning: "Spf, Vxl",
-      dpA: true,
-      linjeB: false,
-      dpC: true,
-      linjeD: true,
-      starttid: "07:12",
-      begard: "19:00",
-      avslutat: false,
-    },
-    {
-      id: 3,
-      btkn: "MA67",
-      namn: "Brodin",
-      telefon: "072-462 63 16",
-      anordning: "Spf, Vxl",
-      dpA: true,
-      linjeB: false,
-      dpC: true,
-      linjeD: true,
-      starttid: "08:31",
-      begard: "20:00",
-      avslutat: true,
-    },
-  ];
+const Preview = () => {
+  const [isOpen, setIsOpen] = useState(true);
+  const [selectedRow, setSelectedRow] = useState({
+    id: 1,
+    btkn: '',
+    namn: '',
+    telefon: '',
+    anordning: [],
+    anteckning: '',
+    samrad: [{ id: 2 }, { id: 3 }],
+    startdatum: '',
+    begardDatum: '',
+    avslutatDatum: '',
+    starttid: '',
+    begard: '',
+    avslutat: '',
+    selectedAreas: [],
+    selections: Array(10).fill(false),
+  });
 
-  const bgColor = useColorModeValue("gray.50", "gray.900");
-  const tableBg = useColorModeValue("white", "gray.800");
-  const headerBg = useColorModeValue("gray.200", "gray.700");
+  const [rows, setRows] = useState([
+    { id: 2, namn: 'Anna Andersson', telefon: '0701234567' },
+    { id: 3, namn: 'Björn Berg', telefon: '0737654321' },
+  ]);
+
+  const [selectedAreas, setSelectedAreas] = useState([]);
+  const [avklaradSamrad, setAvklaradSamrad] = useState({});
+
+  const handleModalChange = (field, value) => {
+    setSelectedRow((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const getCurrentDate = () => new Date().toISOString().split('T')[0];
+  const getCurrentTime = () => new Date().toTimeString().split(':').slice(0, 2).join(':');
 
   return (
+    <ChakraProvider>
+      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} size="5xl" motionPreset="slideInBottom">
+        <ModalOverlay bg="blackAlpha.700" backdropFilter="blur(10px)" />
+        <ModalContent borderRadius="2xl" boxShadow="dark-lg" border="1px solid #ccc" bg="white">
+          <ModalHeader fontSize="2xl" fontWeight="bold" borderBottom="1px solid #eee">
+            <Flex align="center" gap={2}><Icon as={EditIcon} />Redigera rad</Flex>
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <SlideFade in={isOpen} offsetY="20px">
+              <SimpleGrid columns={2} spacing={8}>
+                <Stack spacing={4}>
+                  <SimpleGrid columns={2} spacing={4}>
+                    <FormControl>
+                      <FormLabel>BTKN</FormLabel>
+                      <Input value={selectedRow.btkn} onChange={(e) => handleModalChange('btkn', e.target.value)} />
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel>Anordning</FormLabel>
+                      <Menu closeOnSelect={false}>
+                        <MenuButton as={Button} rightIcon={<ChevronDownIcon />}> {selectedRow.anordning.length > 0 ? `${selectedRow.anordning.length} valda` : 'Välj anordning(ar)'} </MenuButton>
+<MenuList maxHeight="300px" overflowY="auto">
+  {['A-S', 'L-S', 'S-S', 'E-S', 'Spf', 'Vxl'].map((option) => {
+    let color = 'gray';
+    switch (option) {
+      case 'A-S':
+        color = 'blue';
+        break;
+      case 'L-S':
+        color = 'green';
+        break;
+      case 'S-S':
+        color = 'orange';
+        break;
+      case 'E-S':
+        color = 'red';
+        break;
+      case 'Spf':
+        color = 'yellow';
+        break;
+      case 'Vxl':
+        color = 'purple';
+        break;
+      default:
+        color = 'gray';
+    }
+
+    return (
+      <MenuItem key={option}>
+        <Checkbox
+          isChecked={selectedRow.anordning.includes(option)}
+          onChange={(e) => {
+            const isChecked = e.target.checked;
+            handleModalChange(
+              'anordning',
+              isChecked
+                ? [...selectedRow.anordning, option]
+                : selectedRow.anordning.filter((val) => val !== option)
+            );
+          }}
+        >
+          <Flex align="center" gap={2}>
+            <Box w="10px" h="10px" borderRadius="full" bg={`${color}.500`} />
+            {option}
+          </Flex>
+        </Checkbox>
+      </MenuItem>
+    );
+  })}
+</MenuList>
+                      </Menu>
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel><Icon as={InfoIcon} mr={1} />Namn</FormLabel>
+                      <Input value={selectedRow.namn} onChange={(e) => handleModalChange('namn', e.target.value)} />
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel><Icon as={PhoneIcon} mr={1} />Telefon</FormLabel>
+                      <Input value={selectedRow.telefon} onChange={(e) => handleModalChange('telefon', e.target.value)} />
+                    </FormControl>
+                  </SimpleGrid>
+
+                  <SimpleGrid columns={3} spacing={4}>
+                    {['startdatum', 'begardDatum', 'avslutatDatum'].map((field) => (
+                      <FormControl key={field}>
+                        <FormLabel><Icon as={CalendarIcon} mr={1} />{field === 'startdatum' ? 'Startdatum' : field === 'begardDatum' ? 'Begärd datum' : 'Avslutat datum'}</FormLabel>
+                        <Input type="date" value={selectedRow[field]} onChange={(e) => handleModalChange(field, e.target.value)} />
+                        <Button size="xs" mt={1} onClick={() => handleModalChange(field, getCurrentDate())}>Sätt dagens datum</Button>
+                      </FormControl>
+                    ))}
+                  </SimpleGrid>
+
+                  <SimpleGrid columns={3} spacing={4}>
+                    {['starttid', 'begard', 'avslutat'].map((field) => (
+                      <FormControl key={field}>
+                        <FormLabel><Icon as={TimeIcon} mr={1} />{field === 'starttid' ? 'Starttid' : field === 'begard' ? 'Begärd till' : 'Avslutat'}</FormLabel>
+                        <Input type="time" value={selectedRow[field]} onChange={(e) => handleModalChange(field, e.target.value)} />
+                        <Button size="xs" mt={1} onClick={() => handleModalChange(field, getCurrentTime())}>Sätt aktuell tid</Button>
+                      </FormControl>
+                    ))}
+                  </SimpleGrid>
+
+                  <FormControl>
+                    <FormLabel>Anteckning</FormLabel>
+                    <Textarea value={selectedRow.anteckning} onChange={(e) => handleModalChange('anteckning', e.target.value)} />
+                  </FormControl>
+                </Stack>
+
 <Box
-  bgImage="url('/traintrack.png')"
-  bgSize="cover"
-  bgRepeat="no-repeat"
-  bgPosition="center"
-  minH="100vh"
-  p={8}
-  fontFamily="'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+  bg="gray.50"
+  p={3}
+  borderRadius="md"
+  boxShadow="sm"
 >
-      <Box mb={6}>
-        <Flex align="center" gap={4}>
-          <Icon as={FaTrain} w={10} h={10} color="teal.300" />
-          <Text fontSize="3xl" fontWeight="extrabold" color="white">
-            Railworker – Planöversikt
-          </Text>
-        </Flex>
-        <Divider mt={4} borderColor="teal.300" />
-      </Box>
+  <Text fontWeight="semibold" fontSize="md" mb={2}>
+    Samråd
+  </Text>
 
-      <Flex justify="space-between" mb={6} wrap="wrap" gap={4}>
-        <HStack spacing={4}>
-          <Button colorScheme="teal" boxShadow="lg">
-            Visa projekt
-          </Button>
-          <Button leftIcon={<FaFilter />} variant="outline" colorScheme="teal">
-            Filtrera kolumner
-          </Button>
-        </HStack>
-        <Spacer />
-        <Tag size="lg" colorScheme="teal" variant="solid">
-          <TagLeftIcon boxSize="20px" as={MdLocationOn} />
-          <TagLabel>Tågsträcka aktiv</TagLabel>
-        </Tag>
-      </Flex>
+  {selectedRow?.samrad?.length > 0 ? (
+    <SimpleGrid columns={2} spacing={3}>
+      {selectedRow.samrad.map((samradItem, idx) => {
+        const person = rows.find((r) => r.id === samradItem.id);
+        if (!person) return null;
 
-      <TableContainer
-        bg={tableBg}
-        p={6}
-        borderRadius="xl"
-        boxShadow="2xl"
-        border="1px solid rgba(255,255,255,0.08)"
-      >
-        <Table variant="simple" size="sm">
-          <Thead bg={headerBg} borderRadius="xl">
-            <Tr>
-              <Th>BTKN</Th>
-              <Th><Icon as={FaUserTie} mr={2} />Namn</Th>
-              <Th><Icon as={FaPhone} mr={2} />Telefon</Th>
-              <Th>Anordning <Icon as={FaSignal} ml={1} /></Th>
-              <Th textAlign="center">DP A</Th>
-              <Th textAlign="center">Linje B</Th>
-              <Th textAlign="center">DP C</Th>
-              <Th textAlign="center">Linje D</Th>
-              <Th><Icon as={FaClock} mr={2} />Starttid</Th>
-              <Th>Begärd till</Th>
-              <Th>Status</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            {sampleData.map((row, i) => (
-              <Tr
-                key={i}
-                _hover={{ bg: "gray.100", cursor: "pointer" }}
-                transition="background 0.2s ease-in-out"
+        const isActive = avklaradSamrad[selectedRow.id]?.[person.id] || false;
+
+        return (
+          <Box
+            key={idx}
+            position="relative"
+            p={3}
+            pr={8} // plats för ikon till höger
+            border="1px solid #ccc"
+            borderRadius="md"
+            bg="white"
+            boxShadow="xs"
+            cursor="pointer"
+            transition="all 0.2s"
+            _hover={{ bg: 'gray.100' }}
+            onClick={() =>
+              setAvklaradSamrad((prev) => ({
+                ...prev,
+                [selectedRow.id]: {
+                  ...prev[selectedRow.id],
+                  [person.id]: !isActive,
+                },
+              }))
+            }
+          >
+            {/* Check icon when active */}
+            {isActive && (
+              <Flex
+                position="absolute"
+                right="10px"
+                top="50%"
+                transform="translateY(-50%)"
+                align="center"
+                justify="center"
+                color="black"
               >
-                <Td>
-                  <Tag variant="outline" colorScheme="teal">
-                    <TagLabel>{row.btkn}</TagLabel>
-                  </Tag>
-                </Td>
-                <Td>{row.namn}</Td>
-                <Td>{row.telefon}</Td>
-                <Td>
-                  <Badge colorScheme="purple" variant="subtle">
-                    {row.anordning}
-                  </Badge>
-                </Td>
-                <Td textAlign="center">
-                  <Checkbox isChecked={row.dpA} isReadOnly colorScheme="teal" />
-                </Td>
-                <Td textAlign="center">
-                  <Checkbox isChecked={row.linjeB} isReadOnly colorScheme="teal" />
-                </Td>
-                <Td textAlign="center">
-                  <Checkbox isChecked={row.dpC} isReadOnly colorScheme="teal" />
-                </Td>
-                <Td textAlign="center">
-                  <Checkbox isChecked={row.linjeD} isReadOnly colorScheme="teal" />
-                </Td>
-                <Td>{row.starttid}</Td>
-                <Td>{row.begard}</Td>
-                <Td>
-                  <Badge colorScheme={row.avslutat ? "green" : "yellow"}>
-                    {row.avslutat ? "Avslutat" : "Pågående"}
-                  </Badge>
-                </Td>
-              </Tr>
-            ))}
-          </Tbody>
-        </Table>
-      </TableContainer>
-    </Box>
+                <CheckIcon boxSize={4} />
+              </Flex>
+            )}
+            <Text fontSize="sm" fontWeight="medium">
+              {person.namn}
+            </Text>
+            <Text fontSize="xs" color="gray.600">
+              {person.telefon}
+            </Text>
+          </Box>
+        );
+      })}
+    </SimpleGrid>
+  ) : (
+    <Text fontSize="sm" color="gray.500">
+      Inga samråd.
+    </Text>
+  )}
+</Box>
+              </SimpleGrid>
+            </SlideFade>
+          </ModalBody>
+          <ModalFooter justifyContent="space-between">
+            <Flex gap={2}>
+              <Button colorScheme="red">Ta bort</Button>
+              <Button colorScheme="blue" variant="outline">Avsluta</Button>
+            </Flex>
+            <Flex gap={2}>
+              <Button colorScheme="green">Spara</Button>
+              <Button onClick={() => setIsOpen(false)}>Stäng</Button>
+            </Flex>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </ChakraProvider>
   );
 };
 
-export default TestRailworkerUI;
+export default Preview;

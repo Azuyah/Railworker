@@ -381,6 +381,10 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
+  console.log("🧾 Modal uppdaterad med rad:", selectedRow);
+}, [selectedRow]);
+
+useEffect(() => {
   if (project?.rows?.length && (!rows || rows.length === 0)) {
     const restoredRows = project.rows.map((row) => {
       const selectedAreas = Array.isArray(row.selections)
@@ -398,105 +402,6 @@ useEffect(() => {
     setRows(restoredRows);
   }
 }, [project]);
-
-useEffect(() => {
-  if (!selectedRow) return;
-
-  const sameDP = selectedRow.dp;
-  const sameLinje = selectedRow.linje;
-  const isRelevant = ['Spf', 'Vxl'].includes(
-    Array.isArray(selectedRow.anordning) ? selectedRow.anordning[0] : ''
-  );
-
-  const matching = rows.filter((r) => {
-    if (r.id === selectedRow.id) return false;
-    const matchDP = r.dp === sameDP;
-    const matchLinje = r.linje === sameLinje;
-    return isRelevant && (matchDP || matchLinje);
-  });
-
-  const samradList = matching.map((match) => ({
-    id: match.id,
-    namn: match.namn,
-    dp: match.dp,
-    linje: match.linje,
-  }));
-
-  setSelectedRow((prev) => ({
-    ...prev,
-    samrad: samradList,
-  }));
-}, [selectedRow?.dp, selectedRow?.linje, selectedRow?.anordning, rows]);
-
-useEffect(() => {
-  if (!selectedRowId) return;
-
-  const updated = rows.map((row) => {
-    if (row.id !== selectedRowId) return row;
-
-    const matching = rows.filter((r) => {
-      if (r.id === row.id) return false;
-      const hasSameDP = r.dp === row.dp;
-      const hasSameLinje = r.linje === row.linje;
-      const isRelevant = ['Spf', 'Vxl'].includes(row.anordning?.[0]); // Anpassa om du har flera anordningar
-      return isRelevant && (hasSameDP || hasSameLinje);
-    });
-
-    const samradList = matching.map((match) => ({
-      id: match.id,
-      namn: match.namn,
-      dp: match.dp,
-      linje: match.linje,
-    }));
-
-    return {
-      ...row,
-      samrad: samradList,
-      selectedAreas: [...selectedAreas], // uppdatera samtidigt
-    };
-  });
-
-  setRows(updated);
-}, [selectedAreas, selectedRowId]);
-
-useEffect(() => {
-  if (!rows || rows.length === 0) return;
-
-  const updated = rows.map((row, index) => {
-    if (
-      !row.anordning ||
-      (!row.anordning.includes('Spf') && !row.anordning.includes('Vxl'))
-    ) {
-      return { ...row, samrad: [] };
-    }
-
-    const matching = rows.slice(0, index).filter((prevRow) => {
-      return (
-        !prevRow.avslutadRad &&
-        prevRow.anordning &&
-        (prevRow.anordning.includes('Dp') || prevRow.anordning.includes('Linje')) &&
-        prevRow.dp === row.dp &&
-        prevRow.linje === row.linje &&
-        typeof prevRow.namn === 'string'
-      );
-    });
-
-    const samradList = matching.map((match) => ({
-      id: match.id,
-      namn: match.namn,
-      dp: match.dp,
-      linje: match.linje,
-    }));
-
-return {
-  ...row,
-  samrad: samradList,
-  selections: row.selections || Array(project.sections.length).fill(false),
-};
-  });
-
-  setRows(updated);
-}, [rows.length]);
 
 useEffect(() => {
   if (selectedRow?.id) {
@@ -592,6 +497,41 @@ useEffect(() => {
     }));
   }
 }, [rows, selectedRowId]);
+
+useEffect(() => {
+  if (!project?.rows || !project?.sections) return;
+
+  const result = calculateSamrad(project.rows);
+
+  const updated = project.rows.map((row, index) => {
+    const related = result.samradList
+      .filter((entry) => entry.from === index)
+      .map((entry) => {
+        const match = project.rows[entry.to];
+        return {
+          id: match?.id,
+          namn: match?.namn || 'Okänt namn',
+          dp: match?.dp || '',
+          linje: match?.linje || '',
+        };
+      });
+
+    const selectedAreas = Array.isArray(row.selections)
+      ? row.selections
+          .map((v, i) => (v ? i : null))
+          .filter((v) => v !== null)
+      : [];
+
+    return {
+      ...row,
+      samrad: related,
+      selectedAreas,
+      selections: row.selections || Array(project.sections.length).fill(false),
+    };
+  });
+
+  setRows(updated);
+}, [project]);
 
   const fetchProject = async () => {
     try {
@@ -1718,10 +1658,10 @@ if (loading || !project) {
           {/* Högerkolumn: Mina samråd */}
           <Box bg="gray.50" p={4} borderRadius="md" maxW="400px" border="1px solid #ccc" height="100%">
             <Text fontWeight="bold" mb={2}>Samråd</Text>
-{selectedRow?.samrad?.length > 0 ? (
+{Array.isArray(selectedRow?.samrad) && selectedRow.samrad.length > 0 ? (
   <Stack spacing={2}>
 {selectedRow.samrad.map((samradItem, idx) => {
-  const person = rows.find((r) => r.id === samradItem.id);
+  const person = rows.find((r) => String(r.id) === String(samradItem.id));
   if (!person) return null;
 
   return (
