@@ -1709,7 +1709,7 @@ if (loading || !project) {
     <FormLabel>Starttid</FormLabel>
     <Input
       type="time"
-      value={selectedRow.starttid || ''}
+      value={selectedRow.starttid || '00:00'}
       onChange={(e) => handleModalChange('starttid', e.target.value)}
     />
     <Button size="xs" mt={1} onClick={() => handleModalChange('starttid', getCurrentTime())}>
@@ -1725,7 +1725,7 @@ if (loading || !project) {
   ) : (
     <Input
       type="time"
-      value={selectedRow.begard || ''}
+      value={selectedRow.begard || '00:00'}
       onChange={(e) => handleModalChange('begard', e.target.value)}
     />
   )}
@@ -1746,7 +1746,7 @@ if (loading || !project) {
     <FormLabel>Avslutat</FormLabel>
     <Input
       type="time"
-      value={selectedRow.avslutat || ''}
+      value={selectedRow.avslutat || '00:00'}
       onChange={(e) => handleModalChange('avslutat', e.target.value)}
     />
     <Button size="xs" mt={1} onClick={() => handleModalChange('avslutat', getCurrentTime())}>
