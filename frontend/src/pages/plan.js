@@ -167,7 +167,7 @@ const calculateSamrad = (rows) => {
   to: j,
   id: rows[j].id,
   namn: rows[j].namn,
-  telefon: rows[j].telefon, // 👈 lägg till detta
+  telefon: rows[j].telefon,
 });
         newAvklarad[`${i}-${j}`] = false;
       }
@@ -381,10 +381,6 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
-  console.log("🧾 Modal uppdaterad med rad:", selectedRow);
-}, [selectedRow]);
-
-useEffect(() => {
   if (project?.rows?.length && (!rows || rows.length === 0)) {
     const restoredRows = project.rows.map((row) => {
       const selectedAreas = Array.isArray(row.selections)
@@ -450,41 +446,63 @@ return {
 }, [rows, project]);
 
 useEffect(() => {
-  const hasValidAnordning =
-    Array.isArray(selectedRow?.anordning) &&
-    selectedRow.anordning.length > 0;
-
-  const hasValidAreas =
-    Array.isArray(selectedAreas) &&
-    selectedAreas.length > 0;
-
-  if (!hasValidAnordning || !hasValidAreas || !rows || !selectedRow || selectedRow.index === undefined) {
-    setSamrad([]);
+  if (
+    !rows ||
+    !selectedRow ||
+    !Array.isArray(rows) ||
+    !Array.isArray(selectedAreas) ||
+    !project?.sections
+  )
     return;
-  }
 
-  // Skapa temporär rad med användarens aktuella val
-  const tempRow = {
-    ...selectedRow,
-    selections: Array(project.sections.length).fill(false),
-    anordning: selectedRow.anordning,
-  };
+  const realIndex = rows.findIndex((r) => r.id === selectedRow.id);
+  if (realIndex === -1) return;
 
+  const newSelections = Array(project.sections.length).fill(false);
   selectedAreas.forEach((idx) => {
-    tempRow.selections[idx] = true;
+    newSelections[idx] = true;
   });
 
+  const updatedRow = {
+    ...rows[realIndex],
+    selections: newSelections,
+  };
+
   const tempRows = [...rows];
-  tempRows[selectedRow.index] = tempRow;
+  tempRows[realIndex] = updatedRow;
 
   const result = calculateSamrad(tempRows);
 
-  const related = result.samradList
-    .filter((entry) => entry.from === selectedRow.index)
-    .map((entry) => tempRows[entry.to]);
+  const relatedSamrad = result.samradList
+    .filter((entry) => entry.from === realIndex)
+    .map((entry) => {
+      const r = tempRows[entry.to];
+      return {
+        id: r.id,
+        namn: r.namn,
+        dp: r.dp,
+        linje: r.linje,
+        btkn: r.btkn,
+        bt: r.bt,
+      };
+    });
 
-  setSamrad(related);
-}, [selectedAreas, selectedRow, rows, project]);
+  const updatedRowWithSamrad = {
+    ...updatedRow,
+    samrad: relatedSamrad,
+  };
+
+  // ✅ Undvik ändringar om inget faktiskt förändrats
+  const currentRow = rows[realIndex];
+  const rowChanged = JSON.stringify(currentRow) !== JSON.stringify(updatedRowWithSamrad);
+
+  if (rowChanged) {
+    const updatedRows = [...rows];
+    updatedRows[realIndex] = updatedRowWithSamrad;
+    setRows(updatedRows);
+    setSelectedRow(updatedRowWithSamrad);
+  }
+}, [selectedAreas, selectedRow?.id, project?.sections?.length]);
 
 useEffect(() => {
   if (selectedRowId == null) return;
@@ -499,15 +517,15 @@ useEffect(() => {
 }, [rows, selectedRowId]);
 
 useEffect(() => {
-  if (!project?.rows || !project?.sections) return;
+  if (!rows || !project?.sections) return;
 
-  const result = calculateSamrad(project.rows);
+  const result = calculateSamrad(rows); // ✅ Använd rows, inte project.rows
 
-  const updated = project.rows.map((row, index) => {
+  const updated = rows.map((row, index) => {
     const related = result.samradList
       .filter((entry) => entry.from === index)
       .map((entry) => {
-        const match = project.rows[entry.to];
+        const match = rows[entry.to];
         return {
           id: match?.id,
           namn: match?.namn || 'Okänt namn',
@@ -517,9 +535,7 @@ useEffect(() => {
       });
 
     const selectedAreas = Array.isArray(row.selections)
-      ? row.selections
-          .map((v, i) => (v ? i : null))
-          .filter((v) => v !== null)
+      ? row.selections.map((v, i) => (v ? i : null)).filter((v) => v !== null)
       : [];
 
     return {
@@ -531,7 +547,53 @@ useEffect(() => {
   });
 
   setRows(updated);
-}, [project]);
+}, [project]); // ❗️Byt till [project, rows]
+
+useEffect(() => {
+  if (!rows || !Array.isArray(rows)) return;
+
+  const allRowsUpdated = rows.map((row) => {
+    if (!row.samrad || row.samrad.length === 0) return row;
+
+    // Om första värdet i samrad är ett ID (nummer), fixa det
+    if (typeof row.samrad[0] === 'number') {
+      const updatedSamrad = row.samrad.map((id) => {
+        const match = rows.find((r) => r.id === id);
+        return {
+          id,
+          namn: match?.namn || 'Okänt namn',
+          dp: match?.dp || '',
+          linje: match?.linje || '',
+        };
+      });
+
+      return {
+        ...row,
+        samrad: updatedSamrad,
+      };
+    }
+
+    return row;
+  });
+
+  // Endast uppdatera om något ändrats
+  const changed = allRowsUpdated.some((r, i) =>
+    JSON.stringify(r.samrad) !== JSON.stringify(rows[i].samrad)
+  );
+
+  if (changed) {
+    setRows(allRowsUpdated);
+  }
+}, [rows]);
+
+useEffect(() => {
+  if (!selectedRowId || !Array.isArray(rows)) return;
+
+  const match = rows.find((r) => r.id === selectedRowId);
+  if (!match) return;
+
+  setSelectedRow(match);
+}, [selectedRowId, rows]);
 
   const fetchProject = async () => {
     try {
@@ -672,11 +734,9 @@ const tempRows = rows.map((r) =>
 );
 
 const result = calculateSamrad(tempRows);
-  console.log('🔍 calculateSamrad result:', result);
 
   // ✅ Identifiera korrekt index baserat på ID
   const fromIndex = rows.findIndex(r => r.id === row.id);
-  console.log(`➡️ Riktig fromIndex för ${row.namn}:`, fromIndex);
 
   const matched = result.samradList
     .filter((entry) => entry.from === fromIndex)
@@ -688,7 +748,6 @@ const result = calculateSamrad(tempRows);
       };
     });
 
-  console.log(`📌 Samråd för rad ${fromIndex} (${row.namn}):`, matched);
 
   setSelectedRow({
     ...row,
@@ -707,15 +766,7 @@ const result = calculateSamrad(tempRows);
     .filter((index) => index !== null) || []
 );
 
-  setSelectedAnordning(Array.isArray(row.anordning) ? row.anordning : []);
-
-  console.log('🧾 selectedRow som skickas till modalen:', {
-  ...row,
-  dp: row.dp || '',
-  linje: row.linje || '',
-  index: rowIndex,
-  samrad: matched,
-});
+  setSelectedAnordning(Array.isArray(row.anordning) ? row.anordning : [])
 
   onOpen();
 };
@@ -1515,6 +1566,7 @@ if (loading || !project) {
 
     setSelectedAreas(updatedAreas);
     setSelectedRow(newSelectedRow);
+    console.log("🟡 selectedAreas uppdaterad:", selectedAreas);
 
     const newRows = Array.isArray(rows)
       ? rows.map((row) =>
