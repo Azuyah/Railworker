@@ -27,26 +27,48 @@ if (!JWT_SECRET) {
 }
 // Register user
 app.post('/api/register', async (req, res) => {
-  const { email, password, name, phone, company } = req.body;
+  const { email, password, firstName, lastName, phone, company } = req.body;
 
-  const existingUser = await prisma.user.findUnique({ where: { email } });
-  if (existingUser) {
-    return res.status(400).json({ error: 'User already exists' });
+  console.log('📥 Register request body:', req.body);
+
+  try {
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ error: 'User already exists' });
+    }
+
+    if (!password) {
+      return res.status(400).json({ error: 'Lösenord saknas' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const signature = `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
+
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        firstName,
+        lastName,
+        phone,
+        company,
+        signature,
+        role: 'TSM'
+      },
+    });
+
+    res.status(201).json({
+      message: 'User created',
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role
+      }
+    });
+  } catch (err) {
+    console.error('❌ Fel vid registrering:', err);
+    res.status(500).json({ error: 'Registreringen misslyckades internt' });
   }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const user = await prisma.user.create({
-    data: {
-      email,
-      password: hashedPassword,
-      name,
-      phone,
-      company,
-      role: 'TSM'
-    },
-  });
-
-  res.status(201).json({ message: 'User created', user: { id: user.id, email: user.email, role: user.role } });
 });
 
 app.get('/api/user', async (req, res) => {
@@ -65,10 +87,12 @@ app.get('/api/user', async (req, res) => {
       select: {
         id: true,
         email: true,
-        name: true,
+        firstName: true,
+        lastName: true,
         phone: true,
         company: true,
         role: true,
+        signature: true,
       },
     });
 
@@ -104,15 +128,17 @@ app.post('/api/login', async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    res.json({
-      message: 'Login successful',
-      token,
-      role: user.role,
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      company: user.company,
-    });
+res.json({
+  message: 'Login successful',
+  token,
+  role: user.role,
+  firstName: user.firstName,
+  lastName: user.lastName,
+  signature: user.signature,
+  email: user.email,
+  phone: user.phone,
+  company: user.company,
+});
   } catch (error) {
     console.error('Fel vid inloggning:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -120,28 +146,35 @@ app.post('/api/login', async (req, res) => {
 });
 
 app.put('/api/user', authMiddleware, async (req, res) => {
-  const { name, email, phone, company, password } = req.body;
+  const { firstName, lastName, email, phone, company, password } = req.body;
   const userId = req.user.userId;
+
+  const signature =
+    `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
 
   try {
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
-        name,
+        firstName,
+        lastName,
         email,
         phone,
         company,
-        ...(password ? { password: await bcrypt.hash(password, 10) } : {})
+        signature,
+        ...(password ? { password: await bcrypt.hash(password, 10) } : {}),
       },
     });
 
     res.json({
       id: updatedUser.id,
-      name: updatedUser.name,
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName,
       email: updatedUser.email,
       phone: updatedUser.phone,
       company: updatedUser.company,
-      role: updatedUser.role
+      role: updatedUser.role,
+      signature: updatedUser.signature,
     });
   } catch (error) {
     console.error('Fel vid uppdatering av användare:', error);

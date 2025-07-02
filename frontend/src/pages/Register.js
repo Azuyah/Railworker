@@ -7,7 +7,8 @@ const Register = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     company: '',
-    name: '',
+    firstName: '',
+    lastName: '',
     phone: '',
     email: '',
     password: ''
@@ -45,23 +46,67 @@ const Register = () => {
 
           {error && <p className="text-red-500 mb-4">{error}</p>}
 
-          {[{ key: 'company', label: 'Företag' },
-            { key: 'name', label: 'För & efternamn' },
-            { key: 'phone', label: 'Telefonnummer' },
-            { key: 'email', label: 'Email' },
-            { key: 'password', label: 'Lösenord', type: 'password' }].map(({ key, label, type }) => (
-              <div key={key} className="mb-4">
-                <label className="block font-semibold mb-1">{label}</label>
-                <input
-                  type={type || 'text'}
-                  value={formData[key]}
-                  onChange={(e) => handleChange(key, e.target.value)}
-                  className="w-full px-4 py-2 rounded border bg-white"
-                />
-              </div>
-          ))}
+          <div className="mb-4">
+            <label className="block font-semibold mb-1">Företag</label>
+            <input
+              type="text"
+              value={formData.company}
+              onChange={(e) => handleChange('company', e.target.value)}
+              className="w-full px-4 py-2 rounded border bg-white"
+            />
+          </div>
 
-          <div className="flex justify-center mt-6">
+          <div className="mb-4">
+            <label className="block font-semibold mb-1">Förnamn</label>
+            <input
+              type="text"
+              value={formData.firstName}
+              onChange={(e) => handleChange('firstName', e.target.value)}
+              className="w-full px-4 py-2 rounded border bg-white"
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="block font-semibold mb-1">Efternamn</label>
+            <input
+              type="text"
+              value={formData.lastName}
+              onChange={(e) => handleChange('lastName', e.target.value)}
+              className="w-full px-4 py-2 rounded border bg-white"
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="block font-semibold mb-1">Telefonnummer</label>
+            <input
+              type="text"
+              value={formData.phone}
+              onChange={(e) => handleChange('phone', e.target.value)}
+              className="w-full px-4 py-2 rounded border bg-white"
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="block font-semibold mb-1">Email</label>
+            <input
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleChange('email', e.target.value)}
+              className="w-full px-4 py-2 rounded border bg-white"
+            />
+          </div>
+
+          <div className="mb-6">
+            <label className="block font-semibold mb-1">Lösenord</label>
+            <input
+              type="password"
+              value={formData.password}
+              onChange={(e) => handleChange('password', e.target.value)}
+              className="w-full px-4 py-2 rounded border bg-white"
+            />
+          </div>
+
+          <div className="flex justify-center">
             <button
               onClick={handleRegister}
               className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"

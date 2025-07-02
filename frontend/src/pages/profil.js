@@ -96,8 +96,9 @@ const Profil = () => {
   };
 
   const labels = {
+    firstName: 'Förnamn',
+    lastName: 'Efternamn',
     company: 'Företag',
-    name: 'Namn',
     phone: 'Telefon',
     email: 'E-post',
     password: 'Lösenord'
