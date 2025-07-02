@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import LoadingScreen from '../components/LoadingScreen';
 import { Tooltip } from '@chakra-ui/react';
+import { GiRailway } from 'react-icons/gi';
+import { PiTrainLight } from 'react-icons/pi'
 import { Tag, TagLabel } from "@chakra-ui/react";
 import {
   FaUserTie,
@@ -35,6 +37,7 @@ import {
   VStack,
   HStack,
   Menu,
+  Icon,
   MenuButton,
   MenuList,
   MenuItem,
@@ -1020,22 +1023,73 @@ if (loading || !project) {
         </Flex>
       </Th>
     )}
-    {project.sections.map((sec, idx) => (
-      <Th
-        key={idx}
-        minW="40px"
-        py={2}
-        maxW="40"
-        bg={idx % 2 === 0 ? 'blue.50' : 'transparent'}
-        fontSize="sm"
-        fontWeight="semibold"
-        color="gray.700"
+
+{project.sections.map((sec, idx) => (
+<Th
+  key={idx}
+  w="40px"
+  h="40px"
+  p="0"
+  m="0"
+  bg={idx % 2 === 0 ? 'blue.50' : 'transparent'}
+  position="relative"
+  textAlign="center"
+>
+  <Tooltip
+    hasArrow
+    placement="top"
+    bg="white"
+    color="black"
+    border="1px solid #ccc"
+    borderRadius="md"
+    shadow="md"
+    p={3}
+    label={
+      <Box p={2} maxW="300px">
+        <Text fontWeight="bold" mb={1}>Signal:</Text>
+        {sec.name ? (
+          <Text fontSize="sm">{sec.name}</Text>
+        ) : (
+          <Text fontSize="sm" color="gray.500">Ej angivet</Text>
+        )}
+      </Box>
+    }
+    aria-label="Signal tooltip"
+  >
+    <Box position="relative" w="100%" h="100%" cursor="help" overflow="hidden">
+      {/* Bakgrundsikon */}
+      <Box
+        position="absolute"
+        top="50%"
+        left="50%"
+        transform="translate(-50%, -50%)"
+        zIndex={0}
+        opacity={0.12}
       >
-        <Flex direction="column" align="center">
-          <Text fontSize="xs">{String.fromCharCode(65 + idx)}</Text>
-        </Flex>
-      </Th>
-    ))}
+        <Icon
+          as={sec.type === 'DP' ? PiTrainLight : GiRailway}
+          boxSize="32px"
+          color="gray.600"
+        />
+      </Box>
+
+      {/* Bokstav */}
+      <Flex
+        align="center"
+        justify="center"
+        position="relative"
+        zIndex={1}
+        w="100%"
+        h="100%"
+      >
+        <Text fontSize="xs" fontWeight="bold">
+          {String.fromCharCode(65 + idx)}
+        </Text>
+      </Flex>
+    </Box>
+  </Tooltip>
+</Th>
+))}
     {visibleColumns.starttid && (
       <Th py={2} fontWeight="semibold" color="gray.700">
         <Flex align="center" gap={2}>
@@ -1798,58 +1852,138 @@ onChange={() =>
 </ModalFooter>
   </ModalContent>
 </Modal>
-<Modal isOpen={avslutadeModalOpen} onClose={() => setAvslutadeModalOpen(false)} size="lg">
+<Modal isOpen={avslutadeModalOpen} onClose={() => setAvslutadeModalOpen(false)} size="6xl">
   <ModalOverlay />
   <ModalContent>
     <ModalHeader>Avslutade poster</ModalHeader>
     <ModalCloseButton />
-    <ModalBody>
-      <Input
-        placeholder="Sök efter namn eller telefon..."
-        mb={4}
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-      />
-      <Stack spacing={4}>
-        {rows
-          .filter(
-            (row) =>
-row.avslutadRad === true &&
-((row.namn || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
- (row.telefon || '').toLowerCase().includes(searchQuery.toLowerCase()))
-          )
-          .map((row, index) => (
-            <Box key={index} p={3} border="1px solid #ccc" borderRadius="md">
-              <Text><strong>Namn:</strong> {row.namn}</Text>
-              <Text><strong>Telefon:</strong> {row.telefon}</Text>
-              <Button
-                mt={2}
-                size="sm"
-                onClick={() => {
-                  const updatedRows = [...rows];
-                  const actualIndex = rows.findIndex(
-                    (r) => r.id === row.id
-                  );
-                  updatedRows[actualIndex].avslutadRad = false;
-                  setRows(updatedRows);
-                }}
-              >
-                Återställ
-              </Button>
-            </Box>
-          ))
-        }
+<ModalBody>
+  <Input
+    placeholder="Sök efter namn, telefon eller BTKN..."
+    mb={4}
+    value={searchQuery}
+    onChange={(e) => setSearchQuery(e.target.value)}
+  />
 
-        {rows.filter(
-          (row) =>
-            row.avslutadRad === true &&
-              ((row.namn || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-              (row.telefon || '').toLowerCase().includes(searchQuery.toLowerCase()))
-        ).length === 0 && (
-          <Text color="gray.500">Inga träffar.</Text>
-        )}
-      </Stack>
-    </ModalBody>
+  <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+    {rows
+      .filter(
+        (row) =>
+          row.avslutadRad === true &&
+          (
+            (row.namn || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (row.telefon || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (row.anordning?.join(', ') || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (row.btkn || '').toLowerCase().includes(searchQuery.toLowerCase())
+          )
+      )
+      .map((row, index) => (
+<Box
+  key={index}
+  p={3}
+  border="1px solid #ccc"
+  borderRadius="md"
+  bg="gray.50"
+  fontSize="sm"
+>
+  <Text><strong>Namn:</strong> {row.namn}</Text>
+  <Text><strong>Telefon:</strong> {row.telefon}</Text>
+
+{/* ANORDNING */}
+<Flex align="center" gap={2} mb={2}>
+  <Text fontWeight="semibold" whiteSpace="nowrap">Anordning:</Text>
+  <Flex wrap="nowrap" overflowX="auto" gap={1}>
+    {(Array.isArray(row.anordning)
+      ? row.anordning
+      : typeof row.anordning === 'string'
+        ? row.anordning.split(',').map((a) => a.trim())
+        : []
+    ).map((item, idx) => {
+      let color = 'gray';
+      switch (item) {
+        case 'A-S': color = 'blue'; break;
+        case 'L-S': color = 'green'; break;
+        case 'S-S': color = 'orange'; break;
+        case 'E-S': color = 'red'; break;
+        case 'Spf': color = 'yellow'; break;
+        case 'Vxl': color = 'purple'; break;
+        default: color = 'gray';
+      }
+
+      return (
+        <Badge
+          key={idx}
+          colorScheme={color}
+          variant="subtle"
+          fontSize="xs"
+          px={2}
+          py={0.5}
+          borderRadius="none"
+          textTransform="none"
+          whiteSpace="nowrap"
+        >
+          {item}
+        </Badge>
+      );
+    })}
+  </Flex>
+</Flex>
+
+{/* BTKN */}
+<Flex align="center" gap={2} mb={2}>
+  <Text fontWeight="semibold" whiteSpace="nowrap">Beteckning:</Text>
+  <Tag
+    size="md"
+    variant="outline"
+    colorScheme="teal"
+    w="80px"
+    justifyContent="center"
+    borderRadius="md"
+  >
+    <TagLabel isTruncated>{row.btkn || '–'}</TagLabel>
+  </Tag>
+</Flex>
+
+  <Text>
+    <strong>Avslutad:</strong>{' '}
+    {row.avslutatDatum ? (
+      <>
+        {formatDateOnly(row.avslutatDatum)} kl. {row.avslutat}
+      </>
+    ) : (
+      <span style={{ color: 'gray' }}>Ej angivet</span>
+    )}
+  </Text>
+
+  <Button
+    mt={3}
+    size="sm"
+    onClick={() => {
+      const updatedRows = [...rows];
+      const actualIndex = rows.findIndex((r) => r.id === row.id);
+      updatedRows[actualIndex].avslutadRad = false;
+      setRows(updatedRows);
+    }}
+  >
+    Återställ
+  </Button>
+</Box>
+      ))}
+
+    {rows.filter(
+      (row) =>
+        row.avslutadRad === true &&
+        (
+          (row.namn || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (row.telefon || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (row.anordning?.join(', ') || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (row.btkn || '').toLowerCase().includes(searchQuery.toLowerCase())
+        )
+    ).length === 0 && (
+      <Text color="gray.500">Inga träffar.</Text>
+    )}
+  </SimpleGrid>
+</ModalBody>
     <ModalFooter justifyContent="space-between">
 <Button onClick={() => setAvslutadeModalOpen(false)}>Stäng</Button>
 
