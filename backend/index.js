@@ -459,6 +459,8 @@ app.put('/api/projects/:id', async (req, res) => {
       ? beteckningar.filter((b) => typeof b.label === 'string' && b.label.trim() !== '')
       : [];
 
+console.log('📦 Vi skickar anteckningar till Prisma:', anteckningar);
+
     const updatedProject = await prisma.project.update({
       where: { id: projectId },
       data: {
