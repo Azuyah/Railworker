@@ -2039,19 +2039,19 @@ onChange={() =>
     setNoteText('');
     setEditingNoteId(null);
 
-    // ✅ Skicka till backend
-    try {
-      await fetch(`/api/projects/${project.id}/anteckningar`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // om cookies används för auth
-        body: JSON.stringify({ anteckningar: updatedNotes }),
-      });
-    } catch (error) {
-      console.error('Kunde inte spara anteckningar till backend:', error);
-    }
+try {
+  await fetch(`/api/projects/${project.id}/anteckningar`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`, // Lägg till denna
+    },
+    credentials: 'include', // Behövs bara om du kör med cookies – annars valfritt
+    body: JSON.stringify({ anteckningar: updatedNotes }),
+  });
+} catch (error) {
+  console.error('Kunde inte spara anteckningar till backend:', error);
+}
   }}
 >
   {editingNoteId === null ? 'Lägg till' : 'Spara'}
