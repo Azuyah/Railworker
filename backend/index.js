@@ -574,19 +574,17 @@ app.put('/api/projects/:projectId/rows/:rowId/complete', authMiddleware, async (
   }
 });
 
-// PUT /api/projects/:projectId/notes
+// PUT /api/projects/:projectId/anteckningar
 app.put('/api/projects/:projectId/anteckningar', authMiddleware, async (req, res) => {
   const { projectId } = req.params;
-  const { anteckningar } = req.body; // Expects array of { id, text, timestamp, author }
+  const { anteckningar } = req.body; // Array med { id, text, timestamp, author }
 
   try {
     const project = await prisma.project.update({
       where: { id: Number(projectId) },
       data: {
-        anteckningar: {
-          set: anteckningar || [] // This assumes `anteckningar` is a JSON field in the Prisma schema
-        }
-      }
+        anteckningar: anteckningar || [], // ✅ Direkt sättning – EJ { set: ... }
+      },
     });
 
     res.json(project);
