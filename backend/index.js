@@ -224,6 +224,26 @@ app.post('/api/employees', authMiddleware, async (req, res) => {
   }
 });
 
+// PUT /api/projects/:projectId/anteckningar
+app.put('/api/projects/:projectId/anteckningar', authMiddleware, async (req, res) => {
+  const { projectId } = req.params;
+  const { anteckningar } = req.body; // Array med { id, text, timestamp, author }
+
+  try {
+    const project = await prisma.project.update({
+      where: { id: Number(projectId) },
+      data: {
+        anteckningar: anteckningar || [], // ✅ Direkt sättning – EJ { set: ... }
+      },
+    });
+
+    res.json(project);
+  } catch (err) {
+    console.error('Kunde inte spara anteckningar:', err);
+    res.status(500).json({ error: 'Misslyckades med att spara anteckningar' });
+  }
+});
+
 app.get('/api/employees', authMiddleware, async (req, res) => {
   const userId = req.user.userId;
 
@@ -571,26 +591,6 @@ app.put('/api/projects/:projectId/rows/:rowId/complete', authMiddleware, async (
   } catch (err) {
     console.error('Fel vid avslut:', err);
     res.status(500).json({ error: 'Misslyckades med att avsluta rad' });
-  }
-});
-
-// PUT /api/projects/:projectId/anteckningar
-app.put('/api/projects/:projectId/anteckningar', authMiddleware, async (req, res) => {
-  const { projectId } = req.params;
-  const { anteckningar } = req.body; // Array med { id, text, timestamp, author }
-
-  try {
-    const project = await prisma.project.update({
-      where: { id: Number(projectId) },
-      data: {
-        anteckningar: anteckningar || [], // ✅ Direkt sättning – EJ { set: ... }
-      },
-    });
-
-    res.json(project);
-  } catch (err) {
-    console.error('Kunde inte spara anteckningar:', err);
-    res.status(500).json({ error: 'Misslyckades med att spara anteckningar' });
   }
 });
 
