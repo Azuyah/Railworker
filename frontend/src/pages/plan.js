@@ -1996,18 +1996,14 @@ onChange={() =>
 
     <ModalFooter>
 <Button
-  colorScheme="blue"
-  mr={3}
   onClick={async () => {
-    console.log('Anteckningar sparade:', anteckningar);
-
     const token = JSON.parse(localStorage.getItem('user'))?.token;
     if (!token) return alert('Ingen token.');
 
     try {
       await axios.put(
-        `/api/projects/${project.id}/anteckningar`, // ✅ rätt endpoint
-        { anteckningar },
+        `/api/projects/${project.id}`,
+        { anteckningar }, // 🟢 Endast detta skickas
         {
           headers: {
             Authorization: `Bearer ${token}`,

@@ -224,23 +224,6 @@ app.post('/api/employees', authMiddleware, async (req, res) => {
   }
 });
 
-app.put('/api/projects/:projectId/anteckningar', authMiddleware, async (req, res) => {
-  const { projectId } = req.params;
-  const { anteckningar } = req.body;
-
-  try {
-    const project = await prisma.project.update({
-      where: { id: Number(projectId) },
-      data: { anteckningar: anteckningar || [] },
-    });
-
-    res.json(project);
-  } catch (err) {
-    console.error('Kunde inte spara anteckningar:', err);
-    res.status(500).json({ error: 'Misslyckades med att spara anteckningar' });
-  }
-});
-
 app.get('/api/employees', authMiddleware, async (req, res) => {
   const userId = req.user.userId;
 
@@ -393,6 +376,22 @@ app.get('/api/project/:id', async (req, res) => {
     if (isNaN(projectId)) {
       return res.status(400).json({ error: 'Ogiltigt projekt-ID' });
     }
+
+    // 🟡 Specialfall: endast anteckningar uppdateras
+if (req.body.anteckningar && Object.keys(req.body).length === 1) {
+  try {
+    const updated = await prisma.project.update({
+      where: { id: parseInt(id) },
+      data: {
+        anteckningar: req.body.anteckningar,
+      },
+    });
+    return res.json(updated);
+  } catch (err) {
+    console.error('❌ Kunde inte uppdatera anteckningar:', err);
+    return res.status(500).json({ error: 'Misslyckades med att spara anteckningar' });
+  }
+}
 const project = await prisma.project.findUnique({
   where: { id: projectId },
   select: {
