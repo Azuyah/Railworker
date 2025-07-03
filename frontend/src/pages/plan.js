@@ -2001,20 +2001,20 @@ onChange={() =>
     if (!token) return alert('Ingen token.');
 
     try {
-      
-      const { data: currentProject } = await axios.get(`/api/project/${project.id}`, {
+      // 1. Hämta nuvarande projekt
+const { data: currentProject } = await axios.get(`https://railworker-production.up.railway.app/api/project/${project.id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-    
+      // 2. Uppdatera enbart anteckningar
       const updatedProject = {
         ...currentProject,
-        anteckningar, 
+        anteckningar,
       };
 
-     
+      // 3. Skicka tillbaka till korrekt PUT-endpoint
       await axios.put(`/api/projects/${project.id}`, updatedProject, {
         headers: {
           Authorization: `Bearer ${token}`,
