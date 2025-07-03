@@ -2047,7 +2047,7 @@ onChange={() =>
           'Content-Type': 'application/json',
         },
         credentials: 'include', // om cookies används för auth
-        body: JSON.stringify({ notes: updatedNotes }),
+        body: JSON.stringify({ anteckningar: updatedNotes }),
       });
     } catch (error) {
       console.error('Kunde inte spara anteckningar till backend:', error);

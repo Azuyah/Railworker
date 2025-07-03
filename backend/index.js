@@ -577,7 +577,7 @@ app.put('/api/projects/:projectId/rows/:rowId/complete', authMiddleware, async (
 // PUT /api/projects/:projectId/notes
 app.put('/api/projects/:projectId/anteckningar', authMiddleware, async (req, res) => {
   const { projectId } = req.params;
-  const { notes } = req.body; // Expects array of { id, text, timestamp, author }
+  const { anteckningar } = req.body; // Expects array of { id, text, timestamp, author }
 
   try {
     const project = await prisma.project.update({
