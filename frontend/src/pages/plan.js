@@ -679,50 +679,6 @@ const createNewRow = (rows, project) => {
   };
 };
 
-const saveNote = () => {
-  if (!noteText.trim()) return;
-
-  const updatedRow = { ...selectedRow };
-
-  /* Ny anteckning */
-  if (editingNoteId === null) {
-    const nextId =
-      Math.max(0, ...(updatedRow.anteckningar?.map(n => n.id) || [])) + 1;
-    updatedRow.anteckningar = [
-      ...(updatedRow.anteckningar || []),
-      { id: nextId, text: noteText.trim() },
-    ];
-  } else {
-    /* Redigera befintlig */
-    updatedRow.anteckningar = updatedRow.anteckningar.map(n =>
-      n.id === editingNoteId ? { ...n, text: noteText.trim() } : n
-    );
-  }
-
-  setNoteText('');
-  setEditingId(null);
-  const updated = updateRow(updatedRow);
-  setSelectedRow(updatedRow);
-  setRows(updated);
-};
-
-/* Ta bort anteckning */
-const deleteNote = id => {
-  const updatedRow = {
-    ...selectedRow,
-    anteckningar: selectedRow.anteckningar.filter(n => n.id !== id),
-  };
-  const updated = updateRow(updatedRow);
-  setSelectedRow(updatedRow);
-  setRows(updated);
-};
-
-/* Gå in i redigeringsläge */
-const beginEdit = note => {
-  setNoteText(note.text);
-  setEditingId(note.id);
-};
-
 const addRow = () => {
   const newRow = {
     ...createNewRow(rows, project),
@@ -2021,22 +1977,6 @@ onChange={() =>
     setAnteckningar(updatedNotes);
     setNoteText('');
     setEditingNoteId(null);
-
-try {
-  const tokenData = localStorage.getItem('user');
-  const token = tokenData ? JSON.parse(tokenData).token : null;
-
-  await fetch(`/api/projects/${project.id}/anteckningar`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ anteckningar: updatedNotes }),
-  });
-} catch (error) {
-  console.error('Kunde inte spara anteckningar till backend:', error);
-}
   }}
 >
   {editingNoteId === null ? 'Lägg till' : 'Spara'}
@@ -2055,16 +1995,35 @@ try {
     </ModalBody>
 
     <ModalFooter>
-      <Button
-        colorScheme="blue"
-        mr={3}
-        onClick={() => {
-          console.log('Anteckningar sparade:', anteckningar);
-          setAnteckningarModalOpen(false);
-        }}
-      >
-        Klar
-      </Button>
+<Button
+  colorScheme="blue"
+  mr={3}
+  onClick={async () => {
+    console.log('Anteckningar sparade:', anteckningar);
+
+    const token = JSON.parse(localStorage.getItem('user'))?.token;
+    if (!token) return alert('Ingen token.');
+
+    try {
+      await axios.put(
+        `/api/projects/${project.id}/anteckningar`, // ✅ rätt endpoint
+        { anteckningar },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setAnteckningarModalOpen(false);
+    } catch (error) {
+      console.error('Kunde inte spara anteckningar:', error);
+      alert('Fel vid sparande av anteckningar.');
+    }
+  }}
+>
+  Klar
+</Button>
       <Button variant="ghost" onClick={() => setAnteckningarModalOpen(false)}>Stäng</Button>
     </ModalFooter>
   </ModalContent>

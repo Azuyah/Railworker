@@ -224,17 +224,14 @@ app.post('/api/employees', authMiddleware, async (req, res) => {
   }
 });
 
-// PUT /api/projects/:projectId/anteckningar
 app.put('/api/projects/:projectId/anteckningar', authMiddleware, async (req, res) => {
   const { projectId } = req.params;
-  const { anteckningar } = req.body; // Array med { id, text, timestamp, author }
+  const { anteckningar } = req.body;
 
   try {
     const project = await prisma.project.update({
       where: { id: Number(projectId) },
-      data: {
-        anteckningar: anteckningar || [], // ✅ Direkt sättning – EJ { set: ... }
-      },
+      data: { anteckningar: anteckningar || [] },
     });
 
     res.json(project);
@@ -471,6 +468,7 @@ app.put('/api/projects/:id', async (req, res) => {
       rows,
       sections = [],
       beteckningar = [],
+      anteckningar = [],
     } = req.body;
 
     const projectId = parseInt(id);
