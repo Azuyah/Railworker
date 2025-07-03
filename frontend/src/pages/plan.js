@@ -2001,12 +2001,15 @@ onChange={() =>
     if (!token) return alert('Ingen token.');
 
     try {
-      // 1. Hämta nuvarande projekt
-const { data: currentProject } = await axios.get(`https://railworker-production.up.railway.app/api/project/${project.id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // 1. Hämta nuvarande projekt från backend
+      const { data: currentProject } = await axios.get(
+        `https://railworker-production.up.railway.app/api/project/${project.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       // 2. Uppdatera enbart anteckningar
       const updatedProject = {
@@ -2015,12 +2018,19 @@ const { data: currentProject } = await axios.get(`https://railworker-production.
       };
 
       // 3. Skicka tillbaka till korrekt PUT-endpoint
-await axios.put(`https://railworker-production.up.railway.app/api/projects/${project.id}`, updatedProject, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setProject(updatedProject);
+      await axios.put(
+        `https://railworker-production.up.railway.app/api/projects/${project.id}`,
+        updatedProject,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // 4. Uppdatera lokal state med backend-data + nya anteckningar
+      setProject({ ...currentProject, anteckningar });
+
       setAnteckningarModalOpen(false);
     } catch (error) {
       console.error('Kunde inte spara anteckningar:', error);

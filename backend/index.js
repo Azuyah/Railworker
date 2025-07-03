@@ -488,6 +488,8 @@ app.put('/api/projects/:id', async (req, res) => {
       },
     });
 
+    console.log('🧾 Efter update – project:', updatedProject);
+
     try {
       const deleted = await prisma.beteckning.deleteMany({
         where: { projectId },
