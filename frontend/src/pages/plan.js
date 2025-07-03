@@ -622,6 +622,7 @@ useEffect(() => {
       ...current,
       beteckningar: current.beteckningar || [],
     });
+    setAnteckningar(current.anteckningar || []);
       
       
 const enrichedRows = (current.rows || []).map((row) => {
