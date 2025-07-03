@@ -4,6 +4,7 @@ import axios from 'axios';
 import LoadingScreen from '../components/LoadingScreen';
 import { Tooltip } from '@chakra-ui/react';
 import { GiRailway } from 'react-icons/gi';
+import { EditIcon, DeleteIcon } from '@chakra-ui/icons';
 import { PiTrainLight } from 'react-icons/pi'
 import { Tag, TagLabel } from "@chakra-ui/react";
 import {
@@ -75,6 +76,11 @@ const Plan = () => {
   const [samradTrigger, setSamradTrigger] = useState(0);
   const [selectedRowId, setSelectedRowId] = useState(null);
   const [editBeteckningar, setEditBeteckningar] = useState([]);
+const [noteText, setNoteText] = useState('');
+const [editingNoteId, setEditingNoteId] = useState(null);
+const [anteckningar, setAnteckningar] = useState([]);
+const [editingId, setEditingId] = useState(null);
+const [anteckningarModalOpen, setAnteckningarModalOpen] = useState(false);
   const [isProjectInfoOpen, setIsProjectInfoOpen] = useState(false);
   const openProjectInfoModal = () => setIsProjectInfoOpen(true);
   const closeProjectInfoModal = () => setIsProjectInfoOpen(false);
@@ -204,6 +210,23 @@ const handleEditSignalChange = (index, value) => {
   const updated = [...editSections];
   updated[index].name = value;
   setEditSections(updated);
+};
+
+const sparaAnteckningarTillBackend = async () => {
+  try {
+    const res = await fetch(`/api/projects/${project.id}/notes`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ notes: anteckningar }),
+    });
+
+    if (!res.ok) throw new Error('Kunde inte spara anteckningar');
+    console.log('✅ Anteckningar sparade!');
+  } catch (err) {
+    console.error('❌ Fel vid sparande av anteckningar:', err);
+  }
 };
 
 
@@ -673,6 +696,50 @@ const createNewRow = (rows, project) => {
   };
 };
 
+const saveNote = () => {
+  if (!noteText.trim()) return;
+
+  const updatedRow = { ...selectedRow };
+
+  /* Ny anteckning */
+  if (editingNoteId === null) {
+    const nextId =
+      Math.max(0, ...(updatedRow.anteckningar?.map(n => n.id) || [])) + 1;
+    updatedRow.anteckningar = [
+      ...(updatedRow.anteckningar || []),
+      { id: nextId, text: noteText.trim() },
+    ];
+  } else {
+    /* Redigera befintlig */
+    updatedRow.anteckningar = updatedRow.anteckningar.map(n =>
+      n.id === editingNoteId ? { ...n, text: noteText.trim() } : n
+    );
+  }
+
+  setNoteText('');
+  setEditingId(null);
+  const updated = updateRow(updatedRow);
+  setSelectedRow(updatedRow);
+  setRows(updated);
+};
+
+/* Ta bort anteckning */
+const deleteNote = id => {
+  const updatedRow = {
+    ...selectedRow,
+    anteckningar: selectedRow.anteckningar.filter(n => n.id !== id),
+  };
+  const updated = updateRow(updatedRow);
+  setSelectedRow(updatedRow);
+  setRows(updated);
+};
+
+/* Gå in i redigeringsläge */
+const beginEdit = note => {
+  setNoteText(note.text);
+  setEditingId(note.id);
+};
+
 const addRow = () => {
   const newRow = {
     ...createNewRow(rows, project),
@@ -901,7 +968,7 @@ if (loading || !project) {
 </Modal>
 
 <Flex justify="space-between" align="center" mb={6} px={6} py={4} bg="whiteAlpha.800" borderRadius="xl" boxShadow="lg" backdropFilter="blur(8px)">
-  {/* Vänster sida: Visa projekt + Filter */}
+{/* Vänster sida: Visa projekt + Filter */}
   <HStack spacing={6}>
     <Button
       onClick={() => setIsProjectInfoOpen(true)}
@@ -951,19 +1018,34 @@ if (loading || !project) {
     />
   </HStack>
 
-  {/* Höger: Avslutade-knapp */}
-  <Button
-    onClick={() => setAvslutadeModalOpen(true)}
-    bg="gray.800"
-    color="white"
-    px={5}
-    py={2}
-    borderRadius="full"
-    _hover={{ bg: 'gray.700' }}
-    boxShadow="md"
-  >
-    Avslutade
-  </Button>
+  {/* Höger sida: Anteckningar + Avslutade */}
+  <HStack spacing={4}>
+    <Button
+      onClick={() => setAnteckningarModalOpen(true)} // Lägg till din modal trigger här
+      bg="blue.600"
+      color="white"
+      px={5}
+      py={2}
+      borderRadius="full"
+      _hover={{ bg: 'blue.700' }}
+      boxShadow="md"
+    >
+      Anteckningar
+    </Button>
+
+    <Button
+      onClick={() => setAvslutadeModalOpen(true)}
+      bg="gray.800"
+      color="white"
+      px={5}
+      py={2}
+      borderRadius="full"
+      _hover={{ bg: 'gray.700' }}
+      boxShadow="md"
+    >
+      Avslutade
+    </Button>
+  </HStack>
 </Flex>
 <Box overflowX="visible" px={2}>
   <Flex gap={2} align="start" minW="fit-content" w="full">
@@ -1862,6 +1944,147 @@ onChange={() =>
 </ModalFooter>
   </ModalContent>
 </Modal>
+
+<Modal isOpen={anteckningarModalOpen} onClose={() => setAnteckningarModalOpen(false)} size="lg">
+  <ModalOverlay />
+  <ModalContent maxW="800px">
+    <ModalHeader>Anteckningar</ModalHeader>
+    <ModalCloseButton />
+    <ModalBody>
+      <VStack align="stretch" spacing={4}>
+        {/* Lista anteckningar */}
+        {anteckningar.length === 0 && (
+          <Text color="gray.500" fontSize="sm">Inga anteckningar ännu.</Text>
+        )}
+
+        {[...anteckningar].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).map(note => (
+          <Box
+            key={note.id}
+            p={4}
+            bg="gray.50"
+            border="1px solid #ddd"
+            borderRadius="md"
+          >
+            <Text fontSize="md" mb={2}>{note.text}</Text>
+            <Flex justify="space-between" align="center">
+              <Text fontSize="xs" color="gray.600">
+                {note.timestamp && `Skapad ${new Date(note.timestamp).toLocaleString('sv-SE')}`}
+                {note.author && ` av ${note.author}`}
+              </Text>
+              <HStack spacing={1}>
+                <IconButton
+                  icon={<EditIcon />}
+                  size="xs"
+                  aria-label="Redigera"
+                  onClick={() => {
+                    setNoteText(note.text);
+                    setEditingNoteId(note.id);
+                  }}
+                />
+                <IconButton
+                  icon={<DeleteIcon />}
+                  size="xs"
+                  colorScheme="red"
+                  aria-label="Ta bort"
+                  onClick={() => setAnteckningar(prev => prev.filter(n => n.id !== note.id))}
+                />
+              </HStack>
+            </Flex>
+          </Box>
+        ))}
+
+        {/* Inmatning + knappar */}
+        <Flex direction="column" gap={3}>
+          <Textarea
+            placeholder="Skriv anteckning…"
+            value={noteText}
+            onChange={e => setNoteText(e.target.value)}
+            rows={5}
+            resize="vertical"
+          />
+          <Flex gap={2} wrap="wrap">
+<Button
+  colorScheme="blue"
+  onClick={async () => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!noteText.trim()) return;
+
+    let updatedNotes;
+
+    if (editingNoteId === null) {
+      const nextId = Math.max(0, ...anteckningar.map(n => n.id || 0)) + 1;
+      updatedNotes = [
+        ...anteckningar,
+        {
+          id: nextId,
+          text: noteText.trim(),
+          timestamp: new Date().toISOString(),
+          author: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
+        },
+      ];
+    } else {
+      updatedNotes = anteckningar.map(n =>
+        n.id === editingNoteId
+          ? {
+              ...n,
+              text: noteText.trim(),
+              timestamp: new Date().toISOString(),
+              author: `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
+            }
+          : n
+      );
+    }
+
+    setAnteckningar(updatedNotes);
+    setNoteText('');
+    setEditingNoteId(null);
+
+    // ✅ Skicka till backend
+    try {
+      await fetch(`/api/projects/${project.id}/notes`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // om cookies används för auth
+        body: JSON.stringify({ notes: updatedNotes }),
+      });
+    } catch (error) {
+      console.error('Kunde inte spara anteckningar till backend:', error);
+    }
+  }}
+>
+  {editingNoteId === null ? 'Lägg till' : 'Spara'}
+</Button>
+            {editingNoteId !== null && (
+              <Button variant="ghost" onClick={() => {
+                setNoteText('');
+                setEditingNoteId(null);
+              }}>
+                Avbryt
+              </Button>
+            )}
+          </Flex>
+        </Flex>
+      </VStack>
+    </ModalBody>
+
+    <ModalFooter>
+      <Button
+        colorScheme="blue"
+        mr={3}
+        onClick={() => {
+          console.log('Anteckningar sparade:', anteckningar);
+          setAnteckningarModalOpen(false);
+        }}
+      >
+        Klar
+      </Button>
+      <Button variant="ghost" onClick={() => setAnteckningarModalOpen(false)}>Stäng</Button>
+    </ModalFooter>
+  </ModalContent>
+</Modal>
+
 <Modal isOpen={avslutadeModalOpen} onClose={() => setAvslutadeModalOpen(false)} size="6xl">
   <ModalOverlay />
   <ModalContent>

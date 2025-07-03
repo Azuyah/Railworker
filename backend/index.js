@@ -574,6 +574,28 @@ app.put('/api/projects/:projectId/rows/:rowId/complete', authMiddleware, async (
   }
 });
 
+// PUT /api/projects/:projectId/notes
+app.put('/api/projects/:projectId/notes', authMiddleware, async (req, res) => {
+  const { projectId } = req.params;
+  const { notes } = req.body; // Expects array of { id, text, timestamp, author }
+
+  try {
+    const project = await prisma.project.update({
+      where: { id: Number(projectId) },
+      data: {
+        anteckningar: {
+          set: notes || [] // This assumes `anteckningar` is a JSON field in the Prisma schema
+        }
+      }
+    });
+
+    res.json(project);
+  } catch (err) {
+    console.error('Kunde inte spara anteckningar:', err);
+    res.status(500).json({ error: 'Misslyckades med att spara anteckningar' });
+  }
+});
+
 // Start server
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, '0.0.0.0', () => console.log(`✅ Server running on port ${PORT}`));
