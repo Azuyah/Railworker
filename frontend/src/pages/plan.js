@@ -2002,8 +2002,8 @@ onChange={() =>
 
     try {
       await axios.put(
-        `/api/projects/${project.id}`,
-        { anteckningar }, // 🟢 Endast detta skickas
+        `/api/projects/${project.id}/anteckningar`, // 🔁 OBS: separat anteckningar-endpoint
+        { anteckningar },
         {
           headers: {
             Authorization: `Bearer ${token}`,
