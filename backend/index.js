@@ -459,19 +459,6 @@ app.put('/api/projects/:id', async (req, res) => {
       ? beteckningar.filter((b) => typeof b.label === 'string' && b.label.trim() !== '')
       : [];
 
-      console.log('📩 Data mottagen i PUT:', {
-  name,
-  startDate,
-  startTime,
-  endDate,
-  endTime,
-  plats,
-  namn,
-  telefonnummer,
-  rows,
-  anteckningar, // 👈 denna är viktigast
-});
-
     const updatedProject = await prisma.project.update({
       where: { id: projectId },
       data: {
@@ -495,7 +482,7 @@ app.put('/api/projects/:id', async (req, res) => {
         where: { projectId },
       });
     } catch (err) {
-      console.error('❌ FEL vid deleteMany på beteckning:', err.message);
+      console.error('❌ Fel vid deleteMany på beteckning:', err.message);
     }
 
     try {
