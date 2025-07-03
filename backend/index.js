@@ -29,7 +29,6 @@ if (!JWT_SECRET) {
 app.post('/api/register', async (req, res) => {
   const { email, password, firstName, lastName, phone, company } = req.body;
 
-  console.log('📥 Register request body:', req.body);
 
   try {
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -460,7 +459,6 @@ app.put('/api/projects/:id', async (req, res) => {
       ? beteckningar.filter((b) => typeof b.label === 'string' && b.label.trim() !== '')
       : [];
 
-    console.log('✔️ Steg 1: uppdaterar grunddata...');
     const updatedProject = await prisma.project.update({
       where: { id: projectId },
       data: {
@@ -477,17 +475,14 @@ app.put('/api/projects/:id', async (req, res) => {
       },
     });
 
-    console.log('✔️ Steg 2: försöker radera gamla beteckningar...');
     try {
       const deleted = await prisma.beteckning.deleteMany({
         where: { projectId },
       });
-      console.log(`🗑️  Raderade ${deleted.count} gamla beteckningar`);
     } catch (err) {
       console.error('❌ FEL vid deleteMany på beteckning:', err.message);
     }
 
-    console.log('✔️ Steg 3: försöker skapa nya beteckningar...');
     try {
       if (filteredBeteckningar.length > 0) {
         await prisma.beteckning.createMany({
@@ -496,15 +491,13 @@ app.put('/api/projects/:id', async (req, res) => {
             projectId,
           })),
         });
-        console.log(`➕ Skapade ${filteredBeteckningar.length} beteckningar`);
       } else {
-        console.log('⚠️ Inga beteckningar att skapa');
+
       }
     } catch (err) {
       console.error('❌ FEL vid createMany på beteckning:', err.message);
     }
 
-    console.log('✔️ Steg 4: hanterar sections...');
     try {
       await prisma.section.deleteMany({ where: { projectId } });
       if (sections.length > 0) {
@@ -515,13 +508,11 @@ app.put('/api/projects/:id', async (req, res) => {
             projectId,
           })),
         });
-        console.log(`➕ Skapade ${sections.length} sections`);
       }
     } catch (err) {
       console.error('❌ FEL vid sections:', err.message);
     }
 
-    console.log('✔️ Steg 5: hämtar färdigt projekt...');
     const result = await prisma.project.findUnique({
       where: { id: projectId },
       include: {
@@ -529,8 +520,8 @@ app.put('/api/projects/:id', async (req, res) => {
         beteckningar: true,
       },
     });
+    console.log('📌 Anteckningar mottaget från frontend:', anteckningar);
 
-    console.log('🏁 Slutresultat:', result.beteckningar);
     res.json(result);
   } catch (error) {
     console.error('❌ Globalt fel:', error.message, error.stack);
@@ -567,8 +558,6 @@ app.put('/api/projects/:projectId/rows/:rowId/complete', authMiddleware, async (
       where: { id: Number(projectId) },
       data: { rows: updatedRows }
     });
-
-    console.log('✔️ Sparade rows med avslutadAv:', updatedRows);
 
     res.json(updatedProject);
   } catch (err) {
