@@ -212,23 +212,6 @@ const handleEditSignalChange = (index, value) => {
   setEditSections(updated);
 };
 
-const sparaAnteckningarTillBackend = async () => {
-  try {
-    const res = await fetch(`/api/projects/${project.id}/notes`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ notes: anteckningar }),
-    });
-
-    if (!res.ok) throw new Error('Kunde inte spara anteckningar');
-    console.log('✅ Anteckningar sparade!');
-  } catch (err) {
-    console.error('❌ Fel vid sparande av anteckningar:', err);
-  }
-};
-
 
 const openEditProjectModal = () => {
   setProjektNamn(project.name);
@@ -2040,13 +2023,15 @@ onChange={() =>
     setEditingNoteId(null);
 
 try {
+  const tokenData = localStorage.getItem('user');
+  const token = tokenData ? JSON.parse(tokenData).token : null;
+
   await fetch(`/api/projects/${project.id}/anteckningar`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('token')}`, // Lägg till denna
+      Authorization: `Bearer ${token}`,
     },
-    credentials: 'include', // Behövs bara om du kör med cookies – annars valfritt
     body: JSON.stringify({ anteckningar: updatedNotes }),
   });
 } catch (error) {
