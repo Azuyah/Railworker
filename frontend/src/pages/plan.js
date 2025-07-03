@@ -2001,15 +2001,25 @@ onChange={() =>
     if (!token) return alert('Ingen token.');
 
     try {
-      await axios.put(
-        `/api/projects/${project.id}/anteckningar`, // 🔁 OBS: separat anteckningar-endpoint
-        { anteckningar },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      
+      const { data: currentProject } = await axios.get(`/api/project/${project.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+    
+      const updatedProject = {
+        ...currentProject,
+        anteckningar, 
+      };
+
+     
+      await axios.put(`/api/projects/${project.id}`, updatedProject, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       setAnteckningarModalOpen(false);
     } catch (error) {
