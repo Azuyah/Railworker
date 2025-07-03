@@ -2020,7 +2020,7 @@ await axios.put(`https://railworker-production.up.railway.app/api/projects/${pro
           Authorization: `Bearer ${token}`,
         },
       });
-
+      setProject(updatedProject);
       setAnteckningarModalOpen(false);
     } catch (error) {
       console.error('Kunde inte spara anteckningar:', error);
