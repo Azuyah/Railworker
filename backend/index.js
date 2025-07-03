@@ -575,7 +575,7 @@ app.put('/api/projects/:projectId/rows/:rowId/complete', authMiddleware, async (
 });
 
 // PUT /api/projects/:projectId/notes
-app.put('/api/projects/:projectId/notes', authMiddleware, async (req, res) => {
+app.put('/api/projects/:projectId/anteckningar', authMiddleware, async (req, res) => {
   const { projectId } = req.params;
   const { notes } = req.body; // Expects array of { id, text, timestamp, author }
 
@@ -584,7 +584,7 @@ app.put('/api/projects/:projectId/notes', authMiddleware, async (req, res) => {
       where: { id: Number(projectId) },
       data: {
         anteckningar: {
-          set: notes || [] // This assumes `anteckningar` is a JSON field in the Prisma schema
+          set: anteckningar || [] // This assumes `anteckningar` is a JSON field in the Prisma schema
         }
       }
     });

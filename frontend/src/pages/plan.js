@@ -2041,7 +2041,7 @@ onChange={() =>
 
     // ✅ Skicka till backend
     try {
-      await fetch(`/api/projects/${project.id}/notes`, {
+      await fetch(`/api/projects/${project.id}/anteckningar`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
