@@ -2015,7 +2015,7 @@ const { data: currentProject } = await axios.get(`https://railworker-production.
       };
 
       // 3. Skicka tillbaka till korrekt PUT-endpoint
-      await axios.put(`/api/projects/${project.id}`, updatedProject, {
+await axios.put(`https://railworker-production.up.railway.app/api/projects/${project.id}`, updatedProject, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
