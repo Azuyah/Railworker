@@ -630,6 +630,66 @@ app.post('/api/row/self-enroll', authMiddleware, async (req, res) => {
 }
 });
 
+app.put('/api/row/approve/:rowId', authMiddleware, async (req, res) => {
+  const { rowId } = req.params;
+  const userId = req.user.userId;
+
+  try {
+    // Hämta HTSM-användaren
+    const approver = await prisma.user.findUnique({ where: { id: userId } });
+    if (!approver) return res.status(404).json({ error: 'HTSM-användare hittades inte' });
+
+    // Hämta raden som ska godkännas
+    const row = await prisma.row.findUnique({
+      where: { id: Number(rowId) },
+      include: { user: true, section: true, project: true },
+    });
+    if (!row) return res.status(404).json({ error: 'Rad hittades inte' });
+
+    // Läs in befintliga rader i projektet
+    const project = row.project;
+    const existingRows = Array.isArray(project.rows) ? project.rows : [];
+
+    // Skapa ny radstruktur i JSON
+    const newRow = {
+      id: Date.now(), // unik ID för frontend
+      datum: row.datum,
+      anordning: row.anordning,
+      section: row.section.name,
+      type: row.section.type,
+      skapadAv: row.signature,
+      skapadDatum: new Date().toISOString(),
+      avslutadRad: false,
+      avslutadAv: '',
+      avslutat: '',
+      avslutatDatum: '',
+      selections: Array(project.sections.length).fill(false),
+    };
+
+    // Uppdatera projektets rows-array
+    await prisma.project.update({
+      where: { id: project.id },
+      data: {
+        rows: [...existingRows, newRow],
+      },
+    });
+
+    // Markera som godkänd
+    await prisma.row.update({
+      where: { id: row.id },
+      data: {
+        isPending: false,
+        approvedById: userId,
+      },
+    });
+
+    res.json({ message: 'Rad godkänd och tillagd i projektet', addedRow: newRow });
+  } catch (err) {
+    console.error('❌ Fel vid godkännande:', err);
+    res.status(500).json({ error: 'Kunde inte godkänna raden' });
+  }
+});
+
 // Start server
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, '0.0.0.0', () => console.log(`✅ Server running on port ${PORT}`));

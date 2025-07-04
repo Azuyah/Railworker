@@ -1448,9 +1448,10 @@ if (loading || !project) {
 )}
     </Tr>
   ))}
-  {project?.tsmRows?.map((row, index) => (
+{project?.tsmRows?.map((row, index) => (
   <Tr key={`tsm-${row.id}`} bg="green.50">
     <Td colSpan={visibleColumns['#'] ? 1 : 0}></Td>
+
     {visibleColumns.btkn && (
       <Td colSpan={1}>
         <Text fontWeight="bold">
@@ -1458,37 +1459,40 @@ if (loading || !project) {
         </Text>
       </Td>
     )}
+
     {visibleColumns.namn && (
       <Td colSpan={1}>
         <Text>{row.datum}</Text>
       </Td>
     )}
+
     {visibleColumns.anordning && (
       <Td colSpan={1}>
         <Text>{row.anordning}</Text>
       </Td>
     )}
+
     <Td colSpan={2}>
       <Text>{row.section?.type} {row.section?.name}</Text>
     </Td>
+
     <Td colSpan={2}>
-      {row.isPending ? (
-        <Badge colorScheme="yellow">Inväntar godkännande</Badge>
-      ) : (
-        <Badge colorScheme="green">Godkänd av {row.approvedBy?.firstName}</Badge>
-      )}
+{row.isPending ? (
+  <Flex align="center" justify="space-between">
+    <Badge colorScheme="yellow">Inväntar godkännande</Badge>
+    <Button
+      size="sm"
+      colorScheme="green"
+      ml={4}
+      onClick={() => approveRow(row.id)}
+    >
+      Godkänn
+    </Button>
+  </Flex>
+) : (
+  <Badge colorScheme="green">Godkänd av {row.approvedBy?.firstName}</Badge>
+)}
     </Td>
-    {user?.role === 'HTSM' && row.isPending && (
-      <Td colSpan={2}>
-        <Button
-          size="sm"
-          colorScheme="green"
-          onClick={() => approveRow(row.id)}
-        >
-          Godkänn
-        </Button>
-      </Td>
-    )}
   </Tr>
 ))}
 </Tbody>
