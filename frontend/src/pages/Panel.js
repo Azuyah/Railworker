@@ -58,7 +58,12 @@ const handleSelfEnroll = async () => {
     const token = localStorage.getItem('user')
       ? JSON.parse(localStorage.getItem('user')).token
       : null;
-
+console.log('Skickar till servern:', {
+  datum,
+  anordning,
+  sectionId: parseInt(selectedSection),
+  projectId: selectedProject.id,
+});
     const response = await axios.post(
       'https://railworker-production.up.railway.app/api/row/self-enroll',
       {

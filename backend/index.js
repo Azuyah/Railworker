@@ -626,8 +626,8 @@ app.post('/api/row/self-enroll', authMiddleware, async (req, res) => {
 
     res.status(201).json(row);
   } catch (err) {
-    console.error('❌ Fel vid TSM-anmälan:', err.message, err.stack);
-    res.status(500).json({ error: 'Kunde inte skapa rad', details: err.message });
+console.error('❌ Fel vid TSM-anmälan:', err.message, err.stack);
+res.status(500).json({ error: 'Kunde inte skapa rad', details: err.message });
   }
 });
 
