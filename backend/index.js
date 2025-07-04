@@ -660,20 +660,22 @@ app.put('/api/row/approve/:rowId', authMiddleware, async (req, res) => {
     const existingRows = Array.isArray(project.rows) ? project.rows : [];
 
     // Skapa ny godkänd rad baserat på TSM-radens data
-    const newRow = {
-      id: Date.now(), // unikt ID för frontend
-      datum: row.datum,
-      anordning: row.anordning,
-      skapadAv: row.user?.signature || '',
-      skapadDatum: new Date().toISOString(),
-      avslutadRad: false,
-      avslutadAv: '',
-      avslutat: '',
-      avslutatDatum: '',
-      selections: row.selections || Array(project.sections.length).fill(false),
-      namn: project.namn || '',
-      telefonnummer: project.telefonnummer || '',
-    };
+const newRow = {
+  id: Date.now(),
+  datum: row.datum,
+  anordning: row.anordning,
+  section: row.section.name,
+  type: row.section.type,
+  skapadAv: row.signature,
+  telefon: row.user?.phone || '',
+  namn: `${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim(),
+  skapadDatum: new Date().toISOString(),
+  avslutadRad: false,
+  avslutadAv: '',
+  avslutat: '',
+  avslutatDatum: '',
+  selections: Array(project.sections.length).fill(false),
+};
 
     // Uppdatera projektets rows-array
     await prisma.project.update({

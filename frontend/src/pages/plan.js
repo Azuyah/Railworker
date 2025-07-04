@@ -209,6 +209,10 @@ const approveRow = async (rowId) => {
       }
     );
 
+    // 1. Ta bort raden från visningen direkt
+    setRows((prev) => prev.filter((row) => row.id !== rowId));
+
+    // 2. Visa bekräftelse
     toast({
       title: 'Raden godkänd.',
       status: 'success',
@@ -216,7 +220,7 @@ const approveRow = async (rowId) => {
       isClosable: true,
     });
 
-    // Hämta ny data
+    // 3. Hämta uppdaterad projektdata (t.ex. för att ladda nya raden)
     fetchProject();
   } catch (error) {
     console.error('Fel vid godkännande:', error);
