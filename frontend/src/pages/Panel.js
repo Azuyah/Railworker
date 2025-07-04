@@ -58,18 +58,25 @@ const handleSelfEnroll = async () => {
     const token = localStorage.getItem('user')
       ? JSON.parse(localStorage.getItem('user')).token
       : null;
-console.log('Skickar till servern:', {
-  datum,
-  anordning,
-  sectionId: parseInt(selectedSection),
-  projectId: selectedProject.id,
-});
+
+    // Skapa selections-array: t.ex. [true, false, true, false, false, true]
+    const selections = selectedProject.sections.map((sec) =>
+      selectedSectionIds.includes(sec.id)
+    );
+
+    console.log('📤 Skickar TSM-anmälan:', {
+      datum,
+      anordning,
+      selections,
+      projectId: selectedProject.id,
+    });
+
     const response = await axios.post(
       'https://railworker-production.up.railway.app/api/row/self-enroll',
       {
         datum,
-        anordning, // behåll som array
-        sectionId: parseInt(selectedSection),
+        anordning,
+        selections,
         projectId: selectedProject.id,
       },
       {
@@ -79,17 +86,17 @@ console.log('Skickar till servern:', {
       }
     );
 
-    console.log('✅ TSM-anmälan inskickad:', response.data);
     toast({
       title: 'Du har anmält dig.',
       status: 'success',
       duration: 3000,
       isClosable: true,
     });
+
     onClose();
     setDatum('');
     setAnordning([]);
-    setSelectedSection('');
+    setSelectedSectionIds([]);
   } catch (err) {
     console.error('❌ Fel vid TSM-anmälan:', err);
     toast({
