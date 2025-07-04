@@ -637,22 +637,19 @@ app.put('/api/row/approve/:rowId', authMiddleware, async (req, res) => {
     if (!approver) return res.status(404).json({ error: 'HTSM-användare hittades inte' });
 
     // Hämta raden som ska godkännas (inkl. project.sections + project.rows)
-    const row = await prisma.row.findUnique({
-      where: { id: Number(rowId) },
+const row = await prisma.row.findUnique({
+  where: { id: Number(rowId) },
+  include: {
+    user: true,
+    section: true,
+    project: {
       include: {
-        user: true,
-        section: true,
-        project: {
-          select: {
-            id: true,
-            namn: true,
-            telefonnummer: true,
-            rows: true,
-            sections: true,
-          },
-        },
+        rows: true,
+        sections: true,
       },
-    });
+    },
+  },
+});
 
     if (!row) return res.status(404).json({ error: 'Rad hittades inte' });
 
