@@ -639,32 +639,36 @@ app.put('/api/row/approve/:rowId', authMiddleware, async (req, res) => {
     const approver = await prisma.user.findUnique({ where: { id: userId } });
     if (!approver) return res.status(404).json({ error: 'HTSM-användare hittades inte' });
 
-    // Hämta raden som ska godkännas
-    const row = await prisma.row.findUnique({
-      where: { id: Number(rowId) },
-      include: { user: true, section: true, project: true },
-    });
-    if (!row) return res.status(404).json({ error: 'Rad hittades inte' });
+// Hämta raden som ska godkännas
+const row = await prisma.row.findUnique({
+  where: { id: Number(rowId) },
+  include: { user: true, section: true, project: true },
+});
+if (!row) return res.status(404).json({ error: 'Rad hittades inte' });
 
-    // Läs in befintliga rader i projektet
-    const project = row.project;
-    const existingRows = Array.isArray(project.rows) ? project.rows : [];
+const project = row.project;
 
-    // Skapa ny radstruktur i JSON
-    const newRow = {
-      id: Date.now(), // unik ID för frontend
-      datum: row.datum,
-      anordning: row.anordning,
-      section: row.section.name,
-      type: row.section.type,
-      skapadAv: row.signature,
-      skapadDatum: new Date().toISOString(),
-      avslutadRad: false,
-      avslutadAv: '',
-      avslutat: '',
-      avslutatDatum: '',
-      selections: Array(project.sections.length).fill(false),
-    };
+// 🔧 Ladda in sektionerna separat
+const fullProject = await prisma.project.findUnique({
+  where: { id: project.id },
+  include: { sections: true },
+});
+
+// Skapa ny radstruktur i JSON
+const newRow = {
+  id: Date.now(),
+  datum: row.datum,
+  anordning: row.anordning,
+  section: row.section.name,
+  type: row.section.type,
+  skapadAv: row.signature,
+  skapadDatum: new Date().toISOString(),
+  avslutadRad: false,
+  avslutadAv: '',
+  avslutat: '',
+  avslutatDatum: '',
+  selections: Array(fullProject.sections.length).fill(false),
+};
 
     // Uppdatera projektets rows-array
     await prisma.project.update({
