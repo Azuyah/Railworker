@@ -1,6 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
+  SimpleGrid,
+  Stack,
+  FormControl,
+  FormLabel,
+  Input,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  Checkbox,
+  Button,
+  Textarea,
+  Text,
+  Box,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -8,13 +22,12 @@ import {
   ModalFooter,
   ModalBody,
   ModalCloseButton,
-  useDisclosure,
-  Input,
   Select,
   VStack,
-  Button,
-  useToast
+  useToast,
+  useDisclosure,
 } from '@chakra-ui/react';
+import { ChevronDownIcon } from '@chakra-ui/icons';
 import axios from 'axios';
 import Header from '../components/Header';
 import LoadingScreen from '../components/LoadingScreen';
@@ -23,12 +36,13 @@ export default function Panel() {
   const { isOpen, onOpen, onClose } = useDisclosure(); // ✅ FLYTTAD HIT
   const [projects, setProjects] = useState([]);
   const navigate = useNavigate();
-const token = localStorage.getItem('token');
-const userDataRaw = localStorage.getItem('user');
-const user = userDataRaw ? JSON.parse(userDataRaw) : null;
+  const token = localStorage.getItem('token');
+  const userDataRaw = localStorage.getItem('user');
+  const user = userDataRaw ? JSON.parse(userDataRaw) : null;
+  const [selectedSectionIds, setSelectedSectionIds] = useState([]);
   const [datum, setDatum] = useState('');
   const [selectedSection, setSelectedSection] = useState('');
-  const [anordning, setAnordning] = useState('');
+  const [anordning, setAnordning] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const toast = useToast();
 
@@ -39,7 +53,7 @@ const user = userDataRaw ? JSON.parse(userDataRaw) : null;
       fetchAllProjects();
     }
   }, []);
-  const handleSelfEnroll = async () => {
+const handleSelfEnroll = async () => {
   try {
     const token = localStorage.getItem('user')
       ? JSON.parse(localStorage.getItem('user')).token
@@ -49,7 +63,7 @@ const user = userDataRaw ? JSON.parse(userDataRaw) : null;
       'https://railworker-production.up.railway.app/api/row/self-enroll',
       {
         datum,
-        anordning,
+        anordning, // behåll som array
         sectionId: parseInt(selectedSection),
         projectId: selectedProject.id,
       },
@@ -69,7 +83,7 @@ const user = userDataRaw ? JSON.parse(userDataRaw) : null;
     });
     onClose();
     setDatum('');
-    setAnordning('');
+    setAnordning([]);
     setSelectedSection('');
   } catch (err) {
     console.error('❌ Fel vid TSM-anmälan:', err);
@@ -141,50 +155,94 @@ const fetchAllProjects = async () => {
 >
   Visa projekt
 </button>
-<Modal isOpen={isOpen} onClose={onClose}>
+<Modal isOpen={isOpen} onClose={onClose} size="xl">
   <ModalOverlay />
   <ModalContent>
     <ModalHeader>Anmäl dig till projektet</ModalHeader>
     <ModalCloseButton />
     <ModalBody>
-      <VStack spacing={4}>
-        {/* Namn och telefon hämtas från inloggad användare */}
-        <Input value={user?.firstName + ' ' + user?.lastName} isReadOnly />
-        <Input value={user?.phone || ''} isReadOnly />
+      <Stack spacing={6}>
+        <SimpleGrid columns={2} spacing={4}>
+          <FormControl>
+            <FormLabel>Namn</FormLabel>
+            <Input value={user?.firstName + ' ' + user?.lastName} isReadOnly />
+          </FormControl>
+          <FormControl>
+            <FormLabel>Telefon</FormLabel>
+            <Input value={user?.phone || ''} isReadOnly />
+          </FormControl>
 
-        {/* Datum */}
-        <Input
-          placeholder="Datum (ÅÅÅÅ-MM-DD)"
-          value={datum}
-          onChange={(e) => setDatum(e.target.value)}
-        />
+          <FormControl>
+            <FormLabel>Datum</FormLabel>
+            <Input
+              type="date"
+              value={datum}
+              onChange={(e) => setDatum(e.target.value)}
+            />
+          </FormControl>
 
-        {/* Välj delområde – viktigt! */}
-        <Select
-          placeholder="Välj delområde"
-          value={selectedSection}
-          onChange={(e) => setSelectedSection(e.target.value)}
-        >
-          {selectedProject?.sections?.map((sec, i) => (
-            <option key={sec.id} value={sec.id}>
-              {sec.type} {String.fromCharCode(65 + i)} ({sec.name})
-            </option>
-          ))}
-        </Select>
+          <FormControl>
+            <FormLabel>Anordning</FormLabel>
+            <Menu closeOnSelect={false}>
+              <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
+                {anordning.length > 0 ? `${anordning.length} valda` : 'Välj anordning'}
+              </MenuButton>
+              <MenuList maxHeight="300px" overflowY="auto">
+                {['A-S', 'L-S', 'S-S', 'E-S', 'Spf', 'Vxl'].map((option) => (
+                  <MenuItem key={option}>
+                    <Checkbox
+                      isChecked={anordning.includes(option)}
+                      onChange={(e) => {
+                        const isChecked = e.target.checked;
+                        setAnordning((prev) =>
+                          isChecked ? [...prev, option] : prev.filter((v) => v !== option)
+                        );
+                      }}
+                    >
+                      {option}
+                    </Checkbox>
+                  </MenuItem>
+                ))}
+              </MenuList>
+            </Menu>
+          </FormControl>
+        </SimpleGrid>
 
-        {/* Anordning */}
-        <Input
-          placeholder="Anordning"
-          value={anordning}
-          onChange={(e) => setAnordning(e.target.value)}
-        />
-      </VStack>
+        <FormControl>
+          <FormLabel>Delområden</FormLabel>
+          <Menu closeOnSelect={false}>
+            <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
+              {selectedSectionIds.length > 0
+                ? `${selectedSectionIds.length} valda`
+                : 'Välj delområden'}
+            </MenuButton>
+            <MenuList maxHeight="300px" overflowY="auto">
+              {selectedProject?.sections?.map((sec, idx) => (
+                <MenuItem key={sec.id}>
+                  <Checkbox
+                    isChecked={selectedSectionIds.includes(sec.id)}
+                    onChange={(e) => {
+                      const isChecked = e.target.checked;
+                      const updated = isChecked
+                        ? [...selectedSectionIds, sec.id]
+                        : selectedSectionIds.filter((id) => id !== sec.id);
+                      setSelectedSectionIds(updated);
+                    }}
+                  >
+                    {sec.type} {String.fromCharCode(65 + idx)} ({sec.name})
+                  </Checkbox>
+                </MenuItem>
+              ))}
+            </MenuList>
+          </Menu>
+        </FormControl>
+      </Stack>
     </ModalBody>
     <ModalFooter>
       <Button
         colorScheme="blue"
         onClick={handleSelfEnroll}
-        isDisabled={!datum || !selectedSection || !anordning}
+        isDisabled={!datum || anordning.length === 0 || selectedSectionIds.length === 0}
       >
         Skicka
       </Button>

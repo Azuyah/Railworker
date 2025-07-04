@@ -597,6 +597,10 @@ app.post('/api/row/self-enroll', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'projectId eller sectionId saknas' });
     }
 
+    if (!Array.isArray(anordning)) {
+      return res.status(400).json({ error: 'Anordning måste vara en array' });
+    }
+
     const alreadyEnrolled = await prisma.row.findFirst({
       where: {
         userId,
@@ -615,16 +619,16 @@ app.post('/api/row/self-enroll', authMiddleware, async (req, res) => {
         sectionId: Number(sectionId),
         userId,
         datum: datum || null,
-        anordning: anordning || null,
+        anordning,
         isPending: true,
       },
     });
 
     res.status(201).json(row);
-} catch (err) {
-  console.error('❌ Fel vid TSM-anmälan:', err.message, err.stack); // Lägg till både message och stack
-  res.status(500).json({ error: 'Kunde inte skapa rad', details: err.message });
-}
+  } catch (err) {
+    console.error('❌ Fel vid TSM-anmälan:', err.message, err.stack);
+    res.status(500).json({ error: 'Kunde inte skapa rad', details: err.message });
+  }
 });
 
 app.put('/api/row/approve/:rowId', authMiddleware, async (req, res) => {

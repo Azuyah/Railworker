@@ -7333,7 +7333,6 @@ export namespace Prisma {
     projectId: number | null
     userId: number | null
     sectionId: number | null
-    anordning: string | null
     datum: string | null
     isPending: boolean | null
     approvedById: number | null
@@ -7345,7 +7344,6 @@ export namespace Prisma {
     projectId: number | null
     userId: number | null
     sectionId: number | null
-    anordning: string | null
     datum: string | null
     isPending: boolean | null
     approvedById: number | null
@@ -7387,7 +7385,6 @@ export namespace Prisma {
     projectId?: true
     userId?: true
     sectionId?: true
-    anordning?: true
     datum?: true
     isPending?: true
     approvedById?: true
@@ -7399,7 +7396,6 @@ export namespace Prisma {
     projectId?: true
     userId?: true
     sectionId?: true
-    anordning?: true
     datum?: true
     isPending?: true
     approvedById?: true
@@ -7510,7 +7506,7 @@ export namespace Prisma {
     projectId: number
     userId: number | null
     sectionId: number | null
-    anordning: string | null
+    anordning: string[]
     datum: string | null
     isPending: boolean
     approvedById: number | null
@@ -7629,7 +7625,7 @@ export namespace Prisma {
       projectId: number
       userId: number | null
       sectionId: number | null
-      anordning: string | null
+      anordning: string[]
       datum: string | null
       isPending: boolean
       approvedById: number | null
@@ -8065,7 +8061,7 @@ export namespace Prisma {
     readonly projectId: FieldRef<"Row", 'Int'>
     readonly userId: FieldRef<"Row", 'Int'>
     readonly sectionId: FieldRef<"Row", 'Int'>
-    readonly anordning: FieldRef<"Row", 'String'>
+    readonly anordning: FieldRef<"Row", 'String[]'>
     readonly datum: FieldRef<"Row", 'String'>
     readonly isPending: FieldRef<"Row", 'Boolean'>
     readonly approvedById: FieldRef<"Row", 'Int'>
@@ -9114,7 +9110,7 @@ export namespace Prisma {
     projectId?: IntFilter<"Row"> | number
     userId?: IntNullableFilter<"Row"> | number | null
     sectionId?: IntNullableFilter<"Row"> | number | null
-    anordning?: StringNullableFilter<"Row"> | string | null
+    anordning?: StringNullableListFilter<"Row">
     datum?: StringNullableFilter<"Row"> | string | null
     isPending?: BoolFilter<"Row"> | boolean
     approvedById?: IntNullableFilter<"Row"> | number | null
@@ -9130,7 +9126,7 @@ export namespace Prisma {
     projectId?: SortOrder
     userId?: SortOrderInput | SortOrder
     sectionId?: SortOrderInput | SortOrder
-    anordning?: SortOrderInput | SortOrder
+    anordning?: SortOrder
     datum?: SortOrderInput | SortOrder
     isPending?: SortOrder
     approvedById?: SortOrderInput | SortOrder
@@ -9149,7 +9145,7 @@ export namespace Prisma {
     projectId?: IntFilter<"Row"> | number
     userId?: IntNullableFilter<"Row"> | number | null
     sectionId?: IntNullableFilter<"Row"> | number | null
-    anordning?: StringNullableFilter<"Row"> | string | null
+    anordning?: StringNullableListFilter<"Row">
     datum?: StringNullableFilter<"Row"> | string | null
     isPending?: BoolFilter<"Row"> | boolean
     approvedById?: IntNullableFilter<"Row"> | number | null
@@ -9165,7 +9161,7 @@ export namespace Prisma {
     projectId?: SortOrder
     userId?: SortOrderInput | SortOrder
     sectionId?: SortOrderInput | SortOrder
-    anordning?: SortOrderInput | SortOrder
+    anordning?: SortOrder
     datum?: SortOrderInput | SortOrder
     isPending?: SortOrder
     approvedById?: SortOrderInput | SortOrder
@@ -9185,7 +9181,7 @@ export namespace Prisma {
     projectId?: IntWithAggregatesFilter<"Row"> | number
     userId?: IntNullableWithAggregatesFilter<"Row"> | number | null
     sectionId?: IntNullableWithAggregatesFilter<"Row"> | number | null
-    anordning?: StringNullableWithAggregatesFilter<"Row"> | string | null
+    anordning?: StringNullableListFilter<"Row">
     datum?: StringNullableWithAggregatesFilter<"Row"> | string | null
     isPending?: BoolWithAggregatesFilter<"Row"> | boolean
     approvedById?: IntNullableWithAggregatesFilter<"Row"> | number | null
@@ -9539,7 +9535,7 @@ export namespace Prisma {
   }
 
   export type RowCreateInput = {
-    anordning?: string | null
+    anordning?: RowCreateanordningInput | string[]
     datum?: string | null
     isPending?: boolean
     createdAt?: Date | string
@@ -9554,7 +9550,7 @@ export namespace Prisma {
     projectId: number
     userId?: number | null
     sectionId?: number | null
-    anordning?: string | null
+    anordning?: RowCreateanordningInput | string[]
     datum?: string | null
     isPending?: boolean
     approvedById?: number | null
@@ -9562,7 +9558,7 @@ export namespace Prisma {
   }
 
   export type RowUpdateInput = {
-    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    anordning?: RowUpdateanordningInput | string[]
     datum?: NullableStringFieldUpdateOperationsInput | string | null
     isPending?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -9577,7 +9573,7 @@ export namespace Prisma {
     projectId?: IntFieldUpdateOperationsInput | number
     userId?: NullableIntFieldUpdateOperationsInput | number | null
     sectionId?: NullableIntFieldUpdateOperationsInput | number | null
-    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    anordning?: RowUpdateanordningInput | string[]
     datum?: NullableStringFieldUpdateOperationsInput | string | null
     isPending?: BoolFieldUpdateOperationsInput | boolean
     approvedById?: NullableIntFieldUpdateOperationsInput | number | null
@@ -9589,7 +9585,7 @@ export namespace Prisma {
     projectId: number
     userId?: number | null
     sectionId?: number | null
-    anordning?: string | null
+    anordning?: RowCreateanordningInput | string[]
     datum?: string | null
     isPending?: boolean
     approvedById?: number | null
@@ -9597,7 +9593,7 @@ export namespace Prisma {
   }
 
   export type RowUpdateManyMutationInput = {
-    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    anordning?: RowUpdateanordningInput | string[]
     datum?: NullableStringFieldUpdateOperationsInput | string | null
     isPending?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -9608,7 +9604,7 @@ export namespace Prisma {
     projectId?: IntFieldUpdateOperationsInput | number
     userId?: NullableIntFieldUpdateOperationsInput | number | null
     sectionId?: NullableIntFieldUpdateOperationsInput | number | null
-    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    anordning?: RowUpdateanordningInput | string[]
     datum?: NullableStringFieldUpdateOperationsInput | string | null
     isPending?: BoolFieldUpdateOperationsInput | boolean
     approvedById?: NullableIntFieldUpdateOperationsInput | number | null
@@ -10071,6 +10067,14 @@ export namespace Prisma {
     employeeId?: SortOrder
   }
 
+  export type StringNullableListFilter<$PrismaModel = never> = {
+    equals?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    has?: string | StringFieldRefInput<$PrismaModel> | null
+    hasEvery?: string[] | ListStringFieldRefInput<$PrismaModel>
+    hasSome?: string[] | ListStringFieldRefInput<$PrismaModel>
+    isEmpty?: boolean
+  }
+
   export type BoolFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel>
     not?: NestedBoolFilter<$PrismaModel> | boolean
@@ -10106,7 +10110,6 @@ export namespace Prisma {
     projectId?: SortOrder
     userId?: SortOrder
     sectionId?: SortOrder
-    anordning?: SortOrder
     datum?: SortOrder
     isPending?: SortOrder
     approvedById?: SortOrder
@@ -10118,7 +10121,6 @@ export namespace Prisma {
     projectId?: SortOrder
     userId?: SortOrder
     sectionId?: SortOrder
-    anordning?: SortOrder
     datum?: SortOrder
     isPending?: SortOrder
     approvedById?: SortOrder
@@ -10619,6 +10621,10 @@ export namespace Prisma {
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutEmployerOfInput, UserUpdateWithoutEmployerOfInput>, UserUncheckedUpdateWithoutEmployerOfInput>
   }
 
+  export type RowCreateanordningInput = {
+    set: string[]
+  }
+
   export type ProjectCreateNestedOneWithoutTsmRowsInput = {
     create?: XOR<ProjectCreateWithoutTsmRowsInput, ProjectUncheckedCreateWithoutTsmRowsInput>
     connectOrCreate?: ProjectCreateOrConnectWithoutTsmRowsInput
@@ -10641,6 +10647,11 @@ export namespace Prisma {
     create?: XOR<UserCreateWithoutApprovedRowsInput, UserUncheckedCreateWithoutApprovedRowsInput>
     connectOrCreate?: UserCreateOrConnectWithoutApprovedRowsInput
     connect?: UserWhereUniqueInput
+  }
+
+  export type RowUpdateanordningInput = {
+    set?: string[]
+    push?: string | string[]
   }
 
   export type BoolFieldUpdateOperationsInput = {
@@ -10968,7 +10979,7 @@ export namespace Prisma {
   }
 
   export type RowCreateWithoutUserInput = {
-    anordning?: string | null
+    anordning?: RowCreateanordningInput | string[]
     datum?: string | null
     isPending?: boolean
     createdAt?: Date | string
@@ -10981,7 +10992,7 @@ export namespace Prisma {
     id?: number
     projectId: number
     sectionId?: number | null
-    anordning?: string | null
+    anordning?: RowCreateanordningInput | string[]
     datum?: string | null
     isPending?: boolean
     approvedById?: number | null
@@ -10999,7 +11010,7 @@ export namespace Prisma {
   }
 
   export type RowCreateWithoutApprovedByInput = {
-    anordning?: string | null
+    anordning?: RowCreateanordningInput | string[]
     datum?: string | null
     isPending?: boolean
     createdAt?: Date | string
@@ -11013,7 +11024,7 @@ export namespace Prisma {
     projectId: number
     userId?: number | null
     sectionId?: number | null
-    anordning?: string | null
+    anordning?: RowCreateanordningInput | string[]
     datum?: string | null
     isPending?: boolean
     createdAt?: Date | string
@@ -11129,7 +11140,7 @@ export namespace Prisma {
     projectId?: IntFilter<"Row"> | number
     userId?: IntNullableFilter<"Row"> | number | null
     sectionId?: IntNullableFilter<"Row"> | number | null
-    anordning?: StringNullableFilter<"Row"> | string | null
+    anordning?: StringNullableListFilter<"Row">
     datum?: StringNullableFilter<"Row"> | string | null
     isPending?: BoolFilter<"Row"> | boolean
     approvedById?: IntNullableFilter<"Row"> | number | null
@@ -11231,7 +11242,7 @@ export namespace Prisma {
   }
 
   export type RowCreateWithoutProjectInput = {
-    anordning?: string | null
+    anordning?: RowCreateanordningInput | string[]
     datum?: string | null
     isPending?: boolean
     createdAt?: Date | string
@@ -11244,7 +11255,7 @@ export namespace Prisma {
     id?: number
     userId?: number | null
     sectionId?: number | null
-    anordning?: string | null
+    anordning?: RowCreateanordningInput | string[]
     datum?: string | null
     isPending?: boolean
     approvedById?: number | null
@@ -11411,7 +11422,7 @@ export namespace Prisma {
   }
 
   export type RowCreateWithoutSectionInput = {
-    anordning?: string | null
+    anordning?: RowCreateanordningInput | string[]
     datum?: string | null
     isPending?: boolean
     createdAt?: Date | string
@@ -11424,7 +11435,7 @@ export namespace Prisma {
     id?: number
     projectId: number
     userId?: number | null
-    anordning?: string | null
+    anordning?: RowCreateanordningInput | string[]
     datum?: string | null
     isPending?: boolean
     approvedById?: number | null
@@ -12058,7 +12069,7 @@ export namespace Prisma {
     id?: number
     projectId: number
     sectionId?: number | null
-    anordning?: string | null
+    anordning?: RowCreateanordningInput | string[]
     datum?: string | null
     isPending?: boolean
     approvedById?: number | null
@@ -12070,7 +12081,7 @@ export namespace Prisma {
     projectId: number
     userId?: number | null
     sectionId?: number | null
-    anordning?: string | null
+    anordning?: RowCreateanordningInput | string[]
     datum?: string | null
     isPending?: boolean
     createdAt?: Date | string
@@ -12155,7 +12166,7 @@ export namespace Prisma {
   }
 
   export type RowUpdateWithoutUserInput = {
-    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    anordning?: RowUpdateanordningInput | string[]
     datum?: NullableStringFieldUpdateOperationsInput | string | null
     isPending?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12168,7 +12179,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     projectId?: IntFieldUpdateOperationsInput | number
     sectionId?: NullableIntFieldUpdateOperationsInput | number | null
-    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    anordning?: RowUpdateanordningInput | string[]
     datum?: NullableStringFieldUpdateOperationsInput | string | null
     isPending?: BoolFieldUpdateOperationsInput | boolean
     approvedById?: NullableIntFieldUpdateOperationsInput | number | null
@@ -12179,7 +12190,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     projectId?: IntFieldUpdateOperationsInput | number
     sectionId?: NullableIntFieldUpdateOperationsInput | number | null
-    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    anordning?: RowUpdateanordningInput | string[]
     datum?: NullableStringFieldUpdateOperationsInput | string | null
     isPending?: BoolFieldUpdateOperationsInput | boolean
     approvedById?: NullableIntFieldUpdateOperationsInput | number | null
@@ -12187,7 +12198,7 @@ export namespace Prisma {
   }
 
   export type RowUpdateWithoutApprovedByInput = {
-    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    anordning?: RowUpdateanordningInput | string[]
     datum?: NullableStringFieldUpdateOperationsInput | string | null
     isPending?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12201,7 +12212,7 @@ export namespace Prisma {
     projectId?: IntFieldUpdateOperationsInput | number
     userId?: NullableIntFieldUpdateOperationsInput | number | null
     sectionId?: NullableIntFieldUpdateOperationsInput | number | null
-    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    anordning?: RowUpdateanordningInput | string[]
     datum?: NullableStringFieldUpdateOperationsInput | string | null
     isPending?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12212,7 +12223,7 @@ export namespace Prisma {
     projectId?: IntFieldUpdateOperationsInput | number
     userId?: NullableIntFieldUpdateOperationsInput | number | null
     sectionId?: NullableIntFieldUpdateOperationsInput | number | null
-    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    anordning?: RowUpdateanordningInput | string[]
     datum?: NullableStringFieldUpdateOperationsInput | string | null
     isPending?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12233,7 +12244,7 @@ export namespace Prisma {
     id?: number
     userId?: number | null
     sectionId?: number | null
-    anordning?: string | null
+    anordning?: RowCreateanordningInput | string[]
     datum?: string | null
     isPending?: boolean
     approvedById?: number | null
@@ -12274,7 +12285,7 @@ export namespace Prisma {
   }
 
   export type RowUpdateWithoutProjectInput = {
-    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    anordning?: RowUpdateanordningInput | string[]
     datum?: NullableStringFieldUpdateOperationsInput | string | null
     isPending?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12287,7 +12298,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     userId?: NullableIntFieldUpdateOperationsInput | number | null
     sectionId?: NullableIntFieldUpdateOperationsInput | number | null
-    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    anordning?: RowUpdateanordningInput | string[]
     datum?: NullableStringFieldUpdateOperationsInput | string | null
     isPending?: BoolFieldUpdateOperationsInput | boolean
     approvedById?: NullableIntFieldUpdateOperationsInput | number | null
@@ -12298,7 +12309,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     userId?: NullableIntFieldUpdateOperationsInput | number | null
     sectionId?: NullableIntFieldUpdateOperationsInput | number | null
-    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    anordning?: RowUpdateanordningInput | string[]
     datum?: NullableStringFieldUpdateOperationsInput | string | null
     isPending?: BoolFieldUpdateOperationsInput | boolean
     approvedById?: NullableIntFieldUpdateOperationsInput | number | null
@@ -12309,7 +12320,7 @@ export namespace Prisma {
     id?: number
     projectId: number
     userId?: number | null
-    anordning?: string | null
+    anordning?: RowCreateanordningInput | string[]
     datum?: string | null
     isPending?: boolean
     approvedById?: number | null
@@ -12317,7 +12328,7 @@ export namespace Prisma {
   }
 
   export type RowUpdateWithoutSectionInput = {
-    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    anordning?: RowUpdateanordningInput | string[]
     datum?: NullableStringFieldUpdateOperationsInput | string | null
     isPending?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12330,7 +12341,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     projectId?: IntFieldUpdateOperationsInput | number
     userId?: NullableIntFieldUpdateOperationsInput | number | null
-    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    anordning?: RowUpdateanordningInput | string[]
     datum?: NullableStringFieldUpdateOperationsInput | string | null
     isPending?: BoolFieldUpdateOperationsInput | boolean
     approvedById?: NullableIntFieldUpdateOperationsInput | number | null
@@ -12341,7 +12352,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     projectId?: IntFieldUpdateOperationsInput | number
     userId?: NullableIntFieldUpdateOperationsInput | number | null
-    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    anordning?: RowUpdateanordningInput | string[]
     datum?: NullableStringFieldUpdateOperationsInput | string | null
     isPending?: BoolFieldUpdateOperationsInput | boolean
     approvedById?: NullableIntFieldUpdateOperationsInput | number | null

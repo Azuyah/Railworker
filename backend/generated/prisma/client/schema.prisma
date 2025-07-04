@@ -88,7 +88,7 @@ model Row {
   section   Section? @relation(fields: [sectionId], references: [id])
   sectionId Int?
 
-  anordning String?
+  anordning String[]
   datum     String?
 
   isPending    Boolean @default(false)
