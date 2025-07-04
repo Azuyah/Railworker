@@ -26,13 +26,16 @@ model User {
   projects   Project[]
   employees  Employee[] @relation("Employer")
   employerOf Employee[] @relation("Employee")
+
+  createdRows  Row[] @relation("CreatedRows") // TSM-rader
+  approvedRows Row[] @relation("RowApprovedBy") // HTSM-godkända rader
 }
 
 model Project {
   id            Int          @id @default(autoincrement())
   name          String
   userId        Int?
-  user          User?        @relation(fields: [userId], references: [id])
+  user          User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt     DateTime     @default(now())
   startDate     String
   startTime     String
@@ -45,6 +48,7 @@ model Project {
   beteckningar  Beteckning[]
   rows          Json?
   anteckningar  Json?
+  tsmRows       Row[]
 }
 
 model Section {
@@ -53,6 +57,7 @@ model Section {
   type      String
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   projectId Int
+  rows      Row[]
 }
 
 model Beteckning {
@@ -70,4 +75,25 @@ model Employee {
   employeeId Int
 
   @@unique([employerId, employeeId])
+}
+
+model Row {
+  id        Int     @id @default(autoincrement())
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId Int
+
+  user   User? @relation("CreatedRows", fields: [userId], references: [id])
+  userId Int?
+
+  section   Section? @relation(fields: [sectionId], references: [id])
+  sectionId Int?
+
+  anordning String?
+  datum     String?
+
+  isPending    Boolean @default(false)
+  approvedBy   User?   @relation("RowApprovedBy", fields: [approvedById], references: [id])
+  approvedById Int?
+
+  createdAt DateTime @default(now())
 }

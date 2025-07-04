@@ -38,6 +38,11 @@ export type Beteckning = $Result.DefaultSelection<Prisma.$BeteckningPayload>
  * 
  */
 export type Employee = $Result.DefaultSelection<Prisma.$EmployeePayload>
+/**
+ * Model Row
+ * 
+ */
+export type Row = $Result.DefaultSelection<Prisma.$RowPayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -213,6 +218,16 @@ export class PrismaClient<
     * ```
     */
   get employee(): Prisma.EmployeeDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.row`: Exposes CRUD operations for the **Row** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Rows
+    * const rows = await prisma.row.findMany()
+    * ```
+    */
+  get row(): Prisma.RowDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -657,7 +672,8 @@ export namespace Prisma {
     Project: 'Project',
     Section: 'Section',
     Beteckning: 'Beteckning',
-    Employee: 'Employee'
+    Employee: 'Employee',
+    Row: 'Row'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -676,7 +692,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "project" | "section" | "beteckning" | "employee"
+      modelProps: "user" | "project" | "section" | "beteckning" | "employee" | "row"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1050,6 +1066,80 @@ export namespace Prisma {
           }
         }
       }
+      Row: {
+        payload: Prisma.$RowPayload<ExtArgs>
+        fields: Prisma.RowFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.RowFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RowPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.RowFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RowPayload>
+          }
+          findFirst: {
+            args: Prisma.RowFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RowPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.RowFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RowPayload>
+          }
+          findMany: {
+            args: Prisma.RowFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RowPayload>[]
+          }
+          create: {
+            args: Prisma.RowCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RowPayload>
+          }
+          createMany: {
+            args: Prisma.RowCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.RowCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RowPayload>[]
+          }
+          delete: {
+            args: Prisma.RowDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RowPayload>
+          }
+          update: {
+            args: Prisma.RowUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RowPayload>
+          }
+          deleteMany: {
+            args: Prisma.RowDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.RowUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.RowUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RowPayload>[]
+          }
+          upsert: {
+            args: Prisma.RowUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RowPayload>
+          }
+          aggregate: {
+            args: Prisma.RowAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateRow>
+          }
+          groupBy: {
+            args: Prisma.RowGroupByArgs<ExtArgs>
+            result: $Utils.Optional<RowGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.RowCountArgs<ExtArgs>
+            result: $Utils.Optional<RowCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1139,6 +1229,7 @@ export namespace Prisma {
     section?: SectionOmit
     beteckning?: BeteckningOmit
     employee?: EmployeeOmit
+    row?: RowOmit
   }
 
   /* Types for Logging */
@@ -1236,12 +1327,16 @@ export namespace Prisma {
     projects: number
     employees: number
     employerOf: number
+    createdRows: number
+    approvedRows: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     projects?: boolean | UserCountOutputTypeCountProjectsArgs
     employees?: boolean | UserCountOutputTypeCountEmployeesArgs
     employerOf?: boolean | UserCountOutputTypeCountEmployerOfArgs
+    createdRows?: boolean | UserCountOutputTypeCountCreatedRowsArgs
+    approvedRows?: boolean | UserCountOutputTypeCountApprovedRowsArgs
   }
 
   // Custom InputTypes
@@ -1276,6 +1371,20 @@ export namespace Prisma {
     where?: EmployeeWhereInput
   }
 
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountCreatedRowsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RowWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountApprovedRowsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RowWhereInput
+  }
+
 
   /**
    * Count Type ProjectCountOutputType
@@ -1284,11 +1393,13 @@ export namespace Prisma {
   export type ProjectCountOutputType = {
     sections: number
     beteckningar: number
+    tsmRows: number
   }
 
   export type ProjectCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     sections?: boolean | ProjectCountOutputTypeCountSectionsArgs
     beteckningar?: boolean | ProjectCountOutputTypeCountBeteckningarArgs
+    tsmRows?: boolean | ProjectCountOutputTypeCountTsmRowsArgs
   }
 
   // Custom InputTypes
@@ -1314,6 +1425,44 @@ export namespace Prisma {
    */
   export type ProjectCountOutputTypeCountBeteckningarArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: BeteckningWhereInput
+  }
+
+  /**
+   * ProjectCountOutputType without action
+   */
+  export type ProjectCountOutputTypeCountTsmRowsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RowWhereInput
+  }
+
+
+  /**
+   * Count Type SectionCountOutputType
+   */
+
+  export type SectionCountOutputType = {
+    rows: number
+  }
+
+  export type SectionCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    rows?: boolean | SectionCountOutputTypeCountRowsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * SectionCountOutputType without action
+   */
+  export type SectionCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SectionCountOutputType
+     */
+    select?: SectionCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * SectionCountOutputType without action
+   */
+  export type SectionCountOutputTypeCountRowsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RowWhereInput
   }
 
 
@@ -1554,6 +1703,8 @@ export namespace Prisma {
     projects?: boolean | User$projectsArgs<ExtArgs>
     employees?: boolean | User$employeesArgs<ExtArgs>
     employerOf?: boolean | User$employerOfArgs<ExtArgs>
+    createdRows?: boolean | User$createdRowsArgs<ExtArgs>
+    approvedRows?: boolean | User$approvedRowsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -1598,6 +1749,8 @@ export namespace Prisma {
     projects?: boolean | User$projectsArgs<ExtArgs>
     employees?: boolean | User$employeesArgs<ExtArgs>
     employerOf?: boolean | User$employerOfArgs<ExtArgs>
+    createdRows?: boolean | User$createdRowsArgs<ExtArgs>
+    approvedRows?: boolean | User$approvedRowsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -1609,6 +1762,8 @@ export namespace Prisma {
       projects: Prisma.$ProjectPayload<ExtArgs>[]
       employees: Prisma.$EmployeePayload<ExtArgs>[]
       employerOf: Prisma.$EmployeePayload<ExtArgs>[]
+      createdRows: Prisma.$RowPayload<ExtArgs>[]
+      approvedRows: Prisma.$RowPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: number
@@ -2017,6 +2172,8 @@ export namespace Prisma {
     projects<T extends User$projectsArgs<ExtArgs> = {}>(args?: Subset<T, User$projectsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     employees<T extends User$employeesArgs<ExtArgs> = {}>(args?: Subset<T, User$employeesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EmployeePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     employerOf<T extends User$employerOfArgs<ExtArgs> = {}>(args?: Subset<T, User$employerOfArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EmployeePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    createdRows<T extends User$createdRowsArgs<ExtArgs> = {}>(args?: Subset<T, User$createdRowsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RowPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    approvedRows<T extends User$approvedRowsArgs<ExtArgs> = {}>(args?: Subset<T, User$approvedRowsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RowPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2515,6 +2672,54 @@ export namespace Prisma {
   }
 
   /**
+   * User.createdRows
+   */
+  export type User$createdRowsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Row
+     */
+    select?: RowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Row
+     */
+    omit?: RowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RowInclude<ExtArgs> | null
+    where?: RowWhereInput
+    orderBy?: RowOrderByWithRelationInput | RowOrderByWithRelationInput[]
+    cursor?: RowWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RowScalarFieldEnum | RowScalarFieldEnum[]
+  }
+
+  /**
+   * User.approvedRows
+   */
+  export type User$approvedRowsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Row
+     */
+    select?: RowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Row
+     */
+    omit?: RowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RowInclude<ExtArgs> | null
+    where?: RowWhereInput
+    orderBy?: RowOrderByWithRelationInput | RowOrderByWithRelationInput[]
+    cursor?: RowWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RowScalarFieldEnum | RowScalarFieldEnum[]
+  }
+
+  /**
    * User without action
    */
   export type UserDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2794,6 +2999,7 @@ export namespace Prisma {
     user?: boolean | Project$userArgs<ExtArgs>
     sections?: boolean | Project$sectionsArgs<ExtArgs>
     beteckningar?: boolean | Project$beteckningarArgs<ExtArgs>
+    tsmRows?: boolean | Project$tsmRowsArgs<ExtArgs>
     _count?: boolean | ProjectCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["project"]>
 
@@ -2852,6 +3058,7 @@ export namespace Prisma {
     user?: boolean | Project$userArgs<ExtArgs>
     sections?: boolean | Project$sectionsArgs<ExtArgs>
     beteckningar?: boolean | Project$beteckningarArgs<ExtArgs>
+    tsmRows?: boolean | Project$tsmRowsArgs<ExtArgs>
     _count?: boolean | ProjectCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type ProjectIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2867,6 +3074,7 @@ export namespace Prisma {
       user: Prisma.$UserPayload<ExtArgs> | null
       sections: Prisma.$SectionPayload<ExtArgs>[]
       beteckningar: Prisma.$BeteckningPayload<ExtArgs>[]
+      tsmRows: Prisma.$RowPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: number
@@ -3279,6 +3487,7 @@ export namespace Prisma {
     user<T extends Project$userArgs<ExtArgs> = {}>(args?: Subset<T, Project$userArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     sections<T extends Project$sectionsArgs<ExtArgs> = {}>(args?: Subset<T, Project$sectionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     beteckningar<T extends Project$beteckningarArgs<ExtArgs> = {}>(args?: Subset<T, Project$beteckningarArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BeteckningPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    tsmRows<T extends Project$tsmRowsArgs<ExtArgs> = {}>(args?: Subset<T, Project$tsmRowsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RowPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3784,6 +3993,30 @@ export namespace Prisma {
   }
 
   /**
+   * Project.tsmRows
+   */
+  export type Project$tsmRowsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Row
+     */
+    select?: RowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Row
+     */
+    omit?: RowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RowInclude<ExtArgs> | null
+    where?: RowWhereInput
+    orderBy?: RowOrderByWithRelationInput | RowOrderByWithRelationInput[]
+    cursor?: RowWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RowScalarFieldEnum | RowScalarFieldEnum[]
+  }
+
+  /**
    * Project without action
    */
   export type ProjectDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3997,6 +4230,8 @@ export namespace Prisma {
     type?: boolean
     projectId?: boolean
     project?: boolean | ProjectDefaultArgs<ExtArgs>
+    rows?: boolean | Section$rowsArgs<ExtArgs>
+    _count?: boolean | SectionCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["section"]>
 
   export type SectionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -4025,6 +4260,8 @@ export namespace Prisma {
   export type SectionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "type" | "projectId", ExtArgs["result"]["section"]>
   export type SectionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     project?: boolean | ProjectDefaultArgs<ExtArgs>
+    rows?: boolean | Section$rowsArgs<ExtArgs>
+    _count?: boolean | SectionCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type SectionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     project?: boolean | ProjectDefaultArgs<ExtArgs>
@@ -4037,6 +4274,7 @@ export namespace Prisma {
     name: "Section"
     objects: {
       project: Prisma.$ProjectPayload<ExtArgs>
+      rows: Prisma.$RowPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: number
@@ -4438,6 +4676,7 @@ export namespace Prisma {
   export interface Prisma__SectionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     project<T extends ProjectDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ProjectDefaultArgs<ExtArgs>>): Prisma__ProjectClient<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    rows<T extends Section$rowsArgs<ExtArgs> = {}>(args?: Subset<T, Section$rowsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RowPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -4864,6 +5103,30 @@ export namespace Prisma {
      * Limit how many Sections to delete.
      */
     limit?: number
+  }
+
+  /**
+   * Section.rows
+   */
+  export type Section$rowsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Row
+     */
+    select?: RowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Row
+     */
+    omit?: RowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RowInclude<ExtArgs> | null
+    where?: RowWhereInput
+    orderBy?: RowOrderByWithRelationInput | RowOrderByWithRelationInput[]
+    cursor?: RowWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RowScalarFieldEnum | RowScalarFieldEnum[]
   }
 
   /**
@@ -7038,6 +7301,1247 @@ export namespace Prisma {
 
 
   /**
+   * Model Row
+   */
+
+  export type AggregateRow = {
+    _count: RowCountAggregateOutputType | null
+    _avg: RowAvgAggregateOutputType | null
+    _sum: RowSumAggregateOutputType | null
+    _min: RowMinAggregateOutputType | null
+    _max: RowMaxAggregateOutputType | null
+  }
+
+  export type RowAvgAggregateOutputType = {
+    id: number | null
+    projectId: number | null
+    userId: number | null
+    sectionId: number | null
+    approvedById: number | null
+  }
+
+  export type RowSumAggregateOutputType = {
+    id: number | null
+    projectId: number | null
+    userId: number | null
+    sectionId: number | null
+    approvedById: number | null
+  }
+
+  export type RowMinAggregateOutputType = {
+    id: number | null
+    projectId: number | null
+    userId: number | null
+    sectionId: number | null
+    anordning: string | null
+    datum: string | null
+    isPending: boolean | null
+    approvedById: number | null
+    createdAt: Date | null
+  }
+
+  export type RowMaxAggregateOutputType = {
+    id: number | null
+    projectId: number | null
+    userId: number | null
+    sectionId: number | null
+    anordning: string | null
+    datum: string | null
+    isPending: boolean | null
+    approvedById: number | null
+    createdAt: Date | null
+  }
+
+  export type RowCountAggregateOutputType = {
+    id: number
+    projectId: number
+    userId: number
+    sectionId: number
+    anordning: number
+    datum: number
+    isPending: number
+    approvedById: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type RowAvgAggregateInputType = {
+    id?: true
+    projectId?: true
+    userId?: true
+    sectionId?: true
+    approvedById?: true
+  }
+
+  export type RowSumAggregateInputType = {
+    id?: true
+    projectId?: true
+    userId?: true
+    sectionId?: true
+    approvedById?: true
+  }
+
+  export type RowMinAggregateInputType = {
+    id?: true
+    projectId?: true
+    userId?: true
+    sectionId?: true
+    anordning?: true
+    datum?: true
+    isPending?: true
+    approvedById?: true
+    createdAt?: true
+  }
+
+  export type RowMaxAggregateInputType = {
+    id?: true
+    projectId?: true
+    userId?: true
+    sectionId?: true
+    anordning?: true
+    datum?: true
+    isPending?: true
+    approvedById?: true
+    createdAt?: true
+  }
+
+  export type RowCountAggregateInputType = {
+    id?: true
+    projectId?: true
+    userId?: true
+    sectionId?: true
+    anordning?: true
+    datum?: true
+    isPending?: true
+    approvedById?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type RowAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Row to aggregate.
+     */
+    where?: RowWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Rows to fetch.
+     */
+    orderBy?: RowOrderByWithRelationInput | RowOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: RowWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Rows from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Rows.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Rows
+    **/
+    _count?: true | RowCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: RowAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: RowSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: RowMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: RowMaxAggregateInputType
+  }
+
+  export type GetRowAggregateType<T extends RowAggregateArgs> = {
+        [P in keyof T & keyof AggregateRow]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateRow[P]>
+      : GetScalarType<T[P], AggregateRow[P]>
+  }
+
+
+
+
+  export type RowGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RowWhereInput
+    orderBy?: RowOrderByWithAggregationInput | RowOrderByWithAggregationInput[]
+    by: RowScalarFieldEnum[] | RowScalarFieldEnum
+    having?: RowScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: RowCountAggregateInputType | true
+    _avg?: RowAvgAggregateInputType
+    _sum?: RowSumAggregateInputType
+    _min?: RowMinAggregateInputType
+    _max?: RowMaxAggregateInputType
+  }
+
+  export type RowGroupByOutputType = {
+    id: number
+    projectId: number
+    userId: number | null
+    sectionId: number | null
+    anordning: string | null
+    datum: string | null
+    isPending: boolean
+    approvedById: number | null
+    createdAt: Date
+    _count: RowCountAggregateOutputType | null
+    _avg: RowAvgAggregateOutputType | null
+    _sum: RowSumAggregateOutputType | null
+    _min: RowMinAggregateOutputType | null
+    _max: RowMaxAggregateOutputType | null
+  }
+
+  type GetRowGroupByPayload<T extends RowGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<RowGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof RowGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], RowGroupByOutputType[P]>
+            : GetScalarType<T[P], RowGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type RowSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    projectId?: boolean
+    userId?: boolean
+    sectionId?: boolean
+    anordning?: boolean
+    datum?: boolean
+    isPending?: boolean
+    approvedById?: boolean
+    createdAt?: boolean
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    user?: boolean | Row$userArgs<ExtArgs>
+    section?: boolean | Row$sectionArgs<ExtArgs>
+    approvedBy?: boolean | Row$approvedByArgs<ExtArgs>
+  }, ExtArgs["result"]["row"]>
+
+  export type RowSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    projectId?: boolean
+    userId?: boolean
+    sectionId?: boolean
+    anordning?: boolean
+    datum?: boolean
+    isPending?: boolean
+    approvedById?: boolean
+    createdAt?: boolean
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    user?: boolean | Row$userArgs<ExtArgs>
+    section?: boolean | Row$sectionArgs<ExtArgs>
+    approvedBy?: boolean | Row$approvedByArgs<ExtArgs>
+  }, ExtArgs["result"]["row"]>
+
+  export type RowSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    projectId?: boolean
+    userId?: boolean
+    sectionId?: boolean
+    anordning?: boolean
+    datum?: boolean
+    isPending?: boolean
+    approvedById?: boolean
+    createdAt?: boolean
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    user?: boolean | Row$userArgs<ExtArgs>
+    section?: boolean | Row$sectionArgs<ExtArgs>
+    approvedBy?: boolean | Row$approvedByArgs<ExtArgs>
+  }, ExtArgs["result"]["row"]>
+
+  export type RowSelectScalar = {
+    id?: boolean
+    projectId?: boolean
+    userId?: boolean
+    sectionId?: boolean
+    anordning?: boolean
+    datum?: boolean
+    isPending?: boolean
+    approvedById?: boolean
+    createdAt?: boolean
+  }
+
+  export type RowOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "projectId" | "userId" | "sectionId" | "anordning" | "datum" | "isPending" | "approvedById" | "createdAt", ExtArgs["result"]["row"]>
+  export type RowInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    user?: boolean | Row$userArgs<ExtArgs>
+    section?: boolean | Row$sectionArgs<ExtArgs>
+    approvedBy?: boolean | Row$approvedByArgs<ExtArgs>
+  }
+  export type RowIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    user?: boolean | Row$userArgs<ExtArgs>
+    section?: boolean | Row$sectionArgs<ExtArgs>
+    approvedBy?: boolean | Row$approvedByArgs<ExtArgs>
+  }
+  export type RowIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    user?: boolean | Row$userArgs<ExtArgs>
+    section?: boolean | Row$sectionArgs<ExtArgs>
+    approvedBy?: boolean | Row$approvedByArgs<ExtArgs>
+  }
+
+  export type $RowPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Row"
+    objects: {
+      project: Prisma.$ProjectPayload<ExtArgs>
+      user: Prisma.$UserPayload<ExtArgs> | null
+      section: Prisma.$SectionPayload<ExtArgs> | null
+      approvedBy: Prisma.$UserPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      projectId: number
+      userId: number | null
+      sectionId: number | null
+      anordning: string | null
+      datum: string | null
+      isPending: boolean
+      approvedById: number | null
+      createdAt: Date
+    }, ExtArgs["result"]["row"]>
+    composites: {}
+  }
+
+  type RowGetPayload<S extends boolean | null | undefined | RowDefaultArgs> = $Result.GetResult<Prisma.$RowPayload, S>
+
+  type RowCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<RowFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: RowCountAggregateInputType | true
+    }
+
+  export interface RowDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Row'], meta: { name: 'Row' } }
+    /**
+     * Find zero or one Row that matches the filter.
+     * @param {RowFindUniqueArgs} args - Arguments to find a Row
+     * @example
+     * // Get one Row
+     * const row = await prisma.row.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends RowFindUniqueArgs>(args: SelectSubset<T, RowFindUniqueArgs<ExtArgs>>): Prisma__RowClient<$Result.GetResult<Prisma.$RowPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Row that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {RowFindUniqueOrThrowArgs} args - Arguments to find a Row
+     * @example
+     * // Get one Row
+     * const row = await prisma.row.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends RowFindUniqueOrThrowArgs>(args: SelectSubset<T, RowFindUniqueOrThrowArgs<ExtArgs>>): Prisma__RowClient<$Result.GetResult<Prisma.$RowPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Row that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RowFindFirstArgs} args - Arguments to find a Row
+     * @example
+     * // Get one Row
+     * const row = await prisma.row.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends RowFindFirstArgs>(args?: SelectSubset<T, RowFindFirstArgs<ExtArgs>>): Prisma__RowClient<$Result.GetResult<Prisma.$RowPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Row that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RowFindFirstOrThrowArgs} args - Arguments to find a Row
+     * @example
+     * // Get one Row
+     * const row = await prisma.row.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends RowFindFirstOrThrowArgs>(args?: SelectSubset<T, RowFindFirstOrThrowArgs<ExtArgs>>): Prisma__RowClient<$Result.GetResult<Prisma.$RowPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Rows that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RowFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Rows
+     * const rows = await prisma.row.findMany()
+     * 
+     * // Get first 10 Rows
+     * const rows = await prisma.row.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const rowWithIdOnly = await prisma.row.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends RowFindManyArgs>(args?: SelectSubset<T, RowFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RowPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Row.
+     * @param {RowCreateArgs} args - Arguments to create a Row.
+     * @example
+     * // Create one Row
+     * const Row = await prisma.row.create({
+     *   data: {
+     *     // ... data to create a Row
+     *   }
+     * })
+     * 
+     */
+    create<T extends RowCreateArgs>(args: SelectSubset<T, RowCreateArgs<ExtArgs>>): Prisma__RowClient<$Result.GetResult<Prisma.$RowPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Rows.
+     * @param {RowCreateManyArgs} args - Arguments to create many Rows.
+     * @example
+     * // Create many Rows
+     * const row = await prisma.row.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends RowCreateManyArgs>(args?: SelectSubset<T, RowCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Rows and returns the data saved in the database.
+     * @param {RowCreateManyAndReturnArgs} args - Arguments to create many Rows.
+     * @example
+     * // Create many Rows
+     * const row = await prisma.row.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Rows and only return the `id`
+     * const rowWithIdOnly = await prisma.row.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends RowCreateManyAndReturnArgs>(args?: SelectSubset<T, RowCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RowPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Row.
+     * @param {RowDeleteArgs} args - Arguments to delete one Row.
+     * @example
+     * // Delete one Row
+     * const Row = await prisma.row.delete({
+     *   where: {
+     *     // ... filter to delete one Row
+     *   }
+     * })
+     * 
+     */
+    delete<T extends RowDeleteArgs>(args: SelectSubset<T, RowDeleteArgs<ExtArgs>>): Prisma__RowClient<$Result.GetResult<Prisma.$RowPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Row.
+     * @param {RowUpdateArgs} args - Arguments to update one Row.
+     * @example
+     * // Update one Row
+     * const row = await prisma.row.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends RowUpdateArgs>(args: SelectSubset<T, RowUpdateArgs<ExtArgs>>): Prisma__RowClient<$Result.GetResult<Prisma.$RowPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Rows.
+     * @param {RowDeleteManyArgs} args - Arguments to filter Rows to delete.
+     * @example
+     * // Delete a few Rows
+     * const { count } = await prisma.row.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends RowDeleteManyArgs>(args?: SelectSubset<T, RowDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Rows.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RowUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Rows
+     * const row = await prisma.row.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends RowUpdateManyArgs>(args: SelectSubset<T, RowUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Rows and returns the data updated in the database.
+     * @param {RowUpdateManyAndReturnArgs} args - Arguments to update many Rows.
+     * @example
+     * // Update many Rows
+     * const row = await prisma.row.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Rows and only return the `id`
+     * const rowWithIdOnly = await prisma.row.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends RowUpdateManyAndReturnArgs>(args: SelectSubset<T, RowUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RowPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Row.
+     * @param {RowUpsertArgs} args - Arguments to update or create a Row.
+     * @example
+     * // Update or create a Row
+     * const row = await prisma.row.upsert({
+     *   create: {
+     *     // ... data to create a Row
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Row we want to update
+     *   }
+     * })
+     */
+    upsert<T extends RowUpsertArgs>(args: SelectSubset<T, RowUpsertArgs<ExtArgs>>): Prisma__RowClient<$Result.GetResult<Prisma.$RowPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Rows.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RowCountArgs} args - Arguments to filter Rows to count.
+     * @example
+     * // Count the number of Rows
+     * const count = await prisma.row.count({
+     *   where: {
+     *     // ... the filter for the Rows we want to count
+     *   }
+     * })
+    **/
+    count<T extends RowCountArgs>(
+      args?: Subset<T, RowCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], RowCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Row.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RowAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends RowAggregateArgs>(args: Subset<T, RowAggregateArgs>): Prisma.PrismaPromise<GetRowAggregateType<T>>
+
+    /**
+     * Group by Row.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RowGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends RowGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: RowGroupByArgs['orderBy'] }
+        : { orderBy?: RowGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, RowGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetRowGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Row model
+   */
+  readonly fields: RowFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Row.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__RowClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    project<T extends ProjectDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ProjectDefaultArgs<ExtArgs>>): Prisma__ProjectClient<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    user<T extends Row$userArgs<ExtArgs> = {}>(args?: Subset<T, Row$userArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    section<T extends Row$sectionArgs<ExtArgs> = {}>(args?: Subset<T, Row$sectionArgs<ExtArgs>>): Prisma__SectionClient<$Result.GetResult<Prisma.$SectionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    approvedBy<T extends Row$approvedByArgs<ExtArgs> = {}>(args?: Subset<T, Row$approvedByArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Row model
+   */
+  interface RowFieldRefs {
+    readonly id: FieldRef<"Row", 'Int'>
+    readonly projectId: FieldRef<"Row", 'Int'>
+    readonly userId: FieldRef<"Row", 'Int'>
+    readonly sectionId: FieldRef<"Row", 'Int'>
+    readonly anordning: FieldRef<"Row", 'String'>
+    readonly datum: FieldRef<"Row", 'String'>
+    readonly isPending: FieldRef<"Row", 'Boolean'>
+    readonly approvedById: FieldRef<"Row", 'Int'>
+    readonly createdAt: FieldRef<"Row", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Row findUnique
+   */
+  export type RowFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Row
+     */
+    select?: RowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Row
+     */
+    omit?: RowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RowInclude<ExtArgs> | null
+    /**
+     * Filter, which Row to fetch.
+     */
+    where: RowWhereUniqueInput
+  }
+
+  /**
+   * Row findUniqueOrThrow
+   */
+  export type RowFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Row
+     */
+    select?: RowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Row
+     */
+    omit?: RowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RowInclude<ExtArgs> | null
+    /**
+     * Filter, which Row to fetch.
+     */
+    where: RowWhereUniqueInput
+  }
+
+  /**
+   * Row findFirst
+   */
+  export type RowFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Row
+     */
+    select?: RowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Row
+     */
+    omit?: RowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RowInclude<ExtArgs> | null
+    /**
+     * Filter, which Row to fetch.
+     */
+    where?: RowWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Rows to fetch.
+     */
+    orderBy?: RowOrderByWithRelationInput | RowOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Rows.
+     */
+    cursor?: RowWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Rows from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Rows.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Rows.
+     */
+    distinct?: RowScalarFieldEnum | RowScalarFieldEnum[]
+  }
+
+  /**
+   * Row findFirstOrThrow
+   */
+  export type RowFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Row
+     */
+    select?: RowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Row
+     */
+    omit?: RowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RowInclude<ExtArgs> | null
+    /**
+     * Filter, which Row to fetch.
+     */
+    where?: RowWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Rows to fetch.
+     */
+    orderBy?: RowOrderByWithRelationInput | RowOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Rows.
+     */
+    cursor?: RowWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Rows from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Rows.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Rows.
+     */
+    distinct?: RowScalarFieldEnum | RowScalarFieldEnum[]
+  }
+
+  /**
+   * Row findMany
+   */
+  export type RowFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Row
+     */
+    select?: RowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Row
+     */
+    omit?: RowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RowInclude<ExtArgs> | null
+    /**
+     * Filter, which Rows to fetch.
+     */
+    where?: RowWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Rows to fetch.
+     */
+    orderBy?: RowOrderByWithRelationInput | RowOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Rows.
+     */
+    cursor?: RowWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Rows from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Rows.
+     */
+    skip?: number
+    distinct?: RowScalarFieldEnum | RowScalarFieldEnum[]
+  }
+
+  /**
+   * Row create
+   */
+  export type RowCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Row
+     */
+    select?: RowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Row
+     */
+    omit?: RowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RowInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Row.
+     */
+    data: XOR<RowCreateInput, RowUncheckedCreateInput>
+  }
+
+  /**
+   * Row createMany
+   */
+  export type RowCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Rows.
+     */
+    data: RowCreateManyInput | RowCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Row createManyAndReturn
+   */
+  export type RowCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Row
+     */
+    select?: RowSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Row
+     */
+    omit?: RowOmit<ExtArgs> | null
+    /**
+     * The data used to create many Rows.
+     */
+    data: RowCreateManyInput | RowCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RowIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Row update
+   */
+  export type RowUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Row
+     */
+    select?: RowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Row
+     */
+    omit?: RowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RowInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Row.
+     */
+    data: XOR<RowUpdateInput, RowUncheckedUpdateInput>
+    /**
+     * Choose, which Row to update.
+     */
+    where: RowWhereUniqueInput
+  }
+
+  /**
+   * Row updateMany
+   */
+  export type RowUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Rows.
+     */
+    data: XOR<RowUpdateManyMutationInput, RowUncheckedUpdateManyInput>
+    /**
+     * Filter which Rows to update
+     */
+    where?: RowWhereInput
+    /**
+     * Limit how many Rows to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Row updateManyAndReturn
+   */
+  export type RowUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Row
+     */
+    select?: RowSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Row
+     */
+    omit?: RowOmit<ExtArgs> | null
+    /**
+     * The data used to update Rows.
+     */
+    data: XOR<RowUpdateManyMutationInput, RowUncheckedUpdateManyInput>
+    /**
+     * Filter which Rows to update
+     */
+    where?: RowWhereInput
+    /**
+     * Limit how many Rows to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RowIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Row upsert
+   */
+  export type RowUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Row
+     */
+    select?: RowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Row
+     */
+    omit?: RowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RowInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Row to update in case it exists.
+     */
+    where: RowWhereUniqueInput
+    /**
+     * In case the Row found by the `where` argument doesn't exist, create a new Row with this data.
+     */
+    create: XOR<RowCreateInput, RowUncheckedCreateInput>
+    /**
+     * In case the Row was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<RowUpdateInput, RowUncheckedUpdateInput>
+  }
+
+  /**
+   * Row delete
+   */
+  export type RowDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Row
+     */
+    select?: RowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Row
+     */
+    omit?: RowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RowInclude<ExtArgs> | null
+    /**
+     * Filter which Row to delete.
+     */
+    where: RowWhereUniqueInput
+  }
+
+  /**
+   * Row deleteMany
+   */
+  export type RowDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Rows to delete
+     */
+    where?: RowWhereInput
+    /**
+     * Limit how many Rows to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Row.user
+   */
+  export type Row$userArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
+   * Row.section
+   */
+  export type Row$sectionArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Section
+     */
+    select?: SectionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Section
+     */
+    omit?: SectionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SectionInclude<ExtArgs> | null
+    where?: SectionWhereInput
+  }
+
+  /**
+   * Row.approvedBy
+   */
+  export type Row$approvedByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
+   * Row without action
+   */
+  export type RowDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Row
+     */
+    select?: RowSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Row
+     */
+    omit?: RowOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RowInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -7111,6 +8615,21 @@ export namespace Prisma {
   };
 
   export type EmployeeScalarFieldEnum = (typeof EmployeeScalarFieldEnum)[keyof typeof EmployeeScalarFieldEnum]
+
+
+  export const RowScalarFieldEnum: {
+    id: 'id',
+    projectId: 'projectId',
+    userId: 'userId',
+    sectionId: 'sectionId',
+    anordning: 'anordning',
+    datum: 'datum',
+    isPending: 'isPending',
+    approvedById: 'approvedById',
+    createdAt: 'createdAt'
+  };
+
+  export type RowScalarFieldEnum = (typeof RowScalarFieldEnum)[keyof typeof RowScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -7216,6 +8735,13 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+  /**
    * Reference to a field of type 'Float'
    */
   export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -7248,6 +8774,8 @@ export namespace Prisma {
     projects?: ProjectListRelationFilter
     employees?: EmployeeListRelationFilter
     employerOf?: EmployeeListRelationFilter
+    createdRows?: RowListRelationFilter
+    approvedRows?: RowListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -7263,6 +8791,8 @@ export namespace Prisma {
     projects?: ProjectOrderByRelationAggregateInput
     employees?: EmployeeOrderByRelationAggregateInput
     employerOf?: EmployeeOrderByRelationAggregateInput
+    createdRows?: RowOrderByRelationAggregateInput
+    approvedRows?: RowOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -7281,6 +8811,8 @@ export namespace Prisma {
     projects?: ProjectListRelationFilter
     employees?: EmployeeListRelationFilter
     employerOf?: EmployeeListRelationFilter
+    createdRows?: RowListRelationFilter
+    approvedRows?: RowListRelationFilter
   }, "id" | "email">
 
   export type UserOrderByWithAggregationInput = {
@@ -7335,6 +8867,7 @@ export namespace Prisma {
     user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
     sections?: SectionListRelationFilter
     beteckningar?: BeteckningListRelationFilter
+    tsmRows?: RowListRelationFilter
   }
 
   export type ProjectOrderByWithRelationInput = {
@@ -7354,6 +8887,7 @@ export namespace Prisma {
     user?: UserOrderByWithRelationInput
     sections?: SectionOrderByRelationAggregateInput
     beteckningar?: BeteckningOrderByRelationAggregateInput
+    tsmRows?: RowOrderByRelationAggregateInput
   }
 
   export type ProjectWhereUniqueInput = Prisma.AtLeast<{
@@ -7376,6 +8910,7 @@ export namespace Prisma {
     user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
     sections?: SectionListRelationFilter
     beteckningar?: BeteckningListRelationFilter
+    tsmRows?: RowListRelationFilter
   }, "id">
 
   export type ProjectOrderByWithAggregationInput = {
@@ -7427,6 +8962,7 @@ export namespace Prisma {
     type?: StringFilter<"Section"> | string
     projectId?: IntFilter<"Section"> | number
     project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
+    rows?: RowListRelationFilter
   }
 
   export type SectionOrderByWithRelationInput = {
@@ -7435,6 +8971,7 @@ export namespace Prisma {
     type?: SortOrder
     projectId?: SortOrder
     project?: ProjectOrderByWithRelationInput
+    rows?: RowOrderByRelationAggregateInput
   }
 
   export type SectionWhereUniqueInput = Prisma.AtLeast<{
@@ -7446,6 +8983,7 @@ export namespace Prisma {
     type?: StringFilter<"Section"> | string
     projectId?: IntFilter<"Section"> | number
     project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
+    rows?: RowListRelationFilter
   }, "id">
 
   export type SectionOrderByWithAggregationInput = {
@@ -7568,6 +9106,92 @@ export namespace Prisma {
     employeeId?: IntWithAggregatesFilter<"Employee"> | number
   }
 
+  export type RowWhereInput = {
+    AND?: RowWhereInput | RowWhereInput[]
+    OR?: RowWhereInput[]
+    NOT?: RowWhereInput | RowWhereInput[]
+    id?: IntFilter<"Row"> | number
+    projectId?: IntFilter<"Row"> | number
+    userId?: IntNullableFilter<"Row"> | number | null
+    sectionId?: IntNullableFilter<"Row"> | number | null
+    anordning?: StringNullableFilter<"Row"> | string | null
+    datum?: StringNullableFilter<"Row"> | string | null
+    isPending?: BoolFilter<"Row"> | boolean
+    approvedById?: IntNullableFilter<"Row"> | number | null
+    createdAt?: DateTimeFilter<"Row"> | Date | string
+    project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
+    user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+    section?: XOR<SectionNullableScalarRelationFilter, SectionWhereInput> | null
+    approvedBy?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+  }
+
+  export type RowOrderByWithRelationInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    userId?: SortOrderInput | SortOrder
+    sectionId?: SortOrderInput | SortOrder
+    anordning?: SortOrderInput | SortOrder
+    datum?: SortOrderInput | SortOrder
+    isPending?: SortOrder
+    approvedById?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    project?: ProjectOrderByWithRelationInput
+    user?: UserOrderByWithRelationInput
+    section?: SectionOrderByWithRelationInput
+    approvedBy?: UserOrderByWithRelationInput
+  }
+
+  export type RowWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    AND?: RowWhereInput | RowWhereInput[]
+    OR?: RowWhereInput[]
+    NOT?: RowWhereInput | RowWhereInput[]
+    projectId?: IntFilter<"Row"> | number
+    userId?: IntNullableFilter<"Row"> | number | null
+    sectionId?: IntNullableFilter<"Row"> | number | null
+    anordning?: StringNullableFilter<"Row"> | string | null
+    datum?: StringNullableFilter<"Row"> | string | null
+    isPending?: BoolFilter<"Row"> | boolean
+    approvedById?: IntNullableFilter<"Row"> | number | null
+    createdAt?: DateTimeFilter<"Row"> | Date | string
+    project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
+    user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+    section?: XOR<SectionNullableScalarRelationFilter, SectionWhereInput> | null
+    approvedBy?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+  }, "id">
+
+  export type RowOrderByWithAggregationInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    userId?: SortOrderInput | SortOrder
+    sectionId?: SortOrderInput | SortOrder
+    anordning?: SortOrderInput | SortOrder
+    datum?: SortOrderInput | SortOrder
+    isPending?: SortOrder
+    approvedById?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: RowCountOrderByAggregateInput
+    _avg?: RowAvgOrderByAggregateInput
+    _max?: RowMaxOrderByAggregateInput
+    _min?: RowMinOrderByAggregateInput
+    _sum?: RowSumOrderByAggregateInput
+  }
+
+  export type RowScalarWhereWithAggregatesInput = {
+    AND?: RowScalarWhereWithAggregatesInput | RowScalarWhereWithAggregatesInput[]
+    OR?: RowScalarWhereWithAggregatesInput[]
+    NOT?: RowScalarWhereWithAggregatesInput | RowScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"Row"> | number
+    projectId?: IntWithAggregatesFilter<"Row"> | number
+    userId?: IntNullableWithAggregatesFilter<"Row"> | number | null
+    sectionId?: IntNullableWithAggregatesFilter<"Row"> | number | null
+    anordning?: StringNullableWithAggregatesFilter<"Row"> | string | null
+    datum?: StringNullableWithAggregatesFilter<"Row"> | string | null
+    isPending?: BoolWithAggregatesFilter<"Row"> | boolean
+    approvedById?: IntNullableWithAggregatesFilter<"Row"> | number | null
+    createdAt?: DateTimeWithAggregatesFilter<"Row"> | Date | string
+  }
+
   export type UserCreateInput = {
     email: string
     password: string
@@ -7580,6 +9204,8 @@ export namespace Prisma {
     projects?: ProjectCreateNestedManyWithoutUserInput
     employees?: EmployeeCreateNestedManyWithoutEmployerInput
     employerOf?: EmployeeCreateNestedManyWithoutEmployeeInput
+    createdRows?: RowCreateNestedManyWithoutUserInput
+    approvedRows?: RowCreateNestedManyWithoutApprovedByInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -7595,6 +9221,8 @@ export namespace Prisma {
     projects?: ProjectUncheckedCreateNestedManyWithoutUserInput
     employees?: EmployeeUncheckedCreateNestedManyWithoutEmployerInput
     employerOf?: EmployeeUncheckedCreateNestedManyWithoutEmployeeInput
+    createdRows?: RowUncheckedCreateNestedManyWithoutUserInput
+    approvedRows?: RowUncheckedCreateNestedManyWithoutApprovedByInput
   }
 
   export type UserUpdateInput = {
@@ -7609,6 +9237,8 @@ export namespace Prisma {
     projects?: ProjectUpdateManyWithoutUserNestedInput
     employees?: EmployeeUpdateManyWithoutEmployerNestedInput
     employerOf?: EmployeeUpdateManyWithoutEmployeeNestedInput
+    createdRows?: RowUpdateManyWithoutUserNestedInput
+    approvedRows?: RowUpdateManyWithoutApprovedByNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -7624,6 +9254,8 @@ export namespace Prisma {
     projects?: ProjectUncheckedUpdateManyWithoutUserNestedInput
     employees?: EmployeeUncheckedUpdateManyWithoutEmployerNestedInput
     employerOf?: EmployeeUncheckedUpdateManyWithoutEmployeeNestedInput
+    createdRows?: RowUncheckedUpdateManyWithoutUserNestedInput
+    approvedRows?: RowUncheckedUpdateManyWithoutApprovedByNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -7676,6 +9308,7 @@ export namespace Prisma {
     user?: UserCreateNestedOneWithoutProjectsInput
     sections?: SectionCreateNestedManyWithoutProjectInput
     beteckningar?: BeteckningCreateNestedManyWithoutProjectInput
+    tsmRows?: RowCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectUncheckedCreateInput = {
@@ -7694,6 +9327,7 @@ export namespace Prisma {
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     sections?: SectionUncheckedCreateNestedManyWithoutProjectInput
     beteckningar?: BeteckningUncheckedCreateNestedManyWithoutProjectInput
+    tsmRows?: RowUncheckedCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectUpdateInput = {
@@ -7711,6 +9345,7 @@ export namespace Prisma {
     user?: UserUpdateOneWithoutProjectsNestedInput
     sections?: SectionUpdateManyWithoutProjectNestedInput
     beteckningar?: BeteckningUpdateManyWithoutProjectNestedInput
+    tsmRows?: RowUpdateManyWithoutProjectNestedInput
   }
 
   export type ProjectUncheckedUpdateInput = {
@@ -7729,6 +9364,7 @@ export namespace Prisma {
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     sections?: SectionUncheckedUpdateManyWithoutProjectNestedInput
     beteckningar?: BeteckningUncheckedUpdateManyWithoutProjectNestedInput
+    tsmRows?: RowUncheckedUpdateManyWithoutProjectNestedInput
   }
 
   export type ProjectCreateManyInput = {
@@ -7781,6 +9417,7 @@ export namespace Prisma {
     name: string
     type: string
     project: ProjectCreateNestedOneWithoutSectionsInput
+    rows?: RowCreateNestedManyWithoutSectionInput
   }
 
   export type SectionUncheckedCreateInput = {
@@ -7788,12 +9425,14 @@ export namespace Prisma {
     name: string
     type: string
     projectId: number
+    rows?: RowUncheckedCreateNestedManyWithoutSectionInput
   }
 
   export type SectionUpdateInput = {
     name?: StringFieldUpdateOperationsInput | string
     type?: StringFieldUpdateOperationsInput | string
     project?: ProjectUpdateOneRequiredWithoutSectionsNestedInput
+    rows?: RowUpdateManyWithoutSectionNestedInput
   }
 
   export type SectionUncheckedUpdateInput = {
@@ -7801,6 +9440,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     type?: StringFieldUpdateOperationsInput | string
     projectId?: IntFieldUpdateOperationsInput | number
+    rows?: RowUncheckedUpdateManyWithoutSectionNestedInput
   }
 
   export type SectionCreateManyInput = {
@@ -7898,6 +9538,83 @@ export namespace Prisma {
     employeeId?: IntFieldUpdateOperationsInput | number
   }
 
+  export type RowCreateInput = {
+    anordning?: string | null
+    datum?: string | null
+    isPending?: boolean
+    createdAt?: Date | string
+    project: ProjectCreateNestedOneWithoutTsmRowsInput
+    user?: UserCreateNestedOneWithoutCreatedRowsInput
+    section?: SectionCreateNestedOneWithoutRowsInput
+    approvedBy?: UserCreateNestedOneWithoutApprovedRowsInput
+  }
+
+  export type RowUncheckedCreateInput = {
+    id?: number
+    projectId: number
+    userId?: number | null
+    sectionId?: number | null
+    anordning?: string | null
+    datum?: string | null
+    isPending?: boolean
+    approvedById?: number | null
+    createdAt?: Date | string
+  }
+
+  export type RowUpdateInput = {
+    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    datum?: NullableStringFieldUpdateOperationsInput | string | null
+    isPending?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    project?: ProjectUpdateOneRequiredWithoutTsmRowsNestedInput
+    user?: UserUpdateOneWithoutCreatedRowsNestedInput
+    section?: SectionUpdateOneWithoutRowsNestedInput
+    approvedBy?: UserUpdateOneWithoutApprovedRowsNestedInput
+  }
+
+  export type RowUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    projectId?: IntFieldUpdateOperationsInput | number
+    userId?: NullableIntFieldUpdateOperationsInput | number | null
+    sectionId?: NullableIntFieldUpdateOperationsInput | number | null
+    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    datum?: NullableStringFieldUpdateOperationsInput | string | null
+    isPending?: BoolFieldUpdateOperationsInput | boolean
+    approvedById?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RowCreateManyInput = {
+    id?: number
+    projectId: number
+    userId?: number | null
+    sectionId?: number | null
+    anordning?: string | null
+    datum?: string | null
+    isPending?: boolean
+    approvedById?: number | null
+    createdAt?: Date | string
+  }
+
+  export type RowUpdateManyMutationInput = {
+    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    datum?: NullableStringFieldUpdateOperationsInput | string | null
+    isPending?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RowUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    projectId?: IntFieldUpdateOperationsInput | number
+    userId?: NullableIntFieldUpdateOperationsInput | number | null
+    sectionId?: NullableIntFieldUpdateOperationsInput | number | null
+    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    datum?: NullableStringFieldUpdateOperationsInput | string | null
+    isPending?: BoolFieldUpdateOperationsInput | boolean
+    approvedById?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type IntFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel>
     in?: number[] | ListIntFieldRefInput<$PrismaModel>
@@ -7951,6 +9668,12 @@ export namespace Prisma {
     none?: EmployeeWhereInput
   }
 
+  export type RowListRelationFilter = {
+    every?: RowWhereInput
+    some?: RowWhereInput
+    none?: RowWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
@@ -7961,6 +9684,10 @@ export namespace Prisma {
   }
 
   export type EmployeeOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type RowOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -8344,6 +10071,76 @@ export namespace Prisma {
     employeeId?: SortOrder
   }
 
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type SectionNullableScalarRelationFilter = {
+    is?: SectionWhereInput | null
+    isNot?: SectionWhereInput | null
+  }
+
+  export type RowCountOrderByAggregateInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    userId?: SortOrder
+    sectionId?: SortOrder
+    anordning?: SortOrder
+    datum?: SortOrder
+    isPending?: SortOrder
+    approvedById?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type RowAvgOrderByAggregateInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    userId?: SortOrder
+    sectionId?: SortOrder
+    approvedById?: SortOrder
+  }
+
+  export type RowMaxOrderByAggregateInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    userId?: SortOrder
+    sectionId?: SortOrder
+    anordning?: SortOrder
+    datum?: SortOrder
+    isPending?: SortOrder
+    approvedById?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type RowMinOrderByAggregateInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    userId?: SortOrder
+    sectionId?: SortOrder
+    anordning?: SortOrder
+    datum?: SortOrder
+    isPending?: SortOrder
+    approvedById?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type RowSumOrderByAggregateInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    userId?: SortOrder
+    sectionId?: SortOrder
+    approvedById?: SortOrder
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
   export type ProjectCreateNestedManyWithoutUserInput = {
     create?: XOR<ProjectCreateWithoutUserInput, ProjectUncheckedCreateWithoutUserInput> | ProjectCreateWithoutUserInput[] | ProjectUncheckedCreateWithoutUserInput[]
     connectOrCreate?: ProjectCreateOrConnectWithoutUserInput | ProjectCreateOrConnectWithoutUserInput[]
@@ -8365,6 +10162,20 @@ export namespace Prisma {
     connect?: EmployeeWhereUniqueInput | EmployeeWhereUniqueInput[]
   }
 
+  export type RowCreateNestedManyWithoutUserInput = {
+    create?: XOR<RowCreateWithoutUserInput, RowUncheckedCreateWithoutUserInput> | RowCreateWithoutUserInput[] | RowUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: RowCreateOrConnectWithoutUserInput | RowCreateOrConnectWithoutUserInput[]
+    createMany?: RowCreateManyUserInputEnvelope
+    connect?: RowWhereUniqueInput | RowWhereUniqueInput[]
+  }
+
+  export type RowCreateNestedManyWithoutApprovedByInput = {
+    create?: XOR<RowCreateWithoutApprovedByInput, RowUncheckedCreateWithoutApprovedByInput> | RowCreateWithoutApprovedByInput[] | RowUncheckedCreateWithoutApprovedByInput[]
+    connectOrCreate?: RowCreateOrConnectWithoutApprovedByInput | RowCreateOrConnectWithoutApprovedByInput[]
+    createMany?: RowCreateManyApprovedByInputEnvelope
+    connect?: RowWhereUniqueInput | RowWhereUniqueInput[]
+  }
+
   export type ProjectUncheckedCreateNestedManyWithoutUserInput = {
     create?: XOR<ProjectCreateWithoutUserInput, ProjectUncheckedCreateWithoutUserInput> | ProjectCreateWithoutUserInput[] | ProjectUncheckedCreateWithoutUserInput[]
     connectOrCreate?: ProjectCreateOrConnectWithoutUserInput | ProjectCreateOrConnectWithoutUserInput[]
@@ -8384,6 +10195,20 @@ export namespace Prisma {
     connectOrCreate?: EmployeeCreateOrConnectWithoutEmployeeInput | EmployeeCreateOrConnectWithoutEmployeeInput[]
     createMany?: EmployeeCreateManyEmployeeInputEnvelope
     connect?: EmployeeWhereUniqueInput | EmployeeWhereUniqueInput[]
+  }
+
+  export type RowUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<RowCreateWithoutUserInput, RowUncheckedCreateWithoutUserInput> | RowCreateWithoutUserInput[] | RowUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: RowCreateOrConnectWithoutUserInput | RowCreateOrConnectWithoutUserInput[]
+    createMany?: RowCreateManyUserInputEnvelope
+    connect?: RowWhereUniqueInput | RowWhereUniqueInput[]
+  }
+
+  export type RowUncheckedCreateNestedManyWithoutApprovedByInput = {
+    create?: XOR<RowCreateWithoutApprovedByInput, RowUncheckedCreateWithoutApprovedByInput> | RowCreateWithoutApprovedByInput[] | RowUncheckedCreateWithoutApprovedByInput[]
+    connectOrCreate?: RowCreateOrConnectWithoutApprovedByInput | RowCreateOrConnectWithoutApprovedByInput[]
+    createMany?: RowCreateManyApprovedByInputEnvelope
+    connect?: RowWhereUniqueInput | RowWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -8436,6 +10261,34 @@ export namespace Prisma {
     deleteMany?: EmployeeScalarWhereInput | EmployeeScalarWhereInput[]
   }
 
+  export type RowUpdateManyWithoutUserNestedInput = {
+    create?: XOR<RowCreateWithoutUserInput, RowUncheckedCreateWithoutUserInput> | RowCreateWithoutUserInput[] | RowUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: RowCreateOrConnectWithoutUserInput | RowCreateOrConnectWithoutUserInput[]
+    upsert?: RowUpsertWithWhereUniqueWithoutUserInput | RowUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: RowCreateManyUserInputEnvelope
+    set?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    disconnect?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    delete?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    connect?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    update?: RowUpdateWithWhereUniqueWithoutUserInput | RowUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: RowUpdateManyWithWhereWithoutUserInput | RowUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: RowScalarWhereInput | RowScalarWhereInput[]
+  }
+
+  export type RowUpdateManyWithoutApprovedByNestedInput = {
+    create?: XOR<RowCreateWithoutApprovedByInput, RowUncheckedCreateWithoutApprovedByInput> | RowCreateWithoutApprovedByInput[] | RowUncheckedCreateWithoutApprovedByInput[]
+    connectOrCreate?: RowCreateOrConnectWithoutApprovedByInput | RowCreateOrConnectWithoutApprovedByInput[]
+    upsert?: RowUpsertWithWhereUniqueWithoutApprovedByInput | RowUpsertWithWhereUniqueWithoutApprovedByInput[]
+    createMany?: RowCreateManyApprovedByInputEnvelope
+    set?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    disconnect?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    delete?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    connect?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    update?: RowUpdateWithWhereUniqueWithoutApprovedByInput | RowUpdateWithWhereUniqueWithoutApprovedByInput[]
+    updateMany?: RowUpdateManyWithWhereWithoutApprovedByInput | RowUpdateManyWithWhereWithoutApprovedByInput[]
+    deleteMany?: RowScalarWhereInput | RowScalarWhereInput[]
+  }
+
   export type IntFieldUpdateOperationsInput = {
     set?: number
     increment?: number
@@ -8486,6 +10339,34 @@ export namespace Prisma {
     deleteMany?: EmployeeScalarWhereInput | EmployeeScalarWhereInput[]
   }
 
+  export type RowUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<RowCreateWithoutUserInput, RowUncheckedCreateWithoutUserInput> | RowCreateWithoutUserInput[] | RowUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: RowCreateOrConnectWithoutUserInput | RowCreateOrConnectWithoutUserInput[]
+    upsert?: RowUpsertWithWhereUniqueWithoutUserInput | RowUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: RowCreateManyUserInputEnvelope
+    set?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    disconnect?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    delete?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    connect?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    update?: RowUpdateWithWhereUniqueWithoutUserInput | RowUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: RowUpdateManyWithWhereWithoutUserInput | RowUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: RowScalarWhereInput | RowScalarWhereInput[]
+  }
+
+  export type RowUncheckedUpdateManyWithoutApprovedByNestedInput = {
+    create?: XOR<RowCreateWithoutApprovedByInput, RowUncheckedCreateWithoutApprovedByInput> | RowCreateWithoutApprovedByInput[] | RowUncheckedCreateWithoutApprovedByInput[]
+    connectOrCreate?: RowCreateOrConnectWithoutApprovedByInput | RowCreateOrConnectWithoutApprovedByInput[]
+    upsert?: RowUpsertWithWhereUniqueWithoutApprovedByInput | RowUpsertWithWhereUniqueWithoutApprovedByInput[]
+    createMany?: RowCreateManyApprovedByInputEnvelope
+    set?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    disconnect?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    delete?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    connect?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    update?: RowUpdateWithWhereUniqueWithoutApprovedByInput | RowUpdateWithWhereUniqueWithoutApprovedByInput[]
+    updateMany?: RowUpdateManyWithWhereWithoutApprovedByInput | RowUpdateManyWithWhereWithoutApprovedByInput[]
+    deleteMany?: RowScalarWhereInput | RowScalarWhereInput[]
+  }
+
   export type UserCreateNestedOneWithoutProjectsInput = {
     create?: XOR<UserCreateWithoutProjectsInput, UserUncheckedCreateWithoutProjectsInput>
     connectOrCreate?: UserCreateOrConnectWithoutProjectsInput
@@ -8506,6 +10387,13 @@ export namespace Prisma {
     connect?: BeteckningWhereUniqueInput | BeteckningWhereUniqueInput[]
   }
 
+  export type RowCreateNestedManyWithoutProjectInput = {
+    create?: XOR<RowCreateWithoutProjectInput, RowUncheckedCreateWithoutProjectInput> | RowCreateWithoutProjectInput[] | RowUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: RowCreateOrConnectWithoutProjectInput | RowCreateOrConnectWithoutProjectInput[]
+    createMany?: RowCreateManyProjectInputEnvelope
+    connect?: RowWhereUniqueInput | RowWhereUniqueInput[]
+  }
+
   export type SectionUncheckedCreateNestedManyWithoutProjectInput = {
     create?: XOR<SectionCreateWithoutProjectInput, SectionUncheckedCreateWithoutProjectInput> | SectionCreateWithoutProjectInput[] | SectionUncheckedCreateWithoutProjectInput[]
     connectOrCreate?: SectionCreateOrConnectWithoutProjectInput | SectionCreateOrConnectWithoutProjectInput[]
@@ -8518,6 +10406,13 @@ export namespace Prisma {
     connectOrCreate?: BeteckningCreateOrConnectWithoutProjectInput | BeteckningCreateOrConnectWithoutProjectInput[]
     createMany?: BeteckningCreateManyProjectInputEnvelope
     connect?: BeteckningWhereUniqueInput | BeteckningWhereUniqueInput[]
+  }
+
+  export type RowUncheckedCreateNestedManyWithoutProjectInput = {
+    create?: XOR<RowCreateWithoutProjectInput, RowUncheckedCreateWithoutProjectInput> | RowCreateWithoutProjectInput[] | RowUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: RowCreateOrConnectWithoutProjectInput | RowCreateOrConnectWithoutProjectInput[]
+    createMany?: RowCreateManyProjectInputEnvelope
+    connect?: RowWhereUniqueInput | RowWhereUniqueInput[]
   }
 
   export type DateTimeFieldUpdateOperationsInput = {
@@ -8562,6 +10457,20 @@ export namespace Prisma {
     deleteMany?: BeteckningScalarWhereInput | BeteckningScalarWhereInput[]
   }
 
+  export type RowUpdateManyWithoutProjectNestedInput = {
+    create?: XOR<RowCreateWithoutProjectInput, RowUncheckedCreateWithoutProjectInput> | RowCreateWithoutProjectInput[] | RowUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: RowCreateOrConnectWithoutProjectInput | RowCreateOrConnectWithoutProjectInput[]
+    upsert?: RowUpsertWithWhereUniqueWithoutProjectInput | RowUpsertWithWhereUniqueWithoutProjectInput[]
+    createMany?: RowCreateManyProjectInputEnvelope
+    set?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    disconnect?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    delete?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    connect?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    update?: RowUpdateWithWhereUniqueWithoutProjectInput | RowUpdateWithWhereUniqueWithoutProjectInput[]
+    updateMany?: RowUpdateManyWithWhereWithoutProjectInput | RowUpdateManyWithWhereWithoutProjectInput[]
+    deleteMany?: RowScalarWhereInput | RowScalarWhereInput[]
+  }
+
   export type NullableIntFieldUpdateOperationsInput = {
     set?: number | null
     increment?: number
@@ -8598,10 +10507,38 @@ export namespace Prisma {
     deleteMany?: BeteckningScalarWhereInput | BeteckningScalarWhereInput[]
   }
 
+  export type RowUncheckedUpdateManyWithoutProjectNestedInput = {
+    create?: XOR<RowCreateWithoutProjectInput, RowUncheckedCreateWithoutProjectInput> | RowCreateWithoutProjectInput[] | RowUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: RowCreateOrConnectWithoutProjectInput | RowCreateOrConnectWithoutProjectInput[]
+    upsert?: RowUpsertWithWhereUniqueWithoutProjectInput | RowUpsertWithWhereUniqueWithoutProjectInput[]
+    createMany?: RowCreateManyProjectInputEnvelope
+    set?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    disconnect?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    delete?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    connect?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    update?: RowUpdateWithWhereUniqueWithoutProjectInput | RowUpdateWithWhereUniqueWithoutProjectInput[]
+    updateMany?: RowUpdateManyWithWhereWithoutProjectInput | RowUpdateManyWithWhereWithoutProjectInput[]
+    deleteMany?: RowScalarWhereInput | RowScalarWhereInput[]
+  }
+
   export type ProjectCreateNestedOneWithoutSectionsInput = {
     create?: XOR<ProjectCreateWithoutSectionsInput, ProjectUncheckedCreateWithoutSectionsInput>
     connectOrCreate?: ProjectCreateOrConnectWithoutSectionsInput
     connect?: ProjectWhereUniqueInput
+  }
+
+  export type RowCreateNestedManyWithoutSectionInput = {
+    create?: XOR<RowCreateWithoutSectionInput, RowUncheckedCreateWithoutSectionInput> | RowCreateWithoutSectionInput[] | RowUncheckedCreateWithoutSectionInput[]
+    connectOrCreate?: RowCreateOrConnectWithoutSectionInput | RowCreateOrConnectWithoutSectionInput[]
+    createMany?: RowCreateManySectionInputEnvelope
+    connect?: RowWhereUniqueInput | RowWhereUniqueInput[]
+  }
+
+  export type RowUncheckedCreateNestedManyWithoutSectionInput = {
+    create?: XOR<RowCreateWithoutSectionInput, RowUncheckedCreateWithoutSectionInput> | RowCreateWithoutSectionInput[] | RowUncheckedCreateWithoutSectionInput[]
+    connectOrCreate?: RowCreateOrConnectWithoutSectionInput | RowCreateOrConnectWithoutSectionInput[]
+    createMany?: RowCreateManySectionInputEnvelope
+    connect?: RowWhereUniqueInput | RowWhereUniqueInput[]
   }
 
   export type ProjectUpdateOneRequiredWithoutSectionsNestedInput = {
@@ -8610,6 +10547,34 @@ export namespace Prisma {
     upsert?: ProjectUpsertWithoutSectionsInput
     connect?: ProjectWhereUniqueInput
     update?: XOR<XOR<ProjectUpdateToOneWithWhereWithoutSectionsInput, ProjectUpdateWithoutSectionsInput>, ProjectUncheckedUpdateWithoutSectionsInput>
+  }
+
+  export type RowUpdateManyWithoutSectionNestedInput = {
+    create?: XOR<RowCreateWithoutSectionInput, RowUncheckedCreateWithoutSectionInput> | RowCreateWithoutSectionInput[] | RowUncheckedCreateWithoutSectionInput[]
+    connectOrCreate?: RowCreateOrConnectWithoutSectionInput | RowCreateOrConnectWithoutSectionInput[]
+    upsert?: RowUpsertWithWhereUniqueWithoutSectionInput | RowUpsertWithWhereUniqueWithoutSectionInput[]
+    createMany?: RowCreateManySectionInputEnvelope
+    set?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    disconnect?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    delete?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    connect?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    update?: RowUpdateWithWhereUniqueWithoutSectionInput | RowUpdateWithWhereUniqueWithoutSectionInput[]
+    updateMany?: RowUpdateManyWithWhereWithoutSectionInput | RowUpdateManyWithWhereWithoutSectionInput[]
+    deleteMany?: RowScalarWhereInput | RowScalarWhereInput[]
+  }
+
+  export type RowUncheckedUpdateManyWithoutSectionNestedInput = {
+    create?: XOR<RowCreateWithoutSectionInput, RowUncheckedCreateWithoutSectionInput> | RowCreateWithoutSectionInput[] | RowUncheckedCreateWithoutSectionInput[]
+    connectOrCreate?: RowCreateOrConnectWithoutSectionInput | RowCreateOrConnectWithoutSectionInput[]
+    upsert?: RowUpsertWithWhereUniqueWithoutSectionInput | RowUpsertWithWhereUniqueWithoutSectionInput[]
+    createMany?: RowCreateManySectionInputEnvelope
+    set?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    disconnect?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    delete?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    connect?: RowWhereUniqueInput | RowWhereUniqueInput[]
+    update?: RowUpdateWithWhereUniqueWithoutSectionInput | RowUpdateWithWhereUniqueWithoutSectionInput[]
+    updateMany?: RowUpdateManyWithWhereWithoutSectionInput | RowUpdateManyWithWhereWithoutSectionInput[]
+    deleteMany?: RowScalarWhereInput | RowScalarWhereInput[]
   }
 
   export type ProjectCreateNestedOneWithoutBeteckningarInput = {
@@ -8652,6 +10617,72 @@ export namespace Prisma {
     upsert?: UserUpsertWithoutEmployerOfInput
     connect?: UserWhereUniqueInput
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutEmployerOfInput, UserUpdateWithoutEmployerOfInput>, UserUncheckedUpdateWithoutEmployerOfInput>
+  }
+
+  export type ProjectCreateNestedOneWithoutTsmRowsInput = {
+    create?: XOR<ProjectCreateWithoutTsmRowsInput, ProjectUncheckedCreateWithoutTsmRowsInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutTsmRowsInput
+    connect?: ProjectWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutCreatedRowsInput = {
+    create?: XOR<UserCreateWithoutCreatedRowsInput, UserUncheckedCreateWithoutCreatedRowsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutCreatedRowsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type SectionCreateNestedOneWithoutRowsInput = {
+    create?: XOR<SectionCreateWithoutRowsInput, SectionUncheckedCreateWithoutRowsInput>
+    connectOrCreate?: SectionCreateOrConnectWithoutRowsInput
+    connect?: SectionWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutApprovedRowsInput = {
+    create?: XOR<UserCreateWithoutApprovedRowsInput, UserUncheckedCreateWithoutApprovedRowsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutApprovedRowsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
+  export type ProjectUpdateOneRequiredWithoutTsmRowsNestedInput = {
+    create?: XOR<ProjectCreateWithoutTsmRowsInput, ProjectUncheckedCreateWithoutTsmRowsInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutTsmRowsInput
+    upsert?: ProjectUpsertWithoutTsmRowsInput
+    connect?: ProjectWhereUniqueInput
+    update?: XOR<XOR<ProjectUpdateToOneWithWhereWithoutTsmRowsInput, ProjectUpdateWithoutTsmRowsInput>, ProjectUncheckedUpdateWithoutTsmRowsInput>
+  }
+
+  export type UserUpdateOneWithoutCreatedRowsNestedInput = {
+    create?: XOR<UserCreateWithoutCreatedRowsInput, UserUncheckedCreateWithoutCreatedRowsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutCreatedRowsInput
+    upsert?: UserUpsertWithoutCreatedRowsInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutCreatedRowsInput, UserUpdateWithoutCreatedRowsInput>, UserUncheckedUpdateWithoutCreatedRowsInput>
+  }
+
+  export type SectionUpdateOneWithoutRowsNestedInput = {
+    create?: XOR<SectionCreateWithoutRowsInput, SectionUncheckedCreateWithoutRowsInput>
+    connectOrCreate?: SectionCreateOrConnectWithoutRowsInput
+    upsert?: SectionUpsertWithoutRowsInput
+    disconnect?: SectionWhereInput | boolean
+    delete?: SectionWhereInput | boolean
+    connect?: SectionWhereUniqueInput
+    update?: XOR<XOR<SectionUpdateToOneWithWhereWithoutRowsInput, SectionUpdateWithoutRowsInput>, SectionUncheckedUpdateWithoutRowsInput>
+  }
+
+  export type UserUpdateOneWithoutApprovedRowsNestedInput = {
+    create?: XOR<UserCreateWithoutApprovedRowsInput, UserUncheckedCreateWithoutApprovedRowsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutApprovedRowsInput
+    upsert?: UserUpsertWithoutApprovedRowsInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutApprovedRowsInput, UserUpdateWithoutApprovedRowsInput>, UserUncheckedUpdateWithoutApprovedRowsInput>
   }
 
   export type NestedIntFilter<$PrismaModel = never> = {
@@ -8840,6 +10871,19 @@ export namespace Prisma {
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
   export type ProjectCreateWithoutUserInput = {
     name: string
     createdAt?: Date | string
@@ -8854,6 +10898,7 @@ export namespace Prisma {
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     sections?: SectionCreateNestedManyWithoutProjectInput
     beteckningar?: BeteckningCreateNestedManyWithoutProjectInput
+    tsmRows?: RowCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectUncheckedCreateWithoutUserInput = {
@@ -8871,6 +10916,7 @@ export namespace Prisma {
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     sections?: SectionUncheckedCreateNestedManyWithoutProjectInput
     beteckningar?: BeteckningUncheckedCreateNestedManyWithoutProjectInput
+    tsmRows?: RowUncheckedCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectCreateOrConnectWithoutUserInput = {
@@ -8918,6 +10964,68 @@ export namespace Prisma {
 
   export type EmployeeCreateManyEmployeeInputEnvelope = {
     data: EmployeeCreateManyEmployeeInput | EmployeeCreateManyEmployeeInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type RowCreateWithoutUserInput = {
+    anordning?: string | null
+    datum?: string | null
+    isPending?: boolean
+    createdAt?: Date | string
+    project: ProjectCreateNestedOneWithoutTsmRowsInput
+    section?: SectionCreateNestedOneWithoutRowsInput
+    approvedBy?: UserCreateNestedOneWithoutApprovedRowsInput
+  }
+
+  export type RowUncheckedCreateWithoutUserInput = {
+    id?: number
+    projectId: number
+    sectionId?: number | null
+    anordning?: string | null
+    datum?: string | null
+    isPending?: boolean
+    approvedById?: number | null
+    createdAt?: Date | string
+  }
+
+  export type RowCreateOrConnectWithoutUserInput = {
+    where: RowWhereUniqueInput
+    create: XOR<RowCreateWithoutUserInput, RowUncheckedCreateWithoutUserInput>
+  }
+
+  export type RowCreateManyUserInputEnvelope = {
+    data: RowCreateManyUserInput | RowCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type RowCreateWithoutApprovedByInput = {
+    anordning?: string | null
+    datum?: string | null
+    isPending?: boolean
+    createdAt?: Date | string
+    project: ProjectCreateNestedOneWithoutTsmRowsInput
+    user?: UserCreateNestedOneWithoutCreatedRowsInput
+    section?: SectionCreateNestedOneWithoutRowsInput
+  }
+
+  export type RowUncheckedCreateWithoutApprovedByInput = {
+    id?: number
+    projectId: number
+    userId?: number | null
+    sectionId?: number | null
+    anordning?: string | null
+    datum?: string | null
+    isPending?: boolean
+    createdAt?: Date | string
+  }
+
+  export type RowCreateOrConnectWithoutApprovedByInput = {
+    where: RowWhereUniqueInput
+    create: XOR<RowCreateWithoutApprovedByInput, RowUncheckedCreateWithoutApprovedByInput>
+  }
+
+  export type RowCreateManyApprovedByInputEnvelope = {
+    data: RowCreateManyApprovedByInput | RowCreateManyApprovedByInput[]
     skipDuplicates?: boolean
   }
 
@@ -8997,6 +11105,53 @@ export namespace Prisma {
     data: XOR<EmployeeUpdateManyMutationInput, EmployeeUncheckedUpdateManyWithoutEmployeeInput>
   }
 
+  export type RowUpsertWithWhereUniqueWithoutUserInput = {
+    where: RowWhereUniqueInput
+    update: XOR<RowUpdateWithoutUserInput, RowUncheckedUpdateWithoutUserInput>
+    create: XOR<RowCreateWithoutUserInput, RowUncheckedCreateWithoutUserInput>
+  }
+
+  export type RowUpdateWithWhereUniqueWithoutUserInput = {
+    where: RowWhereUniqueInput
+    data: XOR<RowUpdateWithoutUserInput, RowUncheckedUpdateWithoutUserInput>
+  }
+
+  export type RowUpdateManyWithWhereWithoutUserInput = {
+    where: RowScalarWhereInput
+    data: XOR<RowUpdateManyMutationInput, RowUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type RowScalarWhereInput = {
+    AND?: RowScalarWhereInput | RowScalarWhereInput[]
+    OR?: RowScalarWhereInput[]
+    NOT?: RowScalarWhereInput | RowScalarWhereInput[]
+    id?: IntFilter<"Row"> | number
+    projectId?: IntFilter<"Row"> | number
+    userId?: IntNullableFilter<"Row"> | number | null
+    sectionId?: IntNullableFilter<"Row"> | number | null
+    anordning?: StringNullableFilter<"Row"> | string | null
+    datum?: StringNullableFilter<"Row"> | string | null
+    isPending?: BoolFilter<"Row"> | boolean
+    approvedById?: IntNullableFilter<"Row"> | number | null
+    createdAt?: DateTimeFilter<"Row"> | Date | string
+  }
+
+  export type RowUpsertWithWhereUniqueWithoutApprovedByInput = {
+    where: RowWhereUniqueInput
+    update: XOR<RowUpdateWithoutApprovedByInput, RowUncheckedUpdateWithoutApprovedByInput>
+    create: XOR<RowCreateWithoutApprovedByInput, RowUncheckedCreateWithoutApprovedByInput>
+  }
+
+  export type RowUpdateWithWhereUniqueWithoutApprovedByInput = {
+    where: RowWhereUniqueInput
+    data: XOR<RowUpdateWithoutApprovedByInput, RowUncheckedUpdateWithoutApprovedByInput>
+  }
+
+  export type RowUpdateManyWithWhereWithoutApprovedByInput = {
+    where: RowScalarWhereInput
+    data: XOR<RowUpdateManyMutationInput, RowUncheckedUpdateManyWithoutApprovedByInput>
+  }
+
   export type UserCreateWithoutProjectsInput = {
     email: string
     password: string
@@ -9008,6 +11163,8 @@ export namespace Prisma {
     signature?: string | null
     employees?: EmployeeCreateNestedManyWithoutEmployerInput
     employerOf?: EmployeeCreateNestedManyWithoutEmployeeInput
+    createdRows?: RowCreateNestedManyWithoutUserInput
+    approvedRows?: RowCreateNestedManyWithoutApprovedByInput
   }
 
   export type UserUncheckedCreateWithoutProjectsInput = {
@@ -9022,6 +11179,8 @@ export namespace Prisma {
     signature?: string | null
     employees?: EmployeeUncheckedCreateNestedManyWithoutEmployerInput
     employerOf?: EmployeeUncheckedCreateNestedManyWithoutEmployeeInput
+    createdRows?: RowUncheckedCreateNestedManyWithoutUserInput
+    approvedRows?: RowUncheckedCreateNestedManyWithoutApprovedByInput
   }
 
   export type UserCreateOrConnectWithoutProjectsInput = {
@@ -9032,12 +11191,14 @@ export namespace Prisma {
   export type SectionCreateWithoutProjectInput = {
     name: string
     type: string
+    rows?: RowCreateNestedManyWithoutSectionInput
   }
 
   export type SectionUncheckedCreateWithoutProjectInput = {
     id?: number
     name: string
     type: string
+    rows?: RowUncheckedCreateNestedManyWithoutSectionInput
   }
 
   export type SectionCreateOrConnectWithoutProjectInput = {
@@ -9069,6 +11230,37 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type RowCreateWithoutProjectInput = {
+    anordning?: string | null
+    datum?: string | null
+    isPending?: boolean
+    createdAt?: Date | string
+    user?: UserCreateNestedOneWithoutCreatedRowsInput
+    section?: SectionCreateNestedOneWithoutRowsInput
+    approvedBy?: UserCreateNestedOneWithoutApprovedRowsInput
+  }
+
+  export type RowUncheckedCreateWithoutProjectInput = {
+    id?: number
+    userId?: number | null
+    sectionId?: number | null
+    anordning?: string | null
+    datum?: string | null
+    isPending?: boolean
+    approvedById?: number | null
+    createdAt?: Date | string
+  }
+
+  export type RowCreateOrConnectWithoutProjectInput = {
+    where: RowWhereUniqueInput
+    create: XOR<RowCreateWithoutProjectInput, RowUncheckedCreateWithoutProjectInput>
+  }
+
+  export type RowCreateManyProjectInputEnvelope = {
+    data: RowCreateManyProjectInput | RowCreateManyProjectInput[]
+    skipDuplicates?: boolean
+  }
+
   export type UserUpsertWithoutProjectsInput = {
     update: XOR<UserUpdateWithoutProjectsInput, UserUncheckedUpdateWithoutProjectsInput>
     create: XOR<UserCreateWithoutProjectsInput, UserUncheckedCreateWithoutProjectsInput>
@@ -9091,6 +11283,8 @@ export namespace Prisma {
     signature?: NullableStringFieldUpdateOperationsInput | string | null
     employees?: EmployeeUpdateManyWithoutEmployerNestedInput
     employerOf?: EmployeeUpdateManyWithoutEmployeeNestedInput
+    createdRows?: RowUpdateManyWithoutUserNestedInput
+    approvedRows?: RowUpdateManyWithoutApprovedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutProjectsInput = {
@@ -9105,6 +11299,8 @@ export namespace Prisma {
     signature?: NullableStringFieldUpdateOperationsInput | string | null
     employees?: EmployeeUncheckedUpdateManyWithoutEmployerNestedInput
     employerOf?: EmployeeUncheckedUpdateManyWithoutEmployeeNestedInput
+    createdRows?: RowUncheckedUpdateManyWithoutUserNestedInput
+    approvedRows?: RowUncheckedUpdateManyWithoutApprovedByNestedInput
   }
 
   export type SectionUpsertWithWhereUniqueWithoutProjectInput = {
@@ -9158,6 +11354,22 @@ export namespace Prisma {
     projectId?: IntFilter<"Beteckning"> | number
   }
 
+  export type RowUpsertWithWhereUniqueWithoutProjectInput = {
+    where: RowWhereUniqueInput
+    update: XOR<RowUpdateWithoutProjectInput, RowUncheckedUpdateWithoutProjectInput>
+    create: XOR<RowCreateWithoutProjectInput, RowUncheckedCreateWithoutProjectInput>
+  }
+
+  export type RowUpdateWithWhereUniqueWithoutProjectInput = {
+    where: RowWhereUniqueInput
+    data: XOR<RowUpdateWithoutProjectInput, RowUncheckedUpdateWithoutProjectInput>
+  }
+
+  export type RowUpdateManyWithWhereWithoutProjectInput = {
+    where: RowScalarWhereInput
+    data: XOR<RowUpdateManyMutationInput, RowUncheckedUpdateManyWithoutProjectInput>
+  }
+
   export type ProjectCreateWithoutSectionsInput = {
     name: string
     createdAt?: Date | string
@@ -9172,6 +11384,7 @@ export namespace Prisma {
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     user?: UserCreateNestedOneWithoutProjectsInput
     beteckningar?: BeteckningCreateNestedManyWithoutProjectInput
+    tsmRows?: RowCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectUncheckedCreateWithoutSectionsInput = {
@@ -9189,11 +11402,43 @@ export namespace Prisma {
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     beteckningar?: BeteckningUncheckedCreateNestedManyWithoutProjectInput
+    tsmRows?: RowUncheckedCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectCreateOrConnectWithoutSectionsInput = {
     where: ProjectWhereUniqueInput
     create: XOR<ProjectCreateWithoutSectionsInput, ProjectUncheckedCreateWithoutSectionsInput>
+  }
+
+  export type RowCreateWithoutSectionInput = {
+    anordning?: string | null
+    datum?: string | null
+    isPending?: boolean
+    createdAt?: Date | string
+    project: ProjectCreateNestedOneWithoutTsmRowsInput
+    user?: UserCreateNestedOneWithoutCreatedRowsInput
+    approvedBy?: UserCreateNestedOneWithoutApprovedRowsInput
+  }
+
+  export type RowUncheckedCreateWithoutSectionInput = {
+    id?: number
+    projectId: number
+    userId?: number | null
+    anordning?: string | null
+    datum?: string | null
+    isPending?: boolean
+    approvedById?: number | null
+    createdAt?: Date | string
+  }
+
+  export type RowCreateOrConnectWithoutSectionInput = {
+    where: RowWhereUniqueInput
+    create: XOR<RowCreateWithoutSectionInput, RowUncheckedCreateWithoutSectionInput>
+  }
+
+  export type RowCreateManySectionInputEnvelope = {
+    data: RowCreateManySectionInput | RowCreateManySectionInput[]
+    skipDuplicates?: boolean
   }
 
   export type ProjectUpsertWithoutSectionsInput = {
@@ -9221,6 +11466,7 @@ export namespace Prisma {
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     user?: UserUpdateOneWithoutProjectsNestedInput
     beteckningar?: BeteckningUpdateManyWithoutProjectNestedInput
+    tsmRows?: RowUpdateManyWithoutProjectNestedInput
   }
 
   export type ProjectUncheckedUpdateWithoutSectionsInput = {
@@ -9238,6 +11484,23 @@ export namespace Prisma {
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     beteckningar?: BeteckningUncheckedUpdateManyWithoutProjectNestedInput
+    tsmRows?: RowUncheckedUpdateManyWithoutProjectNestedInput
+  }
+
+  export type RowUpsertWithWhereUniqueWithoutSectionInput = {
+    where: RowWhereUniqueInput
+    update: XOR<RowUpdateWithoutSectionInput, RowUncheckedUpdateWithoutSectionInput>
+    create: XOR<RowCreateWithoutSectionInput, RowUncheckedCreateWithoutSectionInput>
+  }
+
+  export type RowUpdateWithWhereUniqueWithoutSectionInput = {
+    where: RowWhereUniqueInput
+    data: XOR<RowUpdateWithoutSectionInput, RowUncheckedUpdateWithoutSectionInput>
+  }
+
+  export type RowUpdateManyWithWhereWithoutSectionInput = {
+    where: RowScalarWhereInput
+    data: XOR<RowUpdateManyMutationInput, RowUncheckedUpdateManyWithoutSectionInput>
   }
 
   export type ProjectCreateWithoutBeteckningarInput = {
@@ -9254,6 +11517,7 @@ export namespace Prisma {
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     user?: UserCreateNestedOneWithoutProjectsInput
     sections?: SectionCreateNestedManyWithoutProjectInput
+    tsmRows?: RowCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectUncheckedCreateWithoutBeteckningarInput = {
@@ -9271,6 +11535,7 @@ export namespace Prisma {
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     sections?: SectionUncheckedCreateNestedManyWithoutProjectInput
+    tsmRows?: RowUncheckedCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectCreateOrConnectWithoutBeteckningarInput = {
@@ -9303,6 +11568,7 @@ export namespace Prisma {
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     user?: UserUpdateOneWithoutProjectsNestedInput
     sections?: SectionUpdateManyWithoutProjectNestedInput
+    tsmRows?: RowUpdateManyWithoutProjectNestedInput
   }
 
   export type ProjectUncheckedUpdateWithoutBeteckningarInput = {
@@ -9320,6 +11586,7 @@ export namespace Prisma {
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     sections?: SectionUncheckedUpdateManyWithoutProjectNestedInput
+    tsmRows?: RowUncheckedUpdateManyWithoutProjectNestedInput
   }
 
   export type UserCreateWithoutEmployeesInput = {
@@ -9333,6 +11600,8 @@ export namespace Prisma {
     signature?: string | null
     projects?: ProjectCreateNestedManyWithoutUserInput
     employerOf?: EmployeeCreateNestedManyWithoutEmployeeInput
+    createdRows?: RowCreateNestedManyWithoutUserInput
+    approvedRows?: RowCreateNestedManyWithoutApprovedByInput
   }
 
   export type UserUncheckedCreateWithoutEmployeesInput = {
@@ -9347,6 +11616,8 @@ export namespace Prisma {
     signature?: string | null
     projects?: ProjectUncheckedCreateNestedManyWithoutUserInput
     employerOf?: EmployeeUncheckedCreateNestedManyWithoutEmployeeInput
+    createdRows?: RowUncheckedCreateNestedManyWithoutUserInput
+    approvedRows?: RowUncheckedCreateNestedManyWithoutApprovedByInput
   }
 
   export type UserCreateOrConnectWithoutEmployeesInput = {
@@ -9365,6 +11636,8 @@ export namespace Prisma {
     signature?: string | null
     projects?: ProjectCreateNestedManyWithoutUserInput
     employees?: EmployeeCreateNestedManyWithoutEmployerInput
+    createdRows?: RowCreateNestedManyWithoutUserInput
+    approvedRows?: RowCreateNestedManyWithoutApprovedByInput
   }
 
   export type UserUncheckedCreateWithoutEmployerOfInput = {
@@ -9379,6 +11652,8 @@ export namespace Prisma {
     signature?: string | null
     projects?: ProjectUncheckedCreateNestedManyWithoutUserInput
     employees?: EmployeeUncheckedCreateNestedManyWithoutEmployerInput
+    createdRows?: RowUncheckedCreateNestedManyWithoutUserInput
+    approvedRows?: RowUncheckedCreateNestedManyWithoutApprovedByInput
   }
 
   export type UserCreateOrConnectWithoutEmployerOfInput = {
@@ -9408,6 +11683,8 @@ export namespace Prisma {
     signature?: NullableStringFieldUpdateOperationsInput | string | null
     projects?: ProjectUpdateManyWithoutUserNestedInput
     employerOf?: EmployeeUpdateManyWithoutEmployeeNestedInput
+    createdRows?: RowUpdateManyWithoutUserNestedInput
+    approvedRows?: RowUpdateManyWithoutApprovedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutEmployeesInput = {
@@ -9422,6 +11699,8 @@ export namespace Prisma {
     signature?: NullableStringFieldUpdateOperationsInput | string | null
     projects?: ProjectUncheckedUpdateManyWithoutUserNestedInput
     employerOf?: EmployeeUncheckedUpdateManyWithoutEmployeeNestedInput
+    createdRows?: RowUncheckedUpdateManyWithoutUserNestedInput
+    approvedRows?: RowUncheckedUpdateManyWithoutApprovedByNestedInput
   }
 
   export type UserUpsertWithoutEmployerOfInput = {
@@ -9446,6 +11725,8 @@ export namespace Prisma {
     signature?: NullableStringFieldUpdateOperationsInput | string | null
     projects?: ProjectUpdateManyWithoutUserNestedInput
     employees?: EmployeeUpdateManyWithoutEmployerNestedInput
+    createdRows?: RowUpdateManyWithoutUserNestedInput
+    approvedRows?: RowUpdateManyWithoutApprovedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutEmployerOfInput = {
@@ -9460,6 +11741,292 @@ export namespace Prisma {
     signature?: NullableStringFieldUpdateOperationsInput | string | null
     projects?: ProjectUncheckedUpdateManyWithoutUserNestedInput
     employees?: EmployeeUncheckedUpdateManyWithoutEmployerNestedInput
+    createdRows?: RowUncheckedUpdateManyWithoutUserNestedInput
+    approvedRows?: RowUncheckedUpdateManyWithoutApprovedByNestedInput
+  }
+
+  export type ProjectCreateWithoutTsmRowsInput = {
+    name: string
+    createdAt?: Date | string
+    startDate: string
+    startTime: string
+    endDate: string
+    endTime: string
+    plats: string
+    namn: string
+    telefonnummer: string
+    rows?: NullableJsonNullValueInput | InputJsonValue
+    anteckningar?: NullableJsonNullValueInput | InputJsonValue
+    user?: UserCreateNestedOneWithoutProjectsInput
+    sections?: SectionCreateNestedManyWithoutProjectInput
+    beteckningar?: BeteckningCreateNestedManyWithoutProjectInput
+  }
+
+  export type ProjectUncheckedCreateWithoutTsmRowsInput = {
+    id?: number
+    name: string
+    userId?: number | null
+    createdAt?: Date | string
+    startDate: string
+    startTime: string
+    endDate: string
+    endTime: string
+    plats: string
+    namn: string
+    telefonnummer: string
+    rows?: NullableJsonNullValueInput | InputJsonValue
+    anteckningar?: NullableJsonNullValueInput | InputJsonValue
+    sections?: SectionUncheckedCreateNestedManyWithoutProjectInput
+    beteckningar?: BeteckningUncheckedCreateNestedManyWithoutProjectInput
+  }
+
+  export type ProjectCreateOrConnectWithoutTsmRowsInput = {
+    where: ProjectWhereUniqueInput
+    create: XOR<ProjectCreateWithoutTsmRowsInput, ProjectUncheckedCreateWithoutTsmRowsInput>
+  }
+
+  export type UserCreateWithoutCreatedRowsInput = {
+    email: string
+    password: string
+    phone?: string | null
+    company?: string | null
+    role?: string
+    firstName?: string | null
+    lastName?: string | null
+    signature?: string | null
+    projects?: ProjectCreateNestedManyWithoutUserInput
+    employees?: EmployeeCreateNestedManyWithoutEmployerInput
+    employerOf?: EmployeeCreateNestedManyWithoutEmployeeInput
+    approvedRows?: RowCreateNestedManyWithoutApprovedByInput
+  }
+
+  export type UserUncheckedCreateWithoutCreatedRowsInput = {
+    id?: number
+    email: string
+    password: string
+    phone?: string | null
+    company?: string | null
+    role?: string
+    firstName?: string | null
+    lastName?: string | null
+    signature?: string | null
+    projects?: ProjectUncheckedCreateNestedManyWithoutUserInput
+    employees?: EmployeeUncheckedCreateNestedManyWithoutEmployerInput
+    employerOf?: EmployeeUncheckedCreateNestedManyWithoutEmployeeInput
+    approvedRows?: RowUncheckedCreateNestedManyWithoutApprovedByInput
+  }
+
+  export type UserCreateOrConnectWithoutCreatedRowsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutCreatedRowsInput, UserUncheckedCreateWithoutCreatedRowsInput>
+  }
+
+  export type SectionCreateWithoutRowsInput = {
+    name: string
+    type: string
+    project: ProjectCreateNestedOneWithoutSectionsInput
+  }
+
+  export type SectionUncheckedCreateWithoutRowsInput = {
+    id?: number
+    name: string
+    type: string
+    projectId: number
+  }
+
+  export type SectionCreateOrConnectWithoutRowsInput = {
+    where: SectionWhereUniqueInput
+    create: XOR<SectionCreateWithoutRowsInput, SectionUncheckedCreateWithoutRowsInput>
+  }
+
+  export type UserCreateWithoutApprovedRowsInput = {
+    email: string
+    password: string
+    phone?: string | null
+    company?: string | null
+    role?: string
+    firstName?: string | null
+    lastName?: string | null
+    signature?: string | null
+    projects?: ProjectCreateNestedManyWithoutUserInput
+    employees?: EmployeeCreateNestedManyWithoutEmployerInput
+    employerOf?: EmployeeCreateNestedManyWithoutEmployeeInput
+    createdRows?: RowCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutApprovedRowsInput = {
+    id?: number
+    email: string
+    password: string
+    phone?: string | null
+    company?: string | null
+    role?: string
+    firstName?: string | null
+    lastName?: string | null
+    signature?: string | null
+    projects?: ProjectUncheckedCreateNestedManyWithoutUserInput
+    employees?: EmployeeUncheckedCreateNestedManyWithoutEmployerInput
+    employerOf?: EmployeeUncheckedCreateNestedManyWithoutEmployeeInput
+    createdRows?: RowUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutApprovedRowsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutApprovedRowsInput, UserUncheckedCreateWithoutApprovedRowsInput>
+  }
+
+  export type ProjectUpsertWithoutTsmRowsInput = {
+    update: XOR<ProjectUpdateWithoutTsmRowsInput, ProjectUncheckedUpdateWithoutTsmRowsInput>
+    create: XOR<ProjectCreateWithoutTsmRowsInput, ProjectUncheckedCreateWithoutTsmRowsInput>
+    where?: ProjectWhereInput
+  }
+
+  export type ProjectUpdateToOneWithWhereWithoutTsmRowsInput = {
+    where?: ProjectWhereInput
+    data: XOR<ProjectUpdateWithoutTsmRowsInput, ProjectUncheckedUpdateWithoutTsmRowsInput>
+  }
+
+  export type ProjectUpdateWithoutTsmRowsInput = {
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startDate?: StringFieldUpdateOperationsInput | string
+    startTime?: StringFieldUpdateOperationsInput | string
+    endDate?: StringFieldUpdateOperationsInput | string
+    endTime?: StringFieldUpdateOperationsInput | string
+    plats?: StringFieldUpdateOperationsInput | string
+    namn?: StringFieldUpdateOperationsInput | string
+    telefonnummer?: StringFieldUpdateOperationsInput | string
+    rows?: NullableJsonNullValueInput | InputJsonValue
+    anteckningar?: NullableJsonNullValueInput | InputJsonValue
+    user?: UserUpdateOneWithoutProjectsNestedInput
+    sections?: SectionUpdateManyWithoutProjectNestedInput
+    beteckningar?: BeteckningUpdateManyWithoutProjectNestedInput
+  }
+
+  export type ProjectUncheckedUpdateWithoutTsmRowsInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    userId?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    startDate?: StringFieldUpdateOperationsInput | string
+    startTime?: StringFieldUpdateOperationsInput | string
+    endDate?: StringFieldUpdateOperationsInput | string
+    endTime?: StringFieldUpdateOperationsInput | string
+    plats?: StringFieldUpdateOperationsInput | string
+    namn?: StringFieldUpdateOperationsInput | string
+    telefonnummer?: StringFieldUpdateOperationsInput | string
+    rows?: NullableJsonNullValueInput | InputJsonValue
+    anteckningar?: NullableJsonNullValueInput | InputJsonValue
+    sections?: SectionUncheckedUpdateManyWithoutProjectNestedInput
+    beteckningar?: BeteckningUncheckedUpdateManyWithoutProjectNestedInput
+  }
+
+  export type UserUpsertWithoutCreatedRowsInput = {
+    update: XOR<UserUpdateWithoutCreatedRowsInput, UserUncheckedUpdateWithoutCreatedRowsInput>
+    create: XOR<UserCreateWithoutCreatedRowsInput, UserUncheckedCreateWithoutCreatedRowsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutCreatedRowsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutCreatedRowsInput, UserUncheckedUpdateWithoutCreatedRowsInput>
+  }
+
+  export type UserUpdateWithoutCreatedRowsInput = {
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    company?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: StringFieldUpdateOperationsInput | string
+    firstName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: NullableStringFieldUpdateOperationsInput | string | null
+    signature?: NullableStringFieldUpdateOperationsInput | string | null
+    projects?: ProjectUpdateManyWithoutUserNestedInput
+    employees?: EmployeeUpdateManyWithoutEmployerNestedInput
+    employerOf?: EmployeeUpdateManyWithoutEmployeeNestedInput
+    approvedRows?: RowUpdateManyWithoutApprovedByNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutCreatedRowsInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    company?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: StringFieldUpdateOperationsInput | string
+    firstName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: NullableStringFieldUpdateOperationsInput | string | null
+    signature?: NullableStringFieldUpdateOperationsInput | string | null
+    projects?: ProjectUncheckedUpdateManyWithoutUserNestedInput
+    employees?: EmployeeUncheckedUpdateManyWithoutEmployerNestedInput
+    employerOf?: EmployeeUncheckedUpdateManyWithoutEmployeeNestedInput
+    approvedRows?: RowUncheckedUpdateManyWithoutApprovedByNestedInput
+  }
+
+  export type SectionUpsertWithoutRowsInput = {
+    update: XOR<SectionUpdateWithoutRowsInput, SectionUncheckedUpdateWithoutRowsInput>
+    create: XOR<SectionCreateWithoutRowsInput, SectionUncheckedCreateWithoutRowsInput>
+    where?: SectionWhereInput
+  }
+
+  export type SectionUpdateToOneWithWhereWithoutRowsInput = {
+    where?: SectionWhereInput
+    data: XOR<SectionUpdateWithoutRowsInput, SectionUncheckedUpdateWithoutRowsInput>
+  }
+
+  export type SectionUpdateWithoutRowsInput = {
+    name?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    project?: ProjectUpdateOneRequiredWithoutSectionsNestedInput
+  }
+
+  export type SectionUncheckedUpdateWithoutRowsInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    projectId?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type UserUpsertWithoutApprovedRowsInput = {
+    update: XOR<UserUpdateWithoutApprovedRowsInput, UserUncheckedUpdateWithoutApprovedRowsInput>
+    create: XOR<UserCreateWithoutApprovedRowsInput, UserUncheckedCreateWithoutApprovedRowsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutApprovedRowsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutApprovedRowsInput, UserUncheckedUpdateWithoutApprovedRowsInput>
+  }
+
+  export type UserUpdateWithoutApprovedRowsInput = {
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    company?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: StringFieldUpdateOperationsInput | string
+    firstName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: NullableStringFieldUpdateOperationsInput | string | null
+    signature?: NullableStringFieldUpdateOperationsInput | string | null
+    projects?: ProjectUpdateManyWithoutUserNestedInput
+    employees?: EmployeeUpdateManyWithoutEmployerNestedInput
+    employerOf?: EmployeeUpdateManyWithoutEmployeeNestedInput
+    createdRows?: RowUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutApprovedRowsInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    company?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: StringFieldUpdateOperationsInput | string
+    firstName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: NullableStringFieldUpdateOperationsInput | string | null
+    signature?: NullableStringFieldUpdateOperationsInput | string | null
+    projects?: ProjectUncheckedUpdateManyWithoutUserNestedInput
+    employees?: EmployeeUncheckedUpdateManyWithoutEmployerNestedInput
+    employerOf?: EmployeeUncheckedUpdateManyWithoutEmployeeNestedInput
+    createdRows?: RowUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type ProjectCreateManyUserInput = {
@@ -9487,6 +12054,28 @@ export namespace Prisma {
     employerId: number
   }
 
+  export type RowCreateManyUserInput = {
+    id?: number
+    projectId: number
+    sectionId?: number | null
+    anordning?: string | null
+    datum?: string | null
+    isPending?: boolean
+    approvedById?: number | null
+    createdAt?: Date | string
+  }
+
+  export type RowCreateManyApprovedByInput = {
+    id?: number
+    projectId: number
+    userId?: number | null
+    sectionId?: number | null
+    anordning?: string | null
+    datum?: string | null
+    isPending?: boolean
+    createdAt?: Date | string
+  }
+
   export type ProjectUpdateWithoutUserInput = {
     name?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -9501,6 +12090,7 @@ export namespace Prisma {
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     sections?: SectionUpdateManyWithoutProjectNestedInput
     beteckningar?: BeteckningUpdateManyWithoutProjectNestedInput
+    tsmRows?: RowUpdateManyWithoutProjectNestedInput
   }
 
   export type ProjectUncheckedUpdateWithoutUserInput = {
@@ -9518,6 +12108,7 @@ export namespace Prisma {
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     sections?: SectionUncheckedUpdateManyWithoutProjectNestedInput
     beteckningar?: BeteckningUncheckedUpdateManyWithoutProjectNestedInput
+    tsmRows?: RowUncheckedUpdateManyWithoutProjectNestedInput
   }
 
   export type ProjectUncheckedUpdateManyWithoutUserInput = {
@@ -9563,6 +12154,70 @@ export namespace Prisma {
     employerId?: IntFieldUpdateOperationsInput | number
   }
 
+  export type RowUpdateWithoutUserInput = {
+    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    datum?: NullableStringFieldUpdateOperationsInput | string | null
+    isPending?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    project?: ProjectUpdateOneRequiredWithoutTsmRowsNestedInput
+    section?: SectionUpdateOneWithoutRowsNestedInput
+    approvedBy?: UserUpdateOneWithoutApprovedRowsNestedInput
+  }
+
+  export type RowUncheckedUpdateWithoutUserInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    projectId?: IntFieldUpdateOperationsInput | number
+    sectionId?: NullableIntFieldUpdateOperationsInput | number | null
+    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    datum?: NullableStringFieldUpdateOperationsInput | string | null
+    isPending?: BoolFieldUpdateOperationsInput | boolean
+    approvedById?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RowUncheckedUpdateManyWithoutUserInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    projectId?: IntFieldUpdateOperationsInput | number
+    sectionId?: NullableIntFieldUpdateOperationsInput | number | null
+    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    datum?: NullableStringFieldUpdateOperationsInput | string | null
+    isPending?: BoolFieldUpdateOperationsInput | boolean
+    approvedById?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RowUpdateWithoutApprovedByInput = {
+    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    datum?: NullableStringFieldUpdateOperationsInput | string | null
+    isPending?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    project?: ProjectUpdateOneRequiredWithoutTsmRowsNestedInput
+    user?: UserUpdateOneWithoutCreatedRowsNestedInput
+    section?: SectionUpdateOneWithoutRowsNestedInput
+  }
+
+  export type RowUncheckedUpdateWithoutApprovedByInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    projectId?: IntFieldUpdateOperationsInput | number
+    userId?: NullableIntFieldUpdateOperationsInput | number | null
+    sectionId?: NullableIntFieldUpdateOperationsInput | number | null
+    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    datum?: NullableStringFieldUpdateOperationsInput | string | null
+    isPending?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RowUncheckedUpdateManyWithoutApprovedByInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    projectId?: IntFieldUpdateOperationsInput | number
+    userId?: NullableIntFieldUpdateOperationsInput | number | null
+    sectionId?: NullableIntFieldUpdateOperationsInput | number | null
+    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    datum?: NullableStringFieldUpdateOperationsInput | string | null
+    isPending?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type SectionCreateManyProjectInput = {
     id?: number
     name: string
@@ -9574,15 +12229,28 @@ export namespace Prisma {
     label: string
   }
 
+  export type RowCreateManyProjectInput = {
+    id?: number
+    userId?: number | null
+    sectionId?: number | null
+    anordning?: string | null
+    datum?: string | null
+    isPending?: boolean
+    approvedById?: number | null
+    createdAt?: Date | string
+  }
+
   export type SectionUpdateWithoutProjectInput = {
     name?: StringFieldUpdateOperationsInput | string
     type?: StringFieldUpdateOperationsInput | string
+    rows?: RowUpdateManyWithoutSectionNestedInput
   }
 
   export type SectionUncheckedUpdateWithoutProjectInput = {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     type?: StringFieldUpdateOperationsInput | string
+    rows?: RowUncheckedUpdateManyWithoutSectionNestedInput
   }
 
   export type SectionUncheckedUpdateManyWithoutProjectInput = {
@@ -9603,6 +12271,81 @@ export namespace Prisma {
   export type BeteckningUncheckedUpdateManyWithoutProjectInput = {
     id?: IntFieldUpdateOperationsInput | number
     label?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type RowUpdateWithoutProjectInput = {
+    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    datum?: NullableStringFieldUpdateOperationsInput | string | null
+    isPending?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneWithoutCreatedRowsNestedInput
+    section?: SectionUpdateOneWithoutRowsNestedInput
+    approvedBy?: UserUpdateOneWithoutApprovedRowsNestedInput
+  }
+
+  export type RowUncheckedUpdateWithoutProjectInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    userId?: NullableIntFieldUpdateOperationsInput | number | null
+    sectionId?: NullableIntFieldUpdateOperationsInput | number | null
+    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    datum?: NullableStringFieldUpdateOperationsInput | string | null
+    isPending?: BoolFieldUpdateOperationsInput | boolean
+    approvedById?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RowUncheckedUpdateManyWithoutProjectInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    userId?: NullableIntFieldUpdateOperationsInput | number | null
+    sectionId?: NullableIntFieldUpdateOperationsInput | number | null
+    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    datum?: NullableStringFieldUpdateOperationsInput | string | null
+    isPending?: BoolFieldUpdateOperationsInput | boolean
+    approvedById?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RowCreateManySectionInput = {
+    id?: number
+    projectId: number
+    userId?: number | null
+    anordning?: string | null
+    datum?: string | null
+    isPending?: boolean
+    approvedById?: number | null
+    createdAt?: Date | string
+  }
+
+  export type RowUpdateWithoutSectionInput = {
+    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    datum?: NullableStringFieldUpdateOperationsInput | string | null
+    isPending?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    project?: ProjectUpdateOneRequiredWithoutTsmRowsNestedInput
+    user?: UserUpdateOneWithoutCreatedRowsNestedInput
+    approvedBy?: UserUpdateOneWithoutApprovedRowsNestedInput
+  }
+
+  export type RowUncheckedUpdateWithoutSectionInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    projectId?: IntFieldUpdateOperationsInput | number
+    userId?: NullableIntFieldUpdateOperationsInput | number | null
+    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    datum?: NullableStringFieldUpdateOperationsInput | string | null
+    isPending?: BoolFieldUpdateOperationsInput | boolean
+    approvedById?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RowUncheckedUpdateManyWithoutSectionInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    projectId?: IntFieldUpdateOperationsInput | number
+    userId?: NullableIntFieldUpdateOperationsInput | number | null
+    anordning?: NullableStringFieldUpdateOperationsInput | string | null
+    datum?: NullableStringFieldUpdateOperationsInput | string | null
+    isPending?: BoolFieldUpdateOperationsInput | boolean
+    approvedById?: NullableIntFieldUpdateOperationsInput | number | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
 

@@ -21,6 +21,9 @@ app.use(cors(corsOptions));
 
 app.use(express.json());
 
+const rowRoutes = require('./routes/row');
+app.use('/api/row', rowRoutes);
+
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
   throw new Error('JWT_SECRET is not defined in your .env file');
@@ -344,19 +347,28 @@ app.get('/api/projects', async (req, res) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    const userId = decoded.userId;
+    console.log('🔓 Token verifierad:', decoded);
 
-    const projects = await prisma.project.findMany({
-      where: { userId },
-      include: {
-        sections: true,
-        beteckningar: true,
+const projects = await prisma.project.findMany({
+  include: {
+    sections: true,
+    beteckningar: true,
+    user: {
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        role: true,
       },
-    });
+    },
+  },
+});
+
+    console.log('✅ Alla projekt:', projects.map(p => ({ id: p.id, userId: p.userId })));
 
     res.json(projects);
   } catch (err) {
-    console.error('Fel vid hämtning av projekt:', err);
+    console.error('❌ Fel vid hämtning av projekt:', err);
     res.status(500).json({ error: 'Kunde inte hämta projekt' });
   }
 });
@@ -369,7 +381,7 @@ app.get('/api/project/:id', async (req, res) => {
 
   try {
     const token = authHeader.split(' ')[1];
-    jwt.verify(token, JWT_SECRET); // Du behöver inte userId här, men verifierar token
+    jwt.verify(token, JWT_SECRET);
 
     const projectId = parseInt(req.params.id, 10);
     if (isNaN(projectId)) {
@@ -391,6 +403,15 @@ const project = await prisma.project.findUnique({
     sections: true,
     beteckningar: true,
     anteckningar: true,
+
+    // 🟢 Lägg till TSM-rader med relationsdata
+    tsmRows: {
+      include: {
+        user: true,
+        section: true,
+        approvedBy: true,
+      },
+    },
   },
 });
 

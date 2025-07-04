@@ -110,6 +110,8 @@ const [anteckningarModalOpen, setAnteckningarModalOpen] = useState(false);
   const [namn, setNamn] = useState(project?.namn || '');
   const [telefonnummer, setTelefonnummer] = useState(project?.telefonnummer || '');
   const [editSections, setEditSections] = useState(project?.sections || []);
+  const tokenData = localStorage.getItem('user');
+  const user = tokenData ? JSON.parse(tokenData).user : null;
 
 function formatDateOnly(datetimeStr) {
   const match = datetimeStr.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
@@ -189,6 +191,28 @@ const calculateSamrad = (rows) => {
 const addEditDP = () => {
   const newDP = { type: 'DP', name: '' }; // ändrat signal ➜ name
   setEditSections([...editSections, newDP]);
+};
+
+const approveRow = async (rowId) => {
+  try {
+    const tokenData = localStorage.getItem('user');
+    const token = tokenData ? JSON.parse(tokenData).token : null;
+
+    await axios.post(
+      `https://railworker-production.up.railway.app/api/tsmRows/${rowId}/approve`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    // Hämta projektet igen för att uppdatera listan
+    fetchProject();
+  } catch (error) {
+    console.error("Fel vid godkännande:", error);
+  }
 };
 
 const addEditLinje = () => {
@@ -1424,6 +1448,49 @@ if (loading || !project) {
 )}
     </Tr>
   ))}
+  {project?.tsmRows?.map((row, index) => (
+  <Tr key={`tsm-${row.id}`} bg="green.50">
+    <Td colSpan={visibleColumns['#'] ? 1 : 0}></Td>
+    {visibleColumns.btkn && (
+      <Td colSpan={1}>
+        <Text fontWeight="bold">
+          {row.user?.firstName} {row.user?.lastName}
+        </Text>
+      </Td>
+    )}
+    {visibleColumns.namn && (
+      <Td colSpan={1}>
+        <Text>{row.datum}</Text>
+      </Td>
+    )}
+    {visibleColumns.anordning && (
+      <Td colSpan={1}>
+        <Text>{row.anordning}</Text>
+      </Td>
+    )}
+    <Td colSpan={2}>
+      <Text>{row.section?.type} {row.section?.name}</Text>
+    </Td>
+    <Td colSpan={2}>
+      {row.isPending ? (
+        <Badge colorScheme="yellow">Inväntar godkännande</Badge>
+      ) : (
+        <Badge colorScheme="green">Godkänd av {row.approvedBy?.firstName}</Badge>
+      )}
+    </Td>
+    {user?.role === 'HTSM' && row.isPending && (
+      <Td colSpan={2}>
+        <Button
+          size="sm"
+          colorScheme="green"
+          onClick={() => approveRow(row.id)}
+        >
+          Godkänn
+        </Button>
+      </Td>
+    )}
+  </Tr>
+))}
 </Tbody>
         </Table>
         <Button
