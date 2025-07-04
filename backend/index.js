@@ -646,15 +646,16 @@ const row = await prisma.row.findUnique({
 });
 if (!row) return res.status(404).json({ error: 'Rad hittades inte' });
 
-const project = row.project;
-
-// 🔧 Ladda in sektionerna separat
-const fullProject = await prisma.project.findUnique({
-  where: { id: project.id },
+// ✅ Ladda om projektet med sektioner
+const project = await prisma.project.findUnique({
+  where: { id: row.project.id },
   include: { sections: true },
 });
 
-// Skapa ny radstruktur i JSON
+// Hämta befintliga rader
+const existingRows = Array.isArray(project.rows) ? project.rows : [];
+
+// Skapa ny rad
 const newRow = {
   id: Date.now(),
   datum: row.datum,
@@ -667,7 +668,7 @@ const newRow = {
   avslutadAv: '',
   avslutat: '',
   avslutatDatum: '',
-  selections: Array(fullProject.sections.length).fill(false),
+  selections: Array(project.sections.length).fill(false), // 💡 Fixad
 };
 
     // Uppdatera projektets rows-array
