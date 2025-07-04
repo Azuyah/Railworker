@@ -76,6 +76,7 @@ const Plan = () => {
   const [samradTrigger, setSamradTrigger] = useState(0);
   const [selectedRowId, setSelectedRowId] = useState(null);
   const [editBeteckningar, setEditBeteckningar] = useState([]);
+  const [pendingRows, setPendingRows] = useState([]);
 const [noteText, setNoteText] = useState('');
 const [editingNoteId, setEditingNoteId] = useState(null);
 const [anteckningar, setAnteckningar] = useState([]);
@@ -198,9 +199,9 @@ const approveRow = async (rowId) => {
     const tokenData = localStorage.getItem('user');
     const token = tokenData ? JSON.parse(tokenData).token : null;
 
-    await axios.put(                                     // ← PUT, inte POST
+    await axios.put(
       `https://railworker-production.up.railway.app/api/row/approve/${rowId}`,
-      {},                                               // ← tom body krävs av axios.put
+      {},
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -208,7 +209,14 @@ const approveRow = async (rowId) => {
       }
     );
 
-    // Hämta projektet igen för att uppdatera listan
+    toast({
+      title: 'Raden godkänd.',
+      status: 'success',
+      duration: 3000,
+      isClosable: true,
+    });
+
+    // Hämta ny data
     fetchProject();
   } catch (error) {
     console.error('Fel vid godkännande:', error);

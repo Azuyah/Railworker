@@ -645,8 +645,10 @@ app.put('/api/row/approve/:rowId', authMiddleware, async (req, res) => {
         project: {
           select: {
             id: true,
-            rows: true,      // ✅ Detta är ett JSON-fält
-            sections: true,  // ✅ Detta är en relation
+            namn: true,
+            telefonnummer: true,
+            rows: true,
+            sections: true,
           },
         },
       },
@@ -669,6 +671,8 @@ app.put('/api/row/approve/:rowId', authMiddleware, async (req, res) => {
       avslutat: '',
       avslutatDatum: '',
       selections: row.selections || Array(project.sections.length).fill(false),
+      namn: project.namn || '',
+      telefonnummer: project.telefonnummer || '',
     };
 
     // Uppdatera projektets rows-array
