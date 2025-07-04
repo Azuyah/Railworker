@@ -198,9 +198,9 @@ const approveRow = async (rowId) => {
     const tokenData = localStorage.getItem('user');
     const token = tokenData ? JSON.parse(tokenData).token : null;
 
-    await axios.post(
-      `https://railworker-production.up.railway.app/api/tsmRows/${rowId}/approve`,
-      {},
+    await axios.put(                                     // ← PUT, inte POST
+      `https://railworker-production.up.railway.app/api/row/approve/${rowId}`,
+      {},                                               // ← tom body krävs av axios.put
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -211,7 +211,7 @@ const approveRow = async (rowId) => {
     // Hämta projektet igen för att uppdatera listan
     fetchProject();
   } catch (error) {
-    console.error("Fel vid godkännande:", error);
+    console.error('Fel vid godkännande:', error);
   }
 };
 
