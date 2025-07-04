@@ -401,8 +401,8 @@ const project = await prisma.project.findUnique({
     beteckningar: true,
     anteckningar: true,
 
-    // 🟢 Lägg till TSM-rader med relationsdata
     tsmRows: {
+      where: { isPending: true },
       include: {
         user: true,
         section: true,
@@ -671,7 +671,7 @@ const newRow = {
   avslutadAv: '',
   avslutat: '',
   avslutatDatum: '',
-  selections: Array(project.sections.length).fill(false),
+  selections: row.selections,
 };
 
     // Uppdatera projektets JSON-fält med ny rad
