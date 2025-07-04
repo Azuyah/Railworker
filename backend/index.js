@@ -650,18 +650,19 @@ app.put('/api/row/approve/:rowId', authMiddleware, async (req, res) => {
     });
     if (!row) return res.status(404).json({ error: 'Rad hittades inte' });
 
-    // Ladda om projektet med sektioner
-    const project = await prisma.project.findUnique({
-      where: { id: row.projectId },
-      include: {
-        sections: true,
-        rows: true,
-      },
-    });
-    if (!project) return res.status(404).json({ error: 'Projekt hittades inte' });
+const project = await prisma.project.findUnique({
+  where: { id: row.project.id },
+  include: {
+    sections: true,
+  },
+});
 
-    // Hämta befintliga rader
-    const existingRows = Array.isArray(project.rows) ? project.rows : [];
+if (!project) {
+  console.error('❌ Projekt saknas!');
+  return res.status(404).json({ error: 'Projekt hittades inte' });
+}
+
+const existingRows = Array.isArray(project.rows) ? project.rows : [];
 
 const sectionsCount = Array.isArray(project.sections) ? project.sections.length : 0;
 
@@ -669,24 +670,24 @@ const newRow = {
   id: Date.now(),
   datum: row.datum,
   anordning: row.anordning,
-  section: row.section.name,
-  type: row.section.type,
+  section: row.section?.name || '',
+  type: row.section?.type || '',
   skapadAv: row.signature || approver.initials || approver.firstName || '',
   skapadDatum: new Date().toISOString(),
   avslutadRad: false,
   avslutadAv: '',
   avslutat: '',
   avslutatDatum: '',
-  selections: Array(sectionsCount).fill(false), // skyddat!
+  selections: Array(sectionsCount).fill(false),
 };
 
-    // Uppdatera projektets rows-array
-    await prisma.project.update({
-      where: { id: project.id },
-      data: {
-        rows: [...existingRows, newRow],
-      },
-    });
+// ✅ Uppdatera JSON-fältet "rows"
+await prisma.project.update({
+  where: { id: project.id },
+  data: {
+    rows: [...existingRows, newRow],
+  },
+});
 
     // Markera raden som godkänd
     await prisma.row.update({
