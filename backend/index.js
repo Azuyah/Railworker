@@ -657,23 +657,22 @@ app.put('/api/row/approve/:rowId', authMiddleware, async (req, res) => {
     const project = row.project;
     const existingRows = Array.isArray(project.rows) ? project.rows : [];
 
-    // Skapa ny godkänd rad
-    const newRow = {
-      id: Date.now(), // Unik frontend-ID
-      datum: row.datum,
-      anordning: row.anordning,
-      section: row.section.name,
-      type: row.section.type,
-      skapadAv: row.signature,
-      telefon: row.user?.phone || '',
-      namn: `${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim(),
-      skapadDatum: new Date().toISOString(),
-      avslutadRad: false,
-      avslutadAv: '',
-      avslutat: '',
-      avslutatDatum: '',
-      selections: Array(project.sections.length).fill(false),
-    };
+const newRow = {
+  id: Date.now(),
+  datum: row.datum,
+  anordning: row.anordning,
+  section: row.section?.name || '',
+  type: row.section?.type || '',
+  skapadAv: row.signature,
+  telefon: row.user?.phone || '',
+  namn: `${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim(),
+  skapadDatum: new Date().toISOString(),
+  avslutadRad: false,
+  avslutadAv: '',
+  avslutat: '',
+  avslutatDatum: '',
+  selections: Array(project.sections.length).fill(false),
+};
 
     // Uppdatera projektets JSON-fält med ny rad
     await prisma.project.update({
