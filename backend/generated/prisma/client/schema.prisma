@@ -85,8 +85,9 @@ model Row {
   user   User? @relation("CreatedRows", fields: [userId], references: [id])
   userId Int?
 
-  section   Section? @relation(fields: [sectionId], references: [id])
-  sectionId Int?
+  section    Section? @relation(fields: [sectionId], references: [id])
+  sectionId  Int?
+  selections Json?
 
   anordning String[]
   datum     String?

@@ -86,6 +86,7 @@ model Row {
 
   section      Section?  @relation(fields: [sectionId], references: [id])
   sectionId    Int?
+  selections   Json?
 
   anordning    String[]
   datum        String?

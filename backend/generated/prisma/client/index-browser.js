@@ -172,6 +172,7 @@ exports.Prisma.RowScalarFieldEnum = {
   projectId: 'projectId',
   userId: 'userId',
   sectionId: 'sectionId',
+  selections: 'selections',
   anordning: 'anordning',
   datum: 'datum',
   isPending: 'isPending',
