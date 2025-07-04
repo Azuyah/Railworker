@@ -627,7 +627,7 @@ app.post('/api/row/self-enroll', authMiddleware, async (req, res) => {
 }
 });
 
-app.put('/approve/:rowId', authMiddleware, async (req, res) => {
+app.put('/api/row/approve/:rowId', authMiddleware, async (req, res) => {
   const { rowId } = req.params;
   const userId = req.user.userId;
 
