@@ -591,12 +591,15 @@ app.put('/api/projects/:projectId/rows/:rowId/complete', authMiddleware, async (
   }
 });
 
-app.post('/api/self-enroll', authMiddleware, async (req, res) => {
+app.post('/api/row/self-enroll', authMiddleware, async (req, res) => {
   const userId = req.user.userId;
-  const { projectId, sectionId } = req.body;
+  const { projectId, sectionId, datum, anordning } = req.body;
 
   try {
-    // ✅ Kontrollera om användaren redan är anmäld
+    if (!projectId || !sectionId) {
+      return res.status(400).json({ error: 'projectId eller sectionId saknas' });
+    }
+
     const alreadyEnrolled = await prisma.row.findFirst({
       where: {
         userId,
@@ -609,21 +612,22 @@ app.post('/api/self-enroll', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Du är redan anmäld till detta delområde' });
     }
 
-    // 🟢 Skapa en ny TSM-rad
     const row = await prisma.row.create({
       data: {
         projectId: Number(projectId),
         sectionId: Number(sectionId),
         userId,
+        datum: datum || null,
+        anordning: anordning || null,
         isPending: true,
       },
     });
 
     res.status(201).json(row);
-  } catch (err) {
-    console.error('❌ Fel vid TSM-anmälan:', err);
-    res.status(500).json({ error: 'Kunde inte anmäla till projektet' });
-  }
+} catch (err) {
+  console.error('❌ Fel vid TSM-anmälan:', err.message, err.stack); // Lägg till både message och stack
+  res.status(500).json({ error: 'Kunde inte skapa rad', details: err.message });
+}
 });
 
 // Start server

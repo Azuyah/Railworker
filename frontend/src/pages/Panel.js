@@ -81,6 +81,7 @@ const user = userDataRaw ? JSON.parse(userDataRaw) : null;
     });
   }
 };
+
 const fetchAllProjects = async () => {
   try {
     const token = localStorage.getItem('token'); // 🟢 Du behöver detta!
