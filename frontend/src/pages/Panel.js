@@ -148,24 +148,31 @@ const fetchAllProjects = async () => {
     <ModalCloseButton />
     <ModalBody>
       <VStack spacing={4}>
+        {/* Namn och telefon hämtas från inloggad användare */}
         <Input value={user?.firstName + ' ' + user?.lastName} isReadOnly />
         <Input value={user?.phone || ''} isReadOnly />
+
+        {/* Datum */}
         <Input
           placeholder="Datum (ÅÅÅÅ-MM-DD)"
           value={datum}
           onChange={(e) => setDatum(e.target.value)}
         />
-<Select
-  placeholder="Välj delområde"
-  value={selectedSection}
-  onChange={(e) => setSelectedSection(e.target.value)}
->
-  {selectedProject?.sections?.map((sec, i) => (
-    <option key={i} value={sec.id}>
-      {sec.type} {String.fromCharCode(65 + i)} ({sec.name})
-    </option>
-  ))}
-</Select>
+
+        {/* Välj delområde – viktigt! */}
+        <Select
+          placeholder="Välj delområde"
+          value={selectedSection}
+          onChange={(e) => setSelectedSection(e.target.value)}
+        >
+          {selectedProject?.sections?.map((sec, i) => (
+            <option key={sec.id} value={sec.id}>
+              {sec.type} {String.fromCharCode(65 + i)} ({sec.name})
+            </option>
+          ))}
+        </Select>
+
+        {/* Anordning */}
         <Input
           placeholder="Anordning"
           value={anordning}
@@ -174,7 +181,11 @@ const fetchAllProjects = async () => {
       </VStack>
     </ModalBody>
     <ModalFooter>
-      <Button colorScheme="blue" onClick={handleSelfEnroll}>
+      <Button
+        colorScheme="blue"
+        onClick={handleSelfEnroll}
+        isDisabled={!datum || !selectedSection || !anordning}
+      >
         Skicka
       </Button>
     </ModalFooter>
