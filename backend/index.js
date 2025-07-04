@@ -663,21 +663,22 @@ app.put('/api/row/approve/:rowId', authMiddleware, async (req, res) => {
     // Hämta befintliga rader
     const existingRows = Array.isArray(project.rows) ? project.rows : [];
 
-    // Skapa ny rad
-    const newRow = {
-      id: Date.now(),
-      datum: row.datum,
-      anordning: row.anordning,
-      section: row.section.name,
-      type: row.section.type,
-      skapadAv: row.signature,
-      skapadDatum: new Date().toISOString(),
-      avslutadRad: false,
-      avslutadAv: '',
-      avslutat: '',
-      avslutatDatum: '',
-      selections: Array(project.sections?.length || 0).fill(false), // Säker fallback
-    };
+const sectionsCount = Array.isArray(project.sections) ? project.sections.length : 0;
+
+const newRow = {
+  id: Date.now(),
+  datum: row.datum,
+  anordning: row.anordning,
+  section: row.section.name,
+  type: row.section.type,
+  skapadAv: row.signature || approver.initials || approver.firstName || '',
+  skapadDatum: new Date().toISOString(),
+  avslutadRad: false,
+  avslutadAv: '',
+  avslutat: '',
+  avslutatDatum: '',
+  selections: Array(sectionsCount).fill(false), // skyddat!
+};
 
     // Uppdatera projektets rows-array
     await prisma.project.update({
