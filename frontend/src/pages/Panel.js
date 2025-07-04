@@ -41,6 +41,9 @@ export default function Panel() {
   const user = userDataRaw ? JSON.parse(userDataRaw) : null;
   const [selectedSectionIds, setSelectedSectionIds] = useState([]);
   const [datum, setDatum] = useState('');
+  const [begardDatum, setBegardDatum] = useState('');
+  const [begardTid, setBegardTid] = useState('');
+  const [anteckning, setAnteckning] = useState('');
   const [selectedSection, setSelectedSection] = useState('');
   const [anordning, setAnordning] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
@@ -174,25 +177,21 @@ const fetchAllProjects = async () => {
     <ModalCloseButton />
     <ModalBody>
       <Stack spacing={6}>
+        {/* RAD 1 */}
         <SimpleGrid columns={2} spacing={4}>
           <FormControl>
             <FormLabel>Namn</FormLabel>
-            <Input value={user?.firstName + ' ' + user?.lastName} isReadOnly />
+            <Input value={user?.firstName + ' ' + user?.lastName} isDisabled />
           </FormControl>
+
           <FormControl>
             <FormLabel>Telefon</FormLabel>
-            <Input value={user?.phone || ''} isReadOnly />
+            <Input value={user?.phone || ''} isDisabled />
           </FormControl>
+        </SimpleGrid>
 
-          <FormControl>
-            <FormLabel>Datum</FormLabel>
-            <Input
-              type="date"
-              value={datum}
-              onChange={(e) => setDatum(e.target.value)}
-            />
-          </FormControl>
-
+        {/* RAD 2 */}
+        <SimpleGrid columns={2} spacing={4}>
           <FormControl>
             <FormLabel>Anordning</FormLabel>
             <Menu closeOnSelect={false}>
@@ -218,50 +217,79 @@ const fetchAllProjects = async () => {
               </MenuList>
             </Menu>
           </FormControl>
+
+          <FormControl>
+            <FormLabel>Delområden</FormLabel>
+            <Menu closeOnSelect={false} portal={false}>
+              <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
+                {selectedSectionIds.length > 0
+                  ? `${selectedSectionIds.length} valda`
+                  : 'Välj delområden'}
+              </MenuButton>
+              <MenuList
+                maxH="300px"
+                overflowY="auto"
+                zIndex={9999}
+                sx={{
+                  '&::-webkit-scrollbar': { width: '6px' },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: 'rgba(0,0,0,0.3)',
+                    borderRadius: '4px',
+                  },
+                }}
+              >
+                {selectedProject?.sections?.map((sec, idx) => (
+                  <MenuItem key={sec.id} whiteSpace="normal">
+                    <Checkbox
+                      isChecked={selectedSectionIds.includes(sec.id)}
+                      onChange={(e) => {
+                        const isChecked = e.target.checked;
+                        const updated = isChecked
+                          ? [...selectedSectionIds, sec.id]
+                          : selectedSectionIds.filter((id) => id !== sec.id);
+                        setSelectedSectionIds(updated);
+                      }}
+                    >
+                      {sec.type} {String.fromCharCode(65 + idx)} ({sec.name})
+                    </Checkbox>
+                  </MenuItem>
+                ))}
+              </MenuList>
+            </Menu>
+          </FormControl>
         </SimpleGrid>
 
-<FormControl>
-  <FormLabel>Delområden</FormLabel>
-  <Menu closeOnSelect={false} portal={false}>
-    <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
-      {selectedSectionIds.length > 0
-        ? `${selectedSectionIds.length} valda`
-        : 'Välj delområden'}
-    </MenuButton>
-    <MenuList
-      maxH="300px"
-      overflowY="auto"
-      overflowX="hidden"
-      zIndex={9999}  // tvingar dropdown över modalen
-      sx={{
-        '&::-webkit-scrollbar': {
-          width: '6px',
-        },
-        '&::-webkit-scrollbar-thumb': {
-          backgroundColor: 'rgba(0,0,0,0.3)',
-          borderRadius: '4px',
-        },
-      }}
-    >
-      {selectedProject?.sections?.map((sec, idx) => (
-        <MenuItem key={sec.id} whiteSpace="normal">
-          <Checkbox
-            isChecked={selectedSectionIds.includes(sec.id)}
-            onChange={(e) => {
-              const isChecked = e.target.checked;
-              const updated = isChecked
-                ? [...selectedSectionIds, sec.id]
-                : selectedSectionIds.filter((id) => id !== sec.id);
-              setSelectedSectionIds(updated);
-            }}
-          >
-            {sec.type} {String.fromCharCode(65 + idx)} ({sec.name})
-          </Checkbox>
-        </MenuItem>
-      ))}
-    </MenuList>
-  </Menu>
-</FormControl>
+        {/* RAD 3 */}
+        <SimpleGrid columns={2} spacing={4}>
+
+          <FormControl>
+            <FormLabel>Begärd till (datum)</FormLabel>
+            <Input
+              type="date"
+              value={begardDatum}
+              onChange={(e) => setBegardDatum(e.target.value)}
+            />
+          </FormControl>
+
+          <FormControl>
+            <FormLabel>Begärd till (tid)</FormLabel>
+            <Input
+              type="time"
+              value={begardTid}
+              onChange={(e) => setBegardTid(e.target.value)}
+            />
+          </FormControl>
+        </SimpleGrid>
+
+        {/* ANTECKNINGAR */}
+        <FormControl>
+          <FormLabel>Anteckningar</FormLabel>
+          <Textarea
+            placeholder="Ange anteckningar..."
+            value={anteckning}
+            onChange={(e) => setAnteckning(e.target.value)}
+          />
+        </FormControl>
       </Stack>
     </ModalBody>
     <ModalFooter>

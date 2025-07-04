@@ -1039,6 +1039,8 @@ if (loading || !project) {
       boxShadow="2xl"
       border="1px solid rgba(255,255,255,0.08)"
       overflow="visible"
+      w="full" 
+      minW="100%" 
     >
       <Table variant="simple" size="sm">
         <Thead bg="gray.100" borderRadius="xl">
@@ -1263,7 +1265,7 @@ if (loading || !project) {
       <Text
         color="gray.800"
         fontSize="sm"
-        w="140px"
+        minWidth="140px"
         isTruncated
         cursor="help"
       >
