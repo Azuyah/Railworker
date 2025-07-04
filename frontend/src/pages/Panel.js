@@ -293,13 +293,15 @@ const fetchAllProjects = async () => {
       </Stack>
     </ModalBody>
     <ModalFooter>
-      <Button
-        colorScheme="blue"
-        onClick={handleSelfEnroll}
-        isDisabled={!datum || anordning.length === 0 || selectedSectionIds.length === 0}
-      >
-        Skicka
-      </Button>
+<Button
+  colorScheme="blue"
+  onClick={handleSelfEnroll}
+  isDisabled={
+    !begardDatum || !begardTid || anordning.length === 0 || selectedSectionIds.length === 0
+  }
+>
+  Skicka
+</Button>
     </ModalFooter>
   </ModalContent>
 </Modal>

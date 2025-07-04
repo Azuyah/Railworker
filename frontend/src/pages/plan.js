@@ -1557,7 +1557,7 @@ if (loading || !project) {
 
     {/* BEGÄRD */}
     <Td borderRight="1px solid rgba(0, 0, 0, 0.1)">
-      <Text>{row.requestedTime || '–'}</Text>
+      <Text>{row.begard || '–'}</Text>
     </Td>
 
     {/* SLUT */}
