@@ -21,9 +21,6 @@ app.use(cors(corsOptions));
 
 app.use(express.json());
 
-const rowRoutes = require('./routes/row');
-app.use('/api/row', rowRoutes);
-
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
   throw new Error('JWT_SECRET is not defined in your .env file');
@@ -630,60 +627,52 @@ app.post('/api/row/self-enroll', authMiddleware, async (req, res) => {
 }
 });
 
-app.put('/api/row/approve/:rowId', authMiddleware, async (req, res) => {
+app.put('/approve/:rowId', authMiddleware, async (req, res) => {
   const { rowId } = req.params;
   const userId = req.user.userId;
 
   try {
-    // ✅ Hämta HTSM-användare
+    // Hämta HTSM-användaren
     const approver = await prisma.user.findUnique({ where: { id: userId } });
     if (!approver) return res.status(404).json({ error: 'HTSM-användare hittades inte' });
 
-    // ✅ Hämta raden inkl. projekt (med sections + rows)
-    const row = await prisma.row.findUnique({
-      where: { id: Number(rowId) },
+// Hämta raden som ska godkännas (inkl. project.sections + project.rows)
+const row = await prisma.row.findUnique({
+  where: { id: Number(rowId) },
+  include: {
+    user: true,
+    section: true,
+    project: {
       include: {
-        user: true,
-        section: true,
-        project: {
-          include: {
-            sections: true,
-            rows: true,
-          },
-        },
+        sections: true,
+        rows: true,
       },
-    });
-
+    },
+  },
+});
     if (!row) return res.status(404).json({ error: 'Rad hittades inte' });
 
+    // Läs in befintliga rader i projektet
     const project = row.project;
-
-    // ✅ Skydd: säkerställ att sections finns
-    if (!Array.isArray(project.sections)) {
-      return res.status(500).json({ error: 'Projekt saknar sektioner' });
-    }
-
-    // ✅ Hämta antal sektioner och befintliga rows
-    const sectionsCount = project.sections.length;
     const existingRows = Array.isArray(project.rows) ? project.rows : [];
 
-    // ✅ Skapa ny rad
+    // Skapa ny radstruktur i JSON
     const newRow = {
-      id: Date.now(),
+      id: Date.now(), // unik ID för frontend
       datum: row.datum,
       anordning: row.anordning,
       section: row.section.name,
       type: row.section.type,
-      skapadAv: row.signature || approver.initials || approver.firstName || '',
+      skapadAv: row.signature,
       skapadDatum: new Date().toISOString(),
       avslutadRad: false,
       avslutadAv: '',
       avslutat: '',
       avslutatDatum: '',
-      selections: Array(sectionsCount).fill(false),
+      selections: Array(project.sections.length).fill(false),
     };
 
-    // ✅ Uppdatera projektets rows-array
+    // Uppdatera projektets rows-array
     await prisma.project.update({
       where: { id: project.id },
       data: {
@@ -691,7 +680,7 @@ app.put('/api/row/approve/:rowId', authMiddleware, async (req, res) => {
       },
     });
 
-    // ✅ Markera raden som godkänd
+    // Markera som godkänd
     await prisma.row.update({
       where: { id: row.id },
       data: {
