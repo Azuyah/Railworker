@@ -590,14 +590,21 @@ app.put('/api/projects/:projectId/rows/:rowId/complete', authMiddleware, async (
 
 app.post('/api/row/self-enroll', authMiddleware, async (req, res) => {
   const userId = req.user.userId;
-  const { projectId, datum, anordning, selections } = req.body;
+  const {
+    projectId,
+    datum,
+    anordning,
+    selections,
+    begardTid,
+    begardDatum,
+    anteckning
+  } = req.body;
 
   try {
     if (!projectId || !selections || !Array.isArray(selections)) {
       return res.status(400).json({ error: 'projectId eller selections saknas eller ogiltiga' });
     }
 
-    // Kontrollera om användaren redan är anmäld (en gång per projekt)
     const alreadyEnrolled = await prisma.row.findFirst({
       where: {
         userId,
@@ -617,6 +624,9 @@ app.post('/api/row/self-enroll', authMiddleware, async (req, res) => {
         anordning: anordning || [],
         selections,
         isPending: true,
+        begard: begardTid || null,
+        begardDatum: begardDatum || null,
+        anteckning: anteckning || null,
       },
     });
 

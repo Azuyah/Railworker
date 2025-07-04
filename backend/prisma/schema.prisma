@@ -95,5 +95,9 @@ model Row {
   approvedBy   User?     @relation("RowApprovedBy", fields: [approvedById], references: [id])
   approvedById Int?
 
+  begard String?
+  begardDatum DateTime?
+  anteckning String?
+
   createdAt    DateTime  @default(now())
 }

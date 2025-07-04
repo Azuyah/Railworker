@@ -177,6 +177,9 @@ exports.Prisma.RowScalarFieldEnum = {
   datum: 'datum',
   isPending: 'isPending',
   approvedById: 'approvedById',
+  begard: 'begard',
+  begardDatum: 'begardDatum',
+  anteckning: 'anteckning',
   createdAt: 'createdAt'
 };
 
