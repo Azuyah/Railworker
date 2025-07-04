@@ -627,88 +627,72 @@ app.post('/api/row/self-enroll', authMiddleware, async (req, res) => {
   }
 });
 
-// PUT /api/row/approve/:rowId
 app.put('/api/row/approve/:rowId', authMiddleware, async (req, res) => {
   const { rowId } = req.params;
-  const userId   = req.user.userId;
+  const userId = req.user.userId;
 
   try {
-    /* 1. Hämta HTSM-användaren (den som godkänner) */
+    // Hämta HTSM-användaren
     const approver = await prisma.user.findUnique({ where: { id: userId } });
-    if (!approver) {
-      console.error('❌ Ingen HTSM-användare med id', userId);
-      return res.status(404).json({ error: 'HTSM-användare hittades inte' });
-    }
+    if (!approver) return res.status(404).json({ error: 'HTSM-användare hittades inte' });
 
-    /* 2. Hämta TSM-raden inkl. projekt + sektioner + nuvarande rows */
+    // Hämta raden som ska godkännas (inkl. projektets sections och rows via select)
     const row = await prisma.row.findUnique({
       where: { id: Number(rowId) },
       include: {
-        user:    true,         // skaparen (TSM)
-        section: true,         // DP / Linje
+        user: true,
+        section: true,
         project: {
-          include: {
-            sections: true,    // relation
-            rows:     true,    // JSON-fält
+          select: {
+            id: true,
+            rows: true,      // ✅ JSON-fält, korrekt via select
+            sections: true,  // ✅ Relation
           },
         },
       },
     });
 
-    if (!row) {
-      console.error('❌ Rad', rowId, 'fanns inte');
-      return res.status(404).json({ error: 'Rad hittades inte' });
-    }
+    if (!row) return res.status(404).json({ error: 'Rad hittades inte' });
 
-    /* 2b. Säkerställ att user & section finns */
-    if (!row.user) {
-      console.error('❌ row.user saknas på rad', rowId, '\nFull rad:', row);
-      return res.status(500).json({ error: 'Användardata saknas på raden' });
-    }
-    if (!row.section) {
-      console.error('❌ row.section saknas på rad', rowId, '\nFull rad:', row);
-      return res.status(500).json({ error: 'Section saknas på raden' });
-    }
+    const project = row.project;
+    const existingRows = Array.isArray(project.rows) ? project.rows : [];
 
-    const project       = row.project;
-    const existingRows  = Array.isArray(project.rows) ? project.rows : [];
-    const sectionsCount = project.sections.length;
-
-    /* 3. Bygg den nya (godkända) raden */
+    // Skapa ny godkänd rad
     const newRow = {
-      id: Date.now(),                                // unik frontend-id
-      datum:       row.datum,
-      anordning:   row.anordning,
-      section:     row.section.name,
-      type:        row.section.type,
-      skapadAv:    row.signature || approver.signature || '',
-      telefon:     row.user.phone || '',
-      namn:        `${row.user.firstName || ''} ${row.user.lastName || ''}`.trim(),
+      id: Date.now(), // Unik frontend-ID
+      datum: row.datum,
+      anordning: row.anordning,
+      section: row.section.name,
+      type: row.section.type,
+      skapadAv: row.signature,
+      telefon: row.user?.phone || '',
+      namn: `${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim(),
       skapadDatum: new Date().toISOString(),
-
-      avslutadRad:   false,
-      avslutadAv:    '',
-      avslutat:      '',
+      avslutadRad: false,
+      avslutadAv: '',
+      avslutat: '',
       avslutatDatum: '',
-
-      selections: Array(sectionsCount).fill(false), // initialt tomt
+      selections: Array(project.sections.length).fill(false),
     };
 
-    /* 4. Lägg in raden i projektets JSON-array */
+    // Uppdatera projektets JSON-fält med ny rad
     await prisma.project.update({
       where: { id: project.id },
-      data:  { rows: [...existingRows, newRow] },
+      data: {
+        rows: [...existingRows, newRow],
+      },
     });
 
-    /* 5. Markera TSM-raden som godkänd */
+    // Markera ursprungliga raden som godkänd
     await prisma.row.update({
       where: { id: row.id },
-      data:  { isPending: false, approvedById: userId },
+      data: {
+        isPending: false,
+        approvedById: userId,
+      },
     });
 
-    console.log('✅ Rad', rowId, 'godkänd av', userId, 'och tillagd i projekt', project.id);
     res.json({ message: 'Rad godkänd och tillagd i projektet', addedRow: newRow });
-
   } catch (err) {
     console.error('❌ Fel vid godkännande:', err);
     res.status(500).json({ error: 'Kunde inte godkänna raden' });
