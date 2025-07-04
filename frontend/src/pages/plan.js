@@ -82,6 +82,7 @@ const [editingNoteId, setEditingNoteId] = useState(null);
 const [anteckningar, setAnteckningar] = useState([]);
 const [editingId, setEditingId] = useState(null);
 const [anteckningarModalOpen, setAnteckningarModalOpen] = useState(false);
+const [selectedTsmRow, setSelectedTsmRow] = useState(null);
   const [isProjectInfoOpen, setIsProjectInfoOpen] = useState(false);
   const openProjectInfoModal = () => setIsProjectInfoOpen(true);
   const closeProjectInfoModal = () => setIsProjectInfoOpen(false);
@@ -147,6 +148,12 @@ const deleteRow = (id) => {
   setRows(updatedRows);
   return updatedRows; // Returnera nya rows
 };
+
+const {
+  isOpen: isApprovalModalOpen,
+  onOpen: onOpenApprovalModal,
+  onClose: onCloseApprovalModal,
+} = useDisclosure();
 
 const calculateSamrad = (rows) => {
   const newSamradList = [];
@@ -1460,50 +1467,100 @@ if (loading || !project) {
 )}
     </Tr>
   ))}
-{project?.tsmRows?.map((row, index) => (
-  <Tr key={`tsm-${row.id}`} bg="green.50">
-    <Td colSpan={visibleColumns['#'] ? 1 : 0}></Td>
-
-    {visibleColumns.btkn && (
-      <Td colSpan={1}>
-        <Text fontWeight="bold">
-          {row.user?.firstName} {row.user?.lastName}
-        </Text>
-      </Td>
-    )}
-
-    {visibleColumns.namn && (
-      <Td colSpan={1}>
-        <Text>{row.datum}</Text>
-      </Td>
-    )}
-
-    {visibleColumns.anordning && (
-      <Td colSpan={1}>
-        <Text>{row.anordning}</Text>
-      </Td>
-    )}
-
-    <Td colSpan={2}>
-      <Text>{row.section?.type} {row.section?.name}</Text>
+{project?.tsmRows?.map((row, rowIndex) => (
+  <Tr
+    key={`tsm-${row.id}`}
+    bg="#C6F6D5"
+    _hover={{ bg: '#D1FAE5' }}
+    cursor="pointer"
+    onClick={() => {
+      setSelectedTsmRow(row);
+      onOpenApprovalModal();
+    }}
+  >
+    {/* BTKN */}
+    <Td borderRight="1px solid rgba(0, 0, 0, 0.1)">
+      <Text>
+      </Text>
     </Td>
 
-    <Td colSpan={2}>
-{row.isPending ? (
-  <Flex align="center" justify="space-between">
-    <Badge colorScheme="yellow">Inväntar godkännande</Badge>
-    <Button
-      size="sm"
-      colorScheme="green"
-      ml={4}
-      onClick={() => approveRow(row.id)}
-    >
-      Godkänn
-    </Button>
-  </Flex>
-) : (
-  <Badge colorScheme="green">Godkänd av {row.approvedBy?.firstName}</Badge>
-)}
+    {/* NAMN */}
+    <Td borderRight="1px solid rgba(0, 0, 0, 0.1)">
+      <Text>
+        {row.user?.firstName} {row.user?.lastName}
+      </Text> {/* Namn visas ej för TSM-rad */}
+    </Td>
+
+    {/* TELEFON */}
+    <Td borderRight="1px solid rgba(0, 0, 0, 0.1)">
+      <Text>{row.user?.phone || '-'}</Text>
+    </Td>
+
+    {/* ANORDNING */}
+    <Td maxW="160px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
+      <Flex gap={1}>
+        {(Array.isArray(row.anordning)
+          ? row.anordning
+          : typeof row.anordning === 'string'
+          ? row.anordning.split(',').map((a) => a.trim())
+          : []
+        ).map((item, idx) => {
+          let color = 'gray';
+          switch (item) {
+            case 'A-S': color = 'blue'; break;
+            case 'L-S': color = 'green'; break;
+            case 'S-S': color = 'orange'; break;
+            case 'E-S': color = 'red'; break;
+            case 'Spf': color = 'yellow'; break;
+            case 'Vxl': color = 'purple'; break;
+            default: color = 'gray';
+          }
+
+          return (
+            <Badge
+              key={idx}
+              colorScheme={color}
+              variant="subtle"
+              fontSize="xs"
+              px={2}
+              py={0.5}
+              borderRadius="none"
+              textTransform="none"
+            >
+              {item}
+            </Badge>
+          );
+        })}
+      </Flex>
+    </Td>
+
+    {/* DELOMRÅDEN (checkboxar) */}
+    {project.sections.map((_, secIdx) => (
+      <Td
+        key={secIdx}
+        width="60px"
+        bg={secIdx % 2 === 0 ? 'blue.50' : 'transparent'}
+        borderRight="1px solid rgba(0, 0, 0, 0.05)"
+      >
+        <Flex justify="center">
+          {row.selections?.[secIdx] === true && <HiX size={16} color="black" />}
+        </Flex>
+      </Td>
+    ))}
+
+    {/* START */}
+    <Td borderRight="1px solid rgba(0, 0, 0, 0.1)">
+      <Text>{row.startTime || '–'}</Text>
+    </Td>
+
+    {/* BEGÄRD */}
+    <Td borderRight="1px solid rgba(0, 0, 0, 0.1)">
+      <Text>{row.requestedTime || '–'}</Text>
+    </Td>
+
+    {/* SLUT */}
+    <Td borderRight="1px solid rgba(0, 0, 0, 0.1)">
+      <Text>{row.endTime || '–'}</Text>
     </Td>
   </Tr>
 ))}
@@ -1965,6 +2022,37 @@ onChange={() =>
     <Button onClick={onClose}>Stäng</Button>
   </Flex>
 </ModalFooter>
+  </ModalContent>
+</Modal>
+
+<Modal isOpen={isApprovalModalOpen} onClose={onCloseApprovalModal} size="md">
+  <ModalOverlay />
+  <ModalContent>
+    <ModalHeader>Godkänn anmälan</ModalHeader>
+    <ModalCloseButton />
+    <ModalBody>
+      <Text>
+        Vill du godkänna anmälan från{' '}
+        <strong>
+          {selectedTsmRow?.user?.firstName} {selectedTsmRow?.user?.lastName}
+        </strong>{' '}
+        för datum <strong>{selectedTsmRow?.datum}</strong>?
+      </Text>
+    </ModalBody>
+    <ModalFooter>
+      <Button variant="ghost" mr={3} onClick={onCloseApprovalModal}>
+        Avbryt
+      </Button>
+      <Button
+        colorScheme="green"
+        onClick={() => {
+          approveRow(selectedTsmRow.id);
+          onCloseApprovalModal();
+        }}
+      >
+        Godkänn
+      </Button>
+    </ModalFooter>
   </ModalContent>
 </Modal>
 

@@ -220,34 +220,48 @@ const fetchAllProjects = async () => {
           </FormControl>
         </SimpleGrid>
 
-        <FormControl>
-          <FormLabel>Delområden</FormLabel>
-          <Menu closeOnSelect={false}>
-            <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
-              {selectedSectionIds.length > 0
-                ? `${selectedSectionIds.length} valda`
-                : 'Välj delområden'}
-            </MenuButton>
-            <MenuList maxHeight="300px" overflowY="auto">
-              {selectedProject?.sections?.map((sec, idx) => (
-                <MenuItem key={sec.id}>
-                  <Checkbox
-                    isChecked={selectedSectionIds.includes(sec.id)}
-                    onChange={(e) => {
-                      const isChecked = e.target.checked;
-                      const updated = isChecked
-                        ? [...selectedSectionIds, sec.id]
-                        : selectedSectionIds.filter((id) => id !== sec.id);
-                      setSelectedSectionIds(updated);
-                    }}
-                  >
-                    {sec.type} {String.fromCharCode(65 + idx)} ({sec.name})
-                  </Checkbox>
-                </MenuItem>
-              ))}
-            </MenuList>
-          </Menu>
-        </FormControl>
+<FormControl>
+  <FormLabel>Delområden</FormLabel>
+  <Menu closeOnSelect={false} portal={false}>
+    <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
+      {selectedSectionIds.length > 0
+        ? `${selectedSectionIds.length} valda`
+        : 'Välj delområden'}
+    </MenuButton>
+    <MenuList
+      maxH="300px"
+      overflowY="auto"
+      overflowX="hidden"
+      zIndex={9999}  // tvingar dropdown över modalen
+      sx={{
+        '&::-webkit-scrollbar': {
+          width: '6px',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          backgroundColor: 'rgba(0,0,0,0.3)',
+          borderRadius: '4px',
+        },
+      }}
+    >
+      {selectedProject?.sections?.map((sec, idx) => (
+        <MenuItem key={sec.id} whiteSpace="normal">
+          <Checkbox
+            isChecked={selectedSectionIds.includes(sec.id)}
+            onChange={(e) => {
+              const isChecked = e.target.checked;
+              const updated = isChecked
+                ? [...selectedSectionIds, sec.id]
+                : selectedSectionIds.filter((id) => id !== sec.id);
+              setSelectedSectionIds(updated);
+            }}
+          >
+            {sec.type} {String.fromCharCode(65 + idx)} ({sec.name})
+          </Checkbox>
+        </MenuItem>
+      ))}
+    </MenuList>
+  </Menu>
+</FormControl>
       </Stack>
     </ModalBody>
     <ModalFooter>
