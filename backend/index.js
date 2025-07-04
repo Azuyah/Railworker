@@ -684,10 +684,10 @@ app.put('/api/row/approve/:rowId', authMiddleware, async (req, res) => {
     });
 
     res.json({ message: 'Rad godkänd och tillagd i projektet', addedRow: newRow });
-  } catch (err) {
-    console.error('❌ Fel vid godkännande:', err);
-    res.status(500).json({ error: 'Kunde inte godkänna raden' });
-  }
+} catch (err) {
+  console.error('❌ Fel vid godkännande:', err.message, err.stack); // Visa exakt fel
+  res.status(500).json({ error: 'Kunde inte godkänna raden', details: err.message });
+}
 });
 
 // Start server
