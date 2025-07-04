@@ -26,7 +26,6 @@ router.post('/self-enroll', authMiddleware, async (req, res) => {
         userId,
         datum,
         anordning,
-        signature: `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase(),
         isPending: true // Indikerar att HTSM ska godkänna denna
       },
       include: {
