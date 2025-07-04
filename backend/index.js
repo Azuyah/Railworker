@@ -639,37 +639,45 @@ app.put('/api/row/approve/:rowId', authMiddleware, async (req, res) => {
     const approver = await prisma.user.findUnique({ where: { id: userId } });
     if (!approver) return res.status(404).json({ error: 'HTSM-användare hittades inte' });
 
-// Hämta raden som ska godkännas
-const row = await prisma.row.findUnique({
-  where: { id: Number(rowId) },
-  include: { user: true, section: true, project: true },
-});
-if (!row) return res.status(404).json({ error: 'Rad hittades inte' });
+    // Hämta raden som ska godkännas
+    const row = await prisma.row.findUnique({
+      where: { id: Number(rowId) },
+      include: {
+        user: true,
+        section: true,
+        project: true,
+      },
+    });
+    if (!row) return res.status(404).json({ error: 'Rad hittades inte' });
 
-// ✅ Ladda om projektet med sektioner
-const project = await prisma.project.findUnique({
-  where: { id: row.project.id },
-  include: { sections: true, rows: true }
-});
+    // Ladda om projektet med sektioner
+    const project = await prisma.project.findUnique({
+      where: { id: row.project.id },
+      include: {
+        sections: true,
+        rows: true,
+      },
+    });
+    if (!project) return res.status(404).json({ error: 'Projekt hittades inte' });
 
-// Hämta befintliga rader
-const existingRows = Array.isArray(project.rows) ? project.rows : [];
+    // Hämta befintliga rader
+    const existingRows = Array.isArray(project.rows) ? project.rows : [];
 
-// Skapa ny rad
-const newRow = {
-  id: Date.now(),
-  datum: row.datum,
-  anordning: row.anordning,
-  section: row.section.name,
-  type: row.section.type,
-  skapadAv: row.signature,
-  skapadDatum: new Date().toISOString(),
-  avslutadRad: false,
-  avslutadAv: '',
-  avslutat: '',
-  avslutatDatum: '',
-  selections: Array(project.sections.length).fill(false), // 💡 Fixad
-};
+    // Skapa ny rad
+    const newRow = {
+      id: Date.now(),
+      datum: row.datum,
+      anordning: row.anordning,
+      section: row.section.name,
+      type: row.section.type,
+      skapadAv: row.signature,
+      skapadDatum: new Date().toISOString(),
+      avslutadRad: false,
+      avslutadAv: '',
+      avslutat: '',
+      avslutatDatum: '',
+      selections: Array(project.sections?.length || 0).fill(false), // Säker fallback
+    };
 
     // Uppdatera projektets rows-array
     await prisma.project.update({
@@ -679,7 +687,7 @@ const newRow = {
       },
     });
 
-    // Markera som godkänd
+    // Markera raden som godkänd
     await prisma.row.update({
       where: { id: row.id },
       data: {
@@ -689,10 +697,10 @@ const newRow = {
     });
 
     res.json({ message: 'Rad godkänd och tillagd i projektet', addedRow: newRow });
-} catch (err) {
-  console.error('❌ Fel vid godkännande:', err.message, err.stack); // Visa exakt fel
-  res.status(500).json({ error: 'Kunde inte godkänna raden', details: err.message });
-}
+  } catch (err) {
+    console.error('❌ Fel vid godkännande:', err);
+    res.status(500).json({ error: 'Kunde inte godkänna raden' });
+  }
 });
 
 // Start server
