@@ -653,6 +653,9 @@ app.put('/api/row/approve/:rowId', authMiddleware, async (req, res) => {
         },
       },
     });
+    console.log('📦 row.project:', row.project);
+console.log('📦 row.project.sections:', row.project?.sections);
+console.log('📦 row.project.rows:', row.project?.rows);
 
     if (!row) return res.status(404).json({ error: 'Rad hittades inte' });
 
