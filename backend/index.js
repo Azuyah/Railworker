@@ -643,11 +643,12 @@ const row = await prisma.row.findUnique({
     user: true,
     section: true,
     project: {
-      include: {
-        sections: true,
-        rows: true,
-      },
-    },
+  select: {
+    id: true,
+    rows: true,      // ✅ Detta fungerar eftersom det är ett JSON-fält, inte en relation
+    sections: true,  // ✅ Detta är en relation och får inkluderas
+  }
+}
   },
 });
     if (!row) return res.status(404).json({ error: 'Rad hittades inte' });
