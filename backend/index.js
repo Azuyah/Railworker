@@ -652,7 +652,7 @@ app.put('/api/row/approve/:rowId', authMiddleware, async (req, res) => {
 
     // Ladda om projektet med sektioner
     const project = await prisma.project.findUnique({
-      where: { id: row.project.id },
+      where: { id: row.projectId },
       include: {
         sections: true,
         rows: true,
