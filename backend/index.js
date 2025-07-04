@@ -636,41 +636,39 @@ app.put('/api/row/approve/:rowId', authMiddleware, async (req, res) => {
     const approver = await prisma.user.findUnique({ where: { id: userId } });
     if (!approver) return res.status(404).json({ error: 'HTSM-användare hittades inte' });
 
-// Hämta raden som ska godkännas (inkl. project.sections + project.rows)
-const row = await prisma.row.findUnique({
-  where: { id: Number(rowId) },
-  include: {
-    user: true,
-    section: true,
-    project: {
-  select: {
-    id: true,
-    rows: true,      // ✅ Detta fungerar eftersom det är ett JSON-fält, inte en relation
-    sections: true,  // ✅ Detta är en relation och får inkluderas
-  }
-}
-  },
-});
+    // Hämta raden som ska godkännas (inkl. project.sections + project.rows)
+    const row = await prisma.row.findUnique({
+      where: { id: Number(rowId) },
+      include: {
+        user: true,
+        section: true,
+        project: {
+          select: {
+            id: true,
+            rows: true,      // ✅ Detta är ett JSON-fält
+            sections: true,  // ✅ Detta är en relation
+          },
+        },
+      },
+    });
+
     if (!row) return res.status(404).json({ error: 'Rad hittades inte' });
 
-    // Läs in befintliga rader i projektet
     const project = row.project;
     const existingRows = Array.isArray(project.rows) ? project.rows : [];
 
-    // Skapa ny radstruktur i JSON
+    // Skapa ny godkänd rad baserat på TSM-radens data
     const newRow = {
-      id: Date.now(), // unik ID för frontend
+      id: Date.now(), // unikt ID för frontend
       datum: row.datum,
       anordning: row.anordning,
-      section: row.section.name,
-      type: row.section.type,
-      skapadAv: row.signature,
+      skapadAv: row.user?.signature || '',
       skapadDatum: new Date().toISOString(),
       avslutadRad: false,
       avslutadAv: '',
       avslutat: '',
       avslutatDatum: '',
-      selections: Array(project.sections.length).fill(false),
+      selections: row.selections || Array(project.sections.length).fill(false),
     };
 
     // Uppdatera projektets rows-array
