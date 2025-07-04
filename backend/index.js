@@ -591,6 +591,41 @@ app.put('/api/projects/:projectId/rows/:rowId/complete', authMiddleware, async (
   }
 });
 
+app.post('/api/self-enroll', authMiddleware, async (req, res) => {
+  const userId = req.user.userId;
+  const { projectId, sectionId } = req.body;
+
+  try {
+    // ✅ Kontrollera om användaren redan är anmäld
+    const alreadyEnrolled = await prisma.row.findFirst({
+      where: {
+        userId,
+        projectId: Number(projectId),
+        sectionId: Number(sectionId),
+      },
+    });
+
+    if (alreadyEnrolled) {
+      return res.status(400).json({ error: 'Du är redan anmäld till detta delområde' });
+    }
+
+    // 🟢 Skapa en ny TSM-rad
+    const row = await prisma.row.create({
+      data: {
+        projectId: Number(projectId),
+        sectionId: Number(sectionId),
+        userId,
+        isPending: true,
+      },
+    });
+
+    res.status(201).json(row);
+  } catch (err) {
+    console.error('❌ Fel vid TSM-anmälan:', err);
+    res.status(500).json({ error: 'Kunde inte anmäla till projektet' });
+  }
+});
+
 // Start server
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, '0.0.0.0', () => console.log(`✅ Server running on port ${PORT}`));
