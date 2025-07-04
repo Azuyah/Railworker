@@ -649,7 +649,7 @@ if (!row) return res.status(404).json({ error: 'Rad hittades inte' });
 // ✅ Ladda om projektet med sektioner
 const project = await prisma.project.findUnique({
   where: { id: row.project.id },
-  include: { sections: true },
+  include: { sections: true, rows: true }
 });
 
 // Hämta befintliga rader
