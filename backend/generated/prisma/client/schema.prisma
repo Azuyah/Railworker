@@ -97,7 +97,7 @@ model Row {
   approvedById Int?
 
   begard      String?
-  begardDatum DateTime?
+  begardDatum String?
   anteckning  String?
 
   createdAt DateTime @default(now())

@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Row" ALTER COLUMN "begardDatum" SET DATA TYPE TEXT;

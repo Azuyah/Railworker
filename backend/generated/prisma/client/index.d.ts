@@ -7337,7 +7337,7 @@ export namespace Prisma {
     isPending: boolean | null
     approvedById: number | null
     begard: string | null
-    begardDatum: Date | null
+    begardDatum: string | null
     anteckning: string | null
     createdAt: Date | null
   }
@@ -7351,7 +7351,7 @@ export namespace Prisma {
     isPending: boolean | null
     approvedById: number | null
     begard: string | null
-    begardDatum: Date | null
+    begardDatum: string | null
     anteckning: string | null
     createdAt: Date | null
   }
@@ -7532,7 +7532,7 @@ export namespace Prisma {
     isPending: boolean
     approvedById: number | null
     begard: string | null
-    begardDatum: Date | null
+    begardDatum: string | null
     anteckning: string | null
     createdAt: Date
     _count: RowCountAggregateOutputType | null
@@ -7671,7 +7671,7 @@ export namespace Prisma {
       isPending: boolean
       approvedById: number | null
       begard: string | null
-      begardDatum: Date | null
+      begardDatum: string | null
       anteckning: string | null
       createdAt: Date
     }, ExtArgs["result"]["row"]>
@@ -8111,7 +8111,7 @@ export namespace Prisma {
     readonly isPending: FieldRef<"Row", 'Boolean'>
     readonly approvedById: FieldRef<"Row", 'Int'>
     readonly begard: FieldRef<"Row", 'String'>
-    readonly begardDatum: FieldRef<"Row", 'DateTime'>
+    readonly begardDatum: FieldRef<"Row", 'String'>
     readonly anteckning: FieldRef<"Row", 'String'>
     readonly createdAt: FieldRef<"Row", 'DateTime'>
   }
@@ -9168,7 +9168,7 @@ export namespace Prisma {
     isPending?: BoolFilter<"Row"> | boolean
     approvedById?: IntNullableFilter<"Row"> | number | null
     begard?: StringNullableFilter<"Row"> | string | null
-    begardDatum?: DateTimeNullableFilter<"Row"> | Date | string | null
+    begardDatum?: StringNullableFilter<"Row"> | string | null
     anteckning?: StringNullableFilter<"Row"> | string | null
     createdAt?: DateTimeFilter<"Row"> | Date | string
     project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
@@ -9211,7 +9211,7 @@ export namespace Prisma {
     isPending?: BoolFilter<"Row"> | boolean
     approvedById?: IntNullableFilter<"Row"> | number | null
     begard?: StringNullableFilter<"Row"> | string | null
-    begardDatum?: DateTimeNullableFilter<"Row"> | Date | string | null
+    begardDatum?: StringNullableFilter<"Row"> | string | null
     anteckning?: StringNullableFilter<"Row"> | string | null
     createdAt?: DateTimeFilter<"Row"> | Date | string
     project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
@@ -9255,7 +9255,7 @@ export namespace Prisma {
     isPending?: BoolWithAggregatesFilter<"Row"> | boolean
     approvedById?: IntNullableWithAggregatesFilter<"Row"> | number | null
     begard?: StringNullableWithAggregatesFilter<"Row"> | string | null
-    begardDatum?: DateTimeNullableWithAggregatesFilter<"Row"> | Date | string | null
+    begardDatum?: StringNullableWithAggregatesFilter<"Row"> | string | null
     anteckning?: StringNullableWithAggregatesFilter<"Row"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Row"> | Date | string
   }
@@ -9612,7 +9612,7 @@ export namespace Prisma {
     datum?: string | null
     isPending?: boolean
     begard?: string | null
-    begardDatum?: Date | string | null
+    begardDatum?: string | null
     anteckning?: string | null
     createdAt?: Date | string
     project: ProjectCreateNestedOneWithoutTsmRowsInput
@@ -9632,7 +9632,7 @@ export namespace Prisma {
     isPending?: boolean
     approvedById?: number | null
     begard?: string | null
-    begardDatum?: Date | string | null
+    begardDatum?: string | null
     anteckning?: string | null
     createdAt?: Date | string
   }
@@ -9643,7 +9643,7 @@ export namespace Prisma {
     datum?: NullableStringFieldUpdateOperationsInput | string | null
     isPending?: BoolFieldUpdateOperationsInput | boolean
     begard?: NullableStringFieldUpdateOperationsInput | string | null
-    begardDatum?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     project?: ProjectUpdateOneRequiredWithoutTsmRowsNestedInput
@@ -9663,7 +9663,7 @@ export namespace Prisma {
     isPending?: BoolFieldUpdateOperationsInput | boolean
     approvedById?: NullableIntFieldUpdateOperationsInput | number | null
     begard?: NullableStringFieldUpdateOperationsInput | string | null
-    begardDatum?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -9679,7 +9679,7 @@ export namespace Prisma {
     isPending?: boolean
     approvedById?: number | null
     begard?: string | null
-    begardDatum?: Date | string | null
+    begardDatum?: string | null
     anteckning?: string | null
     createdAt?: Date | string
   }
@@ -9690,7 +9690,7 @@ export namespace Prisma {
     datum?: NullableStringFieldUpdateOperationsInput | string | null
     isPending?: BoolFieldUpdateOperationsInput | boolean
     begard?: NullableStringFieldUpdateOperationsInput | string | null
-    begardDatum?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -9706,7 +9706,7 @@ export namespace Prisma {
     isPending?: BoolFieldUpdateOperationsInput | boolean
     approvedById?: NullableIntFieldUpdateOperationsInput | number | null
     begard?: NullableStringFieldUpdateOperationsInput | string | null
-    begardDatum?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -10180,17 +10180,6 @@ export namespace Prisma {
     not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
-  export type DateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
-  }
-
   export type SectionNullableScalarRelationFilter = {
     is?: SectionWhereInput | null
     isNot?: SectionWhereInput | null
@@ -10262,20 +10251,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedBoolFilter<$PrismaModel>
     _max?: NestedBoolFilter<$PrismaModel>
-  }
-
-  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type ProjectCreateNestedManyWithoutUserInput = {
@@ -10793,10 +10768,6 @@ export namespace Prisma {
     set?: boolean
   }
 
-  export type NullableDateTimeFieldUpdateOperationsInput = {
-    set?: Date | string | null
-  }
-
   export type ProjectUpdateOneRequiredWithoutTsmRowsNestedInput = {
     create?: XOR<ProjectCreateWithoutTsmRowsInput, ProjectUncheckedCreateWithoutTsmRowsInput>
     connectOrCreate?: ProjectCreateOrConnectWithoutTsmRowsInput
@@ -11026,37 +10997,12 @@ export namespace Prisma {
     not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
-  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
-  }
-
   export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel>
     not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedBoolFilter<$PrismaModel>
     _max?: NestedBoolFilter<$PrismaModel>
-  }
-
-  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type ProjectCreateWithoutUserInput = {
@@ -11148,7 +11094,7 @@ export namespace Prisma {
     datum?: string | null
     isPending?: boolean
     begard?: string | null
-    begardDatum?: Date | string | null
+    begardDatum?: string | null
     anteckning?: string | null
     createdAt?: Date | string
     project: ProjectCreateNestedOneWithoutTsmRowsInput
@@ -11166,7 +11112,7 @@ export namespace Prisma {
     isPending?: boolean
     approvedById?: number | null
     begard?: string | null
-    begardDatum?: Date | string | null
+    begardDatum?: string | null
     anteckning?: string | null
     createdAt?: Date | string
   }
@@ -11187,7 +11133,7 @@ export namespace Prisma {
     datum?: string | null
     isPending?: boolean
     begard?: string | null
-    begardDatum?: Date | string | null
+    begardDatum?: string | null
     anteckning?: string | null
     createdAt?: Date | string
     project: ProjectCreateNestedOneWithoutTsmRowsInput
@@ -11205,7 +11151,7 @@ export namespace Prisma {
     datum?: string | null
     isPending?: boolean
     begard?: string | null
-    begardDatum?: Date | string | null
+    begardDatum?: string | null
     anteckning?: string | null
     createdAt?: Date | string
   }
@@ -11326,7 +11272,7 @@ export namespace Prisma {
     isPending?: BoolFilter<"Row"> | boolean
     approvedById?: IntNullableFilter<"Row"> | number | null
     begard?: StringNullableFilter<"Row"> | string | null
-    begardDatum?: DateTimeNullableFilter<"Row"> | Date | string | null
+    begardDatum?: StringNullableFilter<"Row"> | string | null
     anteckning?: StringNullableFilter<"Row"> | string | null
     createdAt?: DateTimeFilter<"Row"> | Date | string
   }
@@ -11431,7 +11377,7 @@ export namespace Prisma {
     datum?: string | null
     isPending?: boolean
     begard?: string | null
-    begardDatum?: Date | string | null
+    begardDatum?: string | null
     anteckning?: string | null
     createdAt?: Date | string
     user?: UserCreateNestedOneWithoutCreatedRowsInput
@@ -11449,7 +11395,7 @@ export namespace Prisma {
     isPending?: boolean
     approvedById?: number | null
     begard?: string | null
-    begardDatum?: Date | string | null
+    begardDatum?: string | null
     anteckning?: string | null
     createdAt?: Date | string
   }
@@ -11619,7 +11565,7 @@ export namespace Prisma {
     datum?: string | null
     isPending?: boolean
     begard?: string | null
-    begardDatum?: Date | string | null
+    begardDatum?: string | null
     anteckning?: string | null
     createdAt?: Date | string
     project: ProjectCreateNestedOneWithoutTsmRowsInput
@@ -11637,7 +11583,7 @@ export namespace Prisma {
     isPending?: boolean
     approvedById?: number | null
     begard?: string | null
-    begardDatum?: Date | string | null
+    begardDatum?: string | null
     anteckning?: string | null
     createdAt?: Date | string
   }
@@ -12275,7 +12221,7 @@ export namespace Prisma {
     isPending?: boolean
     approvedById?: number | null
     begard?: string | null
-    begardDatum?: Date | string | null
+    begardDatum?: string | null
     anteckning?: string | null
     createdAt?: Date | string
   }
@@ -12290,7 +12236,7 @@ export namespace Prisma {
     datum?: string | null
     isPending?: boolean
     begard?: string | null
-    begardDatum?: Date | string | null
+    begardDatum?: string | null
     anteckning?: string | null
     createdAt?: Date | string
   }
@@ -12379,7 +12325,7 @@ export namespace Prisma {
     datum?: NullableStringFieldUpdateOperationsInput | string | null
     isPending?: BoolFieldUpdateOperationsInput | boolean
     begard?: NullableStringFieldUpdateOperationsInput | string | null
-    begardDatum?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     project?: ProjectUpdateOneRequiredWithoutTsmRowsNestedInput
@@ -12397,7 +12343,7 @@ export namespace Prisma {
     isPending?: BoolFieldUpdateOperationsInput | boolean
     approvedById?: NullableIntFieldUpdateOperationsInput | number | null
     begard?: NullableStringFieldUpdateOperationsInput | string | null
-    begardDatum?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -12412,7 +12358,7 @@ export namespace Prisma {
     isPending?: BoolFieldUpdateOperationsInput | boolean
     approvedById?: NullableIntFieldUpdateOperationsInput | number | null
     begard?: NullableStringFieldUpdateOperationsInput | string | null
-    begardDatum?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -12423,7 +12369,7 @@ export namespace Prisma {
     datum?: NullableStringFieldUpdateOperationsInput | string | null
     isPending?: BoolFieldUpdateOperationsInput | boolean
     begard?: NullableStringFieldUpdateOperationsInput | string | null
-    begardDatum?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     project?: ProjectUpdateOneRequiredWithoutTsmRowsNestedInput
@@ -12441,7 +12387,7 @@ export namespace Prisma {
     datum?: NullableStringFieldUpdateOperationsInput | string | null
     isPending?: BoolFieldUpdateOperationsInput | boolean
     begard?: NullableStringFieldUpdateOperationsInput | string | null
-    begardDatum?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -12456,7 +12402,7 @@ export namespace Prisma {
     datum?: NullableStringFieldUpdateOperationsInput | string | null
     isPending?: BoolFieldUpdateOperationsInput | boolean
     begard?: NullableStringFieldUpdateOperationsInput | string | null
-    begardDatum?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -12482,7 +12428,7 @@ export namespace Prisma {
     isPending?: boolean
     approvedById?: number | null
     begard?: string | null
-    begardDatum?: Date | string | null
+    begardDatum?: string | null
     anteckning?: string | null
     createdAt?: Date | string
   }
@@ -12526,7 +12472,7 @@ export namespace Prisma {
     datum?: NullableStringFieldUpdateOperationsInput | string | null
     isPending?: BoolFieldUpdateOperationsInput | boolean
     begard?: NullableStringFieldUpdateOperationsInput | string | null
-    begardDatum?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     user?: UserUpdateOneWithoutCreatedRowsNestedInput
@@ -12544,7 +12490,7 @@ export namespace Prisma {
     isPending?: BoolFieldUpdateOperationsInput | boolean
     approvedById?: NullableIntFieldUpdateOperationsInput | number | null
     begard?: NullableStringFieldUpdateOperationsInput | string | null
-    begardDatum?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -12559,7 +12505,7 @@ export namespace Prisma {
     isPending?: BoolFieldUpdateOperationsInput | boolean
     approvedById?: NullableIntFieldUpdateOperationsInput | number | null
     begard?: NullableStringFieldUpdateOperationsInput | string | null
-    begardDatum?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -12574,7 +12520,7 @@ export namespace Prisma {
     isPending?: boolean
     approvedById?: number | null
     begard?: string | null
-    begardDatum?: Date | string | null
+    begardDatum?: string | null
     anteckning?: string | null
     createdAt?: Date | string
   }
@@ -12585,7 +12531,7 @@ export namespace Prisma {
     datum?: NullableStringFieldUpdateOperationsInput | string | null
     isPending?: BoolFieldUpdateOperationsInput | boolean
     begard?: NullableStringFieldUpdateOperationsInput | string | null
-    begardDatum?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     project?: ProjectUpdateOneRequiredWithoutTsmRowsNestedInput
@@ -12603,7 +12549,7 @@ export namespace Prisma {
     isPending?: BoolFieldUpdateOperationsInput | boolean
     approvedById?: NullableIntFieldUpdateOperationsInput | number | null
     begard?: NullableStringFieldUpdateOperationsInput | string | null
-    begardDatum?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -12618,7 +12564,7 @@ export namespace Prisma {
     isPending?: BoolFieldUpdateOperationsInput | boolean
     approvedById?: NullableIntFieldUpdateOperationsInput | number | null
     begard?: NullableStringFieldUpdateOperationsInput | string | null
-    begardDatum?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
