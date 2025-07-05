@@ -465,7 +465,7 @@ useEffect(() => {
   });
 
   setSelectedApprovalAreas(selectedTsmRow.selections || []);
-  setIsApprovalModalOpen(true);
+onOpenApprovalModal();
 }, [selectedTsmRow]);
 
 useEffect(() => {
