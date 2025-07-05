@@ -600,7 +600,7 @@ app.post('/api/row/self-enroll', authMiddleware, async (req, res) => {
     if (!projectId || !selections || !Array.isArray(selections)) {
       return res.status(400).json({ error: 'projectId eller selections saknas eller ogiltiga' });
     }
-    
+
     const row = await prisma.row.create({
       data: {
         projectId: Number(projectId),
@@ -667,6 +667,9 @@ const newRow = {
   avslutat: '',
   avslutatDatum: '',
   selections: row.selections,
+  anteckning: row.anteckning || '',
+  begard: row.begard || '',
+  begardDatum: row.begardDatum || null,
 };
 
     // Uppdatera projektets JSON-fält med ny rad
