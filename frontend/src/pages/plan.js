@@ -1511,14 +1511,21 @@ if (loading || !project) {
     _hover={{ bg: '#D1FAE5' }}
     cursor="pointer"
 onClick={() => {
-  setSelectedTsmRow(row);
+  const namn = row.namn?.trim();
+  const telefon = row.telefon?.trim();
+
+  const fallbackNamn = `${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim();
+  const fallbackTelefon = row.user?.phone || '';
+
   setEditableTsmRow({
     ...row,
-    namn: row.namn || `${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim(),
-    telefon: row.telefon || row.user?.phone || '',
+    namn: namn && namn !== '' ? namn : fallbackNamn,
+    telefon: telefon && telefon !== '' ? telefon : fallbackTelefon,
   });
+
+  setSelectedTsmRow(row);
   setSelectedApprovalAreas(row.selections || []);
-  onOpenApprovalModal(); // ✅ Använd denna
+  onOpenApprovalModal();
 }}
   >
     {/* BTKN */}
@@ -2067,6 +2074,8 @@ onChange={() =>
 </ModalFooter>
   </ModalContent>
 </Modal>
+
+{/*Modal för godkännande av ny rad*/}
 
 <Modal isOpen={isApprovalModalOpen} onClose={onCloseApprovalModal} size="4xl">
   <ModalOverlay />
