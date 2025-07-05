@@ -254,6 +254,16 @@ const toggleApprovalArea = (idx) => {
   }));
 };
 
+const openApprovalModal = (row) => {
+  setEditableTsmRow({
+    ...row,
+    namn: row.namn || `${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim(),
+    telefon: row.telefon || row.user?.phone || '',
+  });
+  setSelectedApprovalAreas(row.selections || []);
+  setIsApprovalModalOpen(true);
+};
+
 const addEditLinje = () => {
   const indexToInsert =
     editSections.findIndex(
