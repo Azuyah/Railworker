@@ -67,22 +67,13 @@ const handleSelfEnroll = async () => {
       selectedSectionIds.includes(sec.id)
     );
 
-        // 🛠 Konvertera datum + tid till ISO-strängar
-    const datumISO = datum ? new Date(datum).toISOString() : null;
-    const begardDatumISO = begardDatum ? new Date(begardDatum).toISOString() : null;
-
-    // Kombinera begärd datum + tid om du har båda
-    const combinedBegard = begardDatum && begard
-      ? new Date(`${begardDatum}T${begard}`).toISOString()
-      : null;
-
     const response = await axios.post(
       'https://railworker-production.up.railway.app/api/row/self-enroll',
       {
     anordning,
     selections,
     begard,
-    begardDatum: begardDatumISO,
+    begardDatum,
     anteckning,
     projectId: selectedProject.id,
   },
