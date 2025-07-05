@@ -44,7 +44,6 @@ export default function Panel() {
   const [begardDatum, setBegardDatum] = useState('');
   const [begard, setBegard] = useState('');
   const [anteckning, setAnteckning] = useState('');
-  const [selectedSection, setSelectedSection] = useState('');
   const [anordning, setAnordning] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const toast = useToast();

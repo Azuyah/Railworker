@@ -74,15 +74,16 @@ const Plan = () => {
   const [samradData, setSamradData] = useState({ samradList: [], avklaradMap: {} });
   const [loading, setLoading] = useState(true);
   const [samradTrigger, setSamradTrigger] = useState(0);
+  const [editableTsmRow, setEditableTsmRow] = useState(null);
   const [selectedRowId, setSelectedRowId] = useState(null);
   const [editBeteckningar, setEditBeteckningar] = useState([]);
-  const [pendingRows, setPendingRows] = useState([]);
-const [noteText, setNoteText] = useState('');
-const [editingNoteId, setEditingNoteId] = useState(null);
-const [anteckningar, setAnteckningar] = useState([]);
-const [editingId, setEditingId] = useState(null);
-const [anteckningarModalOpen, setAnteckningarModalOpen] = useState(false);
-const [selectedTsmRow, setSelectedTsmRow] = useState(null);
+  const [noteText, setNoteText] = useState('');
+  const [editingNoteId, setEditingNoteId] = useState(null);
+  const [selectedApprovalAreas, setSelectedApprovalAreas] = useState([]);
+  const [anteckningar, setAnteckningar] = useState([]);
+  const [editingId, setEditingId] = useState(null);
+  const [anteckningarModalOpen, setAnteckningarModalOpen] = useState(false);
+  const [selectedTsmRow, setSelectedTsmRow] = useState(null);
   const [isProjectInfoOpen, setIsProjectInfoOpen] = useState(false);
   const openProjectInfoModal = () => setIsProjectInfoOpen(true);
   const closeProjectInfoModal = () => setIsProjectInfoOpen(false);
@@ -232,6 +233,30 @@ const approveRow = async (rowId) => {
   } catch (error) {
     console.error('Fel vid godkännande:', error);
   }
+};
+
+const handleApprovalChange = (field, value) => {
+  setEditableTsmRow((prev) => ({
+    ...prev,
+    [field]: value,
+  }));
+};
+
+const toggleApprovalArea = (idx) => {
+  const updatedAreas = selectedApprovalAreas.includes(idx)
+    ? selectedApprovalAreas.filter((i) => i !== idx)
+    : [...selectedApprovalAreas, idx].sort((a, b) => a - b);
+
+  setSelectedApprovalAreas(updatedAreas);
+
+  // Sätt om boolean-array baserat på valda index
+  const selections = Array(project.sections.length).fill(false);
+  updatedAreas.forEach((i) => (selections[i] = true));
+
+  setEditableTsmRow((prev) => ({
+    ...prev,
+    selections,
+  }));
 };
 
 const addEditLinje = () => {
@@ -431,6 +456,21 @@ await axios.put(
 useEffect(() => {
   fetchProject();
 }, []);
+
+useEffect(() => {
+  if (selectedTsmRow) {
+    setEditableTsmRow({ ...selectedTsmRow });
+  }
+}, [selectedTsmRow]);
+
+useEffect(() => {
+  if (selectedTsmRow?.selections) {
+    const initialAreas = selectedTsmRow.selections
+      .map((val, idx) => (val ? idx : null))
+      .filter((idx) => idx !== null);
+    setSelectedApprovalAreas(initialAreas);
+  }
+}, [selectedTsmRow]);
 
 useEffect(() => {
   if (project?.rows?.length && (!rows || rows.length === 0)) {
@@ -2027,20 +2067,145 @@ onChange={() =>
   </ModalContent>
 </Modal>
 
-<Modal isOpen={isApprovalModalOpen} onClose={onCloseApprovalModal} size="md">
+<Modal isOpen={isApprovalModalOpen} onClose={onCloseApprovalModal} size="4xl">
   <ModalOverlay />
   <ModalContent>
     <ModalHeader>Godkänn anmälan</ModalHeader>
     <ModalCloseButton />
     <ModalBody>
-      <Text>
-        Vill du godkänna anmälan från{' '}
-        <strong>
-          {selectedTsmRow?.user?.firstName} {selectedTsmRow?.user?.lastName}
-        </strong>{' '}
-        för datum <strong>{selectedTsmRow?.datum}</strong>?
-      </Text>
+      {editableTsmRow && (
+        <SimpleGrid columns={2} spacing={6}>
+          {/* Vänsterkolumn: formulärfält */}
+          <Stack spacing={4}>
+            <SimpleGrid columns={2} spacing={4}>
+              <FormControl>
+                <FormLabel>Namn</FormLabel>
+                <Input
+                  value={editableTsmRow.namn || ''}
+                  onChange={(e) => handleApprovalChange('namn', e.target.value)}
+                />
+              </FormControl>
+              <FormControl>
+                <FormLabel>Telefon</FormLabel>
+                <Input
+                  value={editableTsmRow.telefon || ''}
+                  onChange={(e) => handleApprovalChange('telefon', e.target.value)}
+                />
+              </FormControl>
+              <FormControl>
+                <FormLabel>Anordning</FormLabel>
+                <Menu closeOnSelect={false}>
+                  <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
+                    {Array.isArray(editableTsmRow.anordning) && editableTsmRow.anordning.length > 0
+                      ? `${editableTsmRow.anordning.length} valda`
+                      : 'Välj anordning(ar)'}
+                  </MenuButton>
+                  <MenuList maxHeight="300px" overflowY="auto">
+                    {['A-S', 'L-S', 'S-S', 'E-S', 'Spf', 'Vxl'].map((option) => (
+                      <MenuItem key={option}>
+                        <Checkbox
+                          isChecked={editableTsmRow.anordning?.includes(option)}
+                          onChange={(e) => {
+                            const isChecked = e.target.checked;
+                            const updated = isChecked
+                              ? [...(editableTsmRow.anordning || []), option]
+                              : editableTsmRow.anordning.filter((val) => val !== option);
+                            handleApprovalChange('anordning', updated);
+                          }}
+                        >
+                          {option}
+                        </Checkbox>
+                      </MenuItem>
+                    ))}
+                  </MenuList>
+                </Menu>
+              </FormControl>
+            </SimpleGrid>
+
+            <SimpleGrid columns={2} spacing={4}>
+              {/* Begärd datum */}
+              <FormControl>
+                <FormLabel>Begärd datum</FormLabel>
+                {editableTsmRow.begardDatum === 'Tsv' ? (
+                  <Input value="Tillsvidare" isReadOnly />
+                ) : (
+                  <Input
+                    type="date"
+                    value={editableTsmRow.begardDatum || ''}
+                    onChange={(e) => handleApprovalChange('begardDatum', e.target.value)}
+                  />
+                )}
+                <Button
+                  size="xs"
+                  mt={1}
+                  variant="outline"
+                  onClick={() =>
+                    handleApprovalChange(
+                      'begardDatum',
+                      editableTsmRow.begardDatum === 'Tsv' ? '' : 'Tsv'
+                    )
+                  }
+                >
+                  Tillsvidare
+                </Button>
+              </FormControl>
+
+              {/* Begärd tid */}
+              <FormControl>
+                <FormLabel>Begärd till</FormLabel>
+                {editableTsmRow.begard === 'Tsv' ? (
+                  <Input value="Tillsvidare" isReadOnly />
+                ) : (
+                  <Input
+                    type="time"
+                    value={editableTsmRow.begard || ''}
+                    onChange={(e) => handleApprovalChange('begard', e.target.value)}
+                  />
+                )}
+                <Button
+                  size="xs"
+                  mt={1}
+                  variant="outline"
+                  onClick={() =>
+                    handleApprovalChange(
+                      'begard',
+                      editableTsmRow.begard === 'Tsv' ? '' : 'Tsv'
+                    )
+                  }
+                >
+                  Tillsvidare
+                </Button>
+              </FormControl>
+            </SimpleGrid>
+
+            <FormControl>
+              <FormLabel>Anteckning</FormLabel>
+              <Textarea
+                value={editableTsmRow.anteckning || ''}
+                onChange={(e) => handleApprovalChange('anteckning', e.target.value)}
+              />
+            </FormControl>
+          </Stack>
+
+          {/* Högerkolumn: Delområden */}
+          <Box bg="gray.50" p={4} borderRadius="md" maxW="400px" border="1px solid #ccc" height="100%">
+            <Text fontWeight="bold" mb={2}>Delområden</Text>
+            <SimpleGrid spacing={2}>
+              {project.sections.map((sec, idx) => (
+                <Checkbox
+                  key={idx}
+                  isChecked={selectedApprovalAreas.includes(idx)}
+                  onChange={() => toggleApprovalArea(idx)}
+                >
+                  {sec.type} {String.fromCharCode(65 + idx)}
+                </Checkbox>
+              ))}
+            </SimpleGrid>
+          </Box>
+        </SimpleGrid>
+      )}
     </ModalBody>
+
     <ModalFooter>
       <Button variant="ghost" mr={3} onClick={onCloseApprovalModal}>
         Avbryt
@@ -2048,7 +2213,7 @@ onChange={() =>
       <Button
         colorScheme="green"
         onClick={() => {
-          approveRow(selectedTsmRow.id);
+          approveRow(editableTsmRow);
           onCloseApprovalModal();
         }}
       >
