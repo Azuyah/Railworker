@@ -98,6 +98,8 @@ model Row {
   begard String?
   begardDatum String?
   anteckning String?
+  namn         String?
+  telefon      String?
 
   createdAt    DateTime  @default(now())
 }

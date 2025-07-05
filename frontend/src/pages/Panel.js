@@ -75,6 +75,8 @@ const handleSelfEnroll = async () => {
     begardDatum,
     anteckning,
     projectId: selectedProject.id,
+    namn,
+    telefon 
   },
       {
         headers: {

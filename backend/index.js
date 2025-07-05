@@ -593,7 +593,9 @@ app.post('/api/row/self-enroll', authMiddleware, async (req, res) => {
     selections,
     begard,
     begardDatum,
-    anteckning
+    anteckning,
+    namn,
+    telefon 
   } = req.body;
 
   try {
@@ -612,6 +614,8 @@ app.post('/api/row/self-enroll', authMiddleware, async (req, res) => {
         begard: begard || null,
         begardDatum: begardDatum || null,
         anteckning: anteckning || null,
+        namn: namn || null,
+        telefon: telefon || null 
       },
     });
 

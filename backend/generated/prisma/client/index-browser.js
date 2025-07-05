@@ -180,6 +180,8 @@ exports.Prisma.RowScalarFieldEnum = {
   begard: 'begard',
   begardDatum: 'begardDatum',
   anteckning: 'anteckning',
+  namn: 'namn',
+  telefon: 'telefon',
   createdAt: 'createdAt'
 };
 
