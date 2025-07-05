@@ -84,7 +84,6 @@ const Plan = () => {
   const [editingId, setEditingId] = useState(null);
   const [anteckningarModalOpen, setAnteckningarModalOpen] = useState(false);
   const [selectedTsmRow, setSelectedTsmRow] = useState(null);
-  const [setIsApprovalModalOpen] = useState(false);
   const [isProjectInfoOpen, setIsProjectInfoOpen] = useState(false);
   const openProjectInfoModal = () => setIsProjectInfoOpen(true);
   const closeProjectInfoModal = () => setIsProjectInfoOpen(false);
@@ -1511,16 +1510,16 @@ if (loading || !project) {
     bg="#C6F6D5"
     _hover={{ bg: '#D1FAE5' }}
     cursor="pointer"
-    onClick={() => {
-        setSelectedTsmRow(row);
-        setEditableTsmRow({
-        ...row,
-        namn: row.namn || `${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim(),
-        telefon: row.telefon || row.user?.phone || '',
-        });
-        setSelectedApprovalAreas(row.selections || []);
-        setIsApprovalModalOpen(true);
-    }}
+onClick={() => {
+  setSelectedTsmRow(row);
+  setEditableTsmRow({
+    ...row,
+    namn: row.namn || `${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim(),
+    telefon: row.telefon || row.user?.phone || '',
+  });
+  setSelectedApprovalAreas(row.selections || []);
+  onOpenApprovalModal(); // ✅ Använd denna
+}}
   >
     {/* BTKN */}
     <Td borderRight="1px solid rgba(0, 0, 0, 0.1)">
