@@ -202,14 +202,19 @@ const addEditDP = () => {
   setEditSections([...editSections, newDP]);
 };
 
-const approveRow = async (rowId) => {
+const approveRow = async (rowData) => {
   try {
     const tokenData = localStorage.getItem('user');
     const token = tokenData ? JSON.parse(tokenData).token : null;
 
-    await axios.put(
-      `https://railworker-production.up.railway.app/api/row/approve/${rowId}`,
-      {},
+    if (!rowData?.id) {
+      console.error('❌ approveRow saknar ett ID');
+      return;
+    }
+
+    const response = await axios.put(
+      `https://railworker-production.up.railway.app/api/row/approve/${rowData.id}`,
+      rowData, // hela objektet inkl. ändringar
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -217,21 +222,11 @@ const approveRow = async (rowId) => {
       }
     );
 
-    // 1. Ta bort raden från visningen direkt
-    setRows((prev) => prev.filter((row) => row.id !== rowId));
+    console.log('✅ Rad godkänd:', response.data);
+    fetchProject(); // eller uppdatera lokala state
 
-    // 2. Visa bekräftelse
-    toast({
-      title: 'Raden godkänd.',
-      status: 'success',
-      duration: 3000,
-      isClosable: true,
-    });
-
-    // 3. Hämta uppdaterad projektdata (t.ex. för att ladda nya raden)
-    fetchProject();
-  } catch (error) {
-    console.error('Fel vid godkännande:', error);
+  } catch (err) {
+    console.error('❌ Fel vid godkännande:', err);
   }
 };
 
@@ -2210,15 +2205,15 @@ onChange={() =>
       <Button variant="ghost" mr={3} onClick={onCloseApprovalModal}>
         Avbryt
       </Button>
-      <Button
-        colorScheme="green"
-        onClick={() => {
-          approveRow(editableTsmRow);
-          onCloseApprovalModal();
-        }}
-      >
-        Godkänn
-      </Button>
+<Button
+  colorScheme="green"
+  onClick={() => {
+    approveRow(editableTsmRow);
+    onCloseApprovalModal();
+  }}
+>
+  Godkänn
+</Button>
     </ModalFooter>
   </ModalContent>
 </Modal>
