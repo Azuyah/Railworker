@@ -42,7 +42,7 @@ export default function Panel() {
   const [selectedSectionIds, setSelectedSectionIds] = useState([]);
   const [datum, setDatum] = useState('');
   const [begardDatum, setBegardDatum] = useState('');
-  const [begardTid, setBegardTid] = useState('');
+  const [begard, setBegard] = useState('');
   const [anteckning, setAnteckning] = useState('');
   const [selectedSection, setSelectedSection] = useState('');
   const [anordning, setAnordning] = useState([]);
@@ -72,21 +72,20 @@ const handleSelfEnroll = async () => {
     const begardDatumISO = begardDatum ? new Date(begardDatum).toISOString() : null;
 
     // Kombinera begärd datum + tid om du har båda
-    const combinedBegard = begardDatum && begardTid
-      ? new Date(`${begardDatum}T${begardTid}`).toISOString()
+    const combinedBegard = begardDatum && begard
+      ? new Date(`${begardDatum}T${begard}`).toISOString()
       : null;
 
     const response = await axios.post(
       'https://railworker-production.up.railway.app/api/row/self-enroll',
       {
-        datum,
-        anordning,
-        selections,
-        begard: begardTid || '',
-        begardDatum: begardDatum || '',
-        anteckning, 
-        projectId: selectedProject.id,
-      },
+    anordning,
+    selections,
+    begard,
+    begardDatum: begardDatumISO,
+    anteckning,
+    projectId: selectedProject.id,
+  },
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -103,7 +102,7 @@ const handleSelfEnroll = async () => {
 
     onClose();
     setDatum('');
-    setBegardTid('');
+    setBegard('');
     setBegardDatum('');
     setAnteckning('');
     setAnordning([]);
@@ -270,23 +269,23 @@ const fetchAllProjects = async () => {
         {/* RAD 3 */}
         <SimpleGrid columns={2} spacing={4}>
 
-          <FormControl>
-            <FormLabel>Begärd till (datum)</FormLabel>
-            <Input
-              type="date"
-              value={begardDatum}
-              onChange={(e) => setBegardDatum(e.target.value)}
-            />
-          </FormControl>
+<FormControl>
+  <FormLabel>Begärd tid</FormLabel>
+  <Input
+    type="time"
+    value={begard || ''}
+    onChange={(e) => setBegard(e.target.value)}
+  />
+</FormControl>
 
-          <FormControl>
-            <FormLabel>Begärd till (tid)</FormLabel>
-            <Input
-              type="time"
-              value={begardTid}
-              onChange={(e) => setBegardTid(e.target.value)}
-            />
-          </FormControl>
+<FormControl mt={2}>
+  <FormLabel>Begärd datum</FormLabel>
+  <Input
+    type="date"
+    value={begardDatum ? begardDatum.slice(0, 10) : ''}
+    onChange={(e) => setBegardDatum(e.target.value)}
+  />
+</FormControl>
         </SimpleGrid>
 
         {/* ANTECKNINGAR */}
@@ -305,7 +304,7 @@ const fetchAllProjects = async () => {
   colorScheme="blue"
   onClick={handleSelfEnroll}
   isDisabled={
-    !begardDatum || !begardTid || anordning.length === 0 || selectedSectionIds.length === 0
+    !begardDatum || !begard || anordning.length === 0 || selectedSectionIds.length === 0
   }
 >
   Skicka
