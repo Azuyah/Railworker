@@ -67,19 +67,15 @@ const handleSelfEnroll = async () => {
       selectedSectionIds.includes(sec.id)
     );
 
-    console.log('📤 Skickar TSM-anmälan:', {
-      datum,
-      anordning,
-      selections,
-      projectId: selectedProject.id,
-    });
-
     const response = await axios.post(
       'https://railworker-production.up.railway.app/api/row/self-enroll',
       {
         datum,
         anordning,
         selections,
+        begardTid,
+        begardDatum,
+        anteckning, 
         projectId: selectedProject.id,
       },
       {
@@ -98,6 +94,9 @@ const handleSelfEnroll = async () => {
 
     onClose();
     setDatum('');
+    setBegardTid('');
+    setBegardDatum('');
+    setAnteckning('');
     setAnordning([]);
     setSelectedSectionIds([]);
   } catch (err) {

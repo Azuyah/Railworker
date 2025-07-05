@@ -477,8 +477,6 @@ app.put('/api/projects/:id', async (req, res) => {
       ? beteckningar.filter((b) => typeof b.label === 'string' && b.label.trim() !== '')
       : [];
 
-console.log('📦 Vi skickar anteckningar till Prisma:', anteckningar);
-
     const updatedProject = await prisma.project.update({
       where: { id: projectId },
       data: {
@@ -494,8 +492,6 @@ console.log('📦 Vi skickar anteckningar till Prisma:', anteckningar);
         anteckningar,
       },
     });
-
-    console.log('🧾 Efter update – project:', updatedProject);
 
     try {
       const deleted = await prisma.beteckning.deleteMany({
@@ -604,18 +600,7 @@ app.post('/api/row/self-enroll', authMiddleware, async (req, res) => {
     if (!projectId || !selections || !Array.isArray(selections)) {
       return res.status(400).json({ error: 'projectId eller selections saknas eller ogiltiga' });
     }
-
-    const alreadyEnrolled = await prisma.row.findFirst({
-      where: {
-        userId,
-        projectId: Number(projectId),
-      },
-    });
-
-    if (alreadyEnrolled) {
-      return res.status(400).json({ error: 'Du är redan anmäld till detta projekt' });
-    }
-
+    
     const row = await prisma.row.create({
       data: {
         projectId: Number(projectId),
