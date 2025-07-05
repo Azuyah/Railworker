@@ -84,6 +84,7 @@ const Plan = () => {
   const [editingId, setEditingId] = useState(null);
   const [anteckningarModalOpen, setAnteckningarModalOpen] = useState(false);
   const [selectedTsmRow, setSelectedTsmRow] = useState(null);
+  const [setIsApprovalModalOpen] = useState(false);
   const [isProjectInfoOpen, setIsProjectInfoOpen] = useState(false);
   const openProjectInfoModal = () => setIsProjectInfoOpen(true);
   const closeProjectInfoModal = () => setIsProjectInfoOpen(false);
