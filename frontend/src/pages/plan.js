@@ -453,9 +453,19 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
-  if (selectedTsmRow) {
-    setEditableTsmRow({ ...selectedTsmRow });
-  }
+  if (!selectedTsmRow) return;
+
+  const fallbackNamn = `${selectedTsmRow.user?.firstName || ''} ${selectedTsmRow.user?.lastName || ''}`.trim();
+  const fallbackTelefon = selectedTsmRow.user?.phone || '';
+
+  setEditableTsmRow({
+    ...selectedTsmRow,
+    namn: selectedTsmRow.namn || fallbackNamn,
+    telefon: selectedTsmRow.telefon || fallbackTelefon,
+  });
+
+  setSelectedApprovalAreas(selectedTsmRow.selections || []);
+  setIsApprovalModalOpen(true);
 }, [selectedTsmRow]);
 
 useEffect(() => {
@@ -1511,21 +1521,7 @@ if (loading || !project) {
     _hover={{ bg: '#D1FAE5' }}
     cursor="pointer"
 onClick={() => {
-  const namn = row.namn?.trim();
-  const telefon = row.telefon?.trim();
-
-  const fallbackNamn = `${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim();
-  const fallbackTelefon = row.user?.phone || '';
-
-  setEditableTsmRow({
-    ...row,
-    namn: namn && namn !== '' ? namn : fallbackNamn,
-    telefon: telefon && telefon !== '' ? telefon : fallbackTelefon,
-  });
-
   setSelectedTsmRow(row);
-  setSelectedApprovalAreas(row.selections || []);
-  onOpenApprovalModal();
 }}
   >
     {/* BTKN */}
