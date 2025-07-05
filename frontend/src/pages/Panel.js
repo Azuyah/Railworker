@@ -46,6 +46,8 @@ export default function Panel() {
   const [anteckning, setAnteckning] = useState('');
   const [anordning, setAnordning] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
+  const [namn, setNamn] = useState(`${user?.firstName || ''} ${user?.lastName || ''}`);
+  const [telefon, setTelefon] = useState(user?.phone || '');
   const toast = useToast();
 
   useEffect(() => {
