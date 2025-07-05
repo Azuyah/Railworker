@@ -254,16 +254,6 @@ const toggleApprovalArea = (idx) => {
   }));
 };
 
-const openApprovalModal = (row) => {
-  setEditableTsmRow({
-    ...row,
-    namn: row.namn || `${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim(),
-    telefon: row.telefon || row.user?.phone || '',
-  });
-  setSelectedApprovalAreas(row.selections || []);
-  setIsApprovalModalOpen(true);
-};
-
 const addEditLinje = () => {
   const indexToInsert =
     editSections.findIndex(
@@ -1521,8 +1511,13 @@ if (loading || !project) {
     _hover={{ bg: '#D1FAE5' }}
     cursor="pointer"
     onClick={() => {
-      setSelectedTsmRow(row);
-      onOpenApprovalModal();
+setEditableTsmRow({
+  ...row,
+  namn: row.namn || `${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim(),
+  telefon: row.telefon || row.user?.phone || '',
+});
+setSelectedApprovalAreas(row.selections || []);
+setIsApprovalModalOpen(true);
     }}
   >
     {/* BTKN */}
