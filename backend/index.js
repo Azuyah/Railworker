@@ -358,15 +358,9 @@ const projects = await prisma.project.findMany({
         role: true,
       },
     },
-    rows: {
-      select: {
-        id: true,
-        userId: true,
-        // Lägg till andra fält du vill använda i frontend
-      },
-    },
   },
 });
+
     console.log('✅ Alla projekt:', projects.map(p => ({ id: p.id, userId: p.userId })));
 
     res.json(projects);
