@@ -350,6 +350,7 @@ const projects = await prisma.project.findMany({
   include: {
     sections: true,
     beteckningar: true,
+    rows: true,
     user: {
       select: {
         id: true,
@@ -704,16 +705,17 @@ app.delete('/api/row/:id', authMiddleware, async (req, res) => {
 
   const id = parseInt(req.params.id);
 
-  try {
-    await prisma.row.delete({
-      where: { id },
-    });
+try {
+  const rowId = parseInt(req.params.id);
+  await prisma.row.delete({
+    where: { id: rowId },
+  });
 
-    res.status(204).send(); // Lyckades, inget innehåll tillbaka
-  } catch (error) {
-    console.error('❌ Fel vid borttagning av rad:', error);
-    res.status(500).json({ error: 'Kunde inte ta bort raden' });
-  }
+  res.json({ success: true });
+} catch (error) {
+  console.error('❌ Kunde inte ta bort raden:', error);
+  res.status(500).json({ error: 'Kunde inte ta bort raden' });
+}
 });
 
 // Start server
