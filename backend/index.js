@@ -358,9 +358,15 @@ const projects = await prisma.project.findMany({
         role: true,
       },
     },
+    rows: {
+      select: {
+        id: true,
+        userId: true,
+        // Lägg till andra fält du vill använda i frontend
+      },
+    },
   },
 });
-
     console.log('✅ Alla projekt:', projects.map(p => ({ id: p.id, userId: p.userId })));
 
     res.json(projects);
@@ -697,6 +703,22 @@ const newRow = {
   } catch (err) {
     console.error('❌ Fel vid godkännande:', err);
     res.status(500).json({ error: 'Kunde inte godkänna raden' });
+  }
+});
+
+app.delete('/api/row/:id', authMiddleware, async (req, res) => {
+
+  const id = parseInt(req.params.id);
+
+  try {
+    await prisma.row.delete({
+      where: { id },
+    });
+
+    res.status(204).send(); // Lyckades, inget innehåll tillbaka
+  } catch (error) {
+    console.error('❌ Fel vid borttagning av rad:', error);
+    res.status(500).json({ error: 'Kunde inte ta bort raden' });
   }
 });
 

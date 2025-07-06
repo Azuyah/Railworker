@@ -144,10 +144,23 @@ const updateRow = (updatedRow) => {
   return updatedRows; // Returnera nya rows
 };
 
-const deleteRow = (id) => {
-  const updatedRows = rows.filter((row) => row.id !== id);
-  setRows(updatedRows);
-  return updatedRows; // Returnera nya rows
+const deleteRow = async (id) => {
+  try {
+    const tokenData = localStorage.getItem('user');
+    const token = tokenData ? JSON.parse(tokenData).token : null;
+
+    await axios.delete(`https://railworker-production.up.railway.app/api/row/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const updatedRows = rows.filter((row) => row.id !== id);
+    setRows(updatedRows);
+    return updatedRows;
+  } catch (err) {
+    console.error('❌ Kunde inte ta bort raden:', err);
+  }
 };
 
 const {
