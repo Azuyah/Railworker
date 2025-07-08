@@ -144,7 +144,6 @@ exports.Prisma.ProjectScalarFieldEnum = {
   plats: 'plats',
   namn: 'namn',
   telefonnummer: 'telefonnummer',
-  rows: 'rows',
   anteckningar: 'anteckningar'
 };
 

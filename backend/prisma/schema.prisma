@@ -46,9 +46,8 @@ model Project {
   telefonnummer String
   sections      Section[]     
   beteckningar  Beteckning[] 
-  rows          Json?
+  rows          Row[]
   anteckningar  Json?
-  tsmRows       Row[]
 }
 model Section {
   id        Int      @id @default(autoincrement())
