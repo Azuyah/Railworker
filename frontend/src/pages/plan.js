@@ -1516,6 +1516,7 @@ if (loading || !project) {
     _hover={{ bg: '#D1FAE5' }}
     cursor="pointer"
     onClick={() => {
+      console.log("🧪 Klickad rad:", row);
       setSelectedTsmRow(row);
       onOpenApprovalModal();
     }}
