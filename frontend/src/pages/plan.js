@@ -657,7 +657,7 @@ useEffect(() => {
   });
 
   setRows(updated);
-}, [project]); // ❗️Byt till [project, rows]
+}, [project, rows]);
 
 useEffect(() => {
   if (!rows || !Array.isArray(rows)) return;
