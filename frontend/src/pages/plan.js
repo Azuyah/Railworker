@@ -629,7 +629,7 @@ useEffect(() => {
 useEffect(() => {
   if (!rows || !project?.sections) return;
 
-  const result = calculateSamrad(rows); // ✅ Använd rows, inte project.rows
+  const result = calculateSamrad(rows);
 
   const updated = rows.map((row, index) => {
     const related = result.samradList

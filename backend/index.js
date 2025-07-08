@@ -645,8 +645,8 @@ app.put('/api/row/approve/:rowId', authMiddleware, async (req, res) => {
         project: {
           select: {
             id: true,
-            rows: true,      // ✅ JSON-fält, korrekt via select
-            sections: true,  // ✅ Relation
+            tsmRows: true,
+            sections: true,
           },
         },
       },
