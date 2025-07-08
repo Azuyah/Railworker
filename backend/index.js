@@ -350,7 +350,7 @@ const projects = await prisma.project.findMany({
   include: {
     sections: true,
     beteckningar: true,
-    rows: true,
+    tsmRows: true,
     user: {
       select: {
         id: true,

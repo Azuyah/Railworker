@@ -47,8 +47,8 @@ model Project {
   sections      Section[]     
   beteckningar  Beteckning[] 
   rows          Json?
-  anteckningar Json?
-  tsmRows            Row[]
+  anteckningar  Json?
+  tsmRows       Row[]
 }
 model Section {
   id        Int      @id @default(autoincrement())
