@@ -22,6 +22,7 @@ import {
   ModalFooter,
   ModalBody,
   ModalCloseButton,
+  Select,
   VStack,
   useToast,
   useDisclosure,
@@ -32,7 +33,7 @@ import Header from '../components/Header';
 import LoadingScreen from '../components/LoadingScreen';
 
 export default function Panel() {
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen, onOpen, onClose } = useDisclosure(); // ✅ FLYTTAD HIT
   const [projects, setProjects] = useState([]);
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
@@ -44,10 +45,7 @@ export default function Panel() {
   const [begard, setBegard] = useState('');
   const [anteckning, setAnteckning] = useState('');
   const [anordning, setAnordning] = useState([]);
-  const [enrolledProjects, setEnrolledProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
-  const [namn, setNamn] = useState(`${user?.firstName || ''} ${user?.lastName || ''}`);
-  const [telefon, setTelefon] = useState(user?.phone || '');
   const toast = useToast();
 
   useEffect(() => {
@@ -57,322 +55,241 @@ export default function Panel() {
       fetchAllProjects();
     }
   }, []);
+const handleSelfEnroll = async () => {
+  try {
+    const token = localStorage.getItem('user')
+      ? JSON.parse(localStorage.getItem('user')).token
+      : null;
 
-    const userIsInProject = (project) => {
-    return Array.isArray(project.rows) && project.rows.some((row) => row.userId === user?.id);
-  };
+    // Skapa selections-array: t.ex. [true, false, true, false, false, true]
+    const selections = selectedProject.sections.map((sec) =>
+      selectedSectionIds.includes(sec.id)
+    );
 
-  const handleSelfEnroll = async () => {
-    try {
-      const token = localStorage.getItem('user')
-        ? JSON.parse(localStorage.getItem('user')).token
-        : null;
-
-      const selections = selectedProject.sections.map((sec) =>
-        selectedSectionIds.includes(sec.id)
-      );
-
-      await axios.post(
-        'https://railworker-production.up.railway.app/api/row/self-enroll',
-        {
-          anordning,
-          selections,
-          begard,
-          begardDatum,
-          anteckning,
-          projectId: selectedProject.id,
-          namn,
-          telefon,
+    const response = await axios.post(
+      'https://railworker-production.up.railway.app/api/row/self-enroll',
+      {
+    anordning,
+    selections,
+    begard,
+    begardDatum,
+    anteckning,
+    projectId: selectedProject.id,
+  },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      }
+    );
 
-      toast({
-        title: 'Du har anmält dig.',
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      });
+    toast({
+      title: 'Du har anmält dig.',
+      status: 'success',
+      duration: 3000,
+      isClosable: true,
+    });
 
-      onClose();
-      setDatum('');
-      setBegard('');
-      setBegardDatum('');
-      setAnteckning('');
-      setAnordning([]);
-      setSelectedSectionIds([]);
-      setEnrolledProjects((prev) => [...prev, selectedProject]);
-    } catch (err) {
-      console.error('❌ Fel vid TSM-anmälan:', err);
-      toast({
-        title: 'Kunde inte skicka anmälan.',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
-    }
-  };
+    onClose();
+    setDatum('');
+    setBegard('');
+    setBegardDatum('');
+    setAnteckning('');
+    setAnordning([]);
+    setSelectedSectionIds([]);
+  } catch (err) {
+    console.error('❌ Fel vid TSM-anmälan:', err);
+    toast({
+      title: 'Kunde inte skicka anmälan.',
+      status: 'error',
+      duration: 3000,
+      isClosable: true,
+    });
+  }
+};
 
-  const fetchAllProjects = async () => {
-    try {
-      const token = localStorage.getItem('token');
+const fetchAllProjects = async () => {
+  try {
+    const token = localStorage.getItem('token'); // 🟢 Du behöver detta!
 
-      const response = await axios.get(
-        'https://railworker-production.up.railway.app/api/projects',
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+    const response = await axios.get('https://railworker-production.up.railway.app/api/projects', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-      setProjects(response.data);
-      setEnrolledProjects(response.data.filter(userIsInProject));
-    } catch (error) {
-      console.error('❌ Kunde inte hämta projekt:', error);
-      setProjects([]);
-    }
-  };
+    setProjects(response.data);
+
+  } catch (error) {
+    console.error('❌ Kunde inte hämta projekt:', error);
+    setProjects([]);
+  }
+};
 
   return (
-    <div
-      className="min-h-screen bg-white"
-      style={{
-        background: 'linear-gradient(135deg, #ffffff 0%, #f0f4f8 100%)',
-        animation: 'fadeIn 1s ease-in-out',
-      }}
-    >
-      <style>
-        {`
-          @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-
-          .fancy-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            background: white;
-            border-radius: 1rem;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
-          }
-
-          .fancy-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
-          }
-
-          .fancy-button {
-            transition: background 0.3s ease, transform 0.2s;
-          }
-
-          .fancy-button:hover {
-            transform: scale(1.05);
-          }
-
-          .underline-link {
-            position: relative;
-            text-decoration: none;
-          }
-
-          .underline-link::after {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 2px;
-            bottom: -2px;
-            left: 0;
-            background-color: #3182ce;
-            transform: scaleX(0);
-            transform-origin: bottom right;
-            transition: transform 0.3s ease-out;
-          }
-
-          .underline-link:hover::after {
-            transform: scaleX(1);
-            transform-origin: bottom left;
-          }
-        `}
-      </style>
-
+    <div className="min-h-screen bg-gray-100">
+      {/* Top Menu */}
       <Header />
-      <div className="pt-24 p-6 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="fancy-card p-6">
-            <h2 className="text-lg font-semibold mb-4">Tillgängliga projekt</h2>
-            {projects.length === 0 ? (
-              <p className="text-gray-500">Inga projekt hittades.</p>
-            ) : (
-              <ul className="space-y-4">
-                {projects.map((project) => (
-                  <li
-                    key={project.id}
-                    className="border rounded p-4 flex justify-between items-center transition duration-200 hover:shadow-md"
-                  >
-                    <div>
-                      <h3 className="font-semibold text-lg text-gray-800">
-                        {project.name}
-                      </h3>
-                      {project.description && (
-                        <p className="text-sm text-gray-500">{project.plats}</p>
-                      )}
-                    </div>
-                    <div className="flex space-x-2">
-                      {user?.role === 'TSM' && (
-                        <Button
-                          onClick={() => {
-                            setSelectedProject(project);
-                            onOpen();
-                          }}
-                          className="fancy-button"
-                          colorScheme="blue"
-                        >
-                          Anmäl dig
-                        </Button>
-                      )}
-                      <button
-                        onClick={() => navigate(`/plan/${project.id}`)}
-                        className="text-blue-600 underline-link font-medium"
-                      >
-                        Visa projekt
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
 
-          <div className="fancy-card p-6">
-            <h2 className="text-lg font-semibold mb-4">Mina projekt</h2>
-            {enrolledProjects.length === 0 ? (
-              <p className="text-gray-500">Du har inte anmält dig till något projekt ännu.</p>
-            ) : (
-              <ul className="space-y-4">
-                {enrolledProjects.map((project) => (
-                  <li
-                    key={project.id}
-                    className="border rounded p-4 flex justify-between items-center transition duration-200 hover:shadow-md"
-                  >
-                    <div>
-                      <h3 className="font-semibold text-lg text-gray-800">
-                        {project.name}
-                      </h3>
-                      <p className="text-sm text-gray-500">{project.plats}</p>
-                    </div>
-                    <button
-                      onClick={() => navigate(`/plan/${project.id}`)}
-                      className="text-blue-600 underline-link font-medium"
+      {/* Projects List Only */}
+      <div className="p-6 max-w-4xl mx-auto">
+        <div className="bg-white p-6 rounded shadow-md">
+          <h2 className="text-lg font-semibold mb-4">Alla projekt</h2>
+          {projects.length === 0 ? (
+            <p className="text-gray-500">Inga projekt hittades.</p>
+          ) : (
+            <ul className="space-y-4">
+              {projects.map((project) => (
+                <li
+                  key={project.id}
+                  className="border rounded p-4 flex justify-between items-center"
+                >
+                  <div>
+                    <h3 className="font-semibold">{project.name}</h3>
+                    {project.description && (
+                      <p className="text-sm text-gray-600">{project.plats}</p>
+                    )}
+                  </div>
+                  {user?.role === 'TSM' && (
+<Button
+  onClick={() => {
+    setSelectedProject(project); // 🔵 Spara valt projekt
+    onOpen();
+  }}
+  colorScheme="blue"
+>
+  Anmäl dig
+</Button>
+)}
+<button
+  onClick={() => navigate(`/plan/${project.id}`)}
+  className="text-blue-600 hover:underline"
+>
+  Visa projekt
+</button>
+<Modal isOpen={isOpen} onClose={onClose} size="xl">
+  <ModalOverlay />
+  <ModalContent>
+    <ModalHeader>Anmäl dig till projektet</ModalHeader>
+    <ModalCloseButton />
+    <ModalBody>
+      <Stack spacing={6}>
+        {/* RAD 1 */}
+        <SimpleGrid columns={2} spacing={4}>
+          <FormControl>
+            <FormLabel>Namn</FormLabel>
+            <Input value={user?.firstName + ' ' + user?.lastName} isDisabled />
+          </FormControl>
+
+          <FormControl>
+            <FormLabel>Telefon</FormLabel>
+            <Input value={user?.phone || ''} isDisabled />
+          </FormControl>
+        </SimpleGrid>
+
+        {/* RAD 2 */}
+        <SimpleGrid columns={2} spacing={4}>
+          <FormControl>
+            <FormLabel>Anordning</FormLabel>
+            <Menu closeOnSelect={false}>
+              <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
+                {anordning.length > 0 ? `${anordning.length} valda` : 'Välj anordning'}
+              </MenuButton>
+              <MenuList maxHeight="300px" overflowY="auto">
+                {['A-S', 'L-S', 'S-S', 'E-S', 'Spf', 'Vxl'].map((option) => (
+                  <MenuItem key={option}>
+                    <Checkbox
+                      isChecked={anordning.includes(option)}
+                      onChange={(e) => {
+                        const isChecked = e.target.checked;
+                        setAnordning((prev) =>
+                          isChecked ? [...prev, option] : prev.filter((v) => v !== option)
+                        );
+                      }}
                     >
-                      Visa projekt
-                    </button>
-                  </li>
+                      {option}
+                    </Checkbox>
+                  </MenuItem>
                 ))}
-              </ul>
-            )}
-          </div>
-        </div>
-      </div>
-            {/* Modal */}
-      <Modal isOpen={isOpen} onClose={onClose} size="xl">
-        <ModalOverlay />
-        <ModalContent bg="white" color="black">
-          <ModalHeader>Anmäl dig till projektet</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <Stack spacing={6}>
-              <SimpleGrid columns={2} spacing={4}>
-                <FormControl>
-                  <FormLabel>Namn</FormLabel>
-                  <Input value={`${user?.firstName || ''} ${user?.lastName || ''}`} isDisabled />
-                </FormControl>
-                <FormControl>
-                  <FormLabel>Telefon</FormLabel>
-                  <Input value={user?.phone || ''} isDisabled />
-                </FormControl>
-              </SimpleGrid>
+              </MenuList>
+            </Menu>
+          </FormControl>
 
-              <SimpleGrid columns={2} spacing={4}>
-                <FormControl>
-                  <FormLabel>Anordning</FormLabel>
-                  <Menu closeOnSelect={false}>
-                    <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
-                      {anordning.length ? `${anordning.length} valda` : 'Välj anordning'}
-                    </MenuButton>
-                    <MenuList>
-                      {['A-S', 'L-S', 'S-S', 'E-S', 'Spf', 'Vxl'].map(opt => (
-                        <MenuItem key={opt}>
-                          <Checkbox
-                            isChecked={anordning.includes(opt)}
-                            onChange={e =>
-                              setAnordning(prev =>
-                                e.target.checked ? [...prev, opt] : prev.filter(v => v !== opt),
-                              )
-                            }
-                          >
-                            {opt}
-                          </Checkbox>
-                        </MenuItem>
-                      ))}
-                    </MenuList>
-                  </Menu>
-                </FormControl>
+          <FormControl>
+            <FormLabel>Delområden</FormLabel>
+            <Menu closeOnSelect={false} portal={false}>
+              <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
+                {selectedSectionIds.length > 0
+                  ? `${selectedSectionIds.length} valda`
+                  : 'Välj delområden'}
+              </MenuButton>
+              <MenuList
+                maxH="300px"
+                overflowY="auto"
+                zIndex={9999}
+                sx={{
+                  '&::-webkit-scrollbar': { width: '6px' },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: 'rgba(0,0,0,0.3)',
+                    borderRadius: '4px',
+                  },
+                }}
+              >
+                {selectedProject?.sections?.map((sec, idx) => (
+                  <MenuItem key={sec.id} whiteSpace="normal">
+                    <Checkbox
+                      isChecked={selectedSectionIds.includes(sec.id)}
+                      onChange={(e) => {
+                        const isChecked = e.target.checked;
+                        const updated = isChecked
+                          ? [...selectedSectionIds, sec.id]
+                          : selectedSectionIds.filter((id) => id !== sec.id);
+                        setSelectedSectionIds(updated);
+                      }}
+                    >
+                      {sec.type} {String.fromCharCode(65 + idx)} ({sec.name})
+                    </Checkbox>
+                  </MenuItem>
+                ))}
+              </MenuList>
+            </Menu>
+          </FormControl>
+        </SimpleGrid>
 
-                <FormControl>
-                  <FormLabel>Delområden</FormLabel>
-                  <Menu closeOnSelect={false}>
-                    <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
-                      {selectedSectionIds.length
-                        ? `${selectedSectionIds.length} valda`
-                        : 'Välj delområden'}
-                    </MenuButton>
-                    <MenuList maxH="300px" overflowY="auto">
-                      {selectedProject?.sections?.map((sec, i) => (
-                        <MenuItem key={sec.id}>
-                          <Checkbox
-                            isChecked={selectedSectionIds.includes(sec.id)}
-                            onChange={e =>
-                              setSelectedSectionIds(prev =>
-                                e.target.checked
-                                  ? [...prev, sec.id]
-                                  : prev.filter(id => id !== sec.id),
-                              )
-                            }
-                          >
-                            {sec.type} {String.fromCharCode(65 + i)} ({sec.name})
-                          </Checkbox>
-                        </MenuItem>
-                      ))}
-                    </MenuList>
-                  </Menu>
-                </FormControl>
-              </SimpleGrid>
+        {/* RAD 3 */}
+        <SimpleGrid columns={2} spacing={4}>
 
-              <SimpleGrid columns={2} spacing={4}>
-                <FormControl>
-                  <FormLabel>Begärd tid</FormLabel>
-                  <Input type="time" value={begard} onChange={e => setBegard(e.target.value)} />
-                </FormControl>
-                <FormControl>
-                  <FormLabel>Begärd datum</FormLabel>
-                  <Input
-                    type="date"
-                    value={begardDatum}
-                    onChange={e => setBegardDatum(e.target.value)}
-                  />
-                </FormControl>
-              </SimpleGrid>
+<FormControl>
+  <FormLabel>Begärd tid</FormLabel>
+  <Input
+    type="time"
+    value={begard || ''}
+    onChange={(e) => setBegard(e.target.value)}
+  />
+</FormControl>
 
-              <FormControl>
-                <FormLabel>Anteckningar</FormLabel>
-                <Textarea value={anteckning} onChange={e => setAnteckning(e.target.value)} />
-              </FormControl>
-            </Stack>
-          </ModalBody>
-          <ModalFooter>
+<FormControl mt={2}>
+  <FormLabel>Begärd datum</FormLabel>
+  <Input
+    type="date"
+    value={begardDatum ? begardDatum.slice(0, 10) : ''}
+    onChange={(e) => setBegardDatum(e.target.value)}
+  />
+</FormControl>
+        </SimpleGrid>
+
+        {/* ANTECKNINGAR */}
+        <FormControl>
+          <FormLabel>Anteckningar</FormLabel>
+          <Textarea
+            placeholder="Ange anteckningar..."
+            value={anteckning}
+            onChange={(e) => setAnteckning(e.target.value)}
+          />
+        </FormControl>
+      </Stack>
+    </ModalBody>
+    <ModalFooter>
 <Button
   colorScheme="blue"
   onClick={handleSelfEnroll}
@@ -382,9 +299,15 @@ export default function Panel() {
 >
   Skicka
 </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+    </ModalFooter>
+  </ModalContent>
+</Modal>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

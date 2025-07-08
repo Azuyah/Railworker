@@ -144,23 +144,10 @@ const updateRow = (updatedRow) => {
   return updatedRows; // Returnera nya rows
 };
 
-const deleteRow = async (id) => {
-  try {
-    const tokenData = localStorage.getItem('user');
-    const token = tokenData ? JSON.parse(tokenData).token : null;
-
-    await axios.delete(`https://railworker-production.up.railway.app/api/row/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    const updatedRows = rows.filter((row) => row.id !== id);
-    setRows(updatedRows);
-    return updatedRows;
-  } catch (err) {
-    console.error('❌ Kunde inte ta bort raden:', err);
-  }
+const deleteRow = (id) => {
+  const updatedRows = rows.filter((row) => row.id !== id);
+  setRows(updatedRows);
+  return updatedRows; // Returnera nya rows
 };
 
 const {
@@ -466,19 +453,9 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
-  if (!selectedTsmRow) return;
-
-  const fallbackNamn = `${selectedTsmRow.user?.firstName || ''} ${selectedTsmRow.user?.lastName || ''}`.trim();
-  const fallbackTelefon = selectedTsmRow.user?.phone || '';
-
-  setEditableTsmRow({
-    ...selectedTsmRow,
-    namn: selectedTsmRow.namn || fallbackNamn,
-    telefon: selectedTsmRow.telefon || fallbackTelefon,
-  });
-
-  setSelectedApprovalAreas(selectedTsmRow.selections || []);
-onOpenApprovalModal();
+  if (selectedTsmRow) {
+    setEditableTsmRow({ ...selectedTsmRow });
+  }
 }, [selectedTsmRow]);
 
 useEffect(() => {
@@ -657,7 +634,7 @@ useEffect(() => {
   });
 
   setRows(updated);
-}, [project, rows]);
+}, [project]); // ❗️Byt till [project, rows]
 
 useEffect(() => {
   if (!rows || !Array.isArray(rows)) return;
@@ -1535,6 +1512,13 @@ if (loading || !project) {
     cursor="pointer"
 onClick={() => {
   setSelectedTsmRow(row);
+  setEditableTsmRow({
+    ...row,
+    namn: row.namn || `${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim(),
+    telefon: row.telefon || row.user?.phone || '',
+  });
+  setSelectedApprovalAreas(row.selections || []);
+  onOpenApprovalModal(); // ✅ Använd denna
 }}
   >
     {/* BTKN */}
@@ -2083,8 +2067,6 @@ onChange={() =>
 </ModalFooter>
   </ModalContent>
 </Modal>
-
-{/*Modal för godkännande av ny rad*/}
 
 <Modal isOpen={isApprovalModalOpen} onClose={onCloseApprovalModal} size="4xl">
   <ModalOverlay />
