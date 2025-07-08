@@ -1515,11 +1515,14 @@ if (loading || !project) {
     bg="#C6F6D5"
     _hover={{ bg: '#D1FAE5' }}
     cursor="pointer"
-    onClick={() => {
-      console.log("🧪 Klickad rad:", row);
-      setSelectedTsmRow(row);
-      onOpenApprovalModal();
-    }}
+onClick={() => {
+  setEditableTsmRow({
+    ...row,
+    namn: row.namn || `${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim(),
+    telefon: row.telefon || row.user?.phone || '',
+  });
+  onOpenApprovalModal();
+}}
   >
     {/* BTKN */}
     <Td borderRight="1px solid rgba(0, 0, 0, 0.1)">
