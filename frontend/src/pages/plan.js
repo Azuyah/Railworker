@@ -1516,11 +1516,22 @@ if (loading || !project) {
     _hover={{ bg: '#D1FAE5' }}
     cursor="pointer"
 onClick={() => {
+  // Konvertera selections (t.ex. [true, false, true]) till section-id:n
+  const selectedIdsFromSelections =
+    row.selections?.map((selected, idx) =>
+      selected ? selectedProject.sections[idx]?.id : null
+    ).filter(id => id !== null) || [];
+
+  // Sätt editableTsmRow med namn och telefon
   setEditableTsmRow({
     ...row,
     namn: row.namn || `${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim(),
     telefon: row.telefon || row.user?.phone || '',
   });
+
+  // ✅ Sätt valda delområden baserat på row.selections
+  setSelectedSectionIds(selectedIdsFromSelections);
+
   onOpenApprovalModal();
 }}
   >
