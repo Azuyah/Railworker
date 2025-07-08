@@ -2213,7 +2213,7 @@ onChange={() =>
       <Button
         colorScheme="green"
         onClick={() => {
-          approveRow(editableTsmRow);
+          approveRow(editableTsmRow.id);
           onCloseApprovalModal();
         }}
       >
