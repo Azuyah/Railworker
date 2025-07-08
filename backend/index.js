@@ -350,7 +350,6 @@ const projects = await prisma.project.findMany({
   include: {
     sections: true,
     beteckningar: true,
-    rows: true,
     user: {
       select: {
         id: true,
@@ -594,9 +593,7 @@ app.post('/api/row/self-enroll', authMiddleware, async (req, res) => {
     selections,
     begard,
     begardDatum,
-    anteckning,
-    namn,
-    telefon 
+    anteckning
   } = req.body;
 
   try {
@@ -615,8 +612,6 @@ app.post('/api/row/self-enroll', authMiddleware, async (req, res) => {
         begard: begard || null,
         begardDatum: begardDatum || null,
         anteckning: anteckning || null,
-        namn: namn || null,
-        telefon: telefon || null 
       },
     });
 
@@ -699,23 +694,6 @@ const newRow = {
     console.error('❌ Fel vid godkännande:', err);
     res.status(500).json({ error: 'Kunde inte godkänna raden' });
   }
-});
-
-app.delete('/api/row/:id', authMiddleware, async (req, res) => {
-
-  const id = parseInt(req.params.id);
-
-try {
-  const rowId = parseInt(req.params.id);
-  await prisma.row.delete({
-    where: { id: rowId },
-  });
-
-  res.json({ success: true });
-} catch (error) {
-  console.error('❌ Kunde inte ta bort raden:', error);
-  res.status(500).json({ error: 'Kunde inte ta bort raden' });
-}
 });
 
 // Start server
