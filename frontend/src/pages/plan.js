@@ -369,7 +369,7 @@ const sparaProjekt = async (customRows = rows) => {
     }
 
     // Skapa en kopia av raderna
-const preparedRows = Array.isArray(customRows) ? [...customRows] : [];
+    const preparedRows = [...customRows];
 
 if (selectedRow && selectedRow.id) {
   const index = preparedRows.findIndex((r) => r.id === selectedRow.id);

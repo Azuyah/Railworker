@@ -350,7 +350,7 @@ const projects = await prisma.project.findMany({
   include: {
     sections: true,
     beteckningar: true,
-    tsmRows: true,
+    rows: true,
     user: {
       select: {
         id: true,
@@ -645,8 +645,8 @@ app.put('/api/row/approve/:rowId', authMiddleware, async (req, res) => {
         project: {
           select: {
             id: true,
-            tsmRows: true,
-            sections: true,
+            rows: true,      // ✅ JSON-fält, korrekt via select
+            sections: true,  // ✅ Relation
           },
         },
       },
@@ -702,25 +702,20 @@ const newRow = {
 });
 
 app.delete('/api/row/:id', authMiddleware, async (req, res) => {
+
+  const id = parseInt(req.params.id);
+
+try {
   const rowId = parseInt(req.params.id);
+  await prisma.row.delete({
+    where: { id: rowId },
+  });
 
-  try {
-    // Försök att ta bort raden
-    await prisma.row.delete({
-      where: { id: rowId },
-    });
-
-    res.json({ success: true });
-  } catch (error) {
-    console.error('❌ Kunde inte ta bort raden:', error);
-
-    // Extra: specificera felorsak om du vill logga mer detaljer
-    if (error.code === 'P2025') {
-      return res.status(404).json({ error: 'Raden finns inte' });
-    }
-
-    res.status(500).json({ error: 'Kunde inte ta bort raden' });
-  }
+  res.json({ success: true });
+} catch (error) {
+  console.error('❌ Kunde inte ta bort raden:', error);
+  res.status(500).json({ error: 'Kunde inte ta bort raden' });
+}
 });
 
 // Start server
