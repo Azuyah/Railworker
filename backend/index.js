@@ -400,6 +400,15 @@ const project = await prisma.project.findUnique({
     sections: true,
     beteckningar: true,
     anteckningar: true,
+
+    tsmRows: {
+      where: { isPending: true },
+      include: {
+        user: true,
+        section: true,
+        approvedBy: true,
+      },
+    },
   },
 });
 

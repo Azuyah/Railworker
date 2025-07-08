@@ -46,8 +46,9 @@ model Project {
   telefonnummer String
   sections      Section[]
   beteckningar  Beteckning[]
-  rows          Row[]
+  rows          Json?
   anteckningar  Json?
+  tsmRows       Row[]
 }
 
 model Section {
@@ -98,8 +99,6 @@ model Row {
   begard      String?
   begardDatum String?
   anteckning  String?
-  namn        String?
-  telefon     String?
 
   createdAt DateTime @default(now())
 }

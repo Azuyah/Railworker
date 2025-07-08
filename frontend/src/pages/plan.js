@@ -202,19 +202,14 @@ const addEditDP = () => {
   setEditSections([...editSections, newDP]);
 };
 
-const approveRow = async (rowData) => {
+const approveRow = async (rowId) => {
   try {
     const tokenData = localStorage.getItem('user');
     const token = tokenData ? JSON.parse(tokenData).token : null;
 
-    if (!rowData?.id) {
-      console.error('❌ approveRow saknar ett ID');
-      return;
-    }
-
-    const response = await axios.put(
-      `https://railworker-production.up.railway.app/api/row/approve/${rowData.id}`,
-      rowData, // hela objektet inkl. ändringar
+    await axios.put(
+      `https://railworker-production.up.railway.app/api/row/approve/${rowId}`,
+      {},
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -222,11 +217,21 @@ const approveRow = async (rowData) => {
       }
     );
 
-    console.log('✅ Rad godkänd:', response.data);
-    fetchProject(); // eller uppdatera lokala state
+    // 1. Ta bort raden från visningen direkt
+    setRows((prev) => prev.filter((row) => row.id !== rowId));
 
-  } catch (err) {
-    console.error('❌ Fel vid godkännande:', err);
+    // 2. Visa bekräftelse
+    toast({
+      title: 'Raden godkänd.',
+      status: 'success',
+      duration: 3000,
+      isClosable: true,
+    });
+
+    // 3. Hämta uppdaterad projektdata (t.ex. för att ladda nya raden)
+    fetchProject();
+  } catch (error) {
+    console.error('Fel vid godkännande:', error);
   }
 };
 
@@ -1510,16 +1515,10 @@ if (loading || !project) {
     bg="#C6F6D5"
     _hover={{ bg: '#D1FAE5' }}
     cursor="pointer"
-onClick={() => {
-  setSelectedTsmRow(row);
-  setEditableTsmRow({
-    ...row,
-    namn: row.namn || `${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim(),
-    telefon: row.telefon || row.user?.phone || '',
-  });
-  setSelectedApprovalAreas(row.selections || []);
-  onOpenApprovalModal(); // ✅ Använd denna
-}}
+    onClick={() => {
+      setSelectedTsmRow(row);
+      onOpenApprovalModal();
+    }}
   >
     {/* BTKN */}
     <Td borderRight="1px solid rgba(0, 0, 0, 0.1)">
@@ -2211,15 +2210,15 @@ onChange={() =>
       <Button variant="ghost" mr={3} onClick={onCloseApprovalModal}>
         Avbryt
       </Button>
-<Button
-  colorScheme="green"
-  onClick={() => {
-    approveRow(editableTsmRow);
-    onCloseApprovalModal();
-  }}
->
-  Godkänn
-</Button>
+      <Button
+        colorScheme="green"
+        onClick={() => {
+          approveRow(editableTsmRow);
+          onCloseApprovalModal();
+        }}
+      >
+        Godkänn
+      </Button>
     </ModalFooter>
   </ModalContent>
 </Modal>
