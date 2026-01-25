@@ -4,17 +4,12 @@ import axios from 'axios';
 import LoadingScreen from '../components/LoadingScreen';
 import { Tooltip } from '@chakra-ui/react';
 import { GiRailway } from 'react-icons/gi';
-import { EditIcon, DeleteIcon } from '@chakra-ui/icons';
+import { DeleteIcon } from '@chakra-ui/icons';
 import { PiTrainLight } from 'react-icons/pi'
 import { Tag, TagLabel } from "@chakra-ui/react";
 import {
-  FaUserTie,
-  FaPhone,
-  FaSignal,
   FaClock,
-  FaCalendarAlt,
   FaCheckCircle,
-  FaHashtag,
   FaExclamationTriangle,
   FaFlag,
   FaStar,
@@ -22,6 +17,7 @@ import {
   FaPalette,
   FaRegCommentDots,
 } from 'react-icons/fa';
+import { FiHash, FiUser, FiPhone, FiAperture, FiClock, FiSliders, FiEyeOff, FiEdit2, FiMessageCircle, FiChevronsRight } from 'react-icons/fi';
 import { HiX } from "react-icons/hi";
 import {
   Box,
@@ -48,6 +44,7 @@ import {
   MenuButton,
   MenuList,
   MenuItem,
+  Portal,
   IconButton,
   Textarea,
   Modal,
@@ -75,6 +72,7 @@ const Plan = () => {
   const [countdown, setCountdown] = useState('');
   const [filterValue, setFilterValue] = useState('all');
   const [avslutadeModalOpen, setAvslutadeModalOpen] = useState(false);
+  const [hiddenRowsModalOpen, setHiddenRowsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAnordning, setSelectedAnordning] = useState('');
   const [avklaradSamrad, setAvklaradSamrad] = useState({});
@@ -96,8 +94,24 @@ const Plan = () => {
   const [anteckningarModalOpen, setAnteckningarModalOpen] = useState(false);
   const [selectedTsmRow, setSelectedTsmRow] = useState(null);
   const [isProjectInfoOpen, setIsProjectInfoOpen] = useState(false);
+  const [samradModalRow, setSamradModalRow] = useState(null);
   const [sectionHeaderNotes, setSectionHeaderNotes] = useState([]);
   const [sectionHeaderNotes2, setSectionHeaderNotes2] = useState([]);
+  const [begardDefaultTime, setBegardDefaultTime] = useState('');
+  const [begardDefaultDate, setBegardDefaultDate] = useState('');
+  const [activeRowId, setActiveRowId] = useState(null);
+  const [hotkeysOpen, setHotkeysOpen] = useState(false);
+  const [colorHotkey, setColorHotkey] = useState(null);
+  const [iconHotkey, setIconHotkey] = useState(null);
+  const [btknPrefix, setBtknPrefix] = useState('');
+  const [columnWidths, setColumnWidths] = useState({
+    btkn: 90,
+    namn: 180,
+    telefon: 150,
+    anordning: 180,
+    tider: 260,
+  });
+  const [zoomLevel, setZoomLevel] = useState(1);
   const openProjectInfoModal = () => setIsProjectInfoOpen(true);
   const closeProjectInfoModal = () => setIsProjectInfoOpen(false);
   const tableBg = useColorModeValue("white", "gray.800");
@@ -170,6 +184,12 @@ const {
 } = useDisclosure();
 
 const {
+  isOpen: isSamradModalOpen,
+  onOpen: onOpenSamradModal,
+  onClose: onCloseSamradModal,
+} = useDisclosure();
+
+const {
   isOpen: isCellEditorOpen,
   onOpen: onOpenCellEditor,
   onClose: onCloseCellEditor,
@@ -180,9 +200,33 @@ const calculateSamrad = (rows) => {
   const newAvklarad = {};
 
   const exclusionSet = ['A-S', 'L-S', 'S-S', 'E-S'];
+  const now = new Date();
+
+  const parseRowEndDateTime = (row) => {
+    if (!row?.avslutatDatum || !row?.avslutat) return null;
+    const dateStr = String(row.avslutatDatum).trim();
+    const timeStr = String(row.avslutat).trim();
+    let datePart = dateStr;
+
+    const match = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    if (match) {
+      const [, day, month, year] = match;
+      datePart = `${year}-${month}-${day}`;
+    }
+
+    const dateTime = new Date(`${datePart}T${timeStr}`);
+    return Number.isNaN(dateTime.getTime()) ? null : dateTime;
+  };
+
+  const isRowExpired = (row) => {
+    const endDate = parseRowEndDateTime(row);
+    if (!endDate) return false;
+    return endDate.getTime() <= now.getTime();
+  };
 
   rows.forEach((row, i) => {
     if (row.avslutadRad) return;
+    if (isRowExpired(row)) return;
 
     const rowAreas = row.selections || [];
     const rowAnordningar = String(row.anordning || '').split(',').map(a => a.trim());
@@ -190,6 +234,7 @@ const calculateSamrad = (rows) => {
     for (let j = 0; j < i; j++) {
       const compareRow = rows[j];
       if (compareRow.avslutadRad) continue;
+      if (isRowExpired(compareRow)) continue;
 
       const compareAreas = compareRow.selections || [];
       const compareAnordningar = String(compareRow.anordning || '').split(',').map(a => a.trim());
@@ -236,6 +281,22 @@ const CELL_ICONS = [
   { key: 'star', label: 'Stjärna', icon: FaStar, color: 'yellow.500' },
   { key: 'bolt', label: 'Bolt', icon: FaBolt, color: 'purple.500' },
 ];
+
+const COLOR_HOTKEYS = {
+  1: 'yellow.100',
+  2: 'green.100',
+  3: 'blue.100',
+  4: 'red.100',
+  5: 'purple.100',
+  6: 'gray.100',
+};
+
+const ICON_HOTKEYS = {
+  q: 'check',
+  w: 'alert',
+  e: 'flag',
+  r: 'bolt',
+};
 
 const getCellMeta = (row, key) => {
   if (!row || !key) return {};
@@ -301,6 +362,20 @@ const toggleSectionHeaderType = (index) => {
     next[index] = current === 'linje' ? 'DP' : 'Linje';
     return next;
   });
+};
+
+const handleCellInteraction = (row, cellKey, label) => {
+  if (colorHotkey) {
+    updateCellMeta(row.id, cellKey, { color: colorHotkey });
+    return;
+  }
+  if (iconHotkey) {
+    updateCellMeta(row.id, cellKey, { icon: iconHotkey });
+    return;
+  }
+  if (cellEditMode) {
+    openCellEditor(row, cellKey, label);
+  }
 };
 
 const smsRecipients = useMemo(() => {
@@ -701,6 +776,134 @@ useEffect(() => {
 }, [selectedRowId]);
 
 useEffect(() => {
+  const handleKeyDown = (event) => {
+    if (event.key === 'Meta') {
+      setCellEditMode(true);
+    }
+  };
+
+  const handleKeyUp = (event) => {
+    if (event.key === 'Meta') {
+      setCellEditMode(false);
+    }
+  };
+
+  const handleBlur = () => {
+    setCellEditMode(false);
+  };
+
+  window.addEventListener('keydown', handleKeyDown);
+  window.addEventListener('keyup', handleKeyUp);
+  window.addEventListener('blur', handleBlur);
+
+  return () => {
+    window.removeEventListener('keydown', handleKeyDown);
+    window.removeEventListener('keyup', handleKeyUp);
+    window.removeEventListener('blur', handleBlur);
+  };
+}, []);
+
+useEffect(() => {
+  const handleHotkeys = (event) => {
+    const target = event.target;
+    const isTyping =
+      target &&
+      (target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable);
+
+    if (!isTyping) {
+      const key = event.key.toLowerCase();
+      if (COLOR_HOTKEYS[key]) {
+        setColorHotkey(COLOR_HOTKEYS[key]);
+        return;
+      }
+      if (ICON_HOTKEYS[key]) {
+        setIconHotkey(ICON_HOTKEYS[key]);
+        return;
+      }
+    }
+
+    if (isTyping) return;
+
+    if (event.metaKey && event.key.toLowerCase() === 's') {
+      event.preventDefault();
+      sparaProjekt();
+      return;
+    }
+
+    if (event.metaKey && event.key === '/') {
+      event.preventDefault();
+      setHotkeysOpen((prev) => !prev);
+      return;
+    }
+
+    if (event.key === '+' || event.key === '=') {
+      event.preventDefault();
+      setZoomLevel((z) => Math.min(1.4, Number((z + 0.1).toFixed(2))));
+      return;
+    }
+
+    if (event.key === '-' || event.key === '_') {
+      event.preventDefault();
+      setZoomLevel((z) => Math.max(0.8, Number((z - 0.1).toFixed(2))));
+      return;
+    }
+
+    if (!activeRowId) return;
+
+    if (event.key.toLowerCase() === 't') {
+      event.preventDefault();
+      const now = getCurrentTime();
+      if (event.shiftKey) {
+        updateRowField(activeRowId, 'begard', now);
+      } else if (event.altKey) {
+        updateRowField(activeRowId, 'avslutat', now);
+      } else {
+        updateRowField(activeRowId, 'starttid', now);
+      }
+      return;
+    }
+
+    if (event.key.toLowerCase() === 'd') {
+      event.preventDefault();
+      const row = rows.find((item) => item.id === activeRowId);
+      if (row) {
+        const confirmed = window.confirm('Vill du dölja den här raden?');
+        if (confirmed) {
+          hideRow(row);
+        }
+      }
+      return;
+    }
+
+    if (event.shiftKey && event.key.toLowerCase() === 'd') {
+      event.preventDefault();
+      const today = getCurrentDate();
+      updateRowField(activeRowId, 'begardDatum', today);
+    }
+  };
+
+  const handleKeyUp = (event) => {
+    const key = event.key.toLowerCase();
+    if (COLOR_HOTKEYS[key]) {
+      setColorHotkey(null);
+    }
+    if (ICON_HOTKEYS[key]) {
+      setIconHotkey(null);
+    }
+  };
+
+  window.addEventListener('keydown', handleHotkeys);
+  window.addEventListener('keyup', handleKeyUp);
+  return () => {
+    window.removeEventListener('keydown', handleHotkeys);
+    window.removeEventListener('keyup', handleKeyUp);
+  };
+}, [activeRowId, rows]);
+
+useEffect(() => {
   if (!rows || rows.length === 0 || !project?.sections) return;
 
   // Kontroll: vänta tills alla rader har ett namn
@@ -967,11 +1170,27 @@ const createNewRow = (rows, project) => {
 };
 
 const addRow = () => {
+  const getNextBtkn = (prefix) => {
+    if (!prefix) return '';
+    const safePrefix = prefix.trim();
+    const regex = new RegExp(`^${safePrefix}(\\d+)$`);
+    let max = 0;
+    rows.forEach((row) => {
+      const match = String(row.btkn || '').match(regex);
+      if (match && match[1]) {
+        max = Math.max(max, parseInt(match[1], 10));
+      }
+    });
+    const next = String(max + 1).padStart(2, '0');
+    return `${safePrefix}${next}`;
+  };
+
   const newRow = {
     ...createNewRow(rows, project),
     id: Date.now(),
     dp: '',
     linje: '',
+    btkn: btknPrefix ? getNextBtkn(btknPrefix) : '',
   };
 
   const sameDP = newRow.dp;
@@ -1010,11 +1229,73 @@ const addRow = () => {
   );
 
   setSelectedAnordning('');
+};
+
+const updateRowField = (rowId, field, value) => {
+  setRows((prev) =>
+    prev.map((row) => (row.id === rowId ? { ...row, [field]: value } : row))
+  );
+  if (['dp', 'linje', 'anordning'].includes(field)) {
+    setSamradTrigger((prev) => prev + 1);
+  }
+};
+
+
+const toggleDelomrade = (rowId, secIdx) => {
+  setRows((prev) =>
+    prev.map((row) => {
+      if (row.id !== rowId) return row;
+      const selections = Array.isArray(row.selections)
+        ? [...row.selections]
+        : Array(project.sections.length).fill(false);
+      selections[secIdx] = !selections[secIdx];
+      return { ...row, selections };
+    })
+  );
+};
+
+const hideRow = async (row) => {
+  const updatedRow = {
+    ...row,
+    hiddenRow: true,
+    avslutadRad: true,
+    avslutatDatum: getCurrentDate(),
+    avslutat: getCurrentTime(),
+  };
+  const updated = updateRow(updatedRow);
+  await sparaProjekt(updated);
+};
+
+const unhideRow = async (row) => {
+  const updatedRow = {
+    ...row,
+    hiddenRow: false,
+    avslutadRad: false,
+  };
+  const updated = updateRow(updatedRow);
+  await sparaProjekt(updated);
+};
+
+const openRowModal = (row, rowIndex) => {
+  handleRowClick(row, rowIndex);
   onOpen();
+};
+
+const formatAnordningLabel = (item) => {
+  if (!item) return '';
+  const upper = item.toUpperCase();
+  return upper === 'SPF' ? 'SPF' : upper === 'VXL' ? 'VXL' : item;
 };
 
 const toggleColumn = (col) => {
   setVisibleColumns((prev) => ({ ...prev, [col]: !prev[col] }));
+};
+
+const toggleColumnWidth = (key, expanded) => {
+  setColumnWidths((prev) => ({
+    ...prev,
+    [key]: prev[key] < expanded ? expanded : Math.max(expanded - 60, 90),
+  }));
 };
 
 const handleRowClick = (row, rowIndex) => {
@@ -1089,7 +1370,7 @@ const handleModalChange = (field, value) => {
 
 const [samrad, setSamrad] = useState([]);
 const filteredRows = rows
-  .filter((row) => !row.avslutad)
+  .filter((row) => !row.hiddenRow)
   .filter((row) =>
     filterValue === 'all' || (row.namn || '').toLowerCase() === filterValue.toLowerCase()
   )
@@ -1116,21 +1397,62 @@ const { dpOptions, linjeOptions } = useMemo(() => {
 
   return { dpOptions: dp, linjeOptions: linje };
 }, [project]);
+const visibleSectionIndexes = useMemo(() => {
+  if (!project?.sections?.length) return [];
+  return project.sections
+    .map((_, index) => {
+      const hasSelection = rows.some((row) => row.selections?.[index]);
+      const hasHeaderText = Boolean(sectionHeaderNotes?.[index]?.trim() || sectionHeaderNotes2?.[index]?.trim());
+      return hasSelection || hasHeaderText ? index : null;
+    })
+    .filter((index) => index !== null);
+}, [project?.sections, rows, sectionHeaderNotes, sectionHeaderNotes2]);
 if (loading || !project) {
   return <LoadingScreen text="Hämtar projekt..." />;
 }
+const isCellModeActive = cellEditMode || colorHotkey || iconHotkey;
   return (
 <Box
-  bgImage="url('/traintrack.png')"
-  bgSize="cover"
-  bgRepeat="no-repeat"
-  bgPosition="center"
   minH="100vh"
+  bg="linear-gradient(135deg, #F6F7FB 0%, #EFF2F7 45%, #E9EEF5 100%)"
   py={10}
   px={[4, 8]}
 >
+  <Box position="fixed" inset={0} bg="linear-gradient(135deg, #F6F7FB 0%, #EFF2F7 45%, #E9EEF5 100%)" zIndex={0} />
+  <Box position="relative" zIndex={1}>
       <Header />
-      <Box maxW="1600px" mx="auto" mt={24}>
+      <Box maxW="1600px" mx="auto" mt={20}>
+        <Flex
+          justify="space-between"
+          align="center"
+          mb={6}
+          wrap="wrap"
+          gap={4}
+        >
+          <Box>
+            <Heading fontSize="2xl" fontWeight="700" color="gray.900">
+              Dispositionsarbetsplan
+            </Heading>
+            <Text color="gray.600" fontSize="sm">
+              {project.name} · {project.plats}
+            </Text>
+          </Box>
+          <Box
+            bg="white"
+            borderRadius="2xl"
+            px={5}
+            py={3}
+            border="1px solid #E2E8F0"
+            boxShadow="sm"
+          >
+            <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wider">
+              Planen stänger
+            </Text>
+            <Text fontSize="lg" fontWeight="600" color="blue.600">
+              {countdown}
+            </Text>
+          </Box>
+        </Flex>
 
 <Modal isOpen={isProjectInfoOpen} onClose={() => setIsProjectInfoOpen(false)} size="xl">
   <ModalOverlay />
@@ -1193,129 +1515,175 @@ if (loading || !project) {
   </ModalContent>
 </Modal>
 
-<Flex justify="space-between" align="center" mb={6} px={6} py={4} bg="whiteAlpha.800" borderRadius="xl" boxShadow="lg" backdropFilter="blur(8px)">
-{/* Vänster sida: Visa projekt + Filter */}
-  <HStack spacing={6}>
-    <Button
-      onClick={() => setIsProjectInfoOpen(true)}
-      bg="linear-gradient(to right, #4e54c8, #8f94fb)"
-      color="white"
-      px={6}
-      py={2}
-      borderRadius="full"
-      _hover={{ opacity: 0.9 }}
-      fontWeight="semibold"
-      boxShadow="md"
-    >
-      Visa projekt
-    </Button>
+<Box>
+  <Flex
+    align="center"
+    justify="space-between"
+    bg="white"
+    border="1px solid #E2E8F0"
+    borderRadius="2xl"
+    px={5}
+    py={4}
+    boxShadow="sm"
+    mb={4}
+    wrap="wrap"
+    gap={4}
+  >
+    <Box>
+      <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wider">
+        Projekt
+      </Text>
+      <Text fontSize="lg" fontWeight="600" color="gray.900">
+        {project.name}
+      </Text>
+      <Text fontSize="sm" color="gray.600">
+        {project.plats}
+      </Text>
+    </Box>
+    <HStack spacing={3} wrap="wrap">
+      <Button onClick={() => setIsProjectInfoOpen(true)} variant="outline" borderRadius="full">
+        Visa projekt
+      </Button>
+      <Button onClick={() => sparaProjekt()} bg="gray.900" color="white" borderRadius="full" _hover={{ bg: 'gray.800' }}>
+        Spara
+      </Button>
+      <Button variant="outline" borderRadius="full" onClick={() => addRow()}>
+        + Lägg till rad
+      </Button>
+      <Button variant="outline" borderRadius="full" onClick={() => setAnteckningarModalOpen(true)}>
+        Anteckningar
+      </Button>
+      <Button variant="outline" borderRadius="full" onClick={() => setHiddenRowsModalOpen(true)}>
+        Visa dolda
+      </Button>
+      <Button variant="outline" borderRadius="full" onClick={() => setAvslutadeModalOpen(true)}>
+        Avslutade
+      </Button>
+    </HStack>
+  </Flex>
 
-    <Flex gap={2} align="center">
-      <Text fontWeight="bold" fontSize="md">Filter</Text>
-      <Menu closeOnSelect={false}>
-        <MenuButton
-          as={IconButton}
-          icon={<ChevronDownIcon />}
-          variant="ghost"
+  <Box flex="1" overflowX="visible">
+    <Flex
+      align="center"
+      justify="space-between"
+      bg="white"
+      border="1px solid #E2E8F0"
+      borderRadius="2xl"
+      px={5}
+      py={3}
+      boxShadow="sm"
+      mb={4}
+      wrap="wrap"
+      gap={3}
+    >
+      <HStack spacing={3} wrap="wrap">
+        <Menu closeOnSelect={false}>
+          <MenuButton
+            as={Button}
+            rightIcon={<ChevronDownIcon />}
+            variant="outline"
+            borderRadius="full"
+          >
+            Kolumner
+          </MenuButton>
+          <MenuList borderRadius="md" shadow="lg">
+            {Object.keys(visibleColumns).map((col) => (
+              <MenuItem key={col}>
+                <Checkbox isChecked={visibleColumns[col]} onChange={() => toggleColumn(col)}>
+                  {col.charAt(0).toUpperCase() + col.slice(1)}
+                </Checkbox>
+              </MenuItem>
+            ))}
+          </MenuList>
+        </Menu>
+
+        <Input
+          placeholder="Sök namn eller telefon..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          width="260px"
+          bg="gray.50"
+          borderRadius="full"
+          px={4}
+          py={2}
+          _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px #3182ce' }}
         />
-        <MenuList borderRadius="md" shadow="lg">
-          {Object.keys(visibleColumns).map((col) => (
-            <MenuItem key={col}>
-              <Checkbox isChecked={visibleColumns[col]} onChange={() => toggleColumn(col)}>
-                {col.charAt(0).toUpperCase() + col.slice(1)}
-              </Checkbox>
-            </MenuItem>
-          ))}
-        </MenuList>
-      </Menu>
+      </HStack>
+
+      <HStack spacing={3}>
+        <Button
+          leftIcon={<FaPalette />}
+          variant={isCellModeActive ? 'solid' : 'outline'}
+          colorScheme={isCellModeActive ? 'purple' : 'gray'}
+          onClick={() => setCellEditMode((prev) => !prev)}
+          borderRadius="full"
+        >
+          Cell‑läge
+        </Button>
+        <Button variant="outline" borderRadius="full" onClick={() => setHotkeysOpen(true)}>
+          Kortkommandon
+        </Button>
+      </HStack>
     </Flex>
 
-    <Input
-      placeholder="Sök namn eller telefon..."
-      value={searchQuery}
-      onChange={(e) => setSearchQuery(e.target.value)}
-      width="250px"
-      bg="white"
-      borderRadius="full"
-      px={4}
-      py={2}
-      boxShadow="sm"
-      _focus={{ borderColor: 'blue.400', boxShadow: '0 0 0 1px #90cdf4' }}
-    />
-    <Button
-      leftIcon={<FaPalette />}
-      variant={cellEditMode ? 'solid' : 'outline'}
-      colorScheme={cellEditMode ? 'purple' : 'gray'}
-      onClick={() => setCellEditMode((prev) => !prev)}
-      borderRadius="full"
-    >
-      Cell-läge
-    </Button>
-    {cellEditMode && (
-      <Text fontSize="sm" color="purple.600">
-        Klicka en cell för att ändra färg/ikon/kommentar.
-      </Text>
-    )}
-  </HStack>
-
-  {/* Höger sida: Anteckningar + Avslutade */}
-  <HStack spacing={4}>
-    <Button
-      onClick={() => setAnteckningarModalOpen(true)} // Lägg till din modal trigger här
-      bg="blue.600"
-      color="white"
-      px={5}
-      py={2}
-      borderRadius="full"
-      _hover={{ bg: 'blue.700' }}
-      boxShadow="md"
-    >
-      Anteckningar
-    </Button>
-
-    <Button
-      onClick={() => setAvslutadeModalOpen(true)}
-      bg="gray.800"
-      color="white"
-      px={5}
-      py={2}
-      borderRadius="full"
-      _hover={{ bg: 'gray.700' }}
-      boxShadow="md"
-    >
-      Avslutade
-    </Button>
-  </HStack>
-</Flex>
-<Box overflowX="visible" px={2}>
-  <Flex gap={2} align="start" minW="fit-content" w="full">
+    <Box overflowX="visible">
+      <Flex gap={2} align="start" minW="fit-content" w="full">
     <TableContainer
       bg="white"
-      p={6}
-      borderRadius="xl"
-      boxShadow="2xl"
-      border="1px solid rgba(255,255,255,0.08)"
+      p={4}
+      borderRadius="2xl"
+      boxShadow="xl"
+      border="1px solid #E2E8F0"
       overflow="visible"
       w="full" 
       minW="100%" 
+      transform={`scale(${zoomLevel})`}
+      transformOrigin="top left"
     >
       <Table
         variant="simple"
         size="sm"
         sx={{
           'th, td': {
-            borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+            borderBottom: '1px solid #E2E8F0',
+            paddingY: '6px',
+          },
+          thead: {
+            position: 'sticky',
+            top: 0,
+            zIndex: 1,
+          },
+          'tbody tr': {
+            borderBottom: '1px solid #CBD5E0',
+          },
+          'tbody tr:nth-of-type(even)': {
+            backgroundColor: '#F8FAFC',
+          },
+          'tbody input': {
+            height: '24px',
+            fontSize: '12px',
           },
         }}
       >
         <Thead bg="gray.100" borderRadius="xl">
           <Tr>
+            <Th />
             {visibleColumns['#'] && <Th />}
-            {visibleColumns.btkn && <Th />}
+            {visibleColumns.btkn && (
+              <Th>
+                <Input
+                  size="xs"
+                  variant="flushed"
+                  placeholder="BTKN-prefix"
+                  value={btknPrefix}
+                  onChange={(e) => setBtknPrefix(e.target.value.toUpperCase())}
+                />
+              </Th>
+            )}
             {visibleColumns.namn && <Th />}
             {visibleColumns.telefon && <Th />}
             {visibleColumns.anordning && <Th />}
-            {project.sections.map((_, secIdx) => (
+            {visibleSectionIndexes.map((secIdx) => (
               <Th key={`note2-${secIdx}`} p={1} bg={secIdx % 2 === 0 ? 'blue.50' : 'transparent'}>
                 <Input
                   size="xs"
@@ -1332,17 +1700,17 @@ if (loading || !project) {
                 />
               </Th>
             ))}
-            {visibleColumns.starttid && <Th />}
-            {visibleColumns.begard && <Th />}
-            {visibleColumns.avslutat && <Th />}
+            <Th />
+            <Th />
           </Tr>
           <Tr>
+            <Th />
             {visibleColumns['#'] && <Th />}
             {visibleColumns.btkn && <Th />}
             {visibleColumns.namn && <Th />}
             {visibleColumns.telefon && <Th />}
             {visibleColumns.anordning && <Th />}
-            {project.sections.map((_, secIdx) => (
+            {visibleSectionIndexes.map((secIdx) => (
               <Th key={`note1-${secIdx}`} p={1} bg={secIdx % 2 === 0 ? 'blue.50' : 'transparent'}>
                 <Button
                   size="xs"
@@ -1353,16 +1721,33 @@ if (loading || !project) {
                 </Button>
               </Th>
             ))}
-            {visibleColumns.starttid && <Th />}
-            {visibleColumns.begard && <Th />}
-            {visibleColumns.avslutat && <Th />}
+            <Th p={1}>
+              <Flex gap={2}>
+                <Input
+                  size="xs"
+                  type="date"
+                  variant="flushed"
+                  value={begardDefaultDate}
+                  onChange={(e) => setBegardDefaultDate(e.target.value)}
+                />
+                <Input
+                  size="xs"
+                  type="time"
+                  variant="flushed"
+                  placeholder="Tid"
+                  value={begardDefaultTime}
+                  onChange={(e) => setBegardDefaultTime(e.target.value)}
+                />
+              </Flex>
+            </Th>
+            <Th />
           </Tr>
           <Tr>
-    {visibleColumns['#'] && (
-      <Th
-        width="40px"
-        textAlign="center"
-        py={2}
+            {visibleColumns['#'] && (
+              <Th
+                width="40px"
+                textAlign="center"
+                py={2}
         color="gray.700"
         fontSize="sm"
         fontWeight="semibold"
@@ -1372,39 +1757,77 @@ if (loading || !project) {
       </Th>
     )}
     {visibleColumns.btkn && (
-      <Th py={2} fontWeight="semibold" color="gray.700">
-        <Flex align="center" gap={2}>
-          <FaHashtag size={14} />
-          BTKN
+      <Th py={2} fontWeight="semibold" color="gray.700" width={`${columnWidths.btkn}px`}>
+        <Flex align="center" gap={2} justify="space-between">
+          <Flex align="center" gap={2}>
+            <FiHash size={14} />
+            BTKN
+          </Flex>
+          <IconButton
+            size="xs"
+            variant="ghost"
+            icon={<FiChevronsRight />}
+            aria-label="Expandera BTKN"
+            onClick={() => toggleColumnWidth('btkn', 140)}
+          />
         </Flex>
       </Th>
     )}
     {visibleColumns.namn && (
-      <Th py={2} fontWeight="semibold" color="gray.700">
-        <Flex align="center" gap={2}>
-          <FaUserTie size={14} />
-          Namn
+      <Th py={2} fontWeight="semibold" color="gray.700" width={`${columnWidths.namn}px`}>
+        <Flex align="center" gap={2} justify="space-between">
+          <Flex align="center" gap={2}>
+            <FiUser size={14} />
+            Namn
+          </Flex>
+          <IconButton
+            size="xs"
+            variant="ghost"
+            icon={<FiChevronsRight />}
+            aria-label="Expandera Namn"
+            onClick={() => toggleColumnWidth('namn', 260)}
+          />
         </Flex>
       </Th>
     )}
     {visibleColumns.telefon && (
-      <Th py={2} fontWeight="semibold" color="gray.700">
-        <Flex align="center" gap={2}>
-          <FaPhone size={14} />
-          Telefon
+      <Th py={2} fontWeight="semibold" color="gray.700" width={`${columnWidths.telefon}px`}>
+        <Flex align="center" gap={2} justify="space-between">
+          <Flex align="center" gap={2}>
+            <FiPhone size={14} />
+            Telefon
+          </Flex>
+          <IconButton
+            size="xs"
+            variant="ghost"
+            icon={<FiChevronsRight />}
+            aria-label="Expandera Telefon"
+            onClick={() => toggleColumnWidth('telefon', 220)}
+          />
         </Flex>
       </Th>
     )}
     {visibleColumns.anordning && (
-      <Th py={2} fontWeight="semibold" color="gray.700">
-        <Flex align="center" gap={2}>
-          <FaSignal size={14} />
-          Anordning
+      <Th py={2} fontWeight="semibold" color="gray.700" width={`${columnWidths.anordning}px`}>
+        <Flex align="center" gap={2} justify="space-between">
+          <Flex align="center" gap={2}>
+            <FiAperture size={14} />
+            Anordning
+          </Flex>
+          <IconButton
+            size="xs"
+            variant="ghost"
+            icon={<FiChevronsRight />}
+            aria-label="Expandera Anordning"
+            onClick={() => toggleColumnWidth('anordning', 240)}
+          />
         </Flex>
       </Th>
     )}
 
-{project.sections.map((sec, idx) => (
+{visibleSectionIndexes.map((idx) => {
+  const sec = project.sections[idx];
+  return (
 <Th
   key={idx}
   w="40px"
@@ -1469,31 +1892,20 @@ if (loading || !project) {
     </Box>
   </Tooltip>
 </Th>
-))}
-    {visibleColumns.starttid && (
-      <Th py={2} fontWeight="semibold" color="gray.700">
-        <Flex align="center" gap={2}>
-          <FaClock size={14} />
-          Start
-        </Flex>
-      </Th>
-    )}
-    {visibleColumns.begard && (
-      <Th py={2} fontWeight="semibold" color="gray.700">
-        <Flex align="center" gap={2}>
-          <FaCalendarAlt size={14} />
-          Begärd
-        </Flex>
-      </Th>
-    )}
-    {visibleColumns.avslutat && (
-      <Th py={2} fontWeight="semibold" color="gray.700">
-        <Flex align="center" gap={2}>
-          <FaCheckCircle size={14} />
-          Slut
-        </Flex>
-      </Th>
-    )}
+  );
+})}
+    <Th py={2} fontWeight="semibold" color="gray.700">
+      <Flex align="center" gap={2}>
+        <FiClock size={14} />
+        Tider
+      </Flex>
+    </Th>
+    <Th py={2} fontWeight="semibold" color="gray.700">
+      <Flex align="center" gap={2}>
+        <FiSliders size={14} />
+        Åtgärder
+      </Flex>
+    </Th>
   </Tr>
 </Thead>
 
@@ -1507,27 +1919,16 @@ if (loading || !project) {
                 const namnMeta = cell('namn');
                 const telefonMeta = cell('telefon');
                 const anordningMeta = cell('anordning');
-                const starttidMeta = cell('starttid');
-                const begardMeta = cell('begard');
-                const avslutatMeta = cell('avslutat');
+                const hotkeyMode = cellEditMode || colorHotkey || iconHotkey;
 
                 return (
                 <Tr
                   key={row.id}
-                  bg="transparent"
-                  _hover={{ bg: 'gray.100' }}
-                  cursor={cellEditMode ? 'default' : 'pointer'}
+                  bg={activeRowId === row.id ? 'blue.50' : 'transparent'}
+                  _hover={{ bg: 'blue.50' }}
+                  cursor="default"
                   transition="background 0.2s ease"
-                  onClick={(e) => {
-                    if (cellEditMode) return;
-                    if (
-                      e.target.closest(
-                        'input[type="checkbox"], textarea, select, label, button, input[type="text"]'
-                      )
-                    )
-                      return;
-                    handleRowClick(row, rowIndex);
-                  }}
+                  onMouseEnter={() => setActiveRowId(row.id)}
                 >
                   {visibleColumns['#'] && (
                     <Td width="40px" borderRight="1px solid rgba(0, 0, 0, 0.05)">
@@ -1538,209 +1939,178 @@ if (loading || !project) {
                   )}
 {visibleColumns.btkn && (
   <Td
-    width="80px"
+    width={`${columnWidths.btkn}px`}
     borderRight="1px solid rgba(0, 0, 0, 0.1)"
     bg={btknMeta?.color || 'transparent'}
     onClick={(e) => {
-      if (!cellEditMode) return;
       e.stopPropagation();
-      openCellEditor(row, 'btkn', 'BTKN');
+      handleCellInteraction(row, 'btkn', 'BTKN');
     }}
   >
     <Flex align="center" justify="space-between" gap={2}>
-      <Tag
-        size="md"
-        variant="outline"
-        colorScheme="teal"
-        w="80px"
-        justifyContent="center"
-        borderRadius="md"
-      >
-        <TagLabel isTruncated>{row.btkn}</TagLabel>
-      </Tag>
-      {cellIcon('btkn')?.icon && (
-        <Icon as={cellIcon('btkn').icon} color={cellIcon('btkn').color} boxSize="14px" />
-      )}
+      <Input
+        size="xs"
+        variant="flushed"
+        value={row.btkn || ''}
+        onChange={(e) => updateRowField(row.id, 'btkn', e.target.value)}
+        isReadOnly={hotkeyMode}
+        onFocus={() => setActiveRowId(row.id)}
+      />
     </Flex>
-    {btknMeta?.comment && (
-      <Tooltip label={btknMeta.comment} hasArrow>
-        <Icon as={FaRegCommentDots} color="gray.500" boxSize="14px" mt={1} />
-      </Tooltip>
-    )}
   </Td>
 )}
 
 {visibleColumns.namn && (
   <Td
-    maxW="150px"
+    maxW={`${columnWidths.namn}px`}
     borderRight="1px solid rgba(0, 0, 0, 0.05)"
     bg={namnMeta?.color || 'transparent'}
     onClick={(e) => {
-      if (!cellEditMode) return;
       e.stopPropagation();
-      openCellEditor(row, 'namn', 'Namn');
+      handleCellInteraction(row, 'namn', 'Namn');
     }}
   >
     <Flex align="center" justify="space-between" gap={2}>
-      <Tooltip
-        label={
-          <Box p={2} maxW="300px">
-            <Text fontWeight="bold" mb={1}>Anteckningar:</Text>
-            {row.anteckning ? (
-              <Text fontSize="sm">{row.anteckning}</Text>
-            ) : (
-              <Text fontSize="sm" color="gray.500">Inga anteckningar</Text>
-            )}
-            <Text fontWeight="bold" mt={3} mb={1}>Samråd:</Text>
-            {row.samrad && row.samrad.length > 0 ? (
-              <Stack spacing={0.5} align="start">
-                {row.samrad.map((entry, idx) => (
-                  <Text key={idx} fontSize="sm">
-                    {entry.namn || 'Okänt namn'}
-                  </Text>
-                ))}
-              </Stack>
-            ) : (
-              <Text fontSize="sm" color="gray.500">
-                Inga samråd
-              </Text>
-            )}
-          </Box>
-        }
-        hasArrow
-        placement="top"
-        bg="white"
-        color="black"
-        border="1px solid #ccc"
-        borderRadius="md"
-        shadow="md"
-        p={3}
-      >
-        <Text
-          color="gray.800"
-          fontSize="sm"
-          minWidth="140px"
-          isTruncated
-          cursor="help"
-        >
-          {row.namn}
-        </Text>
-      </Tooltip>
-      {cellIcon('namn')?.icon && (
-        <Icon as={cellIcon('namn').icon} color={cellIcon('namn').color} boxSize="14px" />
-      )}
+      <Input
+        size="xs"
+        variant="flushed"
+        value={row.namn || ''}
+        onChange={(e) => updateRowField(row.id, 'namn', e.target.value)}
+        isReadOnly={hotkeyMode}
+        onFocus={() => setActiveRowId(row.id)}
+      />
     </Flex>
-    {namnMeta?.comment && (
-      <Tooltip label={namnMeta.comment} hasArrow>
-        <Icon as={FaRegCommentDots} color="gray.500" boxSize="14px" mt={1} />
-      </Tooltip>
-    )}
   </Td>
 )}
 
 {visibleColumns.telefon && (
   <Td
-    maxW="145px"
+    maxW={`${columnWidths.telefon}px`}
     borderRight="1px solid rgba(0, 0, 0, 0.05)"
     bg={telefonMeta?.color || 'transparent'}
     onClick={(e) => {
-      if (!cellEditMode) return;
       e.stopPropagation();
-      openCellEditor(row, 'telefon', 'Telefon');
+      handleCellInteraction(row, 'telefon', 'Telefon');
     }}
   >
     <Flex align="center" justify="space-between" gap={2}>
-      <Text color="gray.800" fontSize="sm" w="145px" isTruncated>
-        {row.telefon}
-      </Text>
-      {cellIcon('telefon')?.icon && (
-        <Icon as={cellIcon('telefon').icon} color={cellIcon('telefon').color} boxSize="14px" />
-      )}
+      <Input
+        size="xs"
+        variant="flushed"
+        value={row.telefon || ''}
+        onChange={(e) => updateRowField(row.id, 'telefon', e.target.value)}
+        isReadOnly={hotkeyMode}
+        onFocus={() => setActiveRowId(row.id)}
+      />
     </Flex>
-    {telefonMeta?.comment && (
-      <Tooltip label={telefonMeta.comment} hasArrow>
-        <Icon as={FaRegCommentDots} color="gray.500" boxSize="14px" mt={1} />
-      </Tooltip>
-    )}
   </Td>
 )}
 
 {visibleColumns.anordning && (
   <Td
-    maxW="160px"
+    maxW={`${columnWidths.anordning}px`}
     borderRight="1px solid rgba(0, 0, 0, 0.1)"
     bg={anordningMeta?.color || 'transparent'}
     onClick={(e) => {
-      if (!cellEditMode) return;
       e.stopPropagation();
-      openCellEditor(row, 'anordning', 'Anordning');
+      handleCellInteraction(row, 'anordning', 'Anordning');
     }}
   >
-<Flex gap={1} align="center" justify="space-between">
-  <Flex gap={1}>
-  {(Array.isArray(row.anordning)
-    ? row.anordning
-    : typeof row.anordning === 'string'
-      ? row.anordning.split(',').map((a) => a.trim())
-      : []
-  ).map((item, idx) => {
-    let color = 'gray';
-    switch (item) {
-      case 'A-S':
-        color = 'blue';      // Klarblå
-        break;
-      case 'L-S':
-        color = 'green';     // Grön istället för teal
-        break;
-      case 'S-S':
-        color = 'orange';    // Orange istället för cyan
-        break;
-      case 'E-S':
-        color = 'red';       // Röd istället för purple
-        break;
-      case 'Spf':
-        color = 'yellow';      // Rosa istället för purple
-        break;
-      case 'Vxl':
-        color = 'purple';    // Behåller lila
-        break;
-      default:
-        color = 'gray';
-    }
-
-    return (
-      <Badge
-        key={idx}
-        colorScheme={color}
-        variant="subtle"
-        fontSize="xs"
-        px={2}
-        py={0.5}
-        borderRadius="none" // <--- Inga rundade hörn
-        textTransform="none"
+    <Menu closeOnSelect isOpen={hotkeyMode ? false : undefined}>
+      <MenuButton
+        as={Button}
+        size="xs"
+        rightIcon={<ChevronDownIcon />}
+        bg="transparent"
+        _hover={{ bg: 'transparent' }}
+        _active={{ bg: 'transparent' }}
+        _focus={{ boxShadow: 'none' }}
+        isDisabled={hotkeyMode}
+        onClick={() => setActiveRowId(row.id)}
       >
-        {item}
-      </Badge>
-    );
-  })}
-</Flex>
-  {cellIcon('anordning')?.icon && (
-    <Icon as={cellIcon('anordning').icon} color={cellIcon('anordning').color} boxSize="14px" />
-  )}
-</Flex>
-    {anordningMeta?.comment && (
-      <Tooltip label={anordningMeta.comment} hasArrow>
-        <Icon as={FaRegCommentDots} color="gray.500" boxSize="14px" mt={1} />
-      </Tooltip>
-    )}
+        {Array.isArray(row.anordning) && row.anordning.length > 0 ? (
+          <Flex gap={1} wrap="wrap">
+            {row.anordning.map((item) => {
+              let color = 'gray';
+              switch (item) {
+                case 'A-S': color = 'blue'; break;
+                case 'L-S': color = 'green'; break;
+                case 'S-S': color = 'orange'; break;
+                case 'E-S': color = 'red'; break;
+                case 'Spf': color = 'yellow'; break;
+                case 'Vxl': color = 'purple'; break;
+                default: color = 'gray';
+              }
+              return (
+                <Badge
+                  key={item}
+                  colorScheme={color}
+                  variant="subtle"
+                  fontSize="xs"
+                  px={2}
+                  py={0.5}
+                  borderRadius="none"
+                  textTransform="none"
+                >
+                  {formatAnordningLabel(item)}
+                </Badge>
+              );
+            })}
+          </Flex>
+        ) : (
+          'Välj'
+        )}
+      </MenuButton>
+      <Portal>
+        <MenuList maxHeight="240px" overflowY="auto">
+          {['A-S', 'L-S', 'S-S', 'E-S', 'Spf', 'Vxl'].map((option) => (
+            <MenuItem key={option}>
+              <Button
+                variant="ghost"
+                size="xs"
+                onClick={() => updateRowField(row.id, 'anordning', [option])}
+              >
+                <Badge
+                  colorScheme={
+                    option === 'A-S'
+                      ? 'blue'
+                      : option === 'L-S'
+                      ? 'green'
+                      : option === 'S-S'
+                      ? 'orange'
+                      : option === 'E-S'
+                      ? 'red'
+                      : option === 'Spf'
+                      ? 'yellow'
+                      : option === 'Vxl'
+                      ? 'purple'
+                      : 'gray'
+                  }
+                  variant="subtle"
+                  fontSize="xs"
+                  px={2}
+                  py={0.5}
+                  borderRadius="none"
+                  textTransform="none"
+                  mr={2}
+                >
+                  {formatAnordningLabel(option)}
+                </Badge>
+                {option}
+              </Button>
+            </MenuItem>
+          ))}
+        </MenuList>
+      </Portal>
+    </Menu>
   </Td>
 )}
 
-{project.sections.map((_, secIdx) => {
-  const cellKey = `section-${secIdx}`;
-  const sectionMeta = cell(cellKey);
-  const sectionIcon = cellIcon(cellKey);
-  const baseBg = secIdx % 2 === 0 ? 'blue.50' : 'transparent';
+                {visibleSectionIndexes.map((secIdx) => {
+                  const cellKey = `section-${secIdx}`;
+                  const sectionMeta = cell(cellKey);
+                  const sectionIcon = cellIcon(cellKey);
+                  const baseBg = secIdx % 2 === 0 ? 'blue.50' : 'transparent';
 
   return (
     <Td
@@ -1748,10 +2118,12 @@ if (loading || !project) {
       width="60px"
       bg={sectionMeta?.color || baseBg}
       borderRight="1px solid rgba(0, 0, 0, 0.05)"
-      onClick={(e) => {
-        if (!cellEditMode) return;
-        e.stopPropagation();
-        openCellEditor(row, cellKey, `Delområde ${String.fromCharCode(65 + secIdx)}`);
+      onClick={() => {
+        if (hotkeyMode) {
+          handleCellInteraction(row, cellKey, `Delområde ${String.fromCharCode(65 + secIdx)}`);
+          return;
+        }
+        toggleDelomrade(row.id, secIdx);
       }}
     >
       <Flex align="center" justify="center" gap={2}>
@@ -1769,185 +2141,79 @@ if (loading || !project) {
   );
 })}
 
-{visibleColumns.starttid && (
   <Td
-    maxW="150px"
-    w="90px"
+    minW={`${columnWidths.tider}px`}
     borderRight="1px solid rgba(0, 0, 0, 0.05)"
-    bg={starttidMeta?.color || 'transparent'}
-    onClick={(e) => {
-      if (!cellEditMode) return;
-      e.stopPropagation();
-      openCellEditor(row, 'starttid', 'Start');
-    }}
+    bg="transparent"
   >
-    <Tooltip
-      label={
-        row.startdatum ? (
-          <Box p={2} maxW="100px">
-            <Text fontWeight="bold" mb={1}>Startdatum:</Text>
-            <Text fontSize="sm">{formatDateOnly(row.startdatum)}</Text>
-          </Box>
-        ) : (
-          <Box p={2} maxW="100px">
-            <Text fontWeight="bold" mb={1}>Startdatum:</Text>
-            <Text fontSize="sm" color="gray.500">Ej angivet</Text>
-          </Box>
-        )
-      }
-      hasArrow
-      placement="top"
-      bg="white"
-      color="black"
-      border="1px solid #ccc"
-      borderRadius="md"
-      shadow="md"
-      p={3}
-    >
-      <Flex align="center" justify="space-between" gap={2}>
-        <Text
-          color="gray.800"
-          fontSize="sm"
-          w="50px"
-          maxW="inherit"
-          isTruncated={false}
-          cursor="help"
-        >
-          {row.starttid}
-        </Text>
-        {cellIcon('starttid')?.icon && (
-          <Icon as={cellIcon('starttid').icon} color={cellIcon('starttid').color} boxSize="14px" />
+    <Stack spacing={1}>
+      <HStack spacing={3} fontSize="xs" color="gray.500">
+        {visibleColumns.starttid && <Text minW="70px">Start</Text>}
+        {visibleColumns.begard && <Text minW="70px">Begärd</Text>}
+        {visibleColumns.avslutat && <Text minW="70px">Avslutad</Text>}
+      </HStack>
+      <HStack spacing={3}>
+        {visibleColumns.starttid && (
+          <Input
+            size="xs"
+            type="time"
+            variant="flushed"
+            value={row.starttid || ''}
+            onChange={(e) => updateRowField(row.id, 'starttid', e.target.value)}
+            isReadOnly={hotkeyMode}
+            onFocus={() => setActiveRowId(row.id)}
+            width="70px"
+          />
         )}
-      </Flex>
-    </Tooltip>
-    {starttidMeta?.comment && (
-      <Tooltip label={starttidMeta.comment} hasArrow>
-        <Icon as={FaRegCommentDots} color="gray.500" boxSize="14px" mt={1} />
-      </Tooltip>
-    )}
-  </Td>
-)}
-
-{visibleColumns.begard && (
-  <Td
-    maxW="150px"
-    w="90px"
-    borderRight="1px solid rgba(0, 0, 0, 0.05)"
-    bg={begardMeta?.color || 'transparent'}
-    onClick={(e) => {
-      if (!cellEditMode) return;
-      e.stopPropagation();
-      openCellEditor(row, 'begard', 'Begärd');
-    }}
-  >
-    <Tooltip
-      label={
-        row.begardDatum === 'Tsv' ? (
-          <Box p={2} maxW="100px">
-            <Text fontWeight="bold" mb={1}>Begärd till:</Text>
-            <Text fontSize="sm">Tillsvidare</Text>
-          </Box>
-        ) : row.begardDatum ? (
-          <Box p={2} maxW="100px">
-            <Text fontWeight="bold" mb={1}>Begärd till:</Text>
-            <Text fontSize="sm">{formatDateOnly(row.begardDatum)}</Text>
-          </Box>
-        ) : (
-          <Box p={2} maxW="100px">
-            <Text fontWeight="bold" mb={1}>Begärd till:</Text>
-            <Text fontSize="sm" color="gray.500">Ej angivet</Text>
-          </Box>
-        )
-      }
-      hasArrow
-      placement="top"
-      bg="white"
-      color="black"
-      border="1px solid #ccc"
-      borderRadius="md"
-      shadow="md"
-      p={3}
-    >
-      <Flex align="center" justify="space-between" gap={2}>
-        <Text
-          color="gray.800"
-          fontSize="sm"
-          w="50px"
-          isTruncated={false}
-          cursor="help"
-        >
-          {row.begard === 'Tsv' ? 'Tsv' : row.begard}
-        </Text>
-        {cellIcon('begard')?.icon && (
-          <Icon as={cellIcon('begard').icon} color={cellIcon('begard').color} boxSize="14px" />
+        {visibleColumns.begard && (
+          <Input
+            size="xs"
+            type="time"
+            variant="flushed"
+            value={row.begard || ''}
+            onChange={(e) => updateRowField(row.id, 'begard', e.target.value)}
+            isReadOnly={hotkeyMode}
+            onFocus={() => setActiveRowId(row.id)}
+            width="70px"
+          />
         )}
-      </Flex>
-    </Tooltip>
-    {begardMeta?.comment && (
-      <Tooltip label={begardMeta.comment} hasArrow>
-        <Icon as={FaRegCommentDots} color="gray.500" boxSize="14px" mt={1} />
-      </Tooltip>
-    )}
-  </Td>
-)}
-
-{visibleColumns.avslutat && (
-  <Td
-    maxW="150px"
-    w="90px"
-    borderRight="1px solid rgba(0, 0, 0, 0.05)"
-    bg={avslutatMeta?.color || 'transparent'}
-    onClick={(e) => {
-      if (!cellEditMode) return;
-      e.stopPropagation();
-      openCellEditor(row, 'avslutat', 'Avslutat');
-    }}
-  >
-    <Tooltip
-      label={
-        row.avslutatDatum ? (
-          <Box p={2} maxW="100px">
-            <Text fontWeight="bold" mb={1}>Avslutat:</Text>
-            <Text fontSize="sm">{formatDateOnly(row.avslutatDatum)}</Text>
-          </Box>
-        ) : (
-          <Box p={2} maxW="100px">
-            <Text fontWeight="bold" mb={1}>Avslutat:</Text>
-            <Text fontSize="sm" color="gray.500">Ej angivet</Text>
-          </Box>
-        )
-      }
-      hasArrow
-      placement="top"
-      bg="white"
-      color="black"
-      border="1px solid #ccc"
-      borderRadius="md"
-      shadow="md"
-      p={3}
-    >
-      <Flex align="center" justify="space-between" gap={2}>
-        <Text
-          color="gray.800"
-          fontSize="sm"
-          w="50px"
-          isTruncated={false}
-          cursor="help"
-        >
-          {row.avslutat}
-        </Text>
-        {cellIcon('avslutat')?.icon && (
-          <Icon as={cellIcon('avslutat').icon} color={cellIcon('avslutat').color} boxSize="14px" />
+        {visibleColumns.avslutat && (
+          <Input
+            size="xs"
+            type="time"
+            variant="flushed"
+            value={row.avslutat || ''}
+            onChange={(e) => updateRowField(row.id, 'avslutat', e.target.value)}
+            isReadOnly={hotkeyMode}
+            onFocus={() => setActiveRowId(row.id)}
+            width="70px"
+          />
         )}
-      </Flex>
-    </Tooltip>
-    {avslutatMeta?.comment && (
-      <Tooltip label={avslutatMeta.comment} hasArrow>
-        <Icon as={FaRegCommentDots} color="gray.500" boxSize="14px" mt={1} />
-      </Tooltip>
-    )}
+      </HStack>
+    </Stack>
   </Td>
-)}
+  <Td borderRight="1px solid rgba(0, 0, 0, 0.05)">
+    <Flex align="center" gap={2}>
+      <IconButton
+        size="xs"
+        variant="outline"
+        icon={<FiEdit2 />}
+        aria-label="Redigera rad"
+        onClick={() => openRowModal(row, rowIndex)}
+      />
+      <Button
+        size="xs"
+        variant="outline"
+        leftIcon={<FiMessageCircle />}
+        onClick={() => {
+          setSamradModalRow(row);
+          onOpenSamradModal();
+        }}
+      >
+        Samråd
+      </Button>
+    </Flex>
+  </Td>
     </Tr>
   );
 })}
@@ -1968,6 +2234,7 @@ onClick={() => {
   onOpenApprovalModal();
 }}
   >
+    <Td borderRight="1px solid rgba(0, 0, 0, 0.05)" />
     {/* BTKN */}
     <Td borderRight="1px solid rgba(0, 0, 0, 0.1)">
       <Text>
@@ -2025,7 +2292,7 @@ onClick={() => {
     </Td>
 
     {/* DELOMRÅDEN (checkboxar) */}
-    {project.sections.map((_, secIdx) => (
+    {visibleSectionIndexes.map((secIdx) => (
       <Td
         key={secIdx}
         width="60px"
@@ -2038,39 +2305,65 @@ onClick={() => {
       </Td>
     ))}
 
-    {/* START */}
-    <Td borderRight="1px solid rgba(0, 0, 0, 0.1)">
-      <Text>{row.startTime || '–'}</Text>
+    <Td borderRight="1px solid rgba(0, 0, 0, 0.05)">
+      <Stack spacing={1}>
+        <Flex align="center" justify="space-between">
+          <Text fontSize="xs" color="gray.500">Start</Text>
+          <Text fontSize="sm">{row.startTime || '–'}</Text>
+        </Flex>
+        <Flex align="center" justify="space-between">
+          <Text fontSize="xs" color="gray.500">Begärd</Text>
+          <Text fontSize="sm">{row.begard || '–'}</Text>
+        </Flex>
+        <Flex align="center" justify="space-between">
+          <Text fontSize="xs" color="gray.500">Slut</Text>
+          <Text fontSize="sm">{row.endTime || '–'}</Text>
+        </Flex>
+      </Stack>
     </Td>
-
-    {/* BEGÄRD */}
-    <Td borderRight="1px solid rgba(0, 0, 0, 0.1)">
-      <Text>{row.begard || '–'}</Text>
-    </Td>
-
-    {/* SLUT */}
-    <Td borderRight="1px solid rgba(0, 0, 0, 0.1)">
-      <Text>{row.endTime || '–'}</Text>
-    </Td>
+    <Td borderRight="1px solid rgba(0, 0, 0, 0.05)" />
   </Tr>
 ))}
 </Tbody>
         </Table>
-        <Button
-  onClick={() => {
-    addRow();
-    onOpen(); // öppnar modalen direkt
-  }}
-  colorScheme="blue"
-  mt={4}
->
-  + Lägg till rad
-</Button>
       </TableContainer>
 </Flex>
 </Box>
+</Box>
+</Box>
 
 {/*Slut på table*/}
+
+<Modal isOpen={hotkeysOpen} onClose={() => setHotkeysOpen(false)} size="md">
+  <ModalOverlay />
+  <ModalContent>
+    <ModalHeader>Kortkommandon</ModalHeader>
+    <ModalCloseButton />
+    <ModalBody>
+      <Stack spacing={2} fontSize="sm" color="gray.700">
+        <Flex justify="space-between"><Text>⌘ (håll)</Text><Text>Cell‑läge</Text></Flex>
+        <Flex justify="space-between"><Text>T</Text><Text>Starttid = nu</Text></Flex>
+        <Flex justify="space-between"><Text>Shift + T</Text><Text>Begärd = nu</Text></Flex>
+        <Flex justify="space-between"><Text>Alt + T</Text><Text>Slut = nu</Text></Flex>
+        <Flex justify="space-between"><Text>D</Text><Text>Dölj rad</Text></Flex>
+        <Flex justify="space-between"><Text>Shift + D</Text><Text>Begärd‑datum = idag</Text></Flex>
+        <Flex justify="space-between"><Text>Håll 1–6</Text><Text>Färga cell</Text></Flex>
+        <Flex justify="space-between"><Text>Håll Q/W/E/R</Text><Text>Sätt ikon</Text></Flex>
+        <Flex justify="space-between"><Text>Shift + +</Text><Text>Zooma in</Text></Flex>
+        <Flex justify="space-between"><Text>Shift + -</Text><Text>Zooma ut</Text></Flex>
+        <Flex justify="space-between"><Text>⌘ + S</Text><Text>Spara</Text></Flex>
+        <Flex justify="space-between"><Text>⌘ + /</Text><Text>Visa/Dölj hjälp</Text></Flex>
+      </Stack>
+      <Text mt={3} fontSize="xs" color="gray.500">
+        Aktiva raden = senast hover/fokus.
+      </Text>
+    </ModalBody>
+    <ModalFooter>
+      <Button onClick={() => setHotkeysOpen(false)}>Stäng</Button>
+    </ModalFooter>
+  </ModalContent>
+</Modal>
+
 
   <Modal isOpen={editModalOpen} onClose={() => setEditModalOpen(false)} size="4xl">
   <ModalOverlay />
@@ -2670,6 +2963,41 @@ onChange={() =>
   </ModalContent>
 </Modal>
 
+<Modal isOpen={isSamradModalOpen} onClose={onCloseSamradModal} size="md">
+  <ModalOverlay />
+  <ModalContent>
+    <ModalHeader>Samråd</ModalHeader>
+    <ModalCloseButton />
+    <ModalBody>
+      {samradModalRow ? (
+        <Stack spacing={3}>
+          <Text fontWeight="semibold">{samradModalRow.namn || samradModalRow.btkn || `Rad ${samradModalRow.id}`}</Text>
+          {Array.isArray(samradModalRow.samrad) && samradModalRow.samrad.length > 0 ? (
+            <Stack spacing={2}>
+              {samradModalRow.samrad.map((entry, idx) => {
+                const person = rows.find((r) => String(r.id) === String(entry.id));
+                return (
+                  <Box key={idx} p={2} border="1px solid #e2e8f0" borderRadius="md" bg="gray.50">
+                    <Text fontSize="sm"><strong>Namn:</strong> {person?.namn || entry.namn || 'Okänt'}</Text>
+                    <Text fontSize="sm"><strong>Telefon:</strong> {person?.telefon || '-'}</Text>
+                  </Box>
+                );
+              })}
+            </Stack>
+          ) : (
+            <Text fontSize="sm" color="gray.500">Inga samråd.</Text>
+          )}
+        </Stack>
+      ) : (
+        <Text fontSize="sm" color="gray.500">Ingen rad vald.</Text>
+      )}
+    </ModalBody>
+    <ModalFooter>
+      <Button onClick={onCloseSamradModal}>Stäng</Button>
+    </ModalFooter>
+  </ModalContent>
+</Modal>
+
 <Modal isOpen={isApprovalModalOpen} onClose={onCloseApprovalModal} size="4xl">
   <ModalOverlay />
   <ModalContent>
@@ -2854,7 +3182,7 @@ onChange={() =>
               </Text>
               <HStack spacing={1}>
                 <IconButton
-                  icon={<EditIcon />}
+                  icon={<FiEdit2 />}
                   size="xs"
                   aria-label="Redigera"
                   onClick={() => {
@@ -3160,6 +3488,49 @@ onChange={() =>
     </ModalFooter>
   </ModalContent>
 </Modal>
+
+<Modal isOpen={hiddenRowsModalOpen} onClose={() => setHiddenRowsModalOpen(false)} size="6xl">
+  <ModalOverlay />
+  <ModalContent>
+    <ModalHeader>Dolda rader</ModalHeader>
+    <ModalCloseButton />
+    <ModalBody>
+      <Stack spacing={3}>
+        {rows.filter((row) => row.hiddenRow).length === 0 ? (
+          <Text color="gray.500">Inga dolda rader.</Text>
+        ) : (
+          rows
+            .filter((row) => row.hiddenRow)
+            .map((row) => (
+              <Flex
+                key={`hidden-${row.id}`}
+                justify="space-between"
+                align="center"
+                p={3}
+                border="1px solid #E2E8F0"
+                borderRadius="md"
+                bg="gray.50"
+              >
+                <Box>
+                  <Text fontWeight="semibold">{row.namn || row.btkn || `Rad ${row.id}`}</Text>
+                  <Text fontSize="sm" color="gray.600">
+                    {row.telefon || '—'} · {row.anordning || '—'}
+                  </Text>
+                </Box>
+                <Button size="sm" onClick={() => unhideRow(row)}>
+                  Visa igen
+                </Button>
+              </Flex>
+            ))
+        )}
+      </Stack>
+    </ModalBody>
+    <ModalFooter>
+      <Button onClick={() => setHiddenRowsModalOpen(false)}>Stäng</Button>
+    </ModalFooter>
+  </ModalContent>
+</Modal>
+    </Box>
     </Box>
     </Box>
     
