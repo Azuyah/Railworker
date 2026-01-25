@@ -15,6 +15,12 @@ import {
   FaCalendarAlt,
   FaCheckCircle,
   FaHashtag,
+  FaExclamationTriangle,
+  FaFlag,
+  FaStar,
+  FaBolt,
+  FaPalette,
+  FaRegCommentDots,
 } from 'react-icons/fa';
 import { HiX } from "react-icons/hi";
 import {
@@ -57,6 +63,7 @@ import {
   FormControl,
   FormLabel,
   useColorModeValue,
+  Divider,
 } from '@chakra-ui/react';
 import { ChevronDownIcon } from '@chakra-ui/icons';
 import Header from '../components/Header';
@@ -74,6 +81,10 @@ const Plan = () => {
   const [samradData, setSamradData] = useState({ samradList: [], avklaradMap: {} });
   const [loading, setLoading] = useState(true);
   const [samradTrigger, setSamradTrigger] = useState(0);
+  const [cellEditMode, setCellEditMode] = useState(false);
+  const [activeCell, setActiveCell] = useState(null);
+  const [smsSelection, setSmsSelection] = useState({});
+  const [smsMessage, setSmsMessage] = useState('');
   const [editableTsmRow, setEditableTsmRow] = useState(null);
   const [selectedRowId, setSelectedRowId] = useState(null);
   const [editBeteckningar, setEditBeteckningar] = useState([]);
@@ -85,6 +96,8 @@ const Plan = () => {
   const [anteckningarModalOpen, setAnteckningarModalOpen] = useState(false);
   const [selectedTsmRow, setSelectedTsmRow] = useState(null);
   const [isProjectInfoOpen, setIsProjectInfoOpen] = useState(false);
+  const [sectionHeaderNotes, setSectionHeaderNotes] = useState([]);
+  const [sectionHeaderNotes2, setSectionHeaderNotes2] = useState([]);
   const openProjectInfoModal = () => setIsProjectInfoOpen(true);
   const closeProjectInfoModal = () => setIsProjectInfoOpen(false);
   const tableBg = useColorModeValue("white", "gray.800");
@@ -156,6 +169,12 @@ const {
   onClose: onCloseApprovalModal,
 } = useDisclosure();
 
+const {
+  isOpen: isCellEditorOpen,
+  onOpen: onOpenCellEditor,
+  onClose: onCloseCellEditor,
+} = useDisclosure();
+
 const calculateSamrad = (rows) => {
   const newSamradList = [];
   const newAvklarad = {};
@@ -195,6 +214,161 @@ const calculateSamrad = (rows) => {
   });
 
   return { samradList: newSamradList, avklaradMap: newAvklarad };
+};
+
+const CELL_COLORS = [
+  { label: 'Ingen', value: '' },
+  { label: 'Gul', value: 'yellow.100' },
+  { label: 'Grön', value: 'green.100' },
+  { label: 'Blå', value: 'blue.100' },
+  { label: 'Röd', value: 'red.100' },
+  { label: 'Lila', value: 'purple.100' },
+  { label: 'Orange', value: 'orange.100' },
+  { label: 'Grå', value: 'gray.100' },
+];
+
+const CELL_ICONS = [
+  { key: '', label: 'Ingen', icon: null },
+  { key: 'check', label: 'Check', icon: FaCheckCircle, color: 'green.500' },
+  { key: 'alert', label: 'Varning', icon: FaExclamationTriangle, color: 'orange.500' },
+  { key: 'clock', label: 'Tid', icon: FaClock, color: 'blue.500' },
+  { key: 'flag', label: 'Flagga', icon: FaFlag, color: 'red.500' },
+  { key: 'star', label: 'Stjärna', icon: FaStar, color: 'yellow.500' },
+  { key: 'bolt', label: 'Bolt', icon: FaBolt, color: 'purple.500' },
+];
+
+const getCellMeta = (row, key) => {
+  if (!row || !key) return {};
+  return row.cellMeta?.[key] || {};
+};
+
+const updateCellMeta = (rowId, cellKey, patch) => {
+  if (!rowId || !cellKey) return;
+  const applyPatch = (currentMeta = {}) => {
+    if (patch?.__clear) return {};
+    return { ...currentMeta, ...patch };
+  };
+
+  setRows((prev) =>
+    prev.map((row) => {
+      if (row.id !== rowId) return row;
+      const nextCellMeta = {
+        ...(row.cellMeta || {}),
+        [cellKey]: applyPatch(row.cellMeta?.[cellKey]),
+      };
+      if (patch?.__clear) {
+        delete nextCellMeta[cellKey];
+      }
+      return { ...row, cellMeta: nextCellMeta };
+    })
+  );
+
+  setSelectedRow((prev) => {
+    if (!prev || prev.id !== rowId) return prev;
+    const nextCellMeta = {
+      ...(prev.cellMeta || {}),
+      [cellKey]: applyPatch(prev.cellMeta?.[cellKey]),
+    };
+    if (patch?.__clear) {
+      delete nextCellMeta[cellKey];
+    }
+    return { ...prev, cellMeta: nextCellMeta };
+  });
+};
+
+const openCellEditor = (row, cellKey, label) => {
+  setActiveCell({
+    rowId: row.id,
+    key: cellKey,
+    label,
+    rowName: row.namn || row.btkn || `Rad ${row.id}`,
+  });
+  onOpenCellEditor();
+};
+
+const closeCellEditor = () => {
+  setActiveCell(null);
+  onCloseCellEditor();
+};
+
+const getIconConfig = (iconKey) =>
+  CELL_ICONS.find((option) => option.key === iconKey);
+
+const toggleSectionHeaderType = (index) => {
+  setSectionHeaderNotes((prev) => {
+    const next = [...prev];
+    const current = (next[index] || '').toLowerCase();
+    next[index] = current === 'linje' ? 'DP' : 'Linje';
+    return next;
+  });
+};
+
+const smsRecipients = useMemo(() => {
+  if (!selectedRow) return { samrad: [], allRows: [] };
+  const samradPeople = Array.isArray(selectedRow.samrad)
+    ? selectedRow.samrad
+        .map((entry) => rows.find((r) => String(r.id) === String(entry.id)))
+        .filter((person) => person)
+    : [];
+
+  const allRows = rows
+    .filter((row) => !row.avslutadRad)
+    .map((row) => ({
+      ...row,
+      namn: row.namn || row.btkn || `Rad ${row.id}`,
+    }));
+
+  return { samrad: samradPeople, allRows };
+}, [rows, selectedRow]);
+
+const activeCellRow = useMemo(() => {
+  if (!activeCell?.rowId) return null;
+  return rows.find((row) => row.id === activeCell.rowId) || null;
+}, [activeCell, rows]);
+
+const activeCellMeta = useMemo(() => {
+  if (!activeCell || !activeCellRow) return {};
+  return getCellMeta(activeCellRow, activeCell.key);
+}, [activeCell, activeCellRow]);
+
+const toggleSmsSelection = (recipientId) => {
+  setSmsSelection((prev) => ({
+    ...prev,
+    [recipientId]: !prev[recipientId],
+  }));
+};
+
+const sendCustomSms = () => {
+  const selectedIds = Object.keys(smsSelection).filter((id) => smsSelection[id]);
+  const selectedPeople = smsRecipients.allRows.filter((row) =>
+    selectedIds.includes(String(row.id))
+  );
+  const phones = selectedPeople.map((p) => p.telefon).filter(Boolean);
+
+  if (!smsMessage.trim()) {
+    toast({
+      title: 'Meddelande saknas',
+      description: 'Skriv ett meddelande innan du skickar.',
+      status: 'warning',
+      duration: 3000,
+      isClosable: true,
+    });
+    return;
+  }
+
+  if (phones.length === 0) {
+    toast({
+      title: 'Inga mottagare',
+      description: 'Välj minst en mottagare med telefonnummer.',
+      status: 'info',
+      duration: 3000,
+      isClosable: true,
+    });
+    return;
+  }
+
+  const smsUrl = `sms:${phones.join(',')}?&body=${encodeURIComponent(smsMessage)}`;
+  window.location.href = smsUrl;
 };
 
 const addEditDP = () => {
@@ -418,6 +592,8 @@ if (selectedRow && selectedRow.id) {
     const updatedProject = {
       ...project,
       rows: rowsWithSamrad,
+      sectionHeaderNotes,
+      sectionHeaderNotes2,
     };
 
 rowsWithSamrad.forEach((row, index) => {
@@ -499,6 +675,30 @@ useEffect(() => {
     }));
   }
 }, [selectedAreas]);
+
+useEffect(() => {
+  if (!project?.sections) return;
+  setSectionHeaderNotes((prev) => {
+    const next = [...prev];
+    if (next.length < project.sections.length) {
+      next.length = project.sections.length;
+    }
+    return next.map((value) => value || '');
+  });
+  setSectionHeaderNotes2((prev) => {
+    const next = [...prev];
+    if (next.length < project.sections.length) {
+      next.length = project.sections.length;
+    }
+    return next.map((value) => value || '');
+  });
+}, [project?.sections]);
+
+useEffect(() => {
+  if (!selectedRowId) return;
+  setSmsSelection({});
+  setSmsMessage('');
+}, [selectedRowId]);
 
 useEffect(() => {
   if (!rows || rows.length === 0 || !project?.sections) return;
@@ -706,6 +906,8 @@ useEffect(() => {
       beteckningar: current.beteckningar || [],
     });
     setAnteckningar(current.anteckningar || []);
+    setSectionHeaderNotes(Array.isArray(current.sectionHeaderNotes) ? current.sectionHeaderNotes : []);
+    setSectionHeaderNotes2(Array.isArray(current.sectionHeaderNotes2) ? current.sectionHeaderNotes2 : []);
       
       
 const enrichedRows = (current.rows || []).map((row) => {
@@ -760,6 +962,7 @@ const createNewRow = (rows, project) => {
     anteckning: '',
     selections: project.sections.map(() => false),
     selectedAreas: [],
+    cellMeta: {},
   };
 };
 
@@ -1039,6 +1242,20 @@ if (loading || !project) {
       boxShadow="sm"
       _focus={{ borderColor: 'blue.400', boxShadow: '0 0 0 1px #90cdf4' }}
     />
+    <Button
+      leftIcon={<FaPalette />}
+      variant={cellEditMode ? 'solid' : 'outline'}
+      colorScheme={cellEditMode ? 'purple' : 'gray'}
+      onClick={() => setCellEditMode((prev) => !prev)}
+      borderRadius="full"
+    >
+      Cell-läge
+    </Button>
+    {cellEditMode && (
+      <Text fontSize="sm" color="purple.600">
+        Klicka en cell för att ändra färg/ikon/kommentar.
+      </Text>
+    )}
   </HStack>
 
   {/* Höger sida: Anteckningar + Avslutade */}
@@ -1082,8 +1299,64 @@ if (loading || !project) {
       w="full" 
       minW="100%" 
     >
-      <Table variant="simple" size="sm">
+      <Table
+        variant="simple"
+        size="sm"
+        sx={{
+          'th, td': {
+            borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+          },
+        }}
+      >
         <Thead bg="gray.100" borderRadius="xl">
+          <Tr>
+            {visibleColumns['#'] && <Th />}
+            {visibleColumns.btkn && <Th />}
+            {visibleColumns.namn && <Th />}
+            {visibleColumns.telefon && <Th />}
+            {visibleColumns.anordning && <Th />}
+            {project.sections.map((_, secIdx) => (
+              <Th key={`note2-${secIdx}`} p={1} bg={secIdx % 2 === 0 ? 'blue.50' : 'transparent'}>
+                <Input
+                  size="xs"
+                  variant="flushed"
+                  placeholder="Text"
+                  value={sectionHeaderNotes2[secIdx] || ''}
+                  onChange={(e) =>
+                    setSectionHeaderNotes2((prev) => {
+                      const next = [...prev];
+                      next[secIdx] = e.target.value;
+                      return next;
+                    })
+                  }
+                />
+              </Th>
+            ))}
+            {visibleColumns.starttid && <Th />}
+            {visibleColumns.begard && <Th />}
+            {visibleColumns.avslutat && <Th />}
+          </Tr>
+          <Tr>
+            {visibleColumns['#'] && <Th />}
+            {visibleColumns.btkn && <Th />}
+            {visibleColumns.namn && <Th />}
+            {visibleColumns.telefon && <Th />}
+            {visibleColumns.anordning && <Th />}
+            {project.sections.map((_, secIdx) => (
+              <Th key={`note1-${secIdx}`} p={1} bg={secIdx % 2 === 0 ? 'blue.50' : 'transparent'}>
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  onClick={() => toggleSectionHeaderType(secIdx)}
+                >
+                  {sectionHeaderNotes[secIdx] || 'Linje'}
+                </Button>
+              </Th>
+            ))}
+            {visibleColumns.starttid && <Th />}
+            {visibleColumns.begard && <Th />}
+            {visibleColumns.avslutat && <Th />}
+          </Tr>
           <Tr>
     {visibleColumns['#'] && (
       <Th
@@ -1227,14 +1500,26 @@ if (loading || !project) {
           <Tbody>
             {filteredRows
               .filter((row) => !row.avslutadRad)
-              .map((row, rowIndex) => (
+              .map((row, rowIndex) => {
+                const cell = (key) => getCellMeta(row, key);
+                const cellIcon = (key) => getIconConfig(cell(key).icon);
+                const btknMeta = cell('btkn');
+                const namnMeta = cell('namn');
+                const telefonMeta = cell('telefon');
+                const anordningMeta = cell('anordning');
+                const starttidMeta = cell('starttid');
+                const begardMeta = cell('begard');
+                const avslutatMeta = cell('avslutat');
+
+                return (
                 <Tr
                   key={row.id}
                   bg="transparent"
                   _hover={{ bg: 'gray.100' }}
-                  cursor="pointer"
+                  cursor={cellEditMode ? 'default' : 'pointer'}
                   transition="background 0.2s ease"
                   onClick={(e) => {
+                    if (cellEditMode) return;
                     if (
                       e.target.closest(
                         'input[type="checkbox"], textarea, select, label, button, input[type="text"]'
@@ -1252,80 +1537,147 @@ if (loading || !project) {
                     </Td>
                   )}
 {visibleColumns.btkn && (
-  <Td width="80px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
-    <Tag
-      size="md"
-      variant="outline"
-      colorScheme="teal"
-      w="80px"
-      justifyContent="center"
-      borderRadius="md"
-    >
-      <TagLabel isTruncated>{row.btkn}</TagLabel>
-    </Tag>
+  <Td
+    width="80px"
+    borderRight="1px solid rgba(0, 0, 0, 0.1)"
+    bg={btknMeta?.color || 'transparent'}
+    onClick={(e) => {
+      if (!cellEditMode) return;
+      e.stopPropagation();
+      openCellEditor(row, 'btkn', 'BTKN');
+    }}
+  >
+    <Flex align="center" justify="space-between" gap={2}>
+      <Tag
+        size="md"
+        variant="outline"
+        colorScheme="teal"
+        w="80px"
+        justifyContent="center"
+        borderRadius="md"
+      >
+        <TagLabel isTruncated>{row.btkn}</TagLabel>
+      </Tag>
+      {cellIcon('btkn')?.icon && (
+        <Icon as={cellIcon('btkn').icon} color={cellIcon('btkn').color} boxSize="14px" />
+      )}
+    </Flex>
+    {btknMeta?.comment && (
+      <Tooltip label={btknMeta.comment} hasArrow>
+        <Icon as={FaRegCommentDots} color="gray.500" boxSize="14px" mt={1} />
+      </Tooltip>
+    )}
   </Td>
 )}
 
 {visibleColumns.namn && (
-  <Td maxW="150px" borderRight="1px solid rgba(0, 0, 0, 0.05)">
-    <Tooltip
-      label={
-        <Box p={2} maxW="300px">
-          <Text fontWeight="bold" mb={1}>Anteckningar:</Text>
-          {row.anteckning ? (
-            <Text fontSize="sm">{row.anteckning}</Text>
-          ) : (
-            <Text fontSize="sm" color="gray.500">Inga anteckningar</Text>
-          )}
-          <Text fontWeight="bold" mt={3} mb={1}>Samråd:</Text>
-          {row.samrad && row.samrad.length > 0 ? (
-            <Stack spacing={0.5} align="start">
-              {row.samrad.map((entry, idx) => (
-                <Text key={idx} fontSize="sm">
-                  {entry.namn || 'Okänt namn'}
-                </Text>
-              ))}
-            </Stack>
-          ) : (
-            <Text fontSize="sm" color="gray.500">
-              Inga samråd
-            </Text>
-          )}
-        </Box>
-      }
-      hasArrow
-      placement="top"
-      bg="white"
-      color="black"
-      border="1px solid #ccc"
-      borderRadius="md"
-      shadow="md"
-      p={3}
-    >
-      <Text
-        color="gray.800"
-        fontSize="sm"
-        minWidth="140px"
-        isTruncated
-        cursor="help"
+  <Td
+    maxW="150px"
+    borderRight="1px solid rgba(0, 0, 0, 0.05)"
+    bg={namnMeta?.color || 'transparent'}
+    onClick={(e) => {
+      if (!cellEditMode) return;
+      e.stopPropagation();
+      openCellEditor(row, 'namn', 'Namn');
+    }}
+  >
+    <Flex align="center" justify="space-between" gap={2}>
+      <Tooltip
+        label={
+          <Box p={2} maxW="300px">
+            <Text fontWeight="bold" mb={1}>Anteckningar:</Text>
+            {row.anteckning ? (
+              <Text fontSize="sm">{row.anteckning}</Text>
+            ) : (
+              <Text fontSize="sm" color="gray.500">Inga anteckningar</Text>
+            )}
+            <Text fontWeight="bold" mt={3} mb={1}>Samråd:</Text>
+            {row.samrad && row.samrad.length > 0 ? (
+              <Stack spacing={0.5} align="start">
+                {row.samrad.map((entry, idx) => (
+                  <Text key={idx} fontSize="sm">
+                    {entry.namn || 'Okänt namn'}
+                  </Text>
+                ))}
+              </Stack>
+            ) : (
+              <Text fontSize="sm" color="gray.500">
+                Inga samråd
+              </Text>
+            )}
+          </Box>
+        }
+        hasArrow
+        placement="top"
+        bg="white"
+        color="black"
+        border="1px solid #ccc"
+        borderRadius="md"
+        shadow="md"
+        p={3}
       >
-        {row.namn}
-      </Text>
-    </Tooltip>
+        <Text
+          color="gray.800"
+          fontSize="sm"
+          minWidth="140px"
+          isTruncated
+          cursor="help"
+        >
+          {row.namn}
+        </Text>
+      </Tooltip>
+      {cellIcon('namn')?.icon && (
+        <Icon as={cellIcon('namn').icon} color={cellIcon('namn').color} boxSize="14px" />
+      )}
+    </Flex>
+    {namnMeta?.comment && (
+      <Tooltip label={namnMeta.comment} hasArrow>
+        <Icon as={FaRegCommentDots} color="gray.500" boxSize="14px" mt={1} />
+      </Tooltip>
+    )}
   </Td>
 )}
 
 {visibleColumns.telefon && (
-  <Td maxW="145px" borderRight="1px solid rgba(0, 0, 0, 0.05)">
-    <Text color="gray.800" fontSize="sm" w="145px" isTruncated>
-      {row.telefon}
-    </Text>
+  <Td
+    maxW="145px"
+    borderRight="1px solid rgba(0, 0, 0, 0.05)"
+    bg={telefonMeta?.color || 'transparent'}
+    onClick={(e) => {
+      if (!cellEditMode) return;
+      e.stopPropagation();
+      openCellEditor(row, 'telefon', 'Telefon');
+    }}
+  >
+    <Flex align="center" justify="space-between" gap={2}>
+      <Text color="gray.800" fontSize="sm" w="145px" isTruncated>
+        {row.telefon}
+      </Text>
+      {cellIcon('telefon')?.icon && (
+        <Icon as={cellIcon('telefon').icon} color={cellIcon('telefon').color} boxSize="14px" />
+      )}
+    </Flex>
+    {telefonMeta?.comment && (
+      <Tooltip label={telefonMeta.comment} hasArrow>
+        <Icon as={FaRegCommentDots} color="gray.500" boxSize="14px" mt={1} />
+      </Tooltip>
+    )}
   </Td>
 )}
 
 {visibleColumns.anordning && (
-  <Td maxW="160px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
-<Flex gap={1}>
+  <Td
+    maxW="160px"
+    borderRight="1px solid rgba(0, 0, 0, 0.1)"
+    bg={anordningMeta?.color || 'transparent'}
+    onClick={(e) => {
+      if (!cellEditMode) return;
+      e.stopPropagation();
+      openCellEditor(row, 'anordning', 'Anordning');
+    }}
+  >
+<Flex gap={1} align="center" justify="space-between">
+  <Flex gap={1}>
   {(Array.isArray(row.anordning)
     ? row.anordning
     : typeof row.anordning === 'string'
@@ -1372,24 +1724,63 @@ if (loading || !project) {
     );
   })}
 </Flex>
+  {cellIcon('anordning')?.icon && (
+    <Icon as={cellIcon('anordning').icon} color={cellIcon('anordning').color} boxSize="14px" />
+  )}
+</Flex>
+    {anordningMeta?.comment && (
+      <Tooltip label={anordningMeta.comment} hasArrow>
+        <Icon as={FaRegCommentDots} color="gray.500" boxSize="14px" mt={1} />
+      </Tooltip>
+    )}
   </Td>
 )}
 
-{project.sections.map((_, secIdx) => (
-  <Td
-    key={secIdx}
-    width="60px"
-    bg={secIdx % 2 === 0 ? 'blue.50' : 'transparent'}
-    borderRight="1px solid rgba(0, 0, 0, 0.05)"
-  >
-    <Flex justify="center">
-      {row.selections[secIdx] === true && <HiX size={16} color="black" />}
-    </Flex>
-  </Td>
-))}
+{project.sections.map((_, secIdx) => {
+  const cellKey = `section-${secIdx}`;
+  const sectionMeta = cell(cellKey);
+  const sectionIcon = cellIcon(cellKey);
+  const baseBg = secIdx % 2 === 0 ? 'blue.50' : 'transparent';
+
+  return (
+    <Td
+      key={secIdx}
+      width="60px"
+      bg={sectionMeta?.color || baseBg}
+      borderRight="1px solid rgba(0, 0, 0, 0.05)"
+      onClick={(e) => {
+        if (!cellEditMode) return;
+        e.stopPropagation();
+        openCellEditor(row, cellKey, `Delområde ${String.fromCharCode(65 + secIdx)}`);
+      }}
+    >
+      <Flex align="center" justify="center" gap={2}>
+        {row.selections[secIdx] === true && <HiX size={16} color="black" />}
+        {sectionIcon?.icon && (
+          <Icon as={sectionIcon.icon} color={sectionIcon.color} boxSize="14px" />
+        )}
+      </Flex>
+      {sectionMeta?.comment && (
+        <Tooltip label={sectionMeta.comment} hasArrow>
+          <Icon as={FaRegCommentDots} color="gray.500" boxSize="14px" mt={1} />
+        </Tooltip>
+      )}
+    </Td>
+  );
+})}
 
 {visibleColumns.starttid && (
-  <Td maxW="150px" w="90px" borderRight="1px solid rgba(0, 0, 0, 0.05)">
+  <Td
+    maxW="150px"
+    w="90px"
+    borderRight="1px solid rgba(0, 0, 0, 0.05)"
+    bg={starttidMeta?.color || 'transparent'}
+    onClick={(e) => {
+      if (!cellEditMode) return;
+      e.stopPropagation();
+      openCellEditor(row, 'starttid', 'Start');
+    }}
+  >
     <Tooltip
       label={
         row.startdatum ? (
@@ -1413,22 +1804,42 @@ if (loading || !project) {
       shadow="md"
       p={3}
     >
-      <Text
-        color="gray.800"
-        fontSize="sm"
-        w="50px"
-        maxW="inherit"
-        isTruncated={false}
-        cursor="help"
-      >
-        {row.starttid}
-      </Text>
+      <Flex align="center" justify="space-between" gap={2}>
+        <Text
+          color="gray.800"
+          fontSize="sm"
+          w="50px"
+          maxW="inherit"
+          isTruncated={false}
+          cursor="help"
+        >
+          {row.starttid}
+        </Text>
+        {cellIcon('starttid')?.icon && (
+          <Icon as={cellIcon('starttid').icon} color={cellIcon('starttid').color} boxSize="14px" />
+        )}
+      </Flex>
     </Tooltip>
+    {starttidMeta?.comment && (
+      <Tooltip label={starttidMeta.comment} hasArrow>
+        <Icon as={FaRegCommentDots} color="gray.500" boxSize="14px" mt={1} />
+      </Tooltip>
+    )}
   </Td>
 )}
 
 {visibleColumns.begard && (
-  <Td maxW="150px" w="90px" borderRight="1px solid rgba(0, 0, 0, 0.05)">
+  <Td
+    maxW="150px"
+    w="90px"
+    borderRight="1px solid rgba(0, 0, 0, 0.05)"
+    bg={begardMeta?.color || 'transparent'}
+    onClick={(e) => {
+      if (!cellEditMode) return;
+      e.stopPropagation();
+      openCellEditor(row, 'begard', 'Begärd');
+    }}
+  >
     <Tooltip
       label={
         row.begardDatum === 'Tsv' ? (
@@ -1457,21 +1868,41 @@ if (loading || !project) {
       shadow="md"
       p={3}
     >
-      <Text
-        color="gray.800"
-        fontSize="sm"
-        w="50px"
-        isTruncated={false}
-        cursor="help"
-      >
-        {row.begard === 'Tsv' ? 'Tsv' : row.begard}
-      </Text>
+      <Flex align="center" justify="space-between" gap={2}>
+        <Text
+          color="gray.800"
+          fontSize="sm"
+          w="50px"
+          isTruncated={false}
+          cursor="help"
+        >
+          {row.begard === 'Tsv' ? 'Tsv' : row.begard}
+        </Text>
+        {cellIcon('begard')?.icon && (
+          <Icon as={cellIcon('begard').icon} color={cellIcon('begard').color} boxSize="14px" />
+        )}
+      </Flex>
     </Tooltip>
+    {begardMeta?.comment && (
+      <Tooltip label={begardMeta.comment} hasArrow>
+        <Icon as={FaRegCommentDots} color="gray.500" boxSize="14px" mt={1} />
+      </Tooltip>
+    )}
   </Td>
 )}
 
 {visibleColumns.avslutat && (
-  <Td maxW="150px" w="90px" borderRight="1px solid rgba(0, 0, 0, 0.05)">
+  <Td
+    maxW="150px"
+    w="90px"
+    borderRight="1px solid rgba(0, 0, 0, 0.05)"
+    bg={avslutatMeta?.color || 'transparent'}
+    onClick={(e) => {
+      if (!cellEditMode) return;
+      e.stopPropagation();
+      openCellEditor(row, 'avslutat', 'Avslutat');
+    }}
+  >
     <Tooltip
       label={
         row.avslutatDatum ? (
@@ -1495,20 +1926,31 @@ if (loading || !project) {
       shadow="md"
       p={3}
     >
-      <Text
-        color="gray.800"
-        fontSize="sm"
-        w="50px"
-        isTruncated={false}
-        cursor="help"
-      >
-        {row.avslutat}
-      </Text>
+      <Flex align="center" justify="space-between" gap={2}>
+        <Text
+          color="gray.800"
+          fontSize="sm"
+          w="50px"
+          isTruncated={false}
+          cursor="help"
+        >
+          {row.avslutat}
+        </Text>
+        {cellIcon('avslutat')?.icon && (
+          <Icon as={cellIcon('avslutat').icon} color={cellIcon('avslutat').color} boxSize="14px" />
+        )}
+      </Flex>
     </Tooltip>
+    {avslutatMeta?.comment && (
+      <Tooltip label={avslutatMeta.comment} hasArrow>
+        <Icon as={FaRegCommentDots} color="gray.500" boxSize="14px" mt={1} />
+      </Tooltip>
+    )}
   </Td>
 )}
     </Tr>
-  ))}
+  );
+})}
 {project?.tsmRows?.map((row, rowIndex) => (
   <Tr
     key={`tsm-${row.id}`}
@@ -1516,6 +1958,7 @@ if (loading || !project) {
     _hover={{ bg: '#D1FAE5' }}
     cursor="pointer"
 onClick={() => {
+  if (cellEditMode) return;
   setEditableTsmRow({
     ...row,
     namn: row.namn || `${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim(),
@@ -2009,6 +2452,69 @@ onChange={() =>
               <Text fontSize="sm" color="gray.500">Inga samråd.</Text>
             )}
           </Box>
+          <Box bg="gray.50" p={4} borderRadius="md" maxW="400px" border="1px solid #ccc" height="100%">
+            <Text fontWeight="bold" mb={2}>SMS</Text>
+            <Text fontSize="sm" color="gray.600" mb={3}>
+              Välj mottagare från samråd eller valfri rad och skriv ett eget meddelande.
+            </Text>
+            <Stack spacing={3}>
+              <Box>
+                <Text fontSize="sm" fontWeight="semibold" mb={2}>Samråd</Text>
+                {smsRecipients.samrad.length === 0 ? (
+                  <Text fontSize="sm" color="gray.500">Inga samråd att välja.</Text>
+                ) : (
+                  <Stack spacing={2}>
+                    {smsRecipients.samrad.map((person) => (
+                      <Checkbox
+                        key={`sms-samrad-${person.id}`}
+                        isChecked={!!smsSelection[person.id]}
+                        onChange={() => toggleSmsSelection(String(person.id))}
+                      >
+                        {person.namn || 'Okänt namn'} {person.telefon ? `(${person.telefon})` : '(saknar telefon)'}
+                      </Checkbox>
+                    ))}
+                  </Stack>
+                )}
+              </Box>
+              <Divider />
+              <Box>
+                <Text fontSize="sm" fontWeight="semibold" mb={2}>Alla rader</Text>
+                <Stack spacing={2} maxH="160px" overflowY="auto">
+                  {smsRecipients.allRows.map((person) => (
+                    <Checkbox
+                      key={`sms-row-${person.id}`}
+                      isChecked={!!smsSelection[person.id]}
+                      onChange={() => toggleSmsSelection(String(person.id))}
+                    >
+                      {person.namn} {person.telefon ? `(${person.telefon})` : '(saknar telefon)'}
+                    </Checkbox>
+                  ))}
+                </Stack>
+              </Box>
+              <FormControl>
+                <FormLabel>Meddelande</FormLabel>
+                <Textarea
+                  value={smsMessage}
+                  onChange={(e) => setSmsMessage(e.target.value)}
+                  placeholder="Skriv ditt meddelande..."
+                />
+              </FormControl>
+              <Flex gap={2}>
+                <Button colorScheme="blue" onClick={sendCustomSms}>
+                  Skicka SMS
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSmsSelection({});
+                    setSmsMessage('');
+                  }}
+                >
+                  Rensa
+                </Button>
+              </Flex>
+            </Stack>
+          </Box>
         </SimpleGrid>
       )}
     </ModalBody>
@@ -2069,6 +2575,98 @@ onChange={() =>
     <Button onClick={onClose}>Stäng</Button>
   </Flex>
 </ModalFooter>
+  </ModalContent>
+</Modal>
+
+<Modal isOpen={isCellEditorOpen} onClose={closeCellEditor} size="lg">
+  <ModalOverlay />
+  <ModalContent>
+    <ModalHeader>Cellinställningar</ModalHeader>
+    <ModalCloseButton />
+    <ModalBody>
+      {activeCell ? (
+        <Stack spacing={4}>
+          <Box>
+            <Text fontSize="sm" color="gray.600">
+              {activeCell.rowName} • {activeCell.label}
+            </Text>
+          </Box>
+          <Box>
+            <Text fontWeight="semibold" mb={2}>Färg</Text>
+            <Flex wrap="wrap" gap={2}>
+              {CELL_COLORS.map((color) => (
+                <Button
+                  key={color.value || 'none'}
+                  size="sm"
+                  variant={activeCellMeta?.color === color.value ? 'solid' : 'outline'}
+                  colorScheme={color.value ? 'gray' : 'gray'}
+                  onClick={() =>
+                    updateCellMeta(activeCell.rowId, activeCell.key, { color: color.value })
+                  }
+                  leftIcon={
+                    <Box
+                      w="12px"
+                      h="12px"
+                      borderRadius="full"
+                      bg={color.value || 'transparent'}
+                      border="1px solid #CBD5E0"
+                    />
+                  }
+                >
+                  {color.label}
+                </Button>
+              ))}
+            </Flex>
+          </Box>
+          <Divider />
+          <Box>
+            <Text fontWeight="semibold" mb={2}>Ikon</Text>
+            <Flex wrap="wrap" gap={2}>
+              {CELL_ICONS.map((option) => (
+                <Button
+                  key={option.key || 'none'}
+                  size="sm"
+                  variant={activeCellMeta?.icon === option.key ? 'solid' : 'outline'}
+                  onClick={() =>
+                    updateCellMeta(activeCell.rowId, activeCell.key, { icon: option.key })
+                  }
+                  leftIcon={
+                    option.icon ? <Icon as={option.icon} color={option.color} /> : undefined
+                  }
+                >
+                  {option.label}
+                </Button>
+              ))}
+            </Flex>
+          </Box>
+          <Divider />
+          <FormControl>
+            <FormLabel>Kommentar</FormLabel>
+            <Textarea
+              value={activeCellMeta?.comment || ''}
+              onChange={(e) =>
+                updateCellMeta(activeCell.rowId, activeCell.key, { comment: e.target.value })
+              }
+              placeholder="Skriv en kommentar som visas som tooltip."
+            />
+          </FormControl>
+        </Stack>
+      ) : (
+        <Text fontSize="sm" color="gray.500">Ingen cell vald.</Text>
+      )}
+    </ModalBody>
+    <ModalFooter justifyContent="space-between">
+      <Button
+        variant="outline"
+        onClick={() => {
+          if (!activeCell) return;
+          updateCellMeta(activeCell.rowId, activeCell.key, { __clear: true });
+        }}
+      >
+        Rensa cell
+      </Button>
+      <Button onClick={closeCellEditor}>Stäng</Button>
+    </ModalFooter>
   </ModalContent>
 </Modal>
 
