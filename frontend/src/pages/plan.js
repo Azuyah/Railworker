@@ -1689,7 +1689,7 @@ const finalizeHeaderSelection = useCallback(() => {
   });
 
   setHeaderSelection(null);
-}, [getMergeIndices, headerSelection]);
+}, [getHeaderCellValue, getMergeIndices, headerColumns, headerSelection]);
 
 useEffect(() => {
   if (!headerSelection?.active) return;
