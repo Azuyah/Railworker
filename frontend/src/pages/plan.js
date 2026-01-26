@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import LoadingScreen from '../components/LoadingScreen';
@@ -14,7 +14,6 @@ import {
   FaFlag,
   FaStar,
   FaBolt,
-  FaPalette,
   FaRegCommentDots,
 } from 'react-icons/fa';
 import { FiHash, FiUser, FiPhone, FiAperture, FiClock, FiSliders, FiEyeOff, FiEdit2, FiMessageCircle, FiChevronsRight } from 'react-icons/fi';
@@ -69,17 +68,14 @@ const Plan = () => {
   const { id } = useParams();
   const [project, setProject] = useState(null);
   const [rows, setRows] = useState([]);
-  const [countdown, setCountdown] = useState('');
   const [filterValue, setFilterValue] = useState('all');
-  const [avslutadeModalOpen, setAvslutadeModalOpen] = useState(false);
-  const [hiddenRowsModalOpen, setHiddenRowsModalOpen] = useState(false);
+  const [archivedModalOpen, setArchivedModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAnordning, setSelectedAnordning] = useState('');
   const [avklaradSamrad, setAvklaradSamrad] = useState({});
   const [samradData, setSamradData] = useState({ samradList: [], avklaradMap: {} });
   const [loading, setLoading] = useState(true);
   const [samradTrigger, setSamradTrigger] = useState(0);
-  const [cellEditMode, setCellEditMode] = useState(false);
   const [activeCell, setActiveCell] = useState(null);
   const [smsSelection, setSmsSelection] = useState({});
   const [smsMessage, setSmsMessage] = useState('');
@@ -97,19 +93,30 @@ const Plan = () => {
   const [samradModalRow, setSamradModalRow] = useState(null);
   const [sectionHeaderNotes, setSectionHeaderNotes] = useState([]);
   const [sectionHeaderNotes2, setSectionHeaderNotes2] = useState([]);
+  const [sectionHeaderNotes3, setSectionHeaderNotes3] = useState([]);
+  const [headerNotesTop, setHeaderNotesTop] = useState({});
+  const [headerNotesMid, setHeaderNotesMid] = useState({});
+  const [headerMerges, setHeaderMerges] = useState([]);
+  const [headerSelection, setHeaderSelection] = useState(null);
+  const [headerEditKey, setHeaderEditKey] = useState(null);
+  const [selectedHeaderCell, setSelectedHeaderCell] = useState(null);
+  const [selectedBodyCell, setSelectedBodyCell] = useState(null);
+  const [editingBodyCell, setEditingBodyCell] = useState(null);
+  const [bodyContextMenu, setBodyContextMenu] = useState({ open: false, x: 0, y: 0 });
+  const bodyContextRef = useRef(null);
   const [begardDefaultTime, setBegardDefaultTime] = useState('');
   const [begardDefaultDate, setBegardDefaultDate] = useState('');
   const [activeRowId, setActiveRowId] = useState(null);
   const [hotkeysOpen, setHotkeysOpen] = useState(false);
-  const [colorHotkey, setColorHotkey] = useState(null);
-  const [iconHotkey, setIconHotkey] = useState(null);
   const [btknPrefix, setBtknPrefix] = useState('');
   const [columnWidths, setColumnWidths] = useState({
     btkn: 90,
     namn: 180,
     telefon: 150,
     anordning: 180,
-    tider: 260,
+    starttid: 110,
+    begard: 110,
+    avslutat: 110,
   });
   const [zoomLevel, setZoomLevel] = useState(1);
   const openProjectInfoModal = () => setIsProjectInfoOpen(true);
@@ -139,6 +146,10 @@ const Plan = () => {
   const [endTime, setEndTime] = useState(project?.endTime || '');
   const [namn, setNamn] = useState(project?.namn || '');
   const [telefonnummer, setTelefonnummer] = useState(project?.telefonnummer || '');
+  const [avstamt, setAvstamt] = useState(Boolean(project?.avstamt));
+  const [objekt, setObjekt] = useState(project?.objekt || '');
+  const [avslutaSkyddTid, setAvslutaSkyddTid] = useState(project?.avslutaSkyddTid || '');
+  const [signatur, setSignatur] = useState(project?.signatur || '');
   const [editSections, setEditSections] = useState(project?.sections || []);
   const tokenData = localStorage.getItem('user');
   const user = tokenData ? JSON.parse(tokenData).user : null;
@@ -282,22 +293,6 @@ const CELL_ICONS = [
   { key: 'bolt', label: 'Bolt', icon: FaBolt, color: 'purple.500' },
 ];
 
-const COLOR_HOTKEYS = {
-  1: 'yellow.100',
-  2: 'green.100',
-  3: 'blue.100',
-  4: 'red.100',
-  5: 'purple.100',
-  6: 'gray.100',
-};
-
-const ICON_HOTKEYS = {
-  q: 'check',
-  w: 'alert',
-  e: 'flag',
-  r: 'bolt',
-};
-
 const getCellMeta = (row, key) => {
   if (!row || !key) return {};
   return row.cellMeta?.[key] || {};
@@ -364,19 +359,7 @@ const toggleSectionHeaderType = (index) => {
   });
 };
 
-const handleCellInteraction = (row, cellKey, label) => {
-  if (colorHotkey) {
-    updateCellMeta(row.id, cellKey, { color: colorHotkey });
-    return;
-  }
-  if (iconHotkey) {
-    updateCellMeta(row.id, cellKey, { icon: iconHotkey });
-    return;
-  }
-  if (cellEditMode) {
-    openCellEditor(row, cellKey, label);
-  }
-};
+const handleCellInteraction = () => {};
 
 const smsRecipients = useMemo(() => {
   if (!selectedRow) return { samrad: [], allRows: [] };
@@ -537,8 +520,12 @@ const openEditProjectModal = () => {
   setStartTime(project.startTime);
   setEndDate(project.endDate);
   setEndTime(project.endTime);
-  setNamn(project.namn);
-  setTelefonnummer(project.telefonnummer);
+    setNamn(project.namn);
+    setTelefonnummer(project.telefonnummer);
+    setAvstamt(Boolean(project.avstamt));
+    setObjekt(project.objekt || '');
+    setAvslutaSkyddTid(project.avslutaSkyddTid || '');
+    setSignatur(project.signatur || '');
   setEditSections(project.sections || []);
   setEditModalOpen(true);
   setEditBeteckningar(project.beteckningar?.map(b => b.label) || []);
@@ -557,6 +544,10 @@ const updateProject = async () => {
     sections: editSections,
     rows,
     beteckningar: editBeteckningar.map(b => ({ label: b })),
+    avstamt,
+    objekt,
+    avslutaSkyddTid,
+    signatur,
   };
 
   const token = JSON.parse(localStorage.getItem('user'))?.token;
@@ -669,6 +660,14 @@ if (selectedRow && selectedRow.id) {
       rows: rowsWithSamrad,
       sectionHeaderNotes,
       sectionHeaderNotes2,
+      sectionHeaderNotes3,
+      headerNotesTop,
+      headerNotesMid,
+      headerMerges,
+      avstamt,
+      objekt,
+      avslutaSkyddTid,
+      signatur,
     };
 
 rowsWithSamrad.forEach((row, index) => {
@@ -767,6 +766,13 @@ useEffect(() => {
     }
     return next.map((value) => value || '');
   });
+  setSectionHeaderNotes3((prev) => {
+    const next = [...prev];
+    if (next.length < project.sections.length) {
+      next.length = project.sections.length;
+    }
+    return next.map((value) => value || '');
+  });
 }, [project?.sections]);
 
 useEffect(() => {
@@ -774,34 +780,6 @@ useEffect(() => {
   setSmsSelection({});
   setSmsMessage('');
 }, [selectedRowId]);
-
-useEffect(() => {
-  const handleKeyDown = (event) => {
-    if (event.key === 'Meta') {
-      setCellEditMode(true);
-    }
-  };
-
-  const handleKeyUp = (event) => {
-    if (event.key === 'Meta') {
-      setCellEditMode(false);
-    }
-  };
-
-  const handleBlur = () => {
-    setCellEditMode(false);
-  };
-
-  window.addEventListener('keydown', handleKeyDown);
-  window.addEventListener('keyup', handleKeyUp);
-  window.addEventListener('blur', handleBlur);
-
-  return () => {
-    window.removeEventListener('keydown', handleKeyDown);
-    window.removeEventListener('keyup', handleKeyUp);
-    window.removeEventListener('blur', handleBlur);
-  };
-}, []);
 
 useEffect(() => {
   const handleHotkeys = (event) => {
@@ -812,18 +790,6 @@ useEffect(() => {
         target.tagName === 'TEXTAREA' ||
         target.tagName === 'SELECT' ||
         target.isContentEditable);
-
-    if (!isTyping) {
-      const key = event.key.toLowerCase();
-      if (COLOR_HOTKEYS[key]) {
-        setColorHotkey(COLOR_HOTKEYS[key]);
-        return;
-      }
-      if (ICON_HOTKEYS[key]) {
-        setIconHotkey(ICON_HOTKEYS[key]);
-        return;
-      }
-    }
 
     if (isTyping) return;
 
@@ -870,10 +836,7 @@ useEffect(() => {
       event.preventDefault();
       const row = rows.find((item) => item.id === activeRowId);
       if (row) {
-        const confirmed = window.confirm('Vill du dölja den här raden?');
-        if (confirmed) {
-          hideRow(row);
-        }
+        showAvslutaRowConfirm(row);
       }
       return;
     }
@@ -885,15 +848,7 @@ useEffect(() => {
     }
   };
 
-  const handleKeyUp = (event) => {
-    const key = event.key.toLowerCase();
-    if (COLOR_HOTKEYS[key]) {
-      setColorHotkey(null);
-    }
-    if (ICON_HOTKEYS[key]) {
-      setIconHotkey(null);
-    }
-  };
+  const handleKeyUp = () => {};
 
   window.addEventListener('keydown', handleHotkeys);
   window.addEventListener('keyup', handleKeyUp);
@@ -1111,6 +1066,30 @@ useEffect(() => {
     setAnteckningar(current.anteckningar || []);
     setSectionHeaderNotes(Array.isArray(current.sectionHeaderNotes) ? current.sectionHeaderNotes : []);
     setSectionHeaderNotes2(Array.isArray(current.sectionHeaderNotes2) ? current.sectionHeaderNotes2 : []);
+    setSectionHeaderNotes3(Array.isArray(current.sectionHeaderNotes3) ? current.sectionHeaderNotes3 : []);
+    setHeaderNotesTop(current.headerNotesTop || {});
+    setHeaderNotesMid(current.headerNotesMid || {});
+    if (Array.isArray(current.headerMerges)) {
+      setHeaderMerges(
+        current.headerMerges.map((merge) =>
+          merge.type === 'begard-default'
+            ? { ...merge, colStartKey: 'begard', colEndKey: 'begard', rowStart: 0, rowEnd: 0 }
+            : merge
+        )
+      );
+    } else {
+      setHeaderMerges([
+        {
+          id: 'begard-default',
+          rowStart: 0,
+          rowEnd: 0,
+          colStartKey: 'begard',
+          colEndKey: 'begard',
+          type: 'begard-default',
+          text: '',
+        },
+      ]);
+    }
       
       
 const enrichedRows = (current.rows || []).map((row) => {
@@ -1123,23 +1102,7 @@ const enrichedRows = (current.rows || []).map((row) => {
 
 setRows(enrichedRows);
 
-
-      const interval = setInterval(() => {
-        const target = new Date(`${current.endDate}T${current.endTime}`);
-        const now = new Date();
-        const diff = target - now;
-
-        if (diff <= 0) {
-          setCountdown('Dispositionsarbetsplan stängd!');
-        } else {
-          const h = Math.floor(diff / (1000 * 60 * 60));
-          const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-          const s = Math.floor((diff % (1000 * 60)) / 1000);
-          setCountdown(`${h}h ${m}m ${s}s`);
-        }
-      }, 1000);
-
-      return () => clearInterval(interval);
+      return () => {};
     } catch (error) {
       console.error('Kunde inte hämta projekt:', error);
     } finally {
@@ -1254,23 +1217,15 @@ const toggleDelomrade = (rowId, secIdx) => {
   );
 };
 
-const hideRow = async (row) => {
+const avslutaRow = async (row) => {
+  const currentUser = JSON.parse(localStorage.getItem('user'));
+  const initials = `${currentUser?.firstName?.[0] || ''}${currentUser?.lastName?.[0] || ''}`.toUpperCase();
   const updatedRow = {
     ...row,
-    hiddenRow: true,
     avslutadRad: true,
+    avslutadAv: initials,
     avslutatDatum: getCurrentDate(),
     avslutat: getCurrentTime(),
-  };
-  const updated = updateRow(updatedRow);
-  await sparaProjekt(updated);
-};
-
-const unhideRow = async (row) => {
-  const updatedRow = {
-    ...row,
-    hiddenRow: false,
-    avslutadRad: false,
   };
   const updated = updateRow(updatedRow);
   await sparaProjekt(updated);
@@ -1296,6 +1251,300 @@ const toggleColumnWidth = (key, expanded) => {
     ...prev,
     [key]: prev[key] < expanded ? expanded : Math.max(expanded - 60, 90),
   }));
+};
+
+const autoGrowTextarea = (event) => {
+  const el = event.currentTarget;
+  el.style.height = '0px';
+  el.style.height = `${el.scrollHeight}px`;
+};
+
+const HeaderNoteInput = ({ value, onChange, isEditing, onRequestEdit, onSelect }) => {
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  return (
+    <Box
+      position="relative"
+      w="100%"
+      h="100%"
+      cursor={isEditing ? 'text' : 'pointer'}
+      onDoubleClick={(e) => {
+        e.stopPropagation();
+        onRequestEdit?.();
+      }}
+    >
+      <Textarea
+        ref={inputRef}
+        size="xs"
+        variant="unstyled"
+        value={value}
+        onChange={onChange}
+        isReadOnly={!isEditing}
+        onMouseDown={(e) => {
+          e.stopPropagation();
+          onSelect?.();
+          if (e.detail === 2) onRequestEdit?.();
+        }}
+        onMouseDownCapture={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+        onPointerDownCapture={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect?.();
+        }}
+        onDoubleClick={(e) => {
+          e.stopPropagation();
+          onRequestEdit?.();
+        }}
+        onBlur={() => {
+          if (isEditing) onRequestEdit?.(null);
+        }}
+        onInput={autoGrowTextarea}
+        resize="none"
+        overflow="hidden"
+        rows={1}
+        w="100%"
+        minH="24px"
+        px={2}
+        py={1}
+        lineHeight="1.2"
+        bg="transparent"
+        cursor={isEditing ? 'text' : 'pointer'}
+        caretColor={isEditing ? 'auto' : 'transparent'}
+      />
+    </Box>
+  );
+};
+
+const getHeaderCellValue = (rowIdx, colKey) => {
+  if (colKey.startsWith('section-')) {
+    const idx = Number(colKey.split('-')[1]);
+    return rowIdx === 0 ? sectionHeaderNotes3[idx] || '' : sectionHeaderNotes2[idx] || '';
+  }
+  if (rowIdx === 0) return headerNotesTop[colKey] || '';
+  return headerNotesMid[colKey] || '';
+};
+
+const setHeaderCellValue = (rowIdx, colKey, value) => {
+  if (colKey.startsWith('section-')) {
+    const idx = Number(colKey.split('-')[1]);
+    if (rowIdx === 0) {
+      setSectionHeaderNotes3((prev) => {
+        const next = [...prev];
+        next[idx] = value;
+        return next;
+      });
+    } else {
+      setSectionHeaderNotes2((prev) => {
+        const next = [...prev];
+        next[idx] = value;
+        return next;
+      });
+    }
+    return;
+  }
+  if (rowIdx === 0) {
+    setHeaderNotesTop((prev) => ({ ...prev, [colKey]: value }));
+  } else {
+    setHeaderNotesMid((prev) => ({ ...prev, [colKey]: value }));
+  }
+};
+
+const getHeaderColBg = (colKey) => {
+  if (colKey.startsWith('section-')) {
+    const idx = Number(colKey.split('-')[1]);
+    return idx % 2 === 0 ? 'blue.50' : 'transparent';
+  }
+  return 'transparent';
+};
+
+const updateMergeText = (id, value) => {
+  setHeaderMerges((prev) =>
+    prev.map((merge) => (merge.id === id ? { ...merge, text: value } : merge))
+  );
+};
+
+const renderMergedCellContent = (merge) => {
+  if (merge.type === 'begard-default') {
+    return null;
+  }
+  return (
+    <HeaderNoteInput
+      value={merge.text || ''}
+      onChange={(e) => updateMergeText(merge.id, e.target.value)}
+      isEditing={headerEditKey === `merge:${merge.id}`}
+      onRequestEdit={(val) => setHeaderEditKey(val === null ? null : `merge:${merge.id}`)}
+      onSelect={() => setSelectedHeaderCell({ row: merge.rowStart, colKey: merge.colStartKey })}
+    />
+  );
+};
+
+const renderHeaderCellContent = (rowIdx, colKey) => {
+  if (rowIdx === 0 && colKey === 'begard') {
+    return (
+      <HStack spacing={2} px={2} py={1}>
+        <Text fontSize="xs" color="gray.500">Avsluta skydd</Text>
+        <Input
+          size="xs"
+          type="time"
+          value={avslutaSkyddTid}
+          onChange={(e) => setAvslutaSkyddTid(e.target.value)}
+          width="90px"
+        />
+      </HStack>
+    );
+  }
+  return (
+    <HeaderNoteInput
+      value={getHeaderCellValue(rowIdx, colKey)}
+      onChange={(e) => setHeaderCellValue(rowIdx, colKey, e.target.value)}
+      isEditing={headerEditKey === `${rowIdx}:${colKey}`}
+      onRequestEdit={(val) => setHeaderEditKey(val === null ? null : `${rowIdx}:${colKey}`)}
+      onSelect={() => setSelectedHeaderCell({ row: rowIdx, colKey })}
+    />
+  );
+};
+
+const isBodyCellEditing = (rowId, key) =>
+  editingBodyCell && editingBodyCell.rowId === rowId && editingBodyCell.key === key;
+
+const selectedBodyMeta = useMemo(() => {
+  if (!selectedBodyCell) return {};
+  const row = rows.find((r) => r.id === selectedBodyCell.rowId);
+  return getCellMeta(row, selectedBodyCell.key);
+}, [rows, selectedBodyCell]);
+
+const openBodyContextMenu = (event, rowId, key) => {
+  event.preventDefault();
+  event.stopPropagation();
+  setSelectedBodyCell({ rowId, key });
+  setBodyContextMenu({ open: true, x: event.clientX, y: event.clientY, align: 'down' });
+  setEditingBodyCell(null);
+};
+
+const closeBodyContextMenu = () => {
+  setBodyContextMenu((prev) => ({ ...prev, open: false }));
+};
+
+const applyMetaToSelectedBodyCell = (patch) => {
+  if (!selectedBodyCell) return;
+  updateCellMeta(selectedBodyCell.rowId, selectedBodyCell.key, patch);
+};
+
+const toggleBodyCellSelection = (rowId, key) => {
+  setSelectedBodyCell((prev) =>
+    prev?.rowId === rowId && prev?.key === key ? null : { rowId, key }
+  );
+  if (bodyContextMenu.open) closeBodyContextMenu();
+};
+
+const showAvslutaRowConfirm = (row) => {
+  const toastId = 'confirm-avsluta-row';
+  if (toast.isActive(toastId)) return;
+  toast({
+    id: toastId,
+    position: 'top',
+    containerStyle: {
+      justifyContent: 'center',
+      marginTop: '40vh',
+    },
+    duration: null,
+    render: ({ onClose }) => (
+      <Box
+        bg="white"
+        border="1px solid #E2E8F0"
+        boxShadow="lg"
+        borderRadius="md"
+        p={3}
+        minW="280px"
+      >
+        <Text fontWeight="semibold">Avsluta rad?</Text>
+        <Text fontSize="sm" color="gray.600">
+          Vill du avsluta den här raden?
+        </Text>
+        <HStack mt={3} justify="flex-end">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              onClose();
+            }}
+          >
+            Avbryt
+          </Button>
+          <Button
+            size="sm"
+            colorScheme="red"
+            onClick={() => {
+              avslutaRow(row);
+              onClose();
+            }}
+          >
+            Avsluta
+          </Button>
+        </HStack>
+      </Box>
+    ),
+  });
+};
+
+const showDeleteRowConfirm = (rowId) => {
+  const toastId = 'confirm-delete-row';
+  if (toast.isActive(toastId)) return;
+  toast({
+    id: toastId,
+    position: 'top',
+    containerStyle: {
+      justifyContent: 'center',
+      marginTop: '40vh',
+    },
+    duration: null,
+    render: ({ onClose }) => (
+      <Box
+        bg="white"
+        border="1px solid #E2E8F0"
+        boxShadow="lg"
+        borderRadius="md"
+        p={3}
+        minW="300px"
+      >
+        <Text fontWeight="semibold">Ta bort rad?</Text>
+        <Text fontSize="sm" color="gray.600">
+          Vill du ta bort raden permanent?
+        </Text>
+        <HStack mt={3} justify="flex-end">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              onClose();
+            }}
+          >
+            Avbryt
+          </Button>
+          <Button
+            size="sm"
+            colorScheme="red"
+            onClick={async () => {
+              const updated = deleteRow(rowId);
+              await sparaProjekt(updated);
+              closeBodyContextMenu();
+              onClose();
+            }}
+          >
+            Ta bort
+          </Button>
+        </HStack>
+      </Box>
+    ),
+  });
 };
 
 const handleRowClick = (row, rowIndex) => {
@@ -1370,7 +1619,6 @@ const handleModalChange = (field, value) => {
 
 const [samrad, setSamrad] = useState([]);
 const filteredRows = rows
-  .filter((row) => !row.hiddenRow)
   .filter((row) =>
     filterValue === 'all' || (row.namn || '').toLowerCase() === filterValue.toLowerCase()
   )
@@ -1402,57 +1650,210 @@ const visibleSectionIndexes = useMemo(() => {
   return project.sections
     .map((_, index) => {
       const hasSelection = rows.some((row) => row.selections?.[index]);
-      const hasHeaderText = Boolean(sectionHeaderNotes?.[index]?.trim() || sectionHeaderNotes2?.[index]?.trim());
+      const hasHeaderText = Boolean(
+        sectionHeaderNotes?.[index]?.trim() ||
+        sectionHeaderNotes2?.[index]?.trim() ||
+        sectionHeaderNotes3?.[index]?.trim()
+      );
       return hasSelection || hasHeaderText ? index : null;
     })
     .filter((index) => index !== null);
-}, [project?.sections, rows, sectionHeaderNotes, sectionHeaderNotes2]);
+}, [project?.sections, rows, sectionHeaderNotes, sectionHeaderNotes2, sectionHeaderNotes3]);
+
+const headerColumns = useMemo(() => {
+  const cols = [];
+  if (visibleColumns['#']) cols.push({ key: '#', label: '#' });
+  if (visibleColumns.btkn) cols.push({ key: 'btkn', label: 'BTKN' });
+  if (visibleColumns.namn) cols.push({ key: 'namn', label: 'Namn' });
+  if (visibleColumns.telefon) cols.push({ key: 'telefon', label: 'Telefon' });
+  if (visibleColumns.anordning) cols.push({ key: 'anordning', label: 'Anordning' });
+  visibleSectionIndexes.forEach((idx) => cols.push({ key: `section-${idx}`, label: `section-${idx}` }));
+  if (visibleColumns.starttid) cols.push({ key: 'starttid', label: 'Start' });
+  if (visibleColumns.begard) cols.push({ key: 'begard', label: 'Begärd' });
+  if (visibleColumns.avslutat) cols.push({ key: 'avslutat', label: 'Avslutad' });
+  cols.push({ key: 'actions', label: 'Åtgärder' });
+  return cols;
+}, [visibleColumns, visibleSectionIndexes]);
+
+const headerColumnIndex = useMemo(() => {
+  const map = {};
+  headerColumns.forEach((col, idx) => {
+    map[col.key] = idx;
+  });
+  return map;
+}, [headerColumns]);
+
+const getMergeIndices = (merge) => {
+  const startIdx = headerColumnIndex[merge.colStartKey];
+  const endIdx = headerColumnIndex[merge.colEndKey];
+  if (startIdx === undefined || endIdx === undefined) return null;
+  return {
+    colStart: Math.min(startIdx, endIdx),
+    colEnd: Math.max(startIdx, endIdx),
+  };
+};
+
+const getMergeForCell = (rowIdx, colIdx) => {
+  for (const merge of headerMerges) {
+    const indices = getMergeIndices(merge);
+    if (!indices) continue;
+    if (
+      rowIdx >= merge.rowStart &&
+      rowIdx <= merge.rowEnd &&
+      colIdx >= indices.colStart &&
+      colIdx <= indices.colEnd
+    ) {
+      return { merge, indices };
+    }
+  }
+  return null;
+};
+
+const isCellSelected = (rowIdx, colIdx) => {
+  if (!headerSelection?.active) return false;
+  const rowStart = Math.min(headerSelection.start.row, headerSelection.end.row);
+  const rowEnd = Math.max(headerSelection.start.row, headerSelection.end.row);
+  const colStart = Math.min(headerSelection.start.col, headerSelection.end.col);
+  const colEnd = Math.max(headerSelection.start.col, headerSelection.end.col);
+  return rowIdx >= rowStart && rowIdx <= rowEnd && colIdx >= colStart && colIdx <= colEnd;
+};
+
+const beginHeaderSelection = (rowIdx, colIdx, event) => {
+  if (event.button !== 0) return;
+  if (event.target.closest('input, textarea, button')) return;
+  if (headerEditKey) return;
+  setHeaderSelection({
+    active: true,
+    start: { row: rowIdx, col: colIdx },
+    end: { row: rowIdx, col: colIdx },
+  });
+};
+
+const updateHeaderSelection = (rowIdx, colIdx) => {
+  if (!headerSelection?.active) return;
+  if (headerEditKey) return;
+  setHeaderSelection((prev) => ({
+    ...prev,
+    end: { row: rowIdx, col: colIdx },
+  }));
+};
+
+const finalizeHeaderSelection = () => {
+  if (!headerSelection?.active) return;
+  const rowStart = Math.min(headerSelection.start.row, headerSelection.end.row);
+  const rowEnd = Math.max(headerSelection.start.row, headerSelection.end.row);
+  const colStart = Math.min(headerSelection.start.col, headerSelection.end.col);
+  const colEnd = Math.max(headerSelection.start.col, headerSelection.end.col);
+  if (rowStart === rowEnd && colStart === colEnd) {
+    setHeaderSelection(null);
+    return;
+  }
+
+  const colStartKey = headerColumns[colStart]?.key;
+  const colEndKey = headerColumns[colEnd]?.key;
+  if (!colStartKey || !colEndKey) {
+    setHeaderSelection(null);
+    return;
+  }
+
+  const newMerge = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    rowStart,
+    rowEnd,
+    colStartKey,
+    colEndKey,
+    type: 'text',
+    text: getHeaderCellValue(rowStart, colStartKey) || '',
+  };
+
+  setHeaderMerges((prev) => {
+    const filtered = prev.filter((merge) => {
+      const indices = getMergeIndices(merge);
+      if (!indices) return true;
+      const overlaps =
+        rowStart <= merge.rowEnd &&
+        rowEnd >= merge.rowStart &&
+        colStart <= indices.colEnd &&
+        colEnd >= indices.colStart;
+      return !overlaps;
+    });
+    return [...filtered, newMerge];
+  });
+
+  setHeaderSelection(null);
+};
+
+useEffect(() => {
+  if (!headerSelection?.active) return;
+  const handleMouseUp = () => finalizeHeaderSelection();
+  window.addEventListener('mouseup', handleMouseUp);
+  return () => window.removeEventListener('mouseup', handleMouseUp);
+}, [headerSelection]);
+
+useEffect(() => {
+  if (!bodyContextMenu.open) return;
+  const handleClickOutside = (event) => {
+    if (bodyContextRef.current && !bodyContextRef.current.contains(event.target)) {
+      closeBodyContextMenu();
+    }
+  };
+  const handleEscape = (event) => {
+    if (event.key === 'Escape') {
+      closeBodyContextMenu();
+    }
+  };
+  window.addEventListener('mousedown', handleClickOutside);
+  window.addEventListener('keydown', handleEscape);
+  return () => {
+    window.removeEventListener('mousedown', handleClickOutside);
+    window.removeEventListener('keydown', handleEscape);
+  };
+}, [bodyContextMenu.open]);
+
+useLayoutEffect(() => {
+  if (!bodyContextMenu.open || !bodyContextRef.current) return;
+  const raf = requestAnimationFrame(() => {
+    if (!bodyContextRef.current) return;
+    const rect = bodyContextRef.current.getBoundingClientRect();
+    const padding = 8;
+    let nextX = bodyContextMenu.x;
+    let nextY = bodyContextMenu.y;
+    let align = bodyContextMenu.align;
+
+    const maxX = window.innerWidth - rect.width - padding;
+    const maxY = window.innerHeight - rect.height - padding;
+
+    nextX = Math.min(Math.max(bodyContextMenu.x, padding), Math.max(padding, maxX));
+
+    if (bodyContextMenu.y + rect.height > window.innerHeight - padding) {
+      nextY = Math.max(padding, bodyContextMenu.y - rect.height);
+      align = 'up';
+    } else {
+      nextY = Math.min(Math.max(bodyContextMenu.y, padding), Math.max(padding, maxY));
+      align = 'down';
+    }
+
+    if (nextX !== bodyContextMenu.x || nextY !== bodyContextMenu.y || align !== bodyContextMenu.align) {
+      setBodyContextMenu((prev) => ({ ...prev, x: nextX, y: nextY, align }));
+    }
+  });
+  return () => cancelAnimationFrame(raf);
+}, [bodyContextMenu.open, bodyContextMenu.x, bodyContextMenu.y, bodyContextMenu.align]);
 if (loading || !project) {
   return <LoadingScreen text="Hämtar projekt..." />;
 }
-const isCellModeActive = cellEditMode || colorHotkey || iconHotkey;
+const isCellModeActive = false;
   return (
 <Box
   minH="100vh"
-  bg="linear-gradient(135deg, #F6F7FB 0%, #EFF2F7 45%, #E9EEF5 100%)"
-  py={10}
-  px={[4, 8]}
+  bg="#F5F6F8"
+  py={6}
+  px={[2, 4]}
 >
-  <Box position="fixed" inset={0} bg="linear-gradient(135deg, #F6F7FB 0%, #EFF2F7 45%, #E9EEF5 100%)" zIndex={0} />
+  <Box position="fixed" inset={0} bg="#F5F6F8" zIndex={0} />
   <Box position="relative" zIndex={1}>
       <Header />
-      <Box maxW="1600px" mx="auto" mt={20}>
-        <Flex
-          justify="space-between"
-          align="center"
-          mb={6}
-          wrap="wrap"
-          gap={4}
-        >
-          <Box>
-            <Heading fontSize="2xl" fontWeight="700" color="gray.900">
-              Dispositionsarbetsplan
-            </Heading>
-            <Text color="gray.600" fontSize="sm">
-              {project.name} · {project.plats}
-            </Text>
-          </Box>
-          <Box
-            bg="white"
-            borderRadius="2xl"
-            px={5}
-            py={3}
-            border="1px solid #E2E8F0"
-            boxShadow="sm"
-          >
-            <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wider">
-              Planen stänger
-            </Text>
-            <Text fontSize="lg" fontWeight="600" color="blue.600">
-              {countdown}
-            </Text>
-          </Box>
-        </Flex>
+      <Box maxW="1800px" mx="auto" mt={2} pt="52px">
 
 <Modal isOpen={isProjectInfoOpen} onClose={() => setIsProjectInfoOpen(false)} size="xl">
   <ModalOverlay />
@@ -1460,10 +1861,6 @@ const isCellModeActive = cellEditMode || colorHotkey || iconHotkey;
     <ModalHeader>
       <Flex justify="space-between" align="center">
         <Text fontSize="xl" fontWeight="bold">Projektinformation</Text>
-        <Box textAlign="right">
-          <Text fontSize="sm" fontWeight="semibold">Dispositionsarbetsplan avslutas:</Text>
-          <Text fontSize="lg" fontWeight="bold" color="blue.500">{countdown}</Text>
-        </Box>
       </Flex>
     </ModalHeader>
 
@@ -1515,20 +1912,16 @@ const isCellModeActive = cellEditMode || colorHotkey || iconHotkey;
   </ModalContent>
 </Modal>
 
-<Box>
-  <Flex
-    align="center"
-    justify="space-between"
-    bg="white"
-    border="1px solid #E2E8F0"
-    borderRadius="2xl"
-    px={5}
-    py={4}
-    boxShadow="sm"
-    mb={4}
-    wrap="wrap"
-    gap={4}
-  >
+<Box
+  bg="white"
+  border="1px solid #CBD5E0"
+  borderRadius="md"
+  px={3}
+  py={2}
+  boxShadow="none"
+  mb={2}
+>
+  <Flex align="center" justify="space-between" wrap="wrap" gap={2}>
     <Box>
       <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wider">
         Projekt
@@ -1540,101 +1933,138 @@ const isCellModeActive = cellEditMode || colorHotkey || iconHotkey;
         {project.plats}
       </Text>
     </Box>
-    <HStack spacing={3} wrap="wrap">
-      <Button onClick={() => setIsProjectInfoOpen(true)} variant="outline" borderRadius="full">
+
+    <HStack spacing={2} wrap="wrap">
+      <Button onClick={() => setIsProjectInfoOpen(true)} variant="outline" borderRadius="full" size="sm">
         Visa projekt
       </Button>
-      <Button onClick={() => sparaProjekt()} bg="gray.900" color="white" borderRadius="full" _hover={{ bg: 'gray.800' }}>
+      <Button onClick={() => sparaProjekt()} bg="gray.900" color="white" borderRadius="full" _hover={{ bg: 'gray.800' }} size="sm">
         Spara
       </Button>
-      <Button variant="outline" borderRadius="full" onClick={() => addRow()}>
+      <Button variant="outline" borderRadius="full" onClick={() => addRow()} size="sm">
         + Lägg till rad
       </Button>
-      <Button variant="outline" borderRadius="full" onClick={() => setAnteckningarModalOpen(true)}>
+      <Button variant="outline" borderRadius="full" onClick={() => setAnteckningarModalOpen(true)} size="sm">
         Anteckningar
       </Button>
-      <Button variant="outline" borderRadius="full" onClick={() => setHiddenRowsModalOpen(true)}>
-        Visa dolda
-      </Button>
-      <Button variant="outline" borderRadius="full" onClick={() => setAvslutadeModalOpen(true)}>
+      <Button variant="outline" borderRadius="full" onClick={() => setArchivedModalOpen(true)} size="sm">
         Avslutade
+      </Button>
+    </HStack>
+
+    <HStack spacing={2} wrap="wrap">
+      <Menu closeOnSelect={false}>
+        <MenuButton as={Button} rightIcon={<ChevronDownIcon />} variant="outline" borderRadius="full" size="sm">
+          Kolumner
+        </MenuButton>
+        <MenuList borderRadius="md" shadow="lg">
+          {Object.keys(visibleColumns).map((col) => (
+            <MenuItem key={col}>
+              <Checkbox isChecked={visibleColumns[col]} onChange={() => toggleColumn(col)}>
+                {col.charAt(0).toUpperCase() + col.slice(1)}
+              </Checkbox>
+            </MenuItem>
+          ))}
+        </MenuList>
+      </Menu>
+
+      <Input
+        placeholder="Sök namn eller telefon..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        width="220px"
+        bg="gray.50"
+        borderRadius="full"
+        px={4}
+        py={2}
+        _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px #3182ce' }}
+      />
+
+      <HStack spacing={2} bg="white" border="1px solid #E2E8F0" borderRadius="full" px={3} py={1}>
+        <Input
+          size="xs"
+          type="date"
+          variant="flushed"
+          value={begardDefaultDate}
+          onChange={(e) => setBegardDefaultDate(e.target.value)}
+          width="100px"
+        />
+        <Input
+          size="xs"
+          type="time"
+          variant="flushed"
+          placeholder="Tid"
+          value={begardDefaultTime}
+          onChange={(e) => setBegardDefaultTime(e.target.value)}
+          width="60px"
+        />
+      </HStack>
+
+      <Button variant="outline" borderRadius="full" onClick={() => setHotkeysOpen(true)} size="sm">
+        Kortkommandon
       </Button>
     </HStack>
   </Flex>
 
-  <Box flex="1" overflowX="visible">
-    <Flex
-      align="center"
-      justify="space-between"
-      bg="white"
-      border="1px solid #E2E8F0"
-      borderRadius="2xl"
-      px={5}
-      py={3}
-      boxShadow="sm"
-      mb={4}
-      wrap="wrap"
-      gap={3}
-    >
-      <HStack spacing={3} wrap="wrap">
-        <Menu closeOnSelect={false}>
-          <MenuButton
-            as={Button}
-            rightIcon={<ChevronDownIcon />}
-            variant="outline"
-            borderRadius="full"
-          >
-            Kolumner
-          </MenuButton>
-          <MenuList borderRadius="md" shadow="lg">
-            {Object.keys(visibleColumns).map((col) => (
-              <MenuItem key={col}>
-                <Checkbox isChecked={visibleColumns[col]} onChange={() => toggleColumn(col)}>
-                  {col.charAt(0).toUpperCase() + col.slice(1)}
-                </Checkbox>
-              </MenuItem>
-            ))}
-          </MenuList>
-        </Menu>
+  <Divider my={2} />
 
-        <Input
-          placeholder="Sök namn eller telefon..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          width="260px"
-          bg="gray.50"
-          borderRadius="full"
-          px={4}
-          py={2}
-          _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px #3182ce' }}
-        />
-      </HStack>
+  <HStack spacing={3} wrap="wrap">
+    <HStack spacing={2}>
+      <Text fontSize="xs" color="gray.500">Avstämt</Text>
+      <Checkbox isChecked={avstamt} onChange={(e) => setAvstamt(e.target.checked)} />
+    </HStack>
 
-      <HStack spacing={3}>
-        <Button
-          leftIcon={<FaPalette />}
-          variant={isCellModeActive ? 'solid' : 'outline'}
-          colorScheme={isCellModeActive ? 'purple' : 'gray'}
-          onClick={() => setCellEditMode((prev) => !prev)}
-          borderRadius="full"
-        >
-          Cell‑läge
-        </Button>
-        <Button variant="outline" borderRadius="full" onClick={() => setHotkeysOpen(true)}>
-          Kortkommandon
-        </Button>
-      </HStack>
-    </Flex>
+    <HStack spacing={2}>
+      <Text fontSize="xs" color="gray.500">FJTKL</Text>
+      <Input
+        size="xs"
+        placeholder="Namn"
+        value={namn}
+        onChange={(e) => setNamn(e.target.value)}
+        width="140px"
+      />
+      <Input
+        size="xs"
+        placeholder="Telefon"
+        value={telefonnummer}
+        onChange={(e) => setTelefonnummer(e.target.value)}
+        width="120px"
+      />
+    </HStack>
 
-    <Box overflowX="visible">
+    <HStack spacing={2}>
+      <Text fontSize="xs" color="gray.500">Objekt</Text>
+      <Input
+        size="xs"
+        placeholder="Objekt"
+        value={objekt}
+        onChange={(e) => setObjekt(e.target.value)}
+        width="140px"
+      />
+    </HStack>
+
+    <HStack spacing={2}>
+      <Text fontSize="xs" color="gray.500">Signatur</Text>
+      <Input
+        size="xs"
+        placeholder="Signatur"
+        value={signatur}
+        onChange={(e) => setSignatur(e.target.value)}
+        width="120px"
+      />
+    </HStack>
+  </HStack>
+</Box>
+
+  <Box overflowX="visible">
       <Flex gap={2} align="start" minW="fit-content" w="full">
     <TableContainer
       bg="white"
-      p={4}
-      borderRadius="2xl"
-      boxShadow="xl"
-      border="1px solid #E2E8F0"
-      overflow="visible"
+      p={0}
+      borderRadius="md"
+      boxShadow="none"
+      border="1px solid #CBD5E0"
+      overflow="auto"
       w="full" 
       minW="100%" 
       transform={`scale(${zoomLevel})`}
@@ -1645,32 +2075,96 @@ const isCellModeActive = cellEditMode || colorHotkey || iconHotkey;
         size="sm"
         sx={{
           'th, td': {
-            borderBottom: '1px solid #E2E8F0',
-            paddingY: '6px',
+            border: '1px solid #CBD5E0',
+            paddingX: '6px',
+            paddingY: '4px',
+            fontSize: '12px',
+            overflow: 'visible',
+            position: 'relative',
           },
           thead: {
-            position: 'sticky',
-            top: 0,
-            zIndex: 1,
-          },
-          'tbody tr': {
-            borderBottom: '1px solid #CBD5E0',
+            background: '#EEF2F7',
           },
           'tbody tr:nth-of-type(even)': {
-            backgroundColor: '#F8FAFC',
+            backgroundColor: '#FAFBFD',
+          },
+          'tbody tr:hover': {
+            backgroundColor: '#EBF8FF !important',
           },
           'tbody input': {
-            height: '24px',
+            height: '20px',
             fontSize: '12px',
+          },
+          'input': {
+            border: 'none',
+            boxShadow: 'none',
           },
         }}
       >
-        <Thead bg="gray.100" borderRadius="xl">
+        <Thead bg="#EEF2F7">
+          {[0, 1].map((rowIdx) => (
+            <Tr key={`header-notes-${rowIdx}`}>
+              {headerColumns.map((col, colIdx) => {
+                const mergeInfo = getMergeForCell(rowIdx, colIdx);
+                if (mergeInfo) {
+                  const isTopLeft =
+                    rowIdx === mergeInfo.merge.rowStart && colIdx === mergeInfo.indices.colStart;
+                  if (!isTopLeft) return null;
+                  const colSpan = mergeInfo.indices.colEnd - mergeInfo.indices.colStart + 1;
+                  const rowSpan = mergeInfo.merge.rowEnd - mergeInfo.merge.rowStart + 1;
+                  const selected =
+                    isCellSelected(rowIdx, colIdx) ||
+                    (selectedHeaderCell &&
+                      selectedHeaderCell.row === rowIdx &&
+                      selectedHeaderCell.colKey === col.key);
+                  return (
+                    <Th
+                      key={`merge-${mergeInfo.merge.id}`}
+                      colSpan={colSpan}
+                      rowSpan={rowSpan}
+                      p={0}
+                      bg={selected ? 'blue.100' : getHeaderColBg(col.key)}
+                      verticalAlign="top"
+                      onMouseDown={(e) => beginHeaderSelection(rowIdx, colIdx, e)}
+                      onMouseEnter={() => updateHeaderSelection(rowIdx, colIdx)}
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        setHeaderEditKey(`merge:${mergeInfo.merge.id}`);
+                      }}
+                    >
+                      {renderMergedCellContent(mergeInfo.merge)}
+                    </Th>
+                  );
+                }
+
+                const selected =
+                  isCellSelected(rowIdx, colIdx) ||
+                  (selectedHeaderCell &&
+                    selectedHeaderCell.row === rowIdx &&
+                    selectedHeaderCell.colKey === col.key);
+                return (
+                  <Th
+                    key={`${rowIdx}-${col.key}`}
+                    p={0}
+                    bg={selected ? 'blue.100' : getHeaderColBg(col.key)}
+                    verticalAlign="top"
+                    onMouseDown={(e) => beginHeaderSelection(rowIdx, colIdx, e)}
+                    onMouseEnter={() => updateHeaderSelection(rowIdx, colIdx)}
+                    onDoubleClick={(e) => {
+                      e.stopPropagation();
+                      setHeaderEditKey(`${rowIdx}:${col.key}`);
+                    }}
+                  >
+                    {renderHeaderCellContent(rowIdx, col.key)}
+                  </Th>
+                );
+              })}
+            </Tr>
+          ))}
           <Tr>
-            <Th />
             {visibleColumns['#'] && <Th />}
             {visibleColumns.btkn && (
-              <Th>
+              <Th p={1}>
                 <Input
                   size="xs"
                   variant="flushed"
@@ -1680,33 +2174,6 @@ const isCellModeActive = cellEditMode || colorHotkey || iconHotkey;
                 />
               </Th>
             )}
-            {visibleColumns.namn && <Th />}
-            {visibleColumns.telefon && <Th />}
-            {visibleColumns.anordning && <Th />}
-            {visibleSectionIndexes.map((secIdx) => (
-              <Th key={`note2-${secIdx}`} p={1} bg={secIdx % 2 === 0 ? 'blue.50' : 'transparent'}>
-                <Input
-                  size="xs"
-                  variant="flushed"
-                  placeholder="Text"
-                  value={sectionHeaderNotes2[secIdx] || ''}
-                  onChange={(e) =>
-                    setSectionHeaderNotes2((prev) => {
-                      const next = [...prev];
-                      next[secIdx] = e.target.value;
-                      return next;
-                    })
-                  }
-                />
-              </Th>
-            ))}
-            <Th />
-            <Th />
-          </Tr>
-          <Tr>
-            <Th />
-            {visibleColumns['#'] && <Th />}
-            {visibleColumns.btkn && <Th />}
             {visibleColumns.namn && <Th />}
             {visibleColumns.telefon && <Th />}
             {visibleColumns.anordning && <Th />}
@@ -1721,25 +2188,9 @@ const isCellModeActive = cellEditMode || colorHotkey || iconHotkey;
                 </Button>
               </Th>
             ))}
-            <Th p={1}>
-              <Flex gap={2}>
-                <Input
-                  size="xs"
-                  type="date"
-                  variant="flushed"
-                  value={begardDefaultDate}
-                  onChange={(e) => setBegardDefaultDate(e.target.value)}
-                />
-                <Input
-                  size="xs"
-                  type="time"
-                  variant="flushed"
-                  placeholder="Tid"
-                  value={begardDefaultTime}
-                  onChange={(e) => setBegardDefaultTime(e.target.value)}
-                />
-              </Flex>
-            </Th>
+            {visibleColumns.starttid && <Th />}
+            {visibleColumns.begard && <Th />}
+            {visibleColumns.avslutat && <Th />}
             <Th />
           </Tr>
           <Tr>
@@ -1894,12 +2345,54 @@ const isCellModeActive = cellEditMode || colorHotkey || iconHotkey;
 </Th>
   );
 })}
-    <Th py={2} fontWeight="semibold" color="gray.700">
-      <Flex align="center" gap={2}>
-        <FiClock size={14} />
-        Tider
-      </Flex>
-    </Th>
+    {visibleColumns.starttid && (
+      <Th py={2} fontWeight="semibold" color="gray.700" width={`${columnWidths.starttid}px`}>
+        <Flex align="center" gap={2} justify="space-between">
+          <Flex align="center" gap={2}>
+            Start
+          </Flex>
+          <IconButton
+            size="xs"
+            variant="ghost"
+            icon={<FiChevronsRight />}
+            aria-label="Expandera Start"
+            onClick={() => toggleColumnWidth('starttid', 160)}
+          />
+        </Flex>
+      </Th>
+    )}
+    {visibleColumns.begard && (
+      <Th py={2} fontWeight="semibold" color="gray.700" width={`${columnWidths.begard}px`}>
+        <Flex align="center" gap={2} justify="space-between">
+          <Flex align="center" gap={2}>
+            Begärd
+          </Flex>
+          <IconButton
+            size="xs"
+            variant="ghost"
+            icon={<FiChevronsRight />}
+            aria-label="Expandera Begärd"
+            onClick={() => toggleColumnWidth('begard', 160)}
+          />
+        </Flex>
+      </Th>
+    )}
+    {visibleColumns.avslutat && (
+      <Th py={2} fontWeight="semibold" color="gray.700" width={`${columnWidths.avslutat}px`}>
+        <Flex align="center" gap={2} justify="space-between">
+          <Flex align="center" gap={2}>
+            Avslutad
+          </Flex>
+          <IconButton
+            size="xs"
+            variant="ghost"
+            icon={<FiChevronsRight />}
+            aria-label="Expandera Avslutad"
+            onClick={() => toggleColumnWidth('avslutat', 170)}
+          />
+        </Flex>
+      </Th>
+    )}
     <Th py={2} fontWeight="semibold" color="gray.700">
       <Flex align="center" gap={2}>
         <FiSliders size={14} />
@@ -1919,7 +2412,7 @@ const isCellModeActive = cellEditMode || colorHotkey || iconHotkey;
                 const namnMeta = cell('namn');
                 const telefonMeta = cell('telefon');
                 const anordningMeta = cell('anordning');
-                const hotkeyMode = cellEditMode || colorHotkey || iconHotkey;
+                const hotkeyMode = false;
 
                 return (
                 <Tr
@@ -1941,11 +2434,20 @@ const isCellModeActive = cellEditMode || colorHotkey || iconHotkey;
   <Td
     width={`${columnWidths.btkn}px`}
     borderRight="1px solid rgba(0, 0, 0, 0.1)"
-    bg={btknMeta?.color || 'transparent'}
-    onClick={(e) => {
+    bg={
+      selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === 'btkn'
+        ? 'blue.100'
+        : btknMeta?.color || 'transparent'
+    }
+    onMouseDown={(e) => {
       e.stopPropagation();
-      handleCellInteraction(row, 'btkn', 'BTKN');
+      if (hotkeyMode) {
+        handleCellInteraction(row, 'btkn', 'BTKN');
+        return;
+      }
+      toggleBodyCellSelection(row.id, 'btkn');
     }}
+    onContextMenu={(e) => openBodyContextMenu(e, row.id, 'btkn')}
   >
     <Flex align="center" justify="space-between" gap={2}>
       <Input
@@ -1953,8 +2455,12 @@ const isCellModeActive = cellEditMode || colorHotkey || iconHotkey;
         variant="flushed"
         value={row.btkn || ''}
         onChange={(e) => updateRowField(row.id, 'btkn', e.target.value)}
-        isReadOnly={hotkeyMode}
+        isReadOnly={hotkeyMode || !isBodyCellEditing(row.id, 'btkn')}
         onFocus={() => setActiveRowId(row.id)}
+        onBlur={() => setEditingBodyCell(null)}
+        onDoubleClick={() => setEditingBodyCell({ rowId: row.id, key: 'btkn' })}
+        cursor={isBodyCellEditing(row.id, 'btkn') ? 'text' : 'pointer'}
+        caretColor={isBodyCellEditing(row.id, 'btkn') ? 'auto' : 'transparent'}
       />
     </Flex>
   </Td>
@@ -1964,11 +2470,20 @@ const isCellModeActive = cellEditMode || colorHotkey || iconHotkey;
   <Td
     maxW={`${columnWidths.namn}px`}
     borderRight="1px solid rgba(0, 0, 0, 0.05)"
-    bg={namnMeta?.color || 'transparent'}
-    onClick={(e) => {
+    bg={
+      selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === 'namn'
+        ? 'blue.100'
+        : namnMeta?.color || 'transparent'
+    }
+    onMouseDown={(e) => {
       e.stopPropagation();
-      handleCellInteraction(row, 'namn', 'Namn');
+      if (hotkeyMode) {
+        handleCellInteraction(row, 'namn', 'Namn');
+        return;
+      }
+      toggleBodyCellSelection(row.id, 'namn');
     }}
+    onContextMenu={(e) => openBodyContextMenu(e, row.id, 'namn')}
   >
     <Flex align="center" justify="space-between" gap={2}>
       <Input
@@ -1976,8 +2491,12 @@ const isCellModeActive = cellEditMode || colorHotkey || iconHotkey;
         variant="flushed"
         value={row.namn || ''}
         onChange={(e) => updateRowField(row.id, 'namn', e.target.value)}
-        isReadOnly={hotkeyMode}
+        isReadOnly={hotkeyMode || !isBodyCellEditing(row.id, 'namn')}
         onFocus={() => setActiveRowId(row.id)}
+        onBlur={() => setEditingBodyCell(null)}
+        onDoubleClick={() => setEditingBodyCell({ rowId: row.id, key: 'namn' })}
+        cursor={isBodyCellEditing(row.id, 'namn') ? 'text' : 'pointer'}
+        caretColor={isBodyCellEditing(row.id, 'namn') ? 'auto' : 'transparent'}
       />
     </Flex>
   </Td>
@@ -1987,11 +2506,20 @@ const isCellModeActive = cellEditMode || colorHotkey || iconHotkey;
   <Td
     maxW={`${columnWidths.telefon}px`}
     borderRight="1px solid rgba(0, 0, 0, 0.05)"
-    bg={telefonMeta?.color || 'transparent'}
-    onClick={(e) => {
+    bg={
+      selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === 'telefon'
+        ? 'blue.100'
+        : telefonMeta?.color || 'transparent'
+    }
+    onMouseDown={(e) => {
       e.stopPropagation();
-      handleCellInteraction(row, 'telefon', 'Telefon');
+      if (hotkeyMode) {
+        handleCellInteraction(row, 'telefon', 'Telefon');
+        return;
+      }
+      toggleBodyCellSelection(row.id, 'telefon');
     }}
+    onContextMenu={(e) => openBodyContextMenu(e, row.id, 'telefon')}
   >
     <Flex align="center" justify="space-between" gap={2}>
       <Input
@@ -1999,8 +2527,12 @@ const isCellModeActive = cellEditMode || colorHotkey || iconHotkey;
         variant="flushed"
         value={row.telefon || ''}
         onChange={(e) => updateRowField(row.id, 'telefon', e.target.value)}
-        isReadOnly={hotkeyMode}
+        isReadOnly={hotkeyMode || !isBodyCellEditing(row.id, 'telefon')}
         onFocus={() => setActiveRowId(row.id)}
+        onBlur={() => setEditingBodyCell(null)}
+        onDoubleClick={() => setEditingBodyCell({ rowId: row.id, key: 'telefon' })}
+        cursor={isBodyCellEditing(row.id, 'telefon') ? 'text' : 'pointer'}
+        caretColor={isBodyCellEditing(row.id, 'telefon') ? 'auto' : 'transparent'}
       />
     </Flex>
   </Td>
@@ -2010,11 +2542,20 @@ const isCellModeActive = cellEditMode || colorHotkey || iconHotkey;
   <Td
     maxW={`${columnWidths.anordning}px`}
     borderRight="1px solid rgba(0, 0, 0, 0.1)"
-    bg={anordningMeta?.color || 'transparent'}
-    onClick={(e) => {
+    bg={
+      selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === 'anordning'
+        ? 'blue.100'
+        : anordningMeta?.color || 'transparent'
+    }
+    onMouseDown={(e) => {
       e.stopPropagation();
-      handleCellInteraction(row, 'anordning', 'Anordning');
+      if (hotkeyMode) {
+        handleCellInteraction(row, 'anordning', 'Anordning');
+        return;
+      }
+      toggleBodyCellSelection(row.id, 'anordning');
     }}
+    onContextMenu={(e) => openBodyContextMenu(e, row.id, 'anordning')}
   >
     <Menu closeOnSelect isOpen={hotkeyMode ? false : undefined}>
       <MenuButton
@@ -2068,7 +2609,10 @@ const isCellModeActive = cellEditMode || colorHotkey || iconHotkey;
               <Button
                 variant="ghost"
                 size="xs"
-                onClick={() => updateRowField(row.id, 'anordning', [option])}
+                onClick={() => {
+                  updateRowField(row.id, 'anordning', [option]);
+                  setEditingBodyCell(null);
+                }}
               >
                 <Badge
                   colorScheme={
@@ -2116,9 +2660,22 @@ const isCellModeActive = cellEditMode || colorHotkey || iconHotkey;
     <Td
       key={secIdx}
       width="60px"
-      bg={sectionMeta?.color || baseBg}
+      bg={
+        selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === cellKey
+          ? 'blue.100'
+          : sectionMeta?.color || baseBg
+      }
       borderRight="1px solid rgba(0, 0, 0, 0.05)"
-      onClick={() => {
+      onMouseDown={(e) => {
+        e.stopPropagation();
+        if (hotkeyMode) {
+          handleCellInteraction(row, cellKey, `Delområde ${String.fromCharCode(65 + secIdx)}`);
+          return;
+        }
+        toggleBodyCellSelection(row.id, cellKey);
+      }}
+      onContextMenu={(e) => openBodyContextMenu(e, row.id, cellKey)}
+      onDoubleClick={() => {
         if (hotkeyMode) {
           handleCellInteraction(row, cellKey, `Delområde ${String.fromCharCode(65 + secIdx)}`);
           return;
@@ -2141,57 +2698,111 @@ const isCellModeActive = cellEditMode || colorHotkey || iconHotkey;
   );
 })}
 
-  <Td
-    minW={`${columnWidths.tider}px`}
-    borderRight="1px solid rgba(0, 0, 0, 0.05)"
-    bg="transparent"
-  >
-    <Stack spacing={1}>
-      <HStack spacing={3} fontSize="xs" color="gray.500">
-        {visibleColumns.starttid && <Text minW="70px">Start</Text>}
-        {visibleColumns.begard && <Text minW="70px">Begärd</Text>}
-        {visibleColumns.avslutat && <Text minW="70px">Avslutad</Text>}
-      </HStack>
-      <HStack spacing={3}>
-        {visibleColumns.starttid && (
-          <Input
-            size="xs"
-            type="time"
-            variant="flushed"
-            value={row.starttid || ''}
-            onChange={(e) => updateRowField(row.id, 'starttid', e.target.value)}
-            isReadOnly={hotkeyMode}
-            onFocus={() => setActiveRowId(row.id)}
-            width="70px"
-          />
-        )}
-        {visibleColumns.begard && (
-          <Input
-            size="xs"
-            type="time"
-            variant="flushed"
-            value={row.begard || ''}
-            onChange={(e) => updateRowField(row.id, 'begard', e.target.value)}
-            isReadOnly={hotkeyMode}
-            onFocus={() => setActiveRowId(row.id)}
-            width="70px"
-          />
-        )}
-        {visibleColumns.avslutat && (
-          <Input
-            size="xs"
-            type="time"
-            variant="flushed"
-            value={row.avslutat || ''}
-            onChange={(e) => updateRowField(row.id, 'avslutat', e.target.value)}
-            isReadOnly={hotkeyMode}
-            onFocus={() => setActiveRowId(row.id)}
-            width="70px"
-          />
-        )}
-      </HStack>
-    </Stack>
-  </Td>
+  {visibleColumns.starttid && (
+    <Td
+      minW={`${columnWidths.starttid}px`}
+      borderRight="1px solid rgba(0, 0, 0, 0.05)"
+      bg={
+        selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === 'starttid'
+          ? 'blue.100'
+          : 'transparent'
+      }
+      onMouseDown={(e) => {
+        e.stopPropagation();
+        if (hotkeyMode) {
+          handleCellInteraction(row, 'starttid', 'Start');
+          return;
+        }
+        toggleBodyCellSelection(row.id, 'starttid');
+      }}
+      onContextMenu={(e) => openBodyContextMenu(e, row.id, 'starttid')}
+    >
+      <Input
+        size="xs"
+        type="time"
+        variant="flushed"
+        value={row.starttid || ''}
+        onChange={(e) => updateRowField(row.id, 'starttid', e.target.value)}
+        isReadOnly={hotkeyMode || !isBodyCellEditing(row.id, 'starttid')}
+        onFocus={() => setActiveRowId(row.id)}
+        width="100%"
+        onBlur={() => setEditingBodyCell(null)}
+        onDoubleClick={() => setEditingBodyCell({ rowId: row.id, key: 'starttid' })}
+        cursor={isBodyCellEditing(row.id, 'starttid') ? 'text' : 'pointer'}
+        caretColor={isBodyCellEditing(row.id, 'starttid') ? 'auto' : 'transparent'}
+      />
+    </Td>
+  )}
+  {visibleColumns.begard && (
+    <Td
+      minW={`${columnWidths.begard}px`}
+      borderRight="1px solid rgba(0, 0, 0, 0.05)"
+      bg={
+        selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === 'begard'
+          ? 'blue.100'
+          : 'transparent'
+      }
+      onMouseDown={(e) => {
+        e.stopPropagation();
+        if (hotkeyMode) {
+          handleCellInteraction(row, 'begard', 'Begärd');
+          return;
+        }
+        toggleBodyCellSelection(row.id, 'begard');
+      }}
+      onContextMenu={(e) => openBodyContextMenu(e, row.id, 'begard')}
+    >
+      <Input
+        size="xs"
+        type="time"
+        variant="flushed"
+        value={row.begard || ''}
+        onChange={(e) => updateRowField(row.id, 'begard', e.target.value)}
+        isReadOnly={hotkeyMode || !isBodyCellEditing(row.id, 'begard')}
+        onFocus={() => setActiveRowId(row.id)}
+        width="100%"
+        onBlur={() => setEditingBodyCell(null)}
+        onDoubleClick={() => setEditingBodyCell({ rowId: row.id, key: 'begard' })}
+        cursor={isBodyCellEditing(row.id, 'begard') ? 'text' : 'pointer'}
+        caretColor={isBodyCellEditing(row.id, 'begard') ? 'auto' : 'transparent'}
+      />
+    </Td>
+  )}
+  {visibleColumns.avslutat && (
+    <Td
+      minW={`${columnWidths.avslutat}px`}
+      borderRight="1px solid rgba(0, 0, 0, 0.05)"
+      bg={
+        selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === 'avslutat'
+          ? 'blue.100'
+          : 'transparent'
+      }
+      onMouseDown={(e) => {
+        e.stopPropagation();
+        if (hotkeyMode) {
+          handleCellInteraction(row, 'avslutat', 'Avslutad');
+          return;
+        }
+        toggleBodyCellSelection(row.id, 'avslutat');
+      }}
+      onContextMenu={(e) => openBodyContextMenu(e, row.id, 'avslutat')}
+    >
+      <Input
+        size="xs"
+        type="time"
+        variant="flushed"
+        value={row.avslutat || ''}
+        onChange={(e) => updateRowField(row.id, 'avslutat', e.target.value)}
+        isReadOnly={hotkeyMode || !isBodyCellEditing(row.id, 'avslutat')}
+        onFocus={() => setActiveRowId(row.id)}
+        width="100%"
+        onBlur={() => setEditingBodyCell(null)}
+        onDoubleClick={() => setEditingBodyCell({ rowId: row.id, key: 'avslutat' })}
+        cursor={isBodyCellEditing(row.id, 'avslutat') ? 'text' : 'pointer'}
+        caretColor={isBodyCellEditing(row.id, 'avslutat') ? 'auto' : 'transparent'}
+      />
+    </Td>
+  )}
   <Td borderRight="1px solid rgba(0, 0, 0, 0.05)">
     <Flex align="center" gap={2}>
       <IconButton
@@ -2224,7 +2835,6 @@ const isCellModeActive = cellEditMode || colorHotkey || iconHotkey;
     _hover={{ bg: '#D1FAE5' }}
     cursor="pointer"
 onClick={() => {
-  if (cellEditMode) return;
   setEditableTsmRow({
     ...row,
     namn: row.namn || `${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim(),
@@ -2234,62 +2844,62 @@ onClick={() => {
   onOpenApprovalModal();
 }}
   >
-    <Td borderRight="1px solid rgba(0, 0, 0, 0.05)" />
-    {/* BTKN */}
-    <Td borderRight="1px solid rgba(0, 0, 0, 0.1)">
-      <Text>
-      </Text>
-    </Td>
+    {visibleColumns['#'] && <Td borderRight="1px solid rgba(0, 0, 0, 0.05)" />}
+    {visibleColumns.btkn && (
+      <Td borderRight="1px solid rgba(0, 0, 0, 0.1)">
+        <Text />
+      </Td>
+    )}
+    {visibleColumns.namn && (
+      <Td borderRight="1px solid rgba(0, 0, 0, 0.1)">
+        <Text>
+          {row.user?.firstName} {row.user?.lastName}
+        </Text>
+      </Td>
+    )}
+    {visibleColumns.telefon && (
+      <Td borderRight="1px solid rgba(0, 0, 0, 0.1)">
+        <Text>{row.user?.phone || '-'}</Text>
+      </Td>
+    )}
+    {visibleColumns.anordning && (
+      <Td maxW="160px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
+        <Flex gap={1}>
+          {(Array.isArray(row.anordning)
+            ? row.anordning
+            : typeof row.anordning === 'string'
+            ? row.anordning.split(',').map((a) => a.trim())
+            : []
+          ).map((item, idx) => {
+            let color = 'gray';
+            switch (item) {
+              case 'A-S': color = 'blue'; break;
+              case 'L-S': color = 'green'; break;
+              case 'S-S': color = 'orange'; break;
+              case 'E-S': color = 'red'; break;
+              case 'Spf': color = 'yellow'; break;
+              case 'Vxl': color = 'purple'; break;
+              default: color = 'gray';
+            }
 
-    {/* NAMN */}
-    <Td borderRight="1px solid rgba(0, 0, 0, 0.1)">
-      <Text>
-        {row.user?.firstName} {row.user?.lastName}
-      </Text> {/* Namn visas ej för TSM-rad */}
-    </Td>
-
-    {/* TELEFON */}
-    <Td borderRight="1px solid rgba(0, 0, 0, 0.1)">
-      <Text>{row.user?.phone || '-'}</Text>
-    </Td>
-
-    {/* ANORDNING */}
-    <Td maxW="160px" borderRight="1px solid rgba(0, 0, 0, 0.1)">
-      <Flex gap={1}>
-        {(Array.isArray(row.anordning)
-          ? row.anordning
-          : typeof row.anordning === 'string'
-          ? row.anordning.split(',').map((a) => a.trim())
-          : []
-        ).map((item, idx) => {
-          let color = 'gray';
-          switch (item) {
-            case 'A-S': color = 'blue'; break;
-            case 'L-S': color = 'green'; break;
-            case 'S-S': color = 'orange'; break;
-            case 'E-S': color = 'red'; break;
-            case 'Spf': color = 'yellow'; break;
-            case 'Vxl': color = 'purple'; break;
-            default: color = 'gray';
-          }
-
-          return (
-            <Badge
-              key={idx}
-              colorScheme={color}
-              variant="subtle"
-              fontSize="xs"
-              px={2}
-              py={0.5}
-              borderRadius="none"
-              textTransform="none"
-            >
-              {item}
-            </Badge>
-          );
-        })}
-      </Flex>
-    </Td>
+            return (
+              <Badge
+                key={idx}
+                colorScheme={color}
+                variant="subtle"
+                fontSize="xs"
+                px={2}
+                py={0.5}
+                borderRadius="none"
+                textTransform="none"
+              >
+                {item}
+              </Badge>
+            );
+          })}
+        </Flex>
+      </Td>
+    )}
 
     {/* DELOMRÅDEN (checkboxar) */}
     {visibleSectionIndexes.map((secIdx) => (
@@ -2305,34 +2915,124 @@ onClick={() => {
       </Td>
     ))}
 
-    <Td borderRight="1px solid rgba(0, 0, 0, 0.05)">
-      <Stack spacing={1}>
-        <Flex align="center" justify="space-between">
-          <Text fontSize="xs" color="gray.500">Start</Text>
-          <Text fontSize="sm">{row.startTime || '–'}</Text>
-        </Flex>
-        <Flex align="center" justify="space-between">
-          <Text fontSize="xs" color="gray.500">Begärd</Text>
-          <Text fontSize="sm">{row.begard || '–'}</Text>
-        </Flex>
-        <Flex align="center" justify="space-between">
-          <Text fontSize="xs" color="gray.500">Slut</Text>
-          <Text fontSize="sm">{row.endTime || '–'}</Text>
-        </Flex>
-      </Stack>
-    </Td>
+    {visibleColumns.starttid && (
+      <Td borderRight="1px solid rgba(0, 0, 0, 0.05)">
+        <Text fontSize="sm">{row.startTime || row.starttid || '–'}</Text>
+      </Td>
+    )}
+    {visibleColumns.begard && (
+      <Td borderRight="1px solid rgba(0, 0, 0, 0.05)">
+        <Text fontSize="sm">{row.begard || '–'}</Text>
+      </Td>
+    )}
+    {visibleColumns.avslutat && (
+      <Td borderRight="1px solid rgba(0, 0, 0, 0.05)">
+        <Text fontSize="sm">{row.endTime || row.avslutat || '–'}</Text>
+      </Td>
+    )}
     <Td borderRight="1px solid rgba(0, 0, 0, 0.05)" />
   </Tr>
 ))}
 </Tbody>
         </Table>
-      </TableContainer>
+</TableContainer>
 </Flex>
 </Box>
 </Box>
 </Box>
 
 {/*Slut på table*/}
+
+{bodyContextMenu.open && selectedBodyCell && (
+  <Portal>
+      <Box
+        ref={bodyContextRef}
+        position="fixed"
+        top={`${bodyContextMenu.y}px`}
+        left={`${bodyContextMenu.x}px`}
+        bg="white"
+        border="1px solid #E2E8F0"
+        borderRadius="md"
+        boxShadow="lg"
+        p={3}
+        zIndex={2000}
+        minW="220px"
+        maxH="calc(100vh - 16px)"
+        overflowY="auto"
+      >
+      <Text fontSize="xs" color="gray.500" mb={2}>
+        Cell: {selectedBodyCell.key}
+      </Text>
+      <Text fontSize="xs" fontWeight="semibold" mb={1}>
+        Färg
+      </Text>
+      <SimpleGrid columns={4} spacing={1} mb={2}>
+        {CELL_COLORS.map((color) => (
+          <Button
+            key={color.value || 'none'}
+            size="xs"
+            variant="outline"
+            bg={color.value || 'transparent'}
+            onClick={() => applyMetaToSelectedBodyCell({ color: color.value })}
+          >
+            {color.label}
+          </Button>
+        ))}
+      </SimpleGrid>
+
+      <Text fontSize="xs" fontWeight="semibold" mb={1}>
+        Symbol
+      </Text>
+      <SimpleGrid columns={4} spacing={1} mb={2}>
+        {CELL_ICONS.map((option) => (
+          <Button
+            key={option.key || 'none'}
+            size="xs"
+            variant="outline"
+            onClick={() => applyMetaToSelectedBodyCell({ icon: option.key })}
+          >
+            {option.icon ? <Icon as={option.icon} color={option.color} /> : '–'}
+          </Button>
+        ))}
+      </SimpleGrid>
+
+      <Text fontSize="xs" fontWeight="semibold" mb={1}>
+        Kommentar
+      </Text>
+      <Textarea
+        size="xs"
+        value={selectedBodyMeta?.comment || ''}
+        onChange={(e) => applyMetaToSelectedBodyCell({ comment: e.target.value })}
+        placeholder="Lägg till kommentar"
+        mb={2}
+      />
+
+      <HStack justify="space-between">
+        <Button size="xs" variant="ghost" onClick={closeBodyContextMenu}>
+          Stäng
+        </Button>
+        <Button size="xs" colorScheme="red" variant="outline" onClick={() => applyMetaToSelectedBodyCell({ __clear: true })}>
+          Rensa
+        </Button>
+      </HStack>
+
+      <Divider my={2} />
+
+      <Button
+        size="xs"
+        colorScheme="red"
+        variant="solid"
+        w="full"
+        onClick={() => {
+          if (!selectedBodyCell) return;
+          showDeleteRowConfirm(selectedBodyCell.rowId);
+        }}
+      >
+        Ta bort rad
+      </Button>
+    </Box>
+  </Portal>
+)}
 
 <Modal isOpen={hotkeysOpen} onClose={() => setHotkeysOpen(false)} size="md">
   <ModalOverlay />
@@ -2341,14 +3041,11 @@ onClick={() => {
     <ModalCloseButton />
     <ModalBody>
       <Stack spacing={2} fontSize="sm" color="gray.700">
-        <Flex justify="space-between"><Text>⌘ (håll)</Text><Text>Cell‑läge</Text></Flex>
         <Flex justify="space-between"><Text>T</Text><Text>Starttid = nu</Text></Flex>
         <Flex justify="space-between"><Text>Shift + T</Text><Text>Begärd = nu</Text></Flex>
         <Flex justify="space-between"><Text>Alt + T</Text><Text>Slut = nu</Text></Flex>
-        <Flex justify="space-between"><Text>D</Text><Text>Dölj rad</Text></Flex>
+        <Flex justify="space-between"><Text>D</Text><Text>Avsluta rad</Text></Flex>
         <Flex justify="space-between"><Text>Shift + D</Text><Text>Begärd‑datum = idag</Text></Flex>
-        <Flex justify="space-between"><Text>Håll 1–6</Text><Text>Färga cell</Text></Flex>
-        <Flex justify="space-between"><Text>Håll Q/W/E/R</Text><Text>Sätt ikon</Text></Flex>
         <Flex justify="space-between"><Text>Shift + +</Text><Text>Zooma in</Text></Flex>
         <Flex justify="space-between"><Text>Shift + -</Text><Text>Zooma ut</Text></Flex>
         <Flex justify="space-between"><Text>⌘ + S</Text><Text>Spara</Text></Flex>
@@ -3315,223 +4012,181 @@ onChange={() =>
   </ModalContent>
 </Modal>
 
-<Modal isOpen={avslutadeModalOpen} onClose={() => setAvslutadeModalOpen(false)} size="6xl">
+<Modal isOpen={archivedModalOpen} onClose={() => setArchivedModalOpen(false)} size="6xl">
   <ModalOverlay />
   <ModalContent>
-    <ModalHeader>Avslutade poster</ModalHeader>
-    <ModalCloseButton />
-<ModalBody>
-  <Input
-    placeholder="Sök efter namn, telefon eller BTKN..."
-    mb={4}
-    value={searchQuery}
-    onChange={(e) => setSearchQuery(e.target.value)}
-  />
-
-  <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-    {rows
-      .filter(
-        (row) =>
-          row.avslutadRad === true &&
-          (
-            (row.namn || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (row.telefon || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (row.anordning?.join(', ') || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (row.btkn || '').toLowerCase().includes(searchQuery.toLowerCase())
-          )
-      )
-      .map((row, index) => (
-<Box
-  key={index}
-  p={3}
-  border="1px solid #ccc"
-  borderRadius="md"
-  bg="gray.50"
-  fontSize="sm"
->
-  <Text><strong>Namn:</strong> {row.namn}</Text>
-  <Text><strong>Telefon:</strong> {row.telefon}</Text>
-
-{/* ANORDNING */}
-<Flex align="center" gap={2} mb={2}>
-  <Text fontWeight="semibold" whiteSpace="nowrap">Anordning:</Text>
-  <Flex wrap="nowrap" overflowX="auto" gap={1}>
-    {(Array.isArray(row.anordning)
-      ? row.anordning
-      : typeof row.anordning === 'string'
-        ? row.anordning.split(',').map((a) => a.trim())
-        : []
-    ).map((item, idx) => {
-      let color = 'gray';
-      switch (item) {
-        case 'A-S': color = 'blue'; break;
-        case 'L-S': color = 'green'; break;
-        case 'S-S': color = 'orange'; break;
-        case 'E-S': color = 'red'; break;
-        case 'Spf': color = 'yellow'; break;
-        case 'Vxl': color = 'purple'; break;
-        default: color = 'gray';
-      }
-
-      return (
-        <Badge
-          key={idx}
-          colorScheme={color}
-          variant="subtle"
-          fontSize="xs"
-          px={2}
-          py={0.5}
-          borderRadius="none"
-          textTransform="none"
-          whiteSpace="nowrap"
-        >
-          {item}
-        </Badge>
-      );
-    })}
-  </Flex>
-</Flex>
-
-{/* BTKN */}
-<Flex align="center" gap={2} mb={2}>
-  <Text fontWeight="semibold" whiteSpace="nowrap">Beteckning:</Text>
-  <Tag
-    size="md"
-    variant="outline"
-    colorScheme="teal"
-    w="80px"
-    justifyContent="center"
-    borderRadius="md"
-  >
-    <TagLabel isTruncated>{row.btkn || '–'}</TagLabel>
-  </Tag>
-</Flex>
-{row.startDatum && row.startTid && (
-  <Text>
-    <strong>Start:</strong> {formatDateOnly(row.startDatum)} kl. {row.startTid}
-  </Text>
-)}
-<Text>
-  <strong>Start:</strong>{' '}
-  {row.startdatum && row.starttid ? (
-    <>
-      {formatDateOnly(row.startdatum)} kl. {row.starttid}
-    </>
-  ) : (
-    <span style={{ color: 'gray' }}>Ej angivet</span>
-  )}
-</Text>
-
-<Text>
-  <strong>Avslutad:</strong>{' '}
-  {row.avslutatDatum ? (
-    <>
-      {formatDateOnly(row.avslutatDatum)} kl. {row.avslutat}
-    </>
-  ) : (
-    <span style={{ color: 'gray' }}>Ej angivet</span>
-  )}
-</Text>
-
-{row.avslutadAv && (
-  <Text>
-    <strong>Avslutad av:</strong> {row.avslutadAv}
-  </Text>
-)}
-
-  <Button
-    mt={3}
-    size="sm"
-    onClick={() => {
-      const updatedRows = [...rows];
-      const actualIndex = rows.findIndex((r) => r.id === row.id);
-      updatedRows[actualIndex].avslutadRad = false;
-      setRows(updatedRows);
-    }}
-  >
-    Återställ
-  </Button>
-</Box>
-      ))}
-
-    {rows.filter(
-      (row) =>
-        row.avslutadRad === true &&
-        (
-          (row.namn || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (row.telefon || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (row.anordning?.join(', ') || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (row.btkn || '').toLowerCase().includes(searchQuery.toLowerCase())
-        )
-    ).length === 0 && (
-      <Text color="gray.500">Inga träffar.</Text>
-    )}
-  </SimpleGrid>
-</ModalBody>
-    <ModalFooter justifyContent="space-between">
-<Button onClick={() => setAvslutadeModalOpen(false)}>Stäng</Button>
-
-<Button
-  colorScheme="blue"
-  onClick={async () => {
-    try {
-      await sparaProjekt(); // Återanvänd befintlig sparfunktion
-      setAvslutadeModalOpen(false); // Stäng modalen efter sparande
-    } catch (error) {
-      console.error('Kunde inte spara ändringar:', error);
-      alert('Något gick fel vid sparandet.');
-    }
-  }}
->
-  Spara ändringar
-</Button>
-    </ModalFooter>
-  </ModalContent>
-</Modal>
-
-<Modal isOpen={hiddenRowsModalOpen} onClose={() => setHiddenRowsModalOpen(false)} size="6xl">
-  <ModalOverlay />
-  <ModalContent>
-    <ModalHeader>Dolda rader</ModalHeader>
+  <ModalHeader>Avslutade</ModalHeader>
     <ModalCloseButton />
     <ModalBody>
-      <Stack spacing={3}>
-        {rows.filter((row) => row.hiddenRow).length === 0 ? (
-          <Text color="gray.500">Inga dolda rader.</Text>
-        ) : (
-          rows
-            .filter((row) => row.hiddenRow)
-            .map((row) => (
-              <Flex
-                key={`hidden-${row.id}`}
-                justify="space-between"
-                align="center"
-                p={3}
-                border="1px solid #E2E8F0"
-                borderRadius="md"
-                bg="gray.50"
-              >
-                <Box>
-                  <Text fontWeight="semibold">{row.namn || row.btkn || `Rad ${row.id}`}</Text>
-                  <Text fontSize="sm" color="gray.600">
-                    {row.telefon || '—'} · {row.anordning || '—'}
-                  </Text>
-                </Box>
-                <Button size="sm" onClick={() => unhideRow(row)}>
-                  Visa igen
-                </Button>
-              </Flex>
-            ))
-        )}
+      <Stack spacing={4}>
+        <Input
+          placeholder="Sök efter namn, telefon eller BTKN..."
+          mb={2}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+
+        <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+          {rows
+            .filter(
+              (row) =>
+                row.avslutadRad === true &&
+                (
+                  (row.namn || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  (row.telefon || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  (row.anordning?.join(', ') || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  (row.btkn || '').toLowerCase().includes(searchQuery.toLowerCase())
+                )
+            )
+            .map((row, index) => (
+    <Box
+      key={index}
+      p={3}
+      border="1px solid #ccc"
+      borderRadius="md"
+      bg="gray.50"
+      fontSize="sm"
+    >
+      <Text><strong>Namn:</strong> {row.namn}</Text>
+      <Text><strong>Telefon:</strong> {row.telefon}</Text>
+
+    {/* ANORDNING */}
+    <Flex align="center" gap={2} mb={2}>
+      <Text fontWeight="semibold" whiteSpace="nowrap">Anordning:</Text>
+      <Flex wrap="nowrap" overflowX="auto" gap={1}>
+        {(Array.isArray(row.anordning)
+          ? row.anordning
+          : typeof row.anordning === 'string'
+            ? row.anordning.split(',').map((a) => a.trim())
+            : []
+        ).map((item, idx) => {
+          let color = 'gray';
+          switch (item) {
+            case 'A-S': color = 'blue'; break;
+            case 'L-S': color = 'green'; break;
+            case 'S-S': color = 'orange'; break;
+            case 'E-S': color = 'red'; break;
+            case 'Spf': color = 'yellow'; break;
+            case 'Vxl': color = 'purple'; break;
+            default: color = 'gray';
+          }
+
+          return (
+            <Badge
+              key={idx}
+              colorScheme={color}
+              variant="subtle"
+              fontSize="xs"
+              px={2}
+              py={0.5}
+              borderRadius="none"
+              textTransform="none"
+              whiteSpace="nowrap"
+            >
+              {item}
+            </Badge>
+          );
+        })}
+      </Flex>
+    </Flex>
+
+    {/* BTKN */}
+    <Flex align="center" gap={2} mb={2}>
+      <Text fontWeight="semibold" whiteSpace="nowrap">Beteckning:</Text>
+      <Tag
+        size="md"
+        variant="outline"
+        colorScheme="teal"
+        w="80px"
+        justifyContent="center"
+        borderRadius="md"
+      >
+        <TagLabel isTruncated>{row.btkn || '–'}</TagLabel>
+      </Tag>
+    </Flex>
+    {row.startDatum && row.startTid && (
+      <Text>
+        <strong>Start:</strong> {formatDateOnly(row.startDatum)} kl. {row.startTid}
+      </Text>
+    )}
+    <Text>
+      <strong>Start:</strong>{' '}
+      {row.startdatum && row.starttid ? (
+        <>
+          {formatDateOnly(row.startdatum)} kl. {row.starttid}
+        </>
+      ) : (
+        <span style={{ color: 'gray' }}>Ej angivet</span>
+      )}
+    </Text>
+
+    <Text>
+      <strong>Avslutad:</strong>{' '}
+      {row.avslutatDatum ? (
+        <>
+          {formatDateOnly(row.avslutatDatum)} kl. {row.avslutat}
+        </>
+      ) : (
+        <span style={{ color: 'gray' }}>Ej angivet</span>
+      )}
+    </Text>
+
+    {row.avslutadAv && (
+      <Text>
+        <strong>Avslutad av:</strong> {row.avslutadAv}
+      </Text>
+    )}
+
+      <Button
+        mt={3}
+        size="sm"
+        onClick={() => {
+          const updatedRows = [...rows];
+          const actualIndex = rows.findIndex((r) => r.id === row.id);
+          updatedRows[actualIndex].avslutadRad = false;
+          setRows(updatedRows);
+        }}
+      >
+        Återställ
+      </Button>
+    </Box>
+          ))}
+
+          {rows.filter(
+            (row) =>
+              row.avslutadRad === true &&
+              (
+                (row.namn || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (row.telefon || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (row.anordning?.join(', ') || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (row.btkn || '').toLowerCase().includes(searchQuery.toLowerCase())
+              )
+          ).length === 0 && (
+            <Text color="gray.500">Inga träffar.</Text>
+          )}
+        </SimpleGrid>
       </Stack>
     </ModalBody>
-    <ModalFooter>
-      <Button onClick={() => setHiddenRowsModalOpen(false)}>Stäng</Button>
+    <ModalFooter justifyContent="space-between">
+      <Button onClick={() => setArchivedModalOpen(false)}>Stäng</Button>
+
+      <Button
+        colorScheme="blue"
+        onClick={async () => {
+          try {
+            await sparaProjekt(); // Återanvänd befintlig sparfunktion
+            setArchivedModalOpen(false); // Stäng modalen efter sparande
+          } catch (error) {
+            console.error('Kunde inte spara ändringar:', error);
+            alert('Något gick fel vid sparandet.');
+          }
+        }}
+      >
+        Spara ändringar
+      </Button>
     </ModalFooter>
   </ModalContent>
 </Modal>
-    </Box>
-    </Box>
     </Box>
     
   );
