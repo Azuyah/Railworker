@@ -1077,7 +1077,7 @@ const toggleDelomrade = (rowId, secIdx) => {
   );
 };
 
-const avslutaRow = async (row) => {
+const avslutaRow = useCallback(async (row) => {
   const currentUser = JSON.parse(localStorage.getItem('user'));
   const initials = `${currentUser?.firstName?.[0] || ''}${currentUser?.lastName?.[0] || ''}`.toUpperCase();
   const updatedRow = {
@@ -1089,7 +1089,7 @@ const avslutaRow = async (row) => {
   };
   const updated = updateRow(updatedRow);
   await sparaProjekt(updated);
-};
+}, [getCurrentDate, getCurrentTime, sparaProjekt]);
 
 const openRowModal = (row, rowIndex) => {
   handleRowClick(row, rowIndex);
@@ -1183,14 +1183,14 @@ const HeaderNoteInput = ({ value, onChange, isEditing, onRequestEdit, onSelect }
   );
 };
 
-const getHeaderCellValue = (rowIdx, colKey) => {
+const getHeaderCellValue = useCallback((rowIdx, colKey) => {
   if (colKey.startsWith('section-')) {
     const idx = Number(colKey.split('-')[1]);
     return rowIdx === 0 ? sectionHeaderNotes3[idx] || '' : sectionHeaderNotes2[idx] || '';
   }
   if (rowIdx === 0) return headerNotesTop[colKey] || '';
   return headerNotesMid[colKey] || '';
-};
+}, [headerNotesMid, headerNotesTop, sectionHeaderNotes2, sectionHeaderNotes3]);
 
 const setHeaderCellValue = (rowIdx, colKey, value) => {
   if (colKey.startsWith('section-')) {
