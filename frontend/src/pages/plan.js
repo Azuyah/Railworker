@@ -136,7 +136,10 @@ const Plan = () => {
   const [avstamt, setAvstamt] = useState(Boolean(project?.avstamt));
   const [objekt, setObjekt] = useState(project?.objekt || '');
   const [avslutaSkyddTid, setAvslutaSkyddTid] = useState(project?.avslutaSkyddTid || '');
+  const [uttagningstid, setUttagningstid] = useState(project?.uttagningstid || '');
   const [signatur, setSignatur] = useState(project?.signatur || '');
+  const [avslutningstid, setAvslutningstid] = useState(project?.avslutningstid || '');
+  const [avslutningssignatur, setAvslutningssignatur] = useState(project?.avslutningssignatur || '');
   const [editSections, setEditSections] = useState(project?.sections || []);
 
 function formatDateOnly(datetimeStr) {
@@ -388,6 +391,78 @@ const addEditDP = () => {
   setEditSections([...editSections, newDP]);
 };
 
+const buildSectionsWithInsert = (sections, type) => {
+  const next = [...(sections || [])];
+  if (type === 'Linje') {
+    const indexToInsert =
+      next.findIndex(
+        (sec) =>
+          sec.type === 'DP' &&
+          !next.some((s, i) => i > next.indexOf(sec) && s.type === 'Linje')
+      ) + 1;
+    const insertAt = indexToInsert > 0 ? indexToInsert : next.length;
+    next.splice(insertAt, 0, { type: 'Linje', name: '' });
+    return next;
+  }
+  next.push({ type: 'DP', name: '' });
+  return next;
+};
+
+const addSectionQuick = async (type) => {
+  if (!project) return;
+  const newSections = buildSectionsWithInsert(project.sections, type);
+  const updatedRows = (rows || []).map((row) => ({
+    ...row,
+    selections: Array.isArray(row.selections) ? [...row.selections, false] : Array(newSections.length).fill(false),
+    selectedAreas: Array.isArray(row.selectedAreas) ? [...row.selectedAreas] : [],
+  }));
+
+  const updatedProject = {
+    ...project,
+    sections: newSections,
+    rows: updatedRows,
+  };
+
+  try {
+    const token = JSON.parse(localStorage.getItem('user'))?.token;
+    await axios.put(
+      `https://railworker-production.up.railway.app/api/projects/${project.id}`,
+      updatedProject,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    setProject(updatedProject);
+    setRows(updatedRows);
+    setEditSections(newSections);
+    setSectionHeaderNotes((prev) => {
+      const next = [...prev];
+      next[newSections.length - 1] = type === 'DP' ? 'DP' : 'Linje';
+      return next;
+    });
+    setSectionHeaderNotes2((prev) => {
+      const next = [...prev];
+      if (next.length < newSections.length) next.length = newSections.length;
+      return next.map((value) => value || '');
+    });
+    setSectionHeaderNotes3((prev) => {
+      const next = [...prev];
+      if (next.length < newSections.length) next.length = newSections.length;
+      return next.map((value) => value || '');
+    });
+  } catch (error) {
+    console.error('Kunde inte lägga till delområde:', error);
+    toast({
+      title: 'Fel',
+      description: 'Kunde inte lägga till delområde.',
+      status: 'error',
+      duration: 3000,
+      isClosable: true,
+    });
+  }
+};
+
 const fetchProject = useCallback(async () => {
   try {
     setLoading(true);
@@ -417,6 +492,9 @@ const fetchProject = useCallback(async () => {
     } else {
       setHeaderMerges([]);
     }
+    setUttagningstid(current.uttagningstid || '');
+    setAvslutningstid(current.avslutningstid || '');
+    setAvslutningssignatur(current.avslutningssignatur || '');
 
     const enrichedRows = (current.rows || []).map((row) => {
       const selectedAreas = Array.isArray(row.selections)
@@ -492,17 +570,7 @@ const toggleApprovalArea = (idx) => {
 };
 
 const addEditLinje = () => {
-  const indexToInsert =
-    editSections.findIndex(
-      (sec) =>
-        sec.type === 'DP' &&
-        !editSections.some(
-          (s, i) => i > editSections.indexOf(sec) && s.type === 'Linje'
-        )
-    ) + 1;
-
-  const updated = [...editSections];
-  updated.splice(indexToInsert, 0, { type: 'Linje', name: '' });
+  const updated = buildSectionsWithInsert(editSections, 'Linje');
   setEditSections(updated);
 };
 
@@ -525,7 +593,10 @@ const openEditProjectModal = () => {
     setAvstamt(Boolean(project.avstamt));
     setObjekt(project.objekt || '');
     setAvslutaSkyddTid(project.avslutaSkyddTid || '');
+    setUttagningstid(project.uttagningstid || '');
     setSignatur(project.signatur || '');
+    setAvslutningstid(project.avslutningstid || '');
+    setAvslutningssignatur(project.avslutningssignatur || '');
   setEditSections(project.sections || []);
   setEditModalOpen(true);
   setEditBeteckningar(project.beteckningar?.map(b => b.label) || []);
@@ -547,7 +618,10 @@ const updateProject = async () => {
     avstamt,
     objekt,
     avslutaSkyddTid,
+    uttagningstid,
     signatur,
+    avslutningstid,
+    avslutningssignatur,
   };
 
   const token = JSON.parse(localStorage.getItem('user'))?.token;
@@ -667,7 +741,10 @@ if (selectedRow && selectedRow.id) {
       avstamt,
       objekt,
       avslutaSkyddTid,
+      uttagningstid,
       signatur,
+      avslutningstid,
+      avslutningssignatur,
     };
 
     rowsWithSamrad.forEach(() => {});
@@ -715,7 +792,10 @@ await axios.put(
   sectionHeaderNotes3,
   selectedAreas,
   selectedRow,
+  uttagningstid,
   signatur,
+  avslutningstid,
+  avslutningssignatur,
   toast,
 ]);
 
@@ -781,43 +861,6 @@ useEffect(() => {
   setSmsSelection({});
   setSmsMessage('');
 }, [selectedRowId]);
-
-useEffect(() => {
-  if (!rows || rows.length === 0 || !project?.sections) return;
-
-  // Kontroll: vänta tills alla rader har ett namn
-  const allHaveNames = rows.every(row => typeof row.namn === 'string' && row.namn.trim() !== '');
-  if (!allHaveNames) return; // Vänta tills namn är laddade
-
-  const result = calculateSamrad(rows);
-
-  const updated = rows.map((row, index) => {
-    const related = result.samradList
-      .filter((entry) => entry.from === index)
-      .map((entry) => {
-        const match = rows[entry.to];
-        return {
-          id: match?.id,
-          namn: match?.namn && match.namn.trim() !== '' ? match.namn : 'Okänt namn',
-        };
-      });
-
-return {
-  ...row,
-  samrad: related,
-  selections: row.selections || Array(project.sections.length).fill(false),
-};
-  });
-
-  // Endast uppdatera om något faktiskt ändrats
-  const changed = updated.some((row, i) =>
-    JSON.stringify(row.samrad) !== JSON.stringify(rows[i].samrad)
-  );
-
-  if (changed) {
-    setRows(updated);
-  }
-}, [rows, project?.sections, calculateSamrad]);
 
 useEffect(() => {
   if (
@@ -927,7 +970,7 @@ useEffect(() => {
   if (changed) {
     setRows(updated);
   }
-}, [project, rows, calculateSamrad, selectedRow]);
+}, [project, rows, calculateSamrad]);
 
 useEffect(() => {
   if (!rows || !Array.isArray(rows)) return;
@@ -1139,6 +1182,10 @@ const HeaderNoteInput = ({ value, onChange, isEditing, onRequestEdit, onSelect }
         e.stopPropagation();
         onRequestEdit?.();
       }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect?.();
+      }}
     >
       <Textarea
         ref={inputRef}
@@ -1147,22 +1194,7 @@ const HeaderNoteInput = ({ value, onChange, isEditing, onRequestEdit, onSelect }
         value={value}
         onChange={onChange}
         isReadOnly={!isEditing}
-        onMouseDown={(e) => {
-          e.stopPropagation();
-          onSelect?.();
-          if (e.detail === 2) onRequestEdit?.();
-        }}
-        onMouseDownCapture={(e) => e.stopPropagation()}
-        onPointerDown={(e) => e.stopPropagation()}
-        onPointerDownCapture={(e) => e.stopPropagation()}
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelect?.();
-        }}
-        onDoubleClick={(e) => {
-          e.stopPropagation();
-          onRequestEdit?.();
-        }}
+        pointerEvents={isEditing ? 'auto' : 'none'}
         onBlur={() => {
           if (isEditing) onRequestEdit?.(null);
         }}
@@ -1247,7 +1279,9 @@ const renderHeaderCellContent = (rowIdx, colKey) => {
   if (rowIdx === 0 && colKey === 'begard') {
     return (
       <HStack spacing={2} px={2} py={1}>
-        <Text fontSize="xs" color="gray.500">Avsluta senast</Text>
+        <Text fontSize="xs" color="gray.500" whiteSpace="nowrap">
+          Avsluta senast
+        </Text>
         <Input
           size="xs"
           type="time"
@@ -1628,6 +1662,7 @@ const isCellSelected = (rowIdx, colIdx) => {
 
 const beginHeaderSelection = (rowIdx, colIdx, event) => {
   if (event.button !== 0) return;
+  if (event.detail > 1) return;
   if (event.target.closest('input, textarea, button')) return;
   if (headerEditKey) return;
   setHeaderSelection({
@@ -1851,6 +1886,15 @@ if (loading || !project) {
       <Button variant="outline" borderRadius="full" onClick={() => addRow()} size="sm">
         + Lägg till rad
       </Button>
+      <Menu>
+        <MenuButton as={Button} variant="outline" borderRadius="full" size="sm">
+          + Add delområde
+        </MenuButton>
+        <MenuList>
+          <MenuItem onClick={() => addSectionQuick('DP')}>Lägg till DP</MenuItem>
+          <MenuItem onClick={() => addSectionQuick('Linje')}>Lägg till Linje</MenuItem>
+        </MenuList>
+      </Menu>
       <Button variant="outline" borderRadius="full" onClick={() => setAnteckningarModalOpen(true)} size="sm">
         Anteckningar
       </Button>
@@ -1951,6 +1995,18 @@ if (loading || !project) {
     </HStack>
 
     <HStack spacing={2}>
+      <Text fontSize="xs" color="gray.500">Uttagningstid</Text>
+      <Input
+        size="xs"
+        type="time"
+        placeholder="Tid"
+        value={uttagningstid}
+        onChange={(e) => setUttagningstid(e.target.value)}
+        width="90px"
+      />
+    </HStack>
+
+    <HStack spacing={2}>
       <Text fontSize="xs" color="gray.500">Signatur</Text>
       <Input
         size="xs"
@@ -1958,6 +2014,29 @@ if (loading || !project) {
         value={signatur}
         onChange={(e) => setSignatur(e.target.value)}
         width="120px"
+      />
+    </HStack>
+
+    <HStack spacing={2}>
+      <Text fontSize="xs" color="gray.500">Avslutningstid</Text>
+      <Input
+        size="xs"
+        type="time"
+        placeholder="Tid"
+        value={avslutningstid}
+        onChange={(e) => setAvslutningstid(e.target.value)}
+        width="90px"
+      />
+    </HStack>
+
+    <HStack spacing={2}>
+      <Text fontSize="xs" color="gray.500">Avslutningssignatur</Text>
+      <Input
+        size="xs"
+        placeholder="Signatur"
+        value={avslutningssignatur}
+        onChange={(e) => setAvslutningssignatur(e.target.value)}
+        width="140px"
       />
     </HStack>
   </HStack>
@@ -1970,7 +2049,7 @@ if (loading || !project) {
       p={0}
       borderRadius="md"
       boxShadow="none"
-      border="1px solid #CBD5E0"
+      border="1px solid #718096"
       overflow="auto"
       w="full" 
       minW="100%" 
@@ -1982,7 +2061,7 @@ if (loading || !project) {
         size="sm"
         sx={{
           'th, td': {
-            border: '1px solid #CBD5E0',
+            border: '1px solid #718096',
             paddingX: '6px',
             paddingY: '4px',
             fontSize: '12px',
@@ -1990,10 +2069,10 @@ if (loading || !project) {
             position: 'relative',
           },
           thead: {
-            background: '#EEF2F7',
+            background: '#E1E7EF',
           },
           'tbody tr:nth-of-type(even)': {
-            backgroundColor: '#FAFBFD',
+            backgroundColor: '#F2F4F7',
           },
           'tbody tr:hover': {
             backgroundColor: '#EBF8FF !important',
@@ -2012,6 +2091,15 @@ if (loading || !project) {
           {[0, 1].map((rowIdx) => (
             <Tr key={`header-notes-${rowIdx}`}>
               {headerColumns.map((col, colIdx) => {
+                if (
+                  rowIdx === 0 &&
+                  col.key === 'avslutat' &&
+                  visibleColumns.begard &&
+                  visibleColumns.avslutat
+                ) {
+                  return null;
+                }
+
                 const mergeInfo = getMergeForCell(rowIdx, colIdx);
                 if (mergeInfo) {
                   const isTopLeft =
@@ -2049,6 +2137,30 @@ if (loading || !project) {
                   (selectedHeaderCell &&
                     selectedHeaderCell.row === rowIdx &&
                     selectedHeaderCell.colKey === col.key);
+
+                if (
+                  rowIdx === 0 &&
+                  col.key === 'begard' &&
+                  visibleColumns.avslutat
+                ) {
+                  return (
+                    <Th
+                      key={`${rowIdx}-${col.key}-span`}
+                      colSpan={2}
+                      p={0}
+                      bg={selected ? 'blue.100' : getHeaderColBg(col.key)}
+                      verticalAlign="top"
+                      onMouseDown={(e) => beginHeaderSelection(rowIdx, colIdx, e)}
+                      onMouseEnter={() => updateHeaderSelection(rowIdx, colIdx)}
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        setHeaderEditKey(`${rowIdx}:${col.key}`);
+                      }}
+                    >
+                      {renderHeaderCellContent(rowIdx, col.key)}
+                    </Th>
+                  );
+                }
                 return (
                   <Th
                     key={`${rowIdx}-${col.key}`}
@@ -2512,43 +2624,40 @@ if (loading || !project) {
       <Portal>
         <MenuList maxHeight="240px" overflowY="auto">
           {['A-S', 'L-S', 'S-S', 'E-S', 'Spf', 'Vxl'].map((option) => (
-            <MenuItem key={option}>
-              <Button
-                variant="ghost"
-                size="xs"
-                onClick={() => {
-                  updateRowField(row.id, 'anordning', [option]);
-                  setEditingBodyCell(null);
-                }}
+            <MenuItem
+              key={option}
+              onClick={() => {
+                updateRowField(row.id, 'anordning', [option]);
+                setEditingBodyCell(null);
+              }}
+            >
+              <Badge
+                colorScheme={
+                  option === 'A-S'
+                    ? 'blue'
+                    : option === 'L-S'
+                    ? 'green'
+                    : option === 'S-S'
+                    ? 'orange'
+                    : option === 'E-S'
+                    ? 'red'
+                    : option === 'Spf'
+                    ? 'yellow'
+                    : option === 'Vxl'
+                    ? 'purple'
+                    : 'gray'
+                }
+                variant="subtle"
+                fontSize="xs"
+                px={2}
+                py={0.5}
+                borderRadius="none"
+                textTransform="none"
+                mr={2}
               >
-                <Badge
-                  colorScheme={
-                    option === 'A-S'
-                      ? 'blue'
-                      : option === 'L-S'
-                      ? 'green'
-                      : option === 'S-S'
-                      ? 'orange'
-                      : option === 'E-S'
-                      ? 'red'
-                      : option === 'Spf'
-                      ? 'yellow'
-                      : option === 'Vxl'
-                      ? 'purple'
-                      : 'gray'
-                  }
-                  variant="subtle"
-                  fontSize="xs"
-                  px={2}
-                  py={0.5}
-                  borderRadius="none"
-                  textTransform="none"
-                  mr={2}
-                >
-                  {formatAnordningLabel(option)}
-                </Badge>
-                {option}
-              </Button>
+                {formatAnordningLabel(option)}
+              </Badge>
+              {option}
             </MenuItem>
           ))}
         </MenuList>
