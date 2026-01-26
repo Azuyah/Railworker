@@ -159,13 +159,13 @@ function formatDateOnly(datetimeStr) {
   return `${d}/${m}/${y}`;
 }
 
-const updateRow = (updatedRow) => {
+const updateRow = useCallback((updatedRow) => {
   const updatedRows = rows.map((row) =>
     row.id === updatedRow.id ? updatedRow : row
   );
   setRows(updatedRows);
   return updatedRows; // Returnera nya rows
-};
+}, [rows]);
 
 const deleteRow = (id) => {
   const updatedRows = rows.filter((row) => row.id !== id);
@@ -1089,7 +1089,7 @@ const avslutaRow = useCallback(async (row) => {
   };
   const updated = updateRow(updatedRow);
   await sparaProjekt(updated);
-}, [getCurrentDate, getCurrentTime, sparaProjekt]);
+}, [getCurrentDate, getCurrentTime, sparaProjekt, updateRow]);
 
 const openRowModal = (row, rowIndex) => {
   handleRowClick(row, rowIndex);
