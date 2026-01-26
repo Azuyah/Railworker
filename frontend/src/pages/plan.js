@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import LoadingScreen from '../components/LoadingScreen';
@@ -16,14 +16,13 @@ import {
   FaBolt,
   FaRegCommentDots,
 } from 'react-icons/fa';
-import { FiHash, FiUser, FiPhone, FiAperture, FiClock, FiSliders, FiEyeOff, FiEdit2, FiMessageCircle, FiChevronsRight } from 'react-icons/fi';
+import { FiHash, FiUser, FiPhone, FiAperture, FiSliders, FiEdit2, FiMessageCircle, FiChevronsRight } from 'react-icons/fi';
 import { HiX } from "react-icons/hi";
 import {
   Box,
   Button,
   Checkbox,
   Flex,
-  Heading,
   Input,
   Stack,
   Table,
@@ -35,7 +34,6 @@ import {
   Text,
   useToast,
   TableContainer,
-  Select,
   VStack,
   HStack,
   Menu,
@@ -58,7 +56,6 @@ import {
   SimpleGrid,
   FormControl,
   FormLabel,
-  useColorModeValue,
   Divider,
 } from '@chakra-ui/react';
 import { ChevronDownIcon } from '@chakra-ui/icons';
@@ -68,15 +65,11 @@ const Plan = () => {
   const { id } = useParams();
   const [project, setProject] = useState(null);
   const [rows, setRows] = useState([]);
-  const [filterValue, setFilterValue] = useState('all');
+  const [filterValue] = useState('all');
   const [archivedModalOpen, setArchivedModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedAnordning, setSelectedAnordning] = useState('');
   const [avklaradSamrad, setAvklaradSamrad] = useState({});
-  const [samradData, setSamradData] = useState({ samradList: [], avklaradMap: {} });
   const [loading, setLoading] = useState(true);
-  const [samradTrigger, setSamradTrigger] = useState(0);
-  const [activeCell, setActiveCell] = useState(null);
   const [smsSelection, setSmsSelection] = useState({});
   const [smsMessage, setSmsMessage] = useState('');
   const [editableTsmRow, setEditableTsmRow] = useState(null);
@@ -86,9 +79,7 @@ const Plan = () => {
   const [editingNoteId, setEditingNoteId] = useState(null);
   const [selectedApprovalAreas, setSelectedApprovalAreas] = useState([]);
   const [anteckningar, setAnteckningar] = useState([]);
-  const [editingId, setEditingId] = useState(null);
   const [anteckningarModalOpen, setAnteckningarModalOpen] = useState(false);
-  const [selectedTsmRow, setSelectedTsmRow] = useState(null);
   const [isProjectInfoOpen, setIsProjectInfoOpen] = useState(false);
   const [samradModalRow, setSamradModalRow] = useState(null);
   const [sectionHeaderNotes, setSectionHeaderNotes] = useState([]);
@@ -119,9 +110,6 @@ const Plan = () => {
     avslutat: 110,
   });
   const [zoomLevel, setZoomLevel] = useState(1);
-  const openProjectInfoModal = () => setIsProjectInfoOpen(true);
-  const closeProjectInfoModal = () => setIsProjectInfoOpen(false);
-  const tableBg = useColorModeValue("white", "gray.800");
   const [visibleColumns, setVisibleColumns] = useState({
     '#': false,
     btkn: true,
@@ -135,7 +123,6 @@ const Plan = () => {
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedRow, setSelectedRow] = useState(null);
-  const [selectedRowIndex, setSelectedRowIndex] = useState(null);
   const [selectedAreas, setSelectedAreas] = useState([]);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [projektNamn, setProjektNamn] = useState(project?.name || '');
@@ -151,8 +138,6 @@ const Plan = () => {
   const [avslutaSkyddTid, setAvslutaSkyddTid] = useState(project?.avslutaSkyddTid || '');
   const [signatur, setSignatur] = useState(project?.signatur || '');
   const [editSections, setEditSections] = useState(project?.sections || []);
-  const tokenData = localStorage.getItem('user');
-  const user = tokenData ? JSON.parse(tokenData).user : null;
 
 function formatDateOnly(datetimeStr) {
   const match = datetimeStr.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
@@ -200,13 +185,7 @@ const {
   onClose: onCloseSamradModal,
 } = useDisclosure();
 
-const {
-  isOpen: isCellEditorOpen,
-  onOpen: onOpenCellEditor,
-  onClose: onCloseCellEditor,
-} = useDisclosure();
-
-const calculateSamrad = (rows) => {
+const calculateSamrad = useCallback((rows) => {
   const newSamradList = [];
   const newAvklarad = {};
 
@@ -270,7 +249,7 @@ const calculateSamrad = (rows) => {
   });
 
   return { samradList: newSamradList, avklaradMap: newAvklarad };
-};
+}, []);
 
 const CELL_COLORS = [
   { label: 'Ingen', value: '' },
@@ -332,21 +311,6 @@ const updateCellMeta = (rowId, cellKey, patch) => {
   });
 };
 
-const openCellEditor = (row, cellKey, label) => {
-  setActiveCell({
-    rowId: row.id,
-    key: cellKey,
-    label,
-    rowName: row.namn || row.btkn || `Rad ${row.id}`,
-  });
-  onOpenCellEditor();
-};
-
-const closeCellEditor = () => {
-  setActiveCell(null);
-  onCloseCellEditor();
-};
-
 const getIconConfig = (iconKey) =>
   CELL_ICONS.find((option) => option.key === iconKey);
 
@@ -378,16 +342,6 @@ const smsRecipients = useMemo(() => {
 
   return { samrad: samradPeople, allRows };
 }, [rows, selectedRow]);
-
-const activeCellRow = useMemo(() => {
-  if (!activeCell?.rowId) return null;
-  return rows.find((row) => row.id === activeCell.rowId) || null;
-}, [activeCell, rows]);
-
-const activeCellMeta = useMemo(() => {
-  if (!activeCell || !activeCellRow) return {};
-  return getCellMeta(activeCellRow, activeCell.key);
-}, [activeCell, activeCellRow]);
 
 const toggleSmsSelection = (recipientId) => {
   setSmsSelection((prev) => ({
@@ -433,6 +387,52 @@ const addEditDP = () => {
   const newDP = { type: 'DP', name: '' }; // ändrat signal ➜ name
   setEditSections([...editSections, newDP]);
 };
+
+const fetchProject = useCallback(async () => {
+  try {
+    setLoading(true);
+
+    const tokenData = localStorage.getItem('user');
+    const token = tokenData ? JSON.parse(tokenData).token : null;
+
+    const response = await axios.get(`https://railworker-production.up.railway.app/api/project/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const current = response.data;
+    setProject({
+      ...current,
+      beteckningar: current.beteckningar || [],
+    });
+    setAnteckningar(current.anteckningar || []);
+    setSectionHeaderNotes(Array.isArray(current.sectionHeaderNotes) ? current.sectionHeaderNotes : []);
+    setSectionHeaderNotes2(Array.isArray(current.sectionHeaderNotes2) ? current.sectionHeaderNotes2 : []);
+    setSectionHeaderNotes3(Array.isArray(current.sectionHeaderNotes3) ? current.sectionHeaderNotes3 : []);
+    setHeaderNotesTop(current.headerNotesTop || {});
+    setHeaderNotesMid(current.headerNotesMid || {});
+    if (Array.isArray(current.headerMerges)) {
+      setHeaderMerges(current.headerMerges.filter((merge) => merge.type !== 'begard-default'));
+    } else {
+      setHeaderMerges([]);
+    }
+
+    const enrichedRows = (current.rows || []).map((row) => {
+      const selectedAreas = Array.isArray(row.selections)
+        ? row.selections.map((val, idx) => (val ? idx : null)).filter((i) => i !== null)
+        : [];
+
+      return { ...row, selectedAreas };
+    });
+
+    setRows(enrichedRows);
+  } catch (error) {
+    console.error('Kunde inte hämta projekt:', error);
+  } finally {
+    setLoading(false);
+  }
+}, [id]);
 
 const approveRow = async (rowId) => {
   try {
@@ -705,22 +705,7 @@ await axios.put(
 
 useEffect(() => {
   fetchProject();
-}, []);
-
-useEffect(() => {
-  if (selectedTsmRow) {
-    setEditableTsmRow({ ...selectedTsmRow });
-  }
-}, [selectedTsmRow]);
-
-useEffect(() => {
-  if (selectedTsmRow?.selections) {
-    const initialAreas = selectedTsmRow.selections
-      .map((val, idx) => (val ? idx : null))
-      .filter((idx) => idx !== null);
-    setSelectedApprovalAreas(initialAreas);
-  }
-}, [selectedTsmRow]);
+}, [fetchProject]);
 
 useEffect(() => {
   if (project?.rows?.length && (!rows || rows.length === 0)) {
@@ -739,7 +724,7 @@ useEffect(() => {
 
     setRows(restoredRows);
   }
-}, [project]);
+}, [project, rows]);
 
 useEffect(() => {
   if (selectedRow?.id) {
@@ -748,7 +733,7 @@ useEffect(() => {
       selectedAreas: [...selectedAreas],
     }));
   }
-}, [selectedAreas]);
+}, [selectedAreas, selectedRow?.id]);
 
 useEffect(() => {
   if (!project?.sections) return;
@@ -856,7 +841,7 @@ useEffect(() => {
     window.removeEventListener('keydown', handleHotkeys);
     window.removeEventListener('keyup', handleKeyUp);
   };
-}, [activeRowId, rows]);
+}, [activeRowId, getCurrentDate, getCurrentTime, rows, sparaProjekt, showAvslutaRowConfirm, updateRowField]);
 
 useEffect(() => {
   if (!rows || rows.length === 0 || !project?.sections) return;
@@ -893,7 +878,7 @@ return {
   if (changed) {
     setRows(updated);
   }
-}, [rows, project]);
+}, [rows, project?.sections, calculateSamrad]);
 
 useEffect(() => {
   if (
@@ -952,7 +937,7 @@ useEffect(() => {
     setRows(updatedRows);
     setSelectedRow(updatedRowWithSamrad);
   }
-}, [selectedAreas, selectedRow?.id, project?.sections?.length]);
+}, [rows, selectedAreas, selectedRow?.id, project?.sections, calculateSamrad]);
 
 useEffect(() => {
   if (selectedRowId == null) return;
@@ -996,8 +981,14 @@ useEffect(() => {
     };
   });
 
-  setRows(updated);
-}, [project]); // ❗️Byt till [project, rows]
+  const changed = updated.some((row, i) =>
+    JSON.stringify(row) !== JSON.stringify(rows[i])
+  );
+
+  if (changed) {
+    setRows(updated);
+  }
+}, [project, rows, calculateSamrad]);
 
 useEffect(() => {
   if (!rows || !Array.isArray(rows)) return;
@@ -1044,72 +1035,6 @@ useEffect(() => {
 
   setSelectedRow(match);
 }, [selectedRowId, rows]);
-
-  const fetchProject = async () => {
-    try {
-       setLoading(true);
-
-      const tokenData = localStorage.getItem('user');
-      const token = tokenData ? JSON.parse(tokenData).token : null;
-
-      const response = await axios.get(`https://railworker-production.up.railway.app/api/project/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const current = response.data;
-    setProject({
-      ...current,
-      beteckningar: current.beteckningar || [],
-    });
-    setAnteckningar(current.anteckningar || []);
-    setSectionHeaderNotes(Array.isArray(current.sectionHeaderNotes) ? current.sectionHeaderNotes : []);
-    setSectionHeaderNotes2(Array.isArray(current.sectionHeaderNotes2) ? current.sectionHeaderNotes2 : []);
-    setSectionHeaderNotes3(Array.isArray(current.sectionHeaderNotes3) ? current.sectionHeaderNotes3 : []);
-    setHeaderNotesTop(current.headerNotesTop || {});
-    setHeaderNotesMid(current.headerNotesMid || {});
-    if (Array.isArray(current.headerMerges)) {
-      setHeaderMerges(
-        current.headerMerges.map((merge) =>
-          merge.type === 'begard-default'
-            ? { ...merge, colStartKey: 'begard', colEndKey: 'begard', rowStart: 0, rowEnd: 0 }
-            : merge
-        )
-      );
-    } else {
-      setHeaderMerges([
-        {
-          id: 'begard-default',
-          rowStart: 0,
-          rowEnd: 0,
-          colStartKey: 'begard',
-          colEndKey: 'begard',
-          type: 'begard-default',
-          text: '',
-        },
-      ]);
-    }
-      
-      
-const enrichedRows = (current.rows || []).map((row) => {
-  const selectedAreas = Array.isArray(row.selections)
-    ? row.selections.map((val, idx) => (val ? idx : null)).filter((i) => i !== null)
-    : [];
-
-  return { ...row, selectedAreas };
-});
-
-setRows(enrichedRows);
-
-      return () => {};
-    } catch (error) {
-      console.error('Kunde inte hämta projekt:', error);
-    } finally {
-    setLoading(false);
-    }
-
-  };
 
 const createNewRow = (rows, project) => {
   const nextId = rows.length > 0 ? Math.max(...rows.map(r => r.id)) + 1 : 1;
@@ -1191,17 +1116,13 @@ const addRow = () => {
     newRow.selections?.map((selected, index) => (selected ? index : null)).filter((index) => index !== null) || []
   );
 
-  setSelectedAnordning('');
 };
 
-const updateRowField = (rowId, field, value) => {
+function updateRowField(rowId, field, value) {
   setRows((prev) =>
     prev.map((row) => (row.id === rowId ? { ...row, [field]: value } : row))
   );
-  if (['dp', 'linje', 'anordning'].includes(field)) {
-    setSamradTrigger((prev) => prev + 1);
-  }
-};
+}
 
 
 const toggleDelomrade = (rowId, secIdx) => {
@@ -1372,9 +1293,6 @@ const updateMergeText = (id, value) => {
 };
 
 const renderMergedCellContent = (merge) => {
-  if (merge.type === 'begard-default') {
-    return null;
-  }
   return (
     <HeaderNoteInput
       value={merge.text || ''}
@@ -1390,7 +1308,7 @@ const renderHeaderCellContent = (rowIdx, colKey) => {
   if (rowIdx === 0 && colKey === 'begard') {
     return (
       <HStack spacing={2} px={2} py={1}>
-        <Text fontSize="xs" color="gray.500">Avsluta skydd</Text>
+        <Text fontSize="xs" color="gray.500">Avsluta senast</Text>
         <Input
           size="xs"
           type="time"
@@ -1445,7 +1363,7 @@ const toggleBodyCellSelection = (rowId, key) => {
   if (bodyContextMenu.open) closeBodyContextMenu();
 };
 
-const showAvslutaRowConfirm = (row) => {
+function showAvslutaRowConfirm(row) {
   const toastId = 'confirm-avsluta-row';
   if (toast.isActive(toastId)) return;
   toast({
@@ -1493,7 +1411,7 @@ const showAvslutaRowConfirm = (row) => {
       </Box>
     ),
   });
-};
+}
 
 const showDeleteRowConfirm = (rowId) => {
   const toastId = 'confirm-delete-row';
@@ -1583,7 +1501,6 @@ const result = calculateSamrad(tempRows);
     samrad: matched,
   });
 
-  setSelectedRowIndex(rowIndex);
   setSelectedRowId(row.id);
 
  setSelectedAreas(
@@ -1592,7 +1509,6 @@ const result = calculateSamrad(tempRows);
     .filter((index) => index !== null) || []
 );
 
-  setSelectedAnordning(Array.isArray(row.anordning) ? row.anordning : [])
 
   onOpen();
 };
@@ -1611,13 +1527,8 @@ const handleModalChange = (field, value) => {
 
   setRows(updatedRows);
   setSelectedRow((prev) => ({ ...prev, [field]: value }));
-
-  if (['dp', 'linje', 'anordning'].includes(field)) {
-    setSamradTrigger((prev) => prev + 1);
-  }
 };
 
-const [samrad, setSamrad] = useState([]);
 const filteredRows = rows
   .filter((row) =>
     filterValue === 'all' || (row.namn || '').toLowerCase() === filterValue.toLowerCase()
@@ -1626,25 +1537,6 @@ const filteredRows = rows
     (row.namn || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
     (row.telefon || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
-const { dpOptions, linjeOptions } = useMemo(() => {
-  const dp = [];
-  const linje = [];
-  let letterIndex = 0;
-
-  if (project?.sections) {
-    project.sections.forEach((sec) => {
-      const letter = String.fromCharCode(65 + letterIndex);
-      const labeledSection = { ...sec, label: `${sec.type} ${letter}`, letterIndex };
-
-      if (sec.type === 'DP') dp.push(labeledSection);
-      else if (sec.type === 'Linje') linje.push(labeledSection);
-
-      letterIndex++;
-    });
-  }
-
-  return { dpOptions: dp, linjeOptions: linje };
-}, [project]);
 const visibleSectionIndexes = useMemo(() => {
   if (!project?.sections?.length) return [];
   return project.sections
@@ -1788,7 +1680,7 @@ useEffect(() => {
   const handleMouseUp = () => finalizeHeaderSelection();
   window.addEventListener('mouseup', handleMouseUp);
   return () => window.removeEventListener('mouseup', handleMouseUp);
-}, [headerSelection]);
+}, [headerSelection, finalizeHeaderSelection]);
 
 useEffect(() => {
   if (!bodyContextMenu.open) return;
@@ -1808,7 +1700,7 @@ useEffect(() => {
     window.removeEventListener('mousedown', handleClickOutside);
     window.removeEventListener('keydown', handleEscape);
   };
-}, [bodyContextMenu.open]);
+}, [bodyContextMenu.open, closeBodyContextMenu]);
 
 useLayoutEffect(() => {
   if (!bodyContextMenu.open || !bodyContextRef.current) return;
@@ -1842,7 +1734,6 @@ useLayoutEffect(() => {
 if (loading || !project) {
   return <LoadingScreen text="Hämtar projekt..." />;
 }
-const isCellModeActive = false;
   return (
 <Box
   minH="100vh"
@@ -3279,8 +3170,6 @@ onClick={() => {
     setRows(newRows);
 
     const result = calculateSamrad(newRows);
-    setSamrad(result.samradList);
-    setSamradTrigger((prev) => prev + 1);
   }}
 >
   {sec.type} {String.fromCharCode(65 + idx)}
@@ -3565,98 +3454,6 @@ onChange={() =>
     <Button onClick={onClose}>Stäng</Button>
   </Flex>
 </ModalFooter>
-  </ModalContent>
-</Modal>
-
-<Modal isOpen={isCellEditorOpen} onClose={closeCellEditor} size="lg">
-  <ModalOverlay />
-  <ModalContent>
-    <ModalHeader>Cellinställningar</ModalHeader>
-    <ModalCloseButton />
-    <ModalBody>
-      {activeCell ? (
-        <Stack spacing={4}>
-          <Box>
-            <Text fontSize="sm" color="gray.600">
-              {activeCell.rowName} • {activeCell.label}
-            </Text>
-          </Box>
-          <Box>
-            <Text fontWeight="semibold" mb={2}>Färg</Text>
-            <Flex wrap="wrap" gap={2}>
-              {CELL_COLORS.map((color) => (
-                <Button
-                  key={color.value || 'none'}
-                  size="sm"
-                  variant={activeCellMeta?.color === color.value ? 'solid' : 'outline'}
-                  colorScheme={color.value ? 'gray' : 'gray'}
-                  onClick={() =>
-                    updateCellMeta(activeCell.rowId, activeCell.key, { color: color.value })
-                  }
-                  leftIcon={
-                    <Box
-                      w="12px"
-                      h="12px"
-                      borderRadius="full"
-                      bg={color.value || 'transparent'}
-                      border="1px solid #CBD5E0"
-                    />
-                  }
-                >
-                  {color.label}
-                </Button>
-              ))}
-            </Flex>
-          </Box>
-          <Divider />
-          <Box>
-            <Text fontWeight="semibold" mb={2}>Ikon</Text>
-            <Flex wrap="wrap" gap={2}>
-              {CELL_ICONS.map((option) => (
-                <Button
-                  key={option.key || 'none'}
-                  size="sm"
-                  variant={activeCellMeta?.icon === option.key ? 'solid' : 'outline'}
-                  onClick={() =>
-                    updateCellMeta(activeCell.rowId, activeCell.key, { icon: option.key })
-                  }
-                  leftIcon={
-                    option.icon ? <Icon as={option.icon} color={option.color} /> : undefined
-                  }
-                >
-                  {option.label}
-                </Button>
-              ))}
-            </Flex>
-          </Box>
-          <Divider />
-          <FormControl>
-            <FormLabel>Kommentar</FormLabel>
-            <Textarea
-              value={activeCellMeta?.comment || ''}
-              onChange={(e) =>
-                updateCellMeta(activeCell.rowId, activeCell.key, { comment: e.target.value })
-              }
-              placeholder="Skriv en kommentar som visas som tooltip."
-            />
-          </FormControl>
-        </Stack>
-      ) : (
-        <Text fontSize="sm" color="gray.500">Ingen cell vald.</Text>
-      )}
-    </ModalBody>
-    <ModalFooter justifyContent="space-between">
-      <Button
-        variant="outline"
-        onClick={() => {
-          if (!activeCell) return;
-          updateCellMeta(activeCell.rowId, activeCell.key, { __clear: true });
-        }}
-      >
-        Rensa cell
-      </Button>
-      <Button onClick={closeCellEditor}>Stäng</Button>
-    </ModalFooter>
   </ModalContent>
 </Modal>
 

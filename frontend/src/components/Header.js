@@ -7,7 +7,6 @@ import {
   Button,
   HStack,
   Text,
-  useColorModeValue,
   Image,
 } from '@chakra-ui/react';
 import { motion } from 'framer-motion';

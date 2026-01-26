@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
@@ -16,13 +16,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    fetchUserAndProjects();
-  }, []);
-
-const fetchUserAndProjects = async () => {
+  const fetchUserAndProjects = useCallback(async () => {
   const token = localStorage.getItem('token');
   if (!token) {
     navigate('/');
@@ -30,12 +24,11 @@ const fetchUserAndProjects = async () => {
   }
 
   try {
-    const userRes = await axios.get('https://railworker-production.up.railway.app/api/user', {
+    await axios.get('https://railworker-production.up.railway.app/api/user', {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-    setUser(userRes.data);
 
     const projectRes = await axios.get(
       'https://railworker-production.up.railway.app/api/projects',
@@ -52,7 +45,11 @@ const fetchUserAndProjects = async () => {
   } finally {
     setLoading(false);
   }
-};
+}, [navigate]);
+
+  useEffect(() => {
+    fetchUserAndProjects();
+  }, [fetchUserAndProjects]);
 
   const boxBg = useColorModeValue('white', 'gray.700');
 

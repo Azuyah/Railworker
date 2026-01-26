@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   SimpleGrid,
@@ -13,8 +13,6 @@ import {
   Checkbox,
   Button,
   Textarea,
-  Text,
-  Box,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -22,14 +20,12 @@ import {
   ModalFooter,
   ModalBody,
   ModalCloseButton,
-  VStack,
   useToast,
   useDisclosure,
 } from '@chakra-ui/react';
 import { ChevronDownIcon } from '@chakra-ui/icons';
 import axios from 'axios';
 import Header from '../components/Header';
-import LoadingScreen from '../components/LoadingScreen';
 
 export default function Panel() {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -39,28 +35,20 @@ export default function Panel() {
   const userDataRaw = localStorage.getItem('user');
   const user = userDataRaw ? JSON.parse(userDataRaw) : null;
   const [selectedSectionIds, setSelectedSectionIds] = useState([]);
-  const [datum, setDatum] = useState('');
   const [begardDatum, setBegardDatum] = useState('');
   const [begard, setBegard] = useState('');
   const [anteckning, setAnteckning] = useState('');
   const [anordning, setAnordning] = useState([]);
   const [enrolledProjects, setEnrolledProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
-  const [namn, setNamn] = useState(`${user?.firstName || ''} ${user?.lastName || ''}`);
-  const [telefon, setTelefon] = useState(user?.phone || '');
+  const namn = `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
+  const telefon = user?.phone || '';
   const toast = useToast();
 
-  useEffect(() => {
-    if (!token) {
-      navigate('/');
-    } else {
-      fetchAllProjects();
-    }
-  }, []);
-
-    const userIsInProject = (project) => {
-    return Array.isArray(project.rows) && project.rows.some((row) => row.userId === user?.id);
-  };
+  const userIsInProject = useCallback(
+    (project) => Array.isArray(project.rows) && project.rows.some((row) => row.userId === user?.id),
+    [user?.id]
+  );
 
   const handleSelfEnroll = async () => {
     try {
@@ -99,7 +87,6 @@ export default function Panel() {
       });
 
       onClose();
-      setDatum('');
       setBegard('');
       setBegardDatum('');
       setAnteckning('');
@@ -117,10 +104,8 @@ export default function Panel() {
     }
   };
 
-  const fetchAllProjects = async () => {
+  const fetchAllProjects = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
-
       const response = await axios.get(
         'https://railworker-production.up.railway.app/api/projects',
         {
@@ -136,7 +121,15 @@ export default function Panel() {
       console.error('❌ Kunde inte hämta projekt:', error);
       setProjects([]);
     }
-  };
+  }, [token, userIsInProject]);
+
+  useEffect(() => {
+    if (!token) {
+      navigate('/');
+      return;
+    }
+    fetchAllProjects();
+  }, [fetchAllProjects, navigate, token]);
 
   return (
     <div

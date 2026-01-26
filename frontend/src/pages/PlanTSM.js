@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Header from '../components/Header';
 import axios from 'axios';
@@ -9,11 +9,7 @@ const PlanTSM = () => {
   const [rows, setRows] = useState([]);
   const [countdown, setCountdown] = useState('');
 
-  useEffect(() => {
-    fetchProject();
-  }, []);
-
-  const fetchProject = async () => {
+  const fetchProject = useCallback(async () => {
     try {
       const tokenData = localStorage.getItem('user');
       const token = tokenData ? JSON.parse(tokenData).token : null;
@@ -57,11 +53,22 @@ const PlanTSM = () => {
         }
       }, 1000);
 
-      return () => clearInterval(interval);
+      return interval;
     } catch (err) {
       console.error('Kunde inte hämta projektet:', err);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    let intervalId;
+    const run = async () => {
+      intervalId = await fetchProject();
+    };
+    run();
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [fetchProject]);
 
   const getSharedContacts = () => {
     const firstRow = rows[0];

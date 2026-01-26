@@ -24,7 +24,6 @@ import {
   Text,
   Box,
   Flex,
-  useDisclosure,
   SlideFade,
   Icon,
 } from '@chakra-ui/react';
@@ -50,12 +49,11 @@ const Preview = () => {
     selections: Array(10).fill(false),
   });
 
-  const [rows, setRows] = useState([
+  const [rows] = useState([
     { id: 2, namn: 'Anna Andersson', telefon: '0701234567' },
     { id: 3, namn: 'Björn Berg', telefon: '0737654321' },
   ]);
 
-  const [selectedAreas, setSelectedAreas] = useState([]);
   const [avklaradSamrad, setAvklaradSamrad] = useState({});
 
   const handleModalChange = (field, value) => {

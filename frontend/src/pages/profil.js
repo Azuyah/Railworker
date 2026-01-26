@@ -9,10 +9,7 @@ import Header from '../components/Header';
 
 const Profil = () => {
   const [editing, setEditing] = useState(false);
-  const [user, setUser] = useState(null);
   const [localUser, setLocalUser] = useState(null);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
 
@@ -25,12 +22,11 @@ const Profil = () => {
         const res = await axios.get('https://railworker-production.up.railway.app/api/user', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
-        setUser(res.data);
         setLocalUser(res.data);
         fetchEmployees();
       } catch (err) {
         console.error('Kunde inte hämta användare:', err);
-        setError('Fel vid hämtning av användare');
+        toast({ title: 'Fel vid hämtning av användare', status: 'error', duration: 3000, isClosable: true });
       }
     };
 
@@ -46,7 +42,7 @@ const Profil = () => {
     };
 
     fetchUser();
-  }, []);
+  }, [toast]);
 
   const handleChange = (field, value) => {
     setLocalUser(prev => ({ ...prev, [field]: value }));
@@ -68,14 +64,12 @@ const Profil = () => {
       await axios.put('https://railworker-production.up.railway.app/api/user', localUser, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
-      setUser(localUser);
       setEditing(false);
-      setSuccess(true);
       onClose();
       toast({ title: 'Ändringar sparade', status: 'success', duration: 3000, isClosable: true });
     } catch (err) {
       console.error('Fel vid sparande:', err);
-      setError('Kunde inte spara användarinfo');
+      toast({ title: 'Kunde inte spara användarinfo', status: 'error', duration: 3000, isClosable: true });
     }
   };
 

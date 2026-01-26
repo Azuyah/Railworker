@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -17,8 +17,6 @@ function AppRoutes() {
   const location = useLocation();
 
   // Kontrollera om användaren redan är inloggad
-const user = JSON.parse(localStorage.getItem('user'));
-const token = user?.token;
 
   return (
     <Routes location={location}>
