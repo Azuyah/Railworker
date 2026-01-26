@@ -570,21 +570,21 @@ const updateProject = async () => {
   }
 };
 
-const getCurrentDate = () => {
+const getCurrentDate = useCallback(() => {
   const now = new Date();
   const day = String(now.getDate()).padStart(2, '0');
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const year = now.getFullYear();
   return `${day}/${month}/${year}`; // Exempel: "28/06/2025"
-};
+}, []);
 
-const getCurrentTime = () => {
+const getCurrentTime = useCallback(() => {
   const now = new Date();
   return now.toTimeString().slice(0, 5); // Exempel: "15:12"
-};
+}, []);
 
 
-const sparaProjekt = async (customRows = rows) => {
+const sparaProjekt = useCallback(async (customRows = rows) => {
   try {
     const tokenData = localStorage.getItem('user');
     const token = tokenData ? JSON.parse(tokenData).token : null;
@@ -670,8 +670,7 @@ if (selectedRow && selectedRow.id) {
       signatur,
     };
 
-rowsWithSamrad.forEach((row, index) => {
-});
+    rowsWithSamrad.forEach(() => {});
 
 // ✅ Skicka till backend
 await axios.put(
@@ -701,7 +700,24 @@ await axios.put(
       isClosable: true,
     });
   }
-};
+}, [
+  avstamt,
+  avslutaSkyddTid,
+  calculateSamrad,
+  headerMerges,
+  headerNotesMid,
+  headerNotesTop,
+  objekt,
+  project,
+  rows,
+  sectionHeaderNotes,
+  sectionHeaderNotes2,
+  sectionHeaderNotes3,
+  selectedAreas,
+  selectedRow,
+  signatur,
+  toast,
+]);
 
 useEffect(() => {
   fetchProject();
@@ -765,83 +781,6 @@ useEffect(() => {
   setSmsSelection({});
   setSmsMessage('');
 }, [selectedRowId]);
-
-useEffect(() => {
-  const handleHotkeys = (event) => {
-    const target = event.target;
-    const isTyping =
-      target &&
-      (target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.tagName === 'SELECT' ||
-        target.isContentEditable);
-
-    if (isTyping) return;
-
-    if (event.metaKey && event.key.toLowerCase() === 's') {
-      event.preventDefault();
-      sparaProjekt();
-      return;
-    }
-
-    if (event.metaKey && event.key === '/') {
-      event.preventDefault();
-      setHotkeysOpen((prev) => !prev);
-      return;
-    }
-
-    if (event.key === '+' || event.key === '=') {
-      event.preventDefault();
-      setZoomLevel((z) => Math.min(1.4, Number((z + 0.1).toFixed(2))));
-      return;
-    }
-
-    if (event.key === '-' || event.key === '_') {
-      event.preventDefault();
-      setZoomLevel((z) => Math.max(0.8, Number((z - 0.1).toFixed(2))));
-      return;
-    }
-
-    if (!activeRowId) return;
-
-    if (event.key.toLowerCase() === 't') {
-      event.preventDefault();
-      const now = getCurrentTime();
-      if (event.shiftKey) {
-        updateRowField(activeRowId, 'begard', now);
-      } else if (event.altKey) {
-        updateRowField(activeRowId, 'avslutat', now);
-      } else {
-        updateRowField(activeRowId, 'starttid', now);
-      }
-      return;
-    }
-
-    if (event.key.toLowerCase() === 'd') {
-      event.preventDefault();
-      const row = rows.find((item) => item.id === activeRowId);
-      if (row) {
-        showAvslutaRowConfirm(row);
-      }
-      return;
-    }
-
-    if (event.shiftKey && event.key.toLowerCase() === 'd') {
-      event.preventDefault();
-      const today = getCurrentDate();
-      updateRowField(activeRowId, 'begardDatum', today);
-    }
-  };
-
-  const handleKeyUp = () => {};
-
-  window.addEventListener('keydown', handleHotkeys);
-  window.addEventListener('keyup', handleKeyUp);
-  return () => {
-    window.removeEventListener('keydown', handleHotkeys);
-    window.removeEventListener('keyup', handleKeyUp);
-  };
-}, [activeRowId, getCurrentDate, getCurrentTime, rows, sparaProjekt, showAvslutaRowConfirm, updateRowField]);
 
 useEffect(() => {
   if (!rows || rows.length === 0 || !project?.sections) return;
@@ -937,7 +876,7 @@ useEffect(() => {
     setRows(updatedRows);
     setSelectedRow(updatedRowWithSamrad);
   }
-}, [rows, selectedAreas, selectedRow?.id, project?.sections, calculateSamrad]);
+}, [rows, selectedAreas, selectedRow, project?.sections, calculateSamrad]);
 
 useEffect(() => {
   if (selectedRowId == null) return;
@@ -988,7 +927,7 @@ useEffect(() => {
   if (changed) {
     setRows(updated);
   }
-}, [project, rows, calculateSamrad]);
+}, [project, rows, calculateSamrad, selectedRow]);
 
 useEffect(() => {
   if (!rows || !Array.isArray(rows)) return;
@@ -1118,11 +1057,11 @@ const addRow = () => {
 
 };
 
-function updateRowField(rowId, field, value) {
+const updateRowField = useCallback((rowId, field, value) => {
   setRows((prev) =>
     prev.map((row) => (row.id === rowId ? { ...row, [field]: value } : row))
   );
-}
+}, []);
 
 
 const toggleDelomrade = (rowId, secIdx) => {
@@ -1347,9 +1286,9 @@ const openBodyContextMenu = (event, rowId, key) => {
   setEditingBodyCell(null);
 };
 
-const closeBodyContextMenu = () => {
+const closeBodyContextMenu = useCallback(() => {
   setBodyContextMenu((prev) => ({ ...prev, open: false }));
-};
+}, []);
 
 const applyMetaToSelectedBodyCell = (patch) => {
   if (!selectedBodyCell) return;
@@ -1363,7 +1302,7 @@ const toggleBodyCellSelection = (rowId, key) => {
   if (bodyContextMenu.open) closeBodyContextMenu();
 };
 
-function showAvslutaRowConfirm(row) {
+const showAvslutaRowConfirm = useCallback((row) => {
   const toastId = 'confirm-avsluta-row';
   if (toast.isActive(toastId)) return;
   toast({
@@ -1411,7 +1350,84 @@ function showAvslutaRowConfirm(row) {
       </Box>
     ),
   });
-}
+}, [avslutaRow, toast]);
+
+useEffect(() => {
+  const handleHotkeys = (event) => {
+    const target = event.target;
+    const isTyping =
+      target &&
+      (target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable);
+
+    if (isTyping) return;
+
+    if (event.metaKey && event.key.toLowerCase() === 's') {
+      event.preventDefault();
+      sparaProjekt();
+      return;
+    }
+
+    if (event.metaKey && event.key === '/') {
+      event.preventDefault();
+      setHotkeysOpen((prev) => !prev);
+      return;
+    }
+
+    if (event.key === '+' || event.key === '=') {
+      event.preventDefault();
+      setZoomLevel((z) => Math.min(1.4, Number((z + 0.1).toFixed(2))));
+      return;
+    }
+
+    if (event.key === '-' || event.key === '_') {
+      event.preventDefault();
+      setZoomLevel((z) => Math.max(0.8, Number((z - 0.1).toFixed(2))));
+      return;
+    }
+
+    if (!activeRowId) return;
+
+    if (event.key.toLowerCase() === 't') {
+      event.preventDefault();
+      const now = getCurrentTime();
+      if (event.shiftKey) {
+        updateRowField(activeRowId, 'begard', now);
+      } else if (event.altKey) {
+        updateRowField(activeRowId, 'avslutat', now);
+      } else {
+        updateRowField(activeRowId, 'starttid', now);
+      }
+      return;
+    }
+
+    if (event.key.toLowerCase() === 'd') {
+      event.preventDefault();
+      const row = rows.find((item) => item.id === activeRowId);
+      if (row) {
+        showAvslutaRowConfirm(row);
+      }
+      return;
+    }
+
+    if (event.shiftKey && event.key.toLowerCase() === 'd') {
+      event.preventDefault();
+      const today = getCurrentDate();
+      updateRowField(activeRowId, 'begardDatum', today);
+    }
+  };
+
+  const handleKeyUp = () => {};
+
+  window.addEventListener('keydown', handleHotkeys);
+  window.addEventListener('keyup', handleKeyUp);
+  return () => {
+    window.removeEventListener('keydown', handleHotkeys);
+    window.removeEventListener('keyup', handleKeyUp);
+  };
+}, [activeRowId, getCurrentDate, getCurrentTime, rows, sparaProjekt, showAvslutaRowConfirm, updateRowField]);
 
 const showDeleteRowConfirm = (rowId) => {
   const toastId = 'confirm-delete-row';
@@ -1575,7 +1591,7 @@ const headerColumnIndex = useMemo(() => {
   return map;
 }, [headerColumns]);
 
-const getMergeIndices = (merge) => {
+const getMergeIndices = useCallback((merge) => {
   const startIdx = headerColumnIndex[merge.colStartKey];
   const endIdx = headerColumnIndex[merge.colEndKey];
   if (startIdx === undefined || endIdx === undefined) return null;
@@ -1583,7 +1599,7 @@ const getMergeIndices = (merge) => {
     colStart: Math.min(startIdx, endIdx),
     colEnd: Math.max(startIdx, endIdx),
   };
-};
+}, [headerColumnIndex]);
 
 const getMergeForCell = (rowIdx, colIdx) => {
   for (const merge of headerMerges) {
@@ -1630,7 +1646,7 @@ const updateHeaderSelection = (rowIdx, colIdx) => {
   }));
 };
 
-const finalizeHeaderSelection = () => {
+const finalizeHeaderSelection = useCallback(() => {
   if (!headerSelection?.active) return;
   const rowStart = Math.min(headerSelection.start.row, headerSelection.end.row);
   const rowEnd = Math.max(headerSelection.start.row, headerSelection.end.row);
@@ -1673,7 +1689,7 @@ const finalizeHeaderSelection = () => {
   });
 
   setHeaderSelection(null);
-};
+}, [getMergeIndices, headerSelection]);
 
 useEffect(() => {
   if (!headerSelection?.active) return;
@@ -3169,7 +3185,7 @@ onClick={() => {
 
     setRows(newRows);
 
-    const result = calculateSamrad(newRows);
+    calculateSamrad(newRows);
   }}
 >
   {sec.type} {String.fromCharCode(65 + idx)}
