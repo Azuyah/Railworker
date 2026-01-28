@@ -16,7 +16,7 @@ import {
   FaBolt,
   FaRegCommentDots,
 } from 'react-icons/fa';
-import { FiHash, FiUser, FiPhone, FiAperture, FiSliders, FiEdit2, FiMessageCircle, FiChevronsRight } from 'react-icons/fi';
+import { FiHash, FiUser, FiPhone, FiAperture, FiSliders, FiEdit2, FiMessageCircle } from 'react-icons/fi';
 import { HiX } from "react-icons/hi";
 import {
   Box,
@@ -109,6 +109,7 @@ const Plan = () => {
     begard: 110,
     avslutat: 110,
   });
+  const [resizingColumn, setResizingColumn] = useState(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [visibleColumns, setVisibleColumns] = useState({
     '#': false,
@@ -408,7 +409,7 @@ const buildSectionsWithInsert = (sections, type) => {
   return next;
 };
 
-const addSectionQuick = async (type) => {
+const addSectionQuick = async (type = 'Linje') => {
   if (!project) return;
   const newSections = buildSectionsWithInsert(project.sections, type);
   const updatedRows = (rows || []).map((row) => ({
@@ -1149,12 +1150,31 @@ const toggleColumn = (col) => {
   setVisibleColumns((prev) => ({ ...prev, [col]: !prev[col] }));
 };
 
-const toggleColumnWidth = (key, expanded) => {
-  setColumnWidths((prev) => ({
-    ...prev,
-    [key]: prev[key] < expanded ? expanded : Math.max(expanded - 60, 90),
-  }));
+const beginColumnResize = (key, event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  setResizingColumn({
+    key,
+    startX: event.clientX,
+    startWidth: columnWidths[key] || 120,
+  });
 };
+
+useEffect(() => {
+  if (!resizingColumn) return;
+  const handleMove = (event) => {
+    const delta = event.clientX - resizingColumn.startX;
+    const nextWidth = Math.max(60, resizingColumn.startWidth + delta);
+    setColumnWidths((prev) => ({ ...prev, [resizingColumn.key]: nextWidth }));
+  };
+  const handleUp = () => setResizingColumn(null);
+  window.addEventListener('mousemove', handleMove);
+  window.addEventListener('mouseup', handleUp);
+  return () => {
+    window.removeEventListener('mousemove', handleMove);
+    window.removeEventListener('mouseup', handleUp);
+  };
+}, [resizingColumn]);
 
 const autoGrowTextarea = (event) => {
   const el = event.currentTarget;
@@ -1252,9 +1272,13 @@ const setHeaderCellValue = (rowIdx, colKey, value) => {
 const getHeaderColBg = (colKey) => {
   if (colKey.startsWith('section-')) {
     const idx = Number(colKey.split('-')[1]);
-    return idx % 2 === 0 ? 'blue.50' : 'transparent';
+    const sectionPalette = ['blue.50', 'teal.50', 'purple.50', 'orange.50', 'green.50', 'pink.50'];
+    return sectionPalette[idx % sectionPalette.length];
   }
-  return 'transparent';
+  if (colKey === 'btkn' || colKey === 'namn') return 'purple.50';
+  if (colKey === 'telefon' || colKey === 'anordning') return 'teal.50';
+  if (colKey === 'starttid' || colKey === 'begard' || colKey === 'avslutat') return 'blue.50';
+  return 'white';
 };
 
 const updateMergeText = (id, value) => {
@@ -1868,7 +1892,7 @@ if (loading || !project) {
       <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wider">
         Projekt
       </Text>
-      <Text fontSize="lg" fontWeight="600" color="gray.900">
+      <Text fontSize="lg" fontWeight="800" color="gray.900">
         {project.name}
       </Text>
       <Text fontSize="sm" color="gray.600">
@@ -1886,15 +1910,14 @@ if (loading || !project) {
       <Button variant="outline" borderRadius="full" onClick={() => addRow()} size="sm">
         + Lägg till rad
       </Button>
-      <Menu>
-        <MenuButton as={Button} variant="outline" borderRadius="full" size="sm">
-          + Add delområde
-        </MenuButton>
-        <MenuList>
-          <MenuItem onClick={() => addSectionQuick('DP')}>Lägg till DP</MenuItem>
-          <MenuItem onClick={() => addSectionQuick('Linje')}>Lägg till Linje</MenuItem>
-        </MenuList>
-      </Menu>
+      <Button
+        variant="outline"
+        borderRadius="full"
+        size="sm"
+        onClick={() => addSectionQuick('Linje')}
+      >
+        + Lägg till delområde
+      </Button>
       <Button variant="outline" borderRadius="full" onClick={() => setAnteckningarModalOpen(true)} size="sm">
         Anteckningar
       </Button>
@@ -2049,7 +2072,7 @@ if (loading || !project) {
       p={0}
       borderRadius="md"
       boxShadow="none"
-      border="1px solid #718096"
+      border="1px solid #C9D4E1"
       overflow="auto"
       w="full" 
       minW="100%" 
@@ -2061,21 +2084,22 @@ if (loading || !project) {
         size="sm"
         sx={{
           'th, td': {
-            border: '1px solid #718096',
-            paddingX: '6px',
-            paddingY: '4px',
+            border: '1px solid #C9D4E1',
+            paddingX: '8px',
+            paddingY: '6px',
             fontSize: '12px',
+            fontWeight: '800',
             overflow: 'visible',
             position: 'relative',
           },
           thead: {
-            background: '#E1E7EF',
+            background: '#F2F6FF',
           },
           'tbody tr:nth-of-type(even)': {
-            backgroundColor: '#F2F4F7',
+            backgroundColor: '#F7FBFF',
           },
           'tbody tr:hover': {
-            backgroundColor: '#EBF8FF !important',
+            backgroundColor: '#E8F7FF !important',
           },
           'tbody input': {
             height: '20px',
@@ -2233,12 +2257,14 @@ if (loading || !project) {
             <FiHash size={14} />
             BTKN
           </Flex>
-          <IconButton
-            size="xs"
-            variant="ghost"
-            icon={<FiChevronsRight />}
-            aria-label="Expandera BTKN"
-            onClick={() => toggleColumnWidth('btkn', 140)}
+          <Box
+            onMouseDown={(e) => beginColumnResize('btkn', e)}
+            cursor="col-resize"
+            w="2px"
+            h="14px"
+            borderRadius="full"
+            bg="gray.500"
+            _hover={{ bg: 'gray.700' }}
           />
         </Flex>
       </Th>
@@ -2250,12 +2276,14 @@ if (loading || !project) {
             <FiUser size={14} />
             Namn
           </Flex>
-          <IconButton
-            size="xs"
-            variant="ghost"
-            icon={<FiChevronsRight />}
-            aria-label="Expandera Namn"
-            onClick={() => toggleColumnWidth('namn', 260)}
+          <Box
+            onMouseDown={(e) => beginColumnResize('namn', e)}
+            cursor="col-resize"
+            w="2px"
+            h="14px"
+            borderRadius="full"
+            bg="gray.500"
+            _hover={{ bg: 'gray.700' }}
           />
         </Flex>
       </Th>
@@ -2267,12 +2295,14 @@ if (loading || !project) {
             <FiPhone size={14} />
             Telefon
           </Flex>
-          <IconButton
-            size="xs"
-            variant="ghost"
-            icon={<FiChevronsRight />}
-            aria-label="Expandera Telefon"
-            onClick={() => toggleColumnWidth('telefon', 220)}
+          <Box
+            onMouseDown={(e) => beginColumnResize('telefon', e)}
+            cursor="col-resize"
+            w="2px"
+            h="14px"
+            borderRadius="full"
+            bg="gray.500"
+            _hover={{ bg: 'gray.700' }}
           />
         </Flex>
       </Th>
@@ -2284,12 +2314,14 @@ if (loading || !project) {
             <FiAperture size={14} />
             Anordning
           </Flex>
-          <IconButton
-            size="xs"
-            variant="ghost"
-            icon={<FiChevronsRight />}
-            aria-label="Expandera Anordning"
-            onClick={() => toggleColumnWidth('anordning', 240)}
+          <Box
+            onMouseDown={(e) => beginColumnResize('anordning', e)}
+            cursor="col-resize"
+            w="2px"
+            h="14px"
+            borderRadius="full"
+            bg="gray.500"
+            _hover={{ bg: 'gray.700' }}
           />
         </Flex>
       </Th>
@@ -2370,12 +2402,14 @@ if (loading || !project) {
           <Flex align="center" gap={2}>
             Start
           </Flex>
-          <IconButton
-            size="xs"
-            variant="ghost"
-            icon={<FiChevronsRight />}
-            aria-label="Expandera Start"
-            onClick={() => toggleColumnWidth('starttid', 160)}
+          <Box
+            onMouseDown={(e) => beginColumnResize('starttid', e)}
+            cursor="col-resize"
+            w="2px"
+            h="14px"
+            borderRadius="full"
+            bg="gray.500"
+            _hover={{ bg: 'gray.700' }}
           />
         </Flex>
       </Th>
@@ -2386,12 +2420,14 @@ if (loading || !project) {
           <Flex align="center" gap={2}>
             Begärd
           </Flex>
-          <IconButton
-            size="xs"
-            variant="ghost"
-            icon={<FiChevronsRight />}
-            aria-label="Expandera Begärd"
-            onClick={() => toggleColumnWidth('begard', 160)}
+          <Box
+            onMouseDown={(e) => beginColumnResize('begard', e)}
+            cursor="col-resize"
+            w="2px"
+            h="14px"
+            borderRadius="full"
+            bg="gray.500"
+            _hover={{ bg: 'gray.700' }}
           />
         </Flex>
       </Th>
@@ -2402,12 +2438,14 @@ if (loading || !project) {
           <Flex align="center" gap={2}>
             Avslutad
           </Flex>
-          <IconButton
-            size="xs"
-            variant="ghost"
-            icon={<FiChevronsRight />}
-            aria-label="Expandera Avslutad"
-            onClick={() => toggleColumnWidth('avslutat', 170)}
+          <Box
+            onMouseDown={(e) => beginColumnResize('avslutat', e)}
+            cursor="col-resize"
+            w="2px"
+            h="14px"
+            borderRadius="full"
+            bg="gray.500"
+            _hover={{ bg: 'gray.700' }}
           />
         </Flex>
       </Th>
@@ -2670,7 +2708,8 @@ if (loading || !project) {
                   const cellKey = `section-${secIdx}`;
                   const sectionMeta = cell(cellKey);
                   const sectionIcon = cellIcon(cellKey);
-                  const baseBg = secIdx % 2 === 0 ? 'blue.50' : 'transparent';
+  const sectionPalette = ['blue.50', 'teal.50', 'purple.50', 'orange.50', 'green.50', 'pink.50'];
+  const baseBg = sectionPalette[secIdx % sectionPalette.length];
 
   return (
     <Td
