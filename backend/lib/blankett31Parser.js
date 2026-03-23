@@ -1,4 +1,4 @@
-const { normalizeText, normalizeForMatching, parsePdfWithOcr } = require('./ocrPdf');
+const { normalizeText, normalizeForMatching, parsePdfWithTextOrOcr } = require('./ocrPdf');
 
 const getNextNonEmptyLine = (lines, startIndex) => {
   for (let index = startIndex; index < lines.length; index += 1) {
@@ -85,7 +85,7 @@ const extractBlankett31Fields = (ocrPayload) => {
 };
 
 const parseBlankett31Pdf = async (buffer) => {
-  const payload = await parsePdfWithOcr(buffer, 'blankett31-');
+  const payload = await parsePdfWithTextOrOcr(buffer, 'blankett31-');
   return extractBlankett31Fields(payload);
 };
 
