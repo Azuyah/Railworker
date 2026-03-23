@@ -96,7 +96,7 @@ function RoleBasedPlan() {
     }
 
     axios
-      .get('https://railworker-production.up.railway.app/api/user', {
+      .get('http://localhost:4000/api/user', {
         headers: {
           Authorization: `Bearer ${token}`,
         },

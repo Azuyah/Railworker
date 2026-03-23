@@ -9,7 +9,7 @@ export default function Login() {
 
 const handleLogin = async () => {
   try {
-    const res = await axios.post('https://railworker-production.up.railway.app/api/login', {
+    const res = await axios.post('http://localhost:4000/api/login', {
       email,
       password,
     });

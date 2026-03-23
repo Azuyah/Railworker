@@ -144,6 +144,8 @@ exports.Prisma.ProjectScalarFieldEnum = {
   plats: 'plats',
   namn: 'namn',
   telefonnummer: 'telefonnummer',
+  granspunkter: 'granspunkter',
+  formState: 'formState',
   rows: 'rows',
   anteckningar: 'anteckningar'
 };
@@ -152,6 +154,7 @@ exports.Prisma.SectionScalarFieldEnum = {
   id: 'id',
   name: 'name',
   type: 'type',
+  namingMode: 'namingMode',
   projectId: 'projectId'
 };
 

@@ -44,6 +44,8 @@ model Project {
   plats         String
   namn          String
   telefonnummer String
+  granspunkter  String?
+  formState     Json?
   sections      Section[]
   beteckningar  Beteckning[]
   rows          Json?
@@ -52,12 +54,13 @@ model Project {
 }
 
 model Section {
-  id        Int     @id @default(autoincrement())
-  name      String
-  type      String
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId Int
-  rows      Row[]
+  id         Int     @id @default(autoincrement())
+  name       String
+  type       String
+  namingMode String  @default("LETTERS")
+  project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId  Int
+  rows       Row[]
 }
 
 model Beteckning {

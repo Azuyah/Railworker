@@ -225,7 +225,7 @@ const updateProject = async () => {
 
   try {
     await axios.put(
-      `https://railworker-production.up.railway.app/api/projects/${id}`,
+      `http://localhost:4000/api/projects/${id}`,
       updated,
       {
         headers: {
@@ -335,7 +335,7 @@ rowsWithSamrad.forEach((row, index) => {
 
 // ✅ Skicka till backend
 await axios.put(
-  `https://railworker-production.up.railway.app/api/projects/${project.id}`,
+  `http://localhost:4000/api/projects/${project.id}`,
   updatedProject,
   {
     headers: { Authorization: `Bearer ${token}` },
@@ -587,7 +587,7 @@ useEffect(() => {
       const tokenData = localStorage.getItem('user');
       const token = tokenData ? JSON.parse(tokenData).token : null;
 
-      const response = await axios.get(`https://railworker-production.up.railway.app/api/project/${id}`, {
+      const response = await axios.get(`http://localhost:4000/api/project/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -865,7 +865,7 @@ if (loading || !project) {
             try {
               const tokenData = localStorage.getItem('user');
               const token = tokenData ? JSON.parse(tokenData).token : null;
-              await axios.delete(`https://railworker-production.up.railway.app/api/project/${id}`, {
+              await axios.delete(`http://localhost:4000/api/project/${id}`, {
                 headers: { Authorization: `Bearer ${token}` },
               });
               window.location.href = '/dashboard';

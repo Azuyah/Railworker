@@ -2772,6 +2772,7 @@ export namespace Prisma {
     plats: string | null
     namn: string | null
     telefonnummer: string | null
+    granspunkter: string | null
   }
 
   export type ProjectMaxAggregateOutputType = {
@@ -2786,6 +2787,7 @@ export namespace Prisma {
     plats: string | null
     namn: string | null
     telefonnummer: string | null
+    granspunkter: string | null
   }
 
   export type ProjectCountAggregateOutputType = {
@@ -2800,6 +2802,8 @@ export namespace Prisma {
     plats: number
     namn: number
     telefonnummer: number
+    granspunkter: number
+    formState: number
     rows: number
     anteckningar: number
     _all: number
@@ -2828,6 +2832,7 @@ export namespace Prisma {
     plats?: true
     namn?: true
     telefonnummer?: true
+    granspunkter?: true
   }
 
   export type ProjectMaxAggregateInputType = {
@@ -2842,6 +2847,7 @@ export namespace Prisma {
     plats?: true
     namn?: true
     telefonnummer?: true
+    granspunkter?: true
   }
 
   export type ProjectCountAggregateInputType = {
@@ -2856,6 +2862,8 @@ export namespace Prisma {
     plats?: true
     namn?: true
     telefonnummer?: true
+    granspunkter?: true
+    formState?: true
     rows?: true
     anteckningar?: true
     _all?: true
@@ -2959,6 +2967,8 @@ export namespace Prisma {
     plats: string
     namn: string
     telefonnummer: string
+    granspunkter: string | null
+    formState: JsonValue | null
     rows: JsonValue | null
     anteckningar: JsonValue | null
     _count: ProjectCountAggregateOutputType | null
@@ -2994,6 +3004,8 @@ export namespace Prisma {
     plats?: boolean
     namn?: boolean
     telefonnummer?: boolean
+    granspunkter?: boolean
+    formState?: boolean
     rows?: boolean
     anteckningar?: boolean
     user?: boolean | Project$userArgs<ExtArgs>
@@ -3015,6 +3027,8 @@ export namespace Prisma {
     plats?: boolean
     namn?: boolean
     telefonnummer?: boolean
+    granspunkter?: boolean
+    formState?: boolean
     rows?: boolean
     anteckningar?: boolean
     user?: boolean | Project$userArgs<ExtArgs>
@@ -3032,6 +3046,8 @@ export namespace Prisma {
     plats?: boolean
     namn?: boolean
     telefonnummer?: boolean
+    granspunkter?: boolean
+    formState?: boolean
     rows?: boolean
     anteckningar?: boolean
     user?: boolean | Project$userArgs<ExtArgs>
@@ -3049,11 +3065,13 @@ export namespace Prisma {
     plats?: boolean
     namn?: boolean
     telefonnummer?: boolean
+    granspunkter?: boolean
+    formState?: boolean
     rows?: boolean
     anteckningar?: boolean
   }
 
-  export type ProjectOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "userId" | "createdAt" | "startDate" | "startTime" | "endDate" | "endTime" | "plats" | "namn" | "telefonnummer" | "rows" | "anteckningar", ExtArgs["result"]["project"]>
+  export type ProjectOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "userId" | "createdAt" | "startDate" | "startTime" | "endDate" | "endTime" | "plats" | "namn" | "telefonnummer" | "granspunkter" | "formState" | "rows" | "anteckningar", ExtArgs["result"]["project"]>
   export type ProjectInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | Project$userArgs<ExtArgs>
     sections?: boolean | Project$sectionsArgs<ExtArgs>
@@ -3088,6 +3106,8 @@ export namespace Prisma {
       plats: string
       namn: string
       telefonnummer: string
+      granspunkter: string | null
+      formState: Prisma.JsonValue | null
       rows: Prisma.JsonValue | null
       anteckningar: Prisma.JsonValue | null
     }, ExtArgs["result"]["project"]>
@@ -3528,6 +3548,8 @@ export namespace Prisma {
     readonly plats: FieldRef<"Project", 'String'>
     readonly namn: FieldRef<"Project", 'String'>
     readonly telefonnummer: FieldRef<"Project", 'String'>
+    readonly granspunkter: FieldRef<"Project", 'String'>
+    readonly formState: FieldRef<"Project", 'Json'>
     readonly rows: FieldRef<"Project", 'Json'>
     readonly anteckningar: FieldRef<"Project", 'Json'>
   }
@@ -4061,6 +4083,7 @@ export namespace Prisma {
     id: number | null
     name: string | null
     type: string | null
+    namingMode: string | null
     projectId: number | null
   }
 
@@ -4068,6 +4091,7 @@ export namespace Prisma {
     id: number | null
     name: string | null
     type: string | null
+    namingMode: string | null
     projectId: number | null
   }
 
@@ -4075,6 +4099,7 @@ export namespace Prisma {
     id: number
     name: number
     type: number
+    namingMode: number
     projectId: number
     _all: number
   }
@@ -4094,6 +4119,7 @@ export namespace Prisma {
     id?: true
     name?: true
     type?: true
+    namingMode?: true
     projectId?: true
   }
 
@@ -4101,6 +4127,7 @@ export namespace Prisma {
     id?: true
     name?: true
     type?: true
+    namingMode?: true
     projectId?: true
   }
 
@@ -4108,6 +4135,7 @@ export namespace Prisma {
     id?: true
     name?: true
     type?: true
+    namingMode?: true
     projectId?: true
     _all?: true
   }
@@ -4202,6 +4230,7 @@ export namespace Prisma {
     id: number
     name: string
     type: string
+    namingMode: string
     projectId: number
     _count: SectionCountAggregateOutputType | null
     _avg: SectionAvgAggregateOutputType | null
@@ -4228,6 +4257,7 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     type?: boolean
+    namingMode?: boolean
     projectId?: boolean
     project?: boolean | ProjectDefaultArgs<ExtArgs>
     rows?: boolean | Section$rowsArgs<ExtArgs>
@@ -4238,6 +4268,7 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     type?: boolean
+    namingMode?: boolean
     projectId?: boolean
     project?: boolean | ProjectDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["section"]>
@@ -4246,6 +4277,7 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     type?: boolean
+    namingMode?: boolean
     projectId?: boolean
     project?: boolean | ProjectDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["section"]>
@@ -4254,10 +4286,11 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     type?: boolean
+    namingMode?: boolean
     projectId?: boolean
   }
 
-  export type SectionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "type" | "projectId", ExtArgs["result"]["section"]>
+  export type SectionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "type" | "namingMode" | "projectId", ExtArgs["result"]["section"]>
   export type SectionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     project?: boolean | ProjectDefaultArgs<ExtArgs>
     rows?: boolean | Section$rowsArgs<ExtArgs>
@@ -4280,6 +4313,7 @@ export namespace Prisma {
       id: number
       name: string
       type: string
+      namingMode: string
       projectId: number
     }, ExtArgs["result"]["section"]>
     composites: {}
@@ -4709,6 +4743,7 @@ export namespace Prisma {
     readonly id: FieldRef<"Section", 'Int'>
     readonly name: FieldRef<"Section", 'String'>
     readonly type: FieldRef<"Section", 'String'>
+    readonly namingMode: FieldRef<"Section", 'String'>
     readonly projectId: FieldRef<"Section", 'Int'>
   }
     
@@ -8626,6 +8661,8 @@ export namespace Prisma {
     plats: 'plats',
     namn: 'namn',
     telefonnummer: 'telefonnummer',
+    granspunkter: 'granspunkter',
+    formState: 'formState',
     rows: 'rows',
     anteckningar: 'anteckningar'
   };
@@ -8637,6 +8674,7 @@ export namespace Prisma {
     id: 'id',
     name: 'name',
     type: 'type',
+    namingMode: 'namingMode',
     projectId: 'projectId'
   };
 
@@ -8910,6 +8948,8 @@ export namespace Prisma {
     plats?: StringFilter<"Project"> | string
     namn?: StringFilter<"Project"> | string
     telefonnummer?: StringFilter<"Project"> | string
+    granspunkter?: StringNullableFilter<"Project"> | string | null
+    formState?: JsonNullableFilter<"Project">
     rows?: JsonNullableFilter<"Project">
     anteckningar?: JsonNullableFilter<"Project">
     user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
@@ -8930,6 +8970,8 @@ export namespace Prisma {
     plats?: SortOrder
     namn?: SortOrder
     telefonnummer?: SortOrder
+    granspunkter?: SortOrderInput | SortOrder
+    formState?: SortOrderInput | SortOrder
     rows?: SortOrderInput | SortOrder
     anteckningar?: SortOrderInput | SortOrder
     user?: UserOrderByWithRelationInput
@@ -8953,6 +8995,8 @@ export namespace Prisma {
     plats?: StringFilter<"Project"> | string
     namn?: StringFilter<"Project"> | string
     telefonnummer?: StringFilter<"Project"> | string
+    granspunkter?: StringNullableFilter<"Project"> | string | null
+    formState?: JsonNullableFilter<"Project">
     rows?: JsonNullableFilter<"Project">
     anteckningar?: JsonNullableFilter<"Project">
     user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
@@ -8973,6 +9017,8 @@ export namespace Prisma {
     plats?: SortOrder
     namn?: SortOrder
     telefonnummer?: SortOrder
+    granspunkter?: SortOrderInput | SortOrder
+    formState?: SortOrderInput | SortOrder
     rows?: SortOrderInput | SortOrder
     anteckningar?: SortOrderInput | SortOrder
     _count?: ProjectCountOrderByAggregateInput
@@ -8997,6 +9043,8 @@ export namespace Prisma {
     plats?: StringWithAggregatesFilter<"Project"> | string
     namn?: StringWithAggregatesFilter<"Project"> | string
     telefonnummer?: StringWithAggregatesFilter<"Project"> | string
+    granspunkter?: StringNullableWithAggregatesFilter<"Project"> | string | null
+    formState?: JsonNullableWithAggregatesFilter<"Project">
     rows?: JsonNullableWithAggregatesFilter<"Project">
     anteckningar?: JsonNullableWithAggregatesFilter<"Project">
   }
@@ -9008,6 +9056,7 @@ export namespace Prisma {
     id?: IntFilter<"Section"> | number
     name?: StringFilter<"Section"> | string
     type?: StringFilter<"Section"> | string
+    namingMode?: StringFilter<"Section"> | string
     projectId?: IntFilter<"Section"> | number
     project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
     rows?: RowListRelationFilter
@@ -9017,6 +9066,7 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     type?: SortOrder
+    namingMode?: SortOrder
     projectId?: SortOrder
     project?: ProjectOrderByWithRelationInput
     rows?: RowOrderByRelationAggregateInput
@@ -9029,6 +9079,7 @@ export namespace Prisma {
     NOT?: SectionWhereInput | SectionWhereInput[]
     name?: StringFilter<"Section"> | string
     type?: StringFilter<"Section"> | string
+    namingMode?: StringFilter<"Section"> | string
     projectId?: IntFilter<"Section"> | number
     project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
     rows?: RowListRelationFilter
@@ -9038,6 +9089,7 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     type?: SortOrder
+    namingMode?: SortOrder
     projectId?: SortOrder
     _count?: SectionCountOrderByAggregateInput
     _avg?: SectionAvgOrderByAggregateInput
@@ -9053,6 +9105,7 @@ export namespace Prisma {
     id?: IntWithAggregatesFilter<"Section"> | number
     name?: StringWithAggregatesFilter<"Section"> | string
     type?: StringWithAggregatesFilter<"Section"> | string
+    namingMode?: StringWithAggregatesFilter<"Section"> | string
     projectId?: IntWithAggregatesFilter<"Section"> | number
   }
 
@@ -9371,6 +9424,8 @@ export namespace Prisma {
     plats: string
     namn: string
     telefonnummer: string
+    granspunkter?: string | null
+    formState?: NullableJsonNullValueInput | InputJsonValue
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     user?: UserCreateNestedOneWithoutProjectsInput
@@ -9391,6 +9446,8 @@ export namespace Prisma {
     plats: string
     namn: string
     telefonnummer: string
+    granspunkter?: string | null
+    formState?: NullableJsonNullValueInput | InputJsonValue
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     sections?: SectionUncheckedCreateNestedManyWithoutProjectInput
@@ -9408,6 +9465,8 @@ export namespace Prisma {
     plats?: StringFieldUpdateOperationsInput | string
     namn?: StringFieldUpdateOperationsInput | string
     telefonnummer?: StringFieldUpdateOperationsInput | string
+    granspunkter?: NullableStringFieldUpdateOperationsInput | string | null
+    formState?: NullableJsonNullValueInput | InputJsonValue
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     user?: UserUpdateOneWithoutProjectsNestedInput
@@ -9428,6 +9487,8 @@ export namespace Prisma {
     plats?: StringFieldUpdateOperationsInput | string
     namn?: StringFieldUpdateOperationsInput | string
     telefonnummer?: StringFieldUpdateOperationsInput | string
+    granspunkter?: NullableStringFieldUpdateOperationsInput | string | null
+    formState?: NullableJsonNullValueInput | InputJsonValue
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     sections?: SectionUncheckedUpdateManyWithoutProjectNestedInput
@@ -9447,6 +9508,8 @@ export namespace Prisma {
     plats: string
     namn: string
     telefonnummer: string
+    granspunkter?: string | null
+    formState?: NullableJsonNullValueInput | InputJsonValue
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
   }
@@ -9461,6 +9524,8 @@ export namespace Prisma {
     plats?: StringFieldUpdateOperationsInput | string
     namn?: StringFieldUpdateOperationsInput | string
     telefonnummer?: StringFieldUpdateOperationsInput | string
+    granspunkter?: NullableStringFieldUpdateOperationsInput | string | null
+    formState?: NullableJsonNullValueInput | InputJsonValue
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
   }
@@ -9477,6 +9542,8 @@ export namespace Prisma {
     plats?: StringFieldUpdateOperationsInput | string
     namn?: StringFieldUpdateOperationsInput | string
     telefonnummer?: StringFieldUpdateOperationsInput | string
+    granspunkter?: NullableStringFieldUpdateOperationsInput | string | null
+    formState?: NullableJsonNullValueInput | InputJsonValue
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
   }
@@ -9484,6 +9551,7 @@ export namespace Prisma {
   export type SectionCreateInput = {
     name: string
     type: string
+    namingMode?: string
     project: ProjectCreateNestedOneWithoutSectionsInput
     rows?: RowCreateNestedManyWithoutSectionInput
   }
@@ -9492,6 +9560,7 @@ export namespace Prisma {
     id?: number
     name: string
     type: string
+    namingMode?: string
     projectId: number
     rows?: RowUncheckedCreateNestedManyWithoutSectionInput
   }
@@ -9499,6 +9568,7 @@ export namespace Prisma {
   export type SectionUpdateInput = {
     name?: StringFieldUpdateOperationsInput | string
     type?: StringFieldUpdateOperationsInput | string
+    namingMode?: StringFieldUpdateOperationsInput | string
     project?: ProjectUpdateOneRequiredWithoutSectionsNestedInput
     rows?: RowUpdateManyWithoutSectionNestedInput
   }
@@ -9507,6 +9577,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     type?: StringFieldUpdateOperationsInput | string
+    namingMode?: StringFieldUpdateOperationsInput | string
     projectId?: IntFieldUpdateOperationsInput | number
     rows?: RowUncheckedUpdateManyWithoutSectionNestedInput
   }
@@ -9515,18 +9586,21 @@ export namespace Prisma {
     id?: number
     name: string
     type: string
+    namingMode?: string
     projectId: number
   }
 
   export type SectionUpdateManyMutationInput = {
     name?: StringFieldUpdateOperationsInput | string
     type?: StringFieldUpdateOperationsInput | string
+    namingMode?: StringFieldUpdateOperationsInput | string
   }
 
   export type SectionUncheckedUpdateManyInput = {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     type?: StringFieldUpdateOperationsInput | string
+    namingMode?: StringFieldUpdateOperationsInput | string
     projectId?: IntFieldUpdateOperationsInput | number
   }
 
@@ -9965,6 +10039,8 @@ export namespace Prisma {
     plats?: SortOrder
     namn?: SortOrder
     telefonnummer?: SortOrder
+    granspunkter?: SortOrder
+    formState?: SortOrder
     rows?: SortOrder
     anteckningar?: SortOrder
   }
@@ -9986,6 +10062,7 @@ export namespace Prisma {
     plats?: SortOrder
     namn?: SortOrder
     telefonnummer?: SortOrder
+    granspunkter?: SortOrder
   }
 
   export type ProjectMinOrderByAggregateInput = {
@@ -10000,6 +10077,7 @@ export namespace Prisma {
     plats?: SortOrder
     namn?: SortOrder
     telefonnummer?: SortOrder
+    granspunkter?: SortOrder
   }
 
   export type ProjectSumOrderByAggregateInput = {
@@ -10072,6 +10150,7 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     type?: SortOrder
+    namingMode?: SortOrder
     projectId?: SortOrder
   }
 
@@ -10084,6 +10163,7 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     type?: SortOrder
+    namingMode?: SortOrder
     projectId?: SortOrder
   }
 
@@ -10091,6 +10171,7 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     type?: SortOrder
+    namingMode?: SortOrder
     projectId?: SortOrder
   }
 
@@ -11015,6 +11096,8 @@ export namespace Prisma {
     plats: string
     namn: string
     telefonnummer: string
+    granspunkter?: string | null
+    formState?: NullableJsonNullValueInput | InputJsonValue
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     sections?: SectionCreateNestedManyWithoutProjectInput
@@ -11033,6 +11116,8 @@ export namespace Prisma {
     plats: string
     namn: string
     telefonnummer: string
+    granspunkter?: string | null
+    formState?: NullableJsonNullValueInput | InputJsonValue
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     sections?: SectionUncheckedCreateNestedManyWithoutProjectInput
@@ -11197,6 +11282,8 @@ export namespace Prisma {
     plats?: StringFilter<"Project"> | string
     namn?: StringFilter<"Project"> | string
     telefonnummer?: StringFilter<"Project"> | string
+    granspunkter?: StringNullableFilter<"Project"> | string | null
+    formState?: JsonNullableFilter<"Project">
     rows?: JsonNullableFilter<"Project">
     anteckningar?: JsonNullableFilter<"Project">
   }
@@ -11332,6 +11419,7 @@ export namespace Prisma {
   export type SectionCreateWithoutProjectInput = {
     name: string
     type: string
+    namingMode?: string
     rows?: RowCreateNestedManyWithoutSectionInput
   }
 
@@ -11339,6 +11427,7 @@ export namespace Prisma {
     id?: number
     name: string
     type: string
+    namingMode?: string
     rows?: RowUncheckedCreateNestedManyWithoutSectionInput
   }
 
@@ -11475,6 +11564,7 @@ export namespace Prisma {
     id?: IntFilter<"Section"> | number
     name?: StringFilter<"Section"> | string
     type?: StringFilter<"Section"> | string
+    namingMode?: StringFilter<"Section"> | string
     projectId?: IntFilter<"Section"> | number
   }
 
@@ -11529,6 +11619,8 @@ export namespace Prisma {
     plats: string
     namn: string
     telefonnummer: string
+    granspunkter?: string | null
+    formState?: NullableJsonNullValueInput | InputJsonValue
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     user?: UserCreateNestedOneWithoutProjectsInput
@@ -11548,6 +11640,8 @@ export namespace Prisma {
     plats: string
     namn: string
     telefonnummer: string
+    granspunkter?: string | null
+    formState?: NullableJsonNullValueInput | InputJsonValue
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     beteckningar?: BeteckningUncheckedCreateNestedManyWithoutProjectInput
@@ -11619,6 +11713,8 @@ export namespace Prisma {
     plats?: StringFieldUpdateOperationsInput | string
     namn?: StringFieldUpdateOperationsInput | string
     telefonnummer?: StringFieldUpdateOperationsInput | string
+    granspunkter?: NullableStringFieldUpdateOperationsInput | string | null
+    formState?: NullableJsonNullValueInput | InputJsonValue
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     user?: UserUpdateOneWithoutProjectsNestedInput
@@ -11638,6 +11734,8 @@ export namespace Prisma {
     plats?: StringFieldUpdateOperationsInput | string
     namn?: StringFieldUpdateOperationsInput | string
     telefonnummer?: StringFieldUpdateOperationsInput | string
+    granspunkter?: NullableStringFieldUpdateOperationsInput | string | null
+    formState?: NullableJsonNullValueInput | InputJsonValue
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     beteckningar?: BeteckningUncheckedUpdateManyWithoutProjectNestedInput
@@ -11670,6 +11768,8 @@ export namespace Prisma {
     plats: string
     namn: string
     telefonnummer: string
+    granspunkter?: string | null
+    formState?: NullableJsonNullValueInput | InputJsonValue
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     user?: UserCreateNestedOneWithoutProjectsInput
@@ -11689,6 +11789,8 @@ export namespace Prisma {
     plats: string
     namn: string
     telefonnummer: string
+    granspunkter?: string | null
+    formState?: NullableJsonNullValueInput | InputJsonValue
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     sections?: SectionUncheckedCreateNestedManyWithoutProjectInput
@@ -11721,6 +11823,8 @@ export namespace Prisma {
     plats?: StringFieldUpdateOperationsInput | string
     namn?: StringFieldUpdateOperationsInput | string
     telefonnummer?: StringFieldUpdateOperationsInput | string
+    granspunkter?: NullableStringFieldUpdateOperationsInput | string | null
+    formState?: NullableJsonNullValueInput | InputJsonValue
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     user?: UserUpdateOneWithoutProjectsNestedInput
@@ -11740,6 +11844,8 @@ export namespace Prisma {
     plats?: StringFieldUpdateOperationsInput | string
     namn?: StringFieldUpdateOperationsInput | string
     telefonnummer?: StringFieldUpdateOperationsInput | string
+    granspunkter?: NullableStringFieldUpdateOperationsInput | string | null
+    formState?: NullableJsonNullValueInput | InputJsonValue
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     sections?: SectionUncheckedUpdateManyWithoutProjectNestedInput
@@ -11912,6 +12018,8 @@ export namespace Prisma {
     plats: string
     namn: string
     telefonnummer: string
+    granspunkter?: string | null
+    formState?: NullableJsonNullValueInput | InputJsonValue
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     user?: UserCreateNestedOneWithoutProjectsInput
@@ -11931,6 +12039,8 @@ export namespace Prisma {
     plats: string
     namn: string
     telefonnummer: string
+    granspunkter?: string | null
+    formState?: NullableJsonNullValueInput | InputJsonValue
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     sections?: SectionUncheckedCreateNestedManyWithoutProjectInput
@@ -11981,6 +12091,7 @@ export namespace Prisma {
   export type SectionCreateWithoutRowsInput = {
     name: string
     type: string
+    namingMode?: string
     project: ProjectCreateNestedOneWithoutSectionsInput
   }
 
@@ -11988,6 +12099,7 @@ export namespace Prisma {
     id?: number
     name: string
     type: string
+    namingMode?: string
     projectId: number
   }
 
@@ -12053,6 +12165,8 @@ export namespace Prisma {
     plats?: StringFieldUpdateOperationsInput | string
     namn?: StringFieldUpdateOperationsInput | string
     telefonnummer?: StringFieldUpdateOperationsInput | string
+    granspunkter?: NullableStringFieldUpdateOperationsInput | string | null
+    formState?: NullableJsonNullValueInput | InputJsonValue
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     user?: UserUpdateOneWithoutProjectsNestedInput
@@ -12072,6 +12186,8 @@ export namespace Prisma {
     plats?: StringFieldUpdateOperationsInput | string
     namn?: StringFieldUpdateOperationsInput | string
     telefonnummer?: StringFieldUpdateOperationsInput | string
+    granspunkter?: NullableStringFieldUpdateOperationsInput | string | null
+    formState?: NullableJsonNullValueInput | InputJsonValue
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     sections?: SectionUncheckedUpdateManyWithoutProjectNestedInput
@@ -12134,6 +12250,7 @@ export namespace Prisma {
   export type SectionUpdateWithoutRowsInput = {
     name?: StringFieldUpdateOperationsInput | string
     type?: StringFieldUpdateOperationsInput | string
+    namingMode?: StringFieldUpdateOperationsInput | string
     project?: ProjectUpdateOneRequiredWithoutSectionsNestedInput
   }
 
@@ -12141,6 +12258,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     type?: StringFieldUpdateOperationsInput | string
+    namingMode?: StringFieldUpdateOperationsInput | string
     projectId?: IntFieldUpdateOperationsInput | number
   }
 
@@ -12197,6 +12315,8 @@ export namespace Prisma {
     plats: string
     namn: string
     telefonnummer: string
+    granspunkter?: string | null
+    formState?: NullableJsonNullValueInput | InputJsonValue
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
   }
@@ -12251,6 +12371,8 @@ export namespace Prisma {
     plats?: StringFieldUpdateOperationsInput | string
     namn?: StringFieldUpdateOperationsInput | string
     telefonnummer?: StringFieldUpdateOperationsInput | string
+    granspunkter?: NullableStringFieldUpdateOperationsInput | string | null
+    formState?: NullableJsonNullValueInput | InputJsonValue
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     sections?: SectionUpdateManyWithoutProjectNestedInput
@@ -12269,6 +12391,8 @@ export namespace Prisma {
     plats?: StringFieldUpdateOperationsInput | string
     namn?: StringFieldUpdateOperationsInput | string
     telefonnummer?: StringFieldUpdateOperationsInput | string
+    granspunkter?: NullableStringFieldUpdateOperationsInput | string | null
+    formState?: NullableJsonNullValueInput | InputJsonValue
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
     sections?: SectionUncheckedUpdateManyWithoutProjectNestedInput
@@ -12287,6 +12411,8 @@ export namespace Prisma {
     plats?: StringFieldUpdateOperationsInput | string
     namn?: StringFieldUpdateOperationsInput | string
     telefonnummer?: StringFieldUpdateOperationsInput | string
+    granspunkter?: NullableStringFieldUpdateOperationsInput | string | null
+    formState?: NullableJsonNullValueInput | InputJsonValue
     rows?: NullableJsonNullValueInput | InputJsonValue
     anteckningar?: NullableJsonNullValueInput | InputJsonValue
   }
@@ -12411,6 +12537,7 @@ export namespace Prisma {
     id?: number
     name: string
     type: string
+    namingMode?: string
   }
 
   export type BeteckningCreateManyProjectInput = {
@@ -12436,6 +12563,7 @@ export namespace Prisma {
   export type SectionUpdateWithoutProjectInput = {
     name?: StringFieldUpdateOperationsInput | string
     type?: StringFieldUpdateOperationsInput | string
+    namingMode?: StringFieldUpdateOperationsInput | string
     rows?: RowUpdateManyWithoutSectionNestedInput
   }
 
@@ -12443,6 +12571,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     type?: StringFieldUpdateOperationsInput | string
+    namingMode?: StringFieldUpdateOperationsInput | string
     rows?: RowUncheckedUpdateManyWithoutSectionNestedInput
   }
 
@@ -12450,6 +12579,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     type?: StringFieldUpdateOperationsInput | string
+    namingMode?: StringFieldUpdateOperationsInput | string
   }
 
   export type BeteckningUpdateWithoutProjectInput = {

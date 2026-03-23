@@ -60,6 +60,36 @@ import {
 } from '@chakra-ui/react';
 import { ChevronDownIcon } from '@chakra-ui/icons';
 import Header from '../components/Header';
+import { getSectionLabel, getSectionMarker } from '../utils/sectionLabels';
+
+const mergeSectionDetails = (sections = [], sectionDetails = []) =>
+  sections.map((section, index) => ({
+    ...section,
+    ...(sectionDetails[index] || {}),
+    signal: section?.signal || section?.name || sectionDetails[index]?.signal || '',
+  }));
+
+const splitSectionSignalAndTrack = (section) => {
+  const raw = String(section?.signal || section?.name || '').trim();
+  const trackMatch = raw.match(/(Spår\s+.+)$/i);
+  if (!trackMatch) {
+    return {
+      signal: raw,
+      spar: section?.spar || '',
+    };
+  }
+
+  return {
+    signal: raw.replace(/\s*,?\s*Spår\s+.+$/i, '').trim(),
+    spar: trackMatch[1].trim(),
+  };
+};
+
+const compactSectionText = (value = '') =>
+  String(value || '')
+    .replace(/\s*-\s*/g, '-')
+    .replace(/\s*,\s*/g, ',')
+    .trim();
 
 const Plan = () => {
   const { id } = useParams();
@@ -101,13 +131,13 @@ const Plan = () => {
   const [hotkeysOpen, setHotkeysOpen] = useState(false);
   const [btknPrefix, setBtknPrefix] = useState('');
   const [columnWidths, setColumnWidths] = useState({
-    btkn: 90,
-    namn: 180,
-    telefon: 150,
-    anordning: 180,
-    starttid: 110,
-    begard: 110,
-    avslutat: 110,
+    btkn: 54,
+    namn: 96,
+    telefon: 190,
+    anordning: 62,
+    sectionDefault: 14,
+    starttid: 66,
+    begard: 66,
   });
   const [resizingColumn, setResizingColumn] = useState(null);
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -119,7 +149,6 @@ const Plan = () => {
     anordning: true,
     starttid: true,
     begard: true,
-    avslutat: true,
   });
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -139,9 +168,15 @@ const Plan = () => {
   const [avslutaSkyddTid, setAvslutaSkyddTid] = useState(project?.avslutaSkyddTid || '');
   const [uttagningstid, setUttagningstid] = useState(project?.uttagningstid || '');
   const [signatur, setSignatur] = useState(project?.signatur || '');
-  const [avslutningstid, setAvslutningstid] = useState(project?.avslutningstid || '');
-  const [avslutningssignatur, setAvslutningssignatur] = useState(project?.avslutningssignatur || '');
   const [editSections, setEditSections] = useState(project?.sections || []);
+  const projectFormState = project?.formState || {};
+  const projectNodnummer = projectFormState.nodnummer || '';
+  const projectSluttid = project?.endTime || projectFormState.avslutningstid || '';
+  const projectSectionSummaries = (project?.sections || []).map((sec, idx) => ({
+    id: sec.id || `${sec.type || 'section'}-${idx}`,
+    label: getSectionLabel(sec, idx),
+    signal: sec.name || sec.signal || '',
+  }));
 
 function formatDateOnly(datetimeStr) {
   const match = datetimeStr.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
@@ -189,11 +224,15 @@ const {
   onClose: onCloseSamradModal,
 } = useDisclosure();
 
+const isSamradResolved = (resolvedMap, rowAId, rowBId) =>
+  Boolean(
+    resolvedMap?.[rowAId]?.[rowBId] ||
+    resolvedMap?.[rowBId]?.[rowAId]
+  );
+
 const calculateSamrad = useCallback((rows) => {
   const newSamradList = [];
   const newAvklarad = {};
-
-  const exclusionSet = ['A-S', 'L-S', 'S-S', 'E-S'];
   const now = new Date();
 
   const parseRowEndDateTime = (row) => {
@@ -218,12 +257,25 @@ const calculateSamrad = useCallback((rows) => {
     return endDate.getTime() <= now.getTime();
   };
 
+  const normalizeAnordningar = (value) => {
+    if (Array.isArray(value)) {
+      return value.map((item) => String(item || '').trim().toUpperCase()).filter(Boolean);
+    }
+    if (typeof value === 'string') {
+      return value.split(',').map((item) => item.trim().toUpperCase()).filter(Boolean);
+    }
+    return [];
+  };
+
+  const hasSamradDriver = (anordningar) =>
+    anordningar.some((item) => item === 'SPF' || item === 'VXL');
+
   rows.forEach((row, i) => {
     if (row.avslutadRad) return;
     if (isRowExpired(row)) return;
 
     const rowAreas = row.selections || [];
-    const rowAnordningar = String(row.anordning || '').split(',').map(a => a.trim());
+    const rowAnordningar = normalizeAnordningar(row.anordning);
 
     for (let j = 0; j < i; j++) {
       const compareRow = rows[j];
@@ -231,15 +283,12 @@ const calculateSamrad = useCallback((rows) => {
       if (isRowExpired(compareRow)) continue;
 
       const compareAreas = compareRow.selections || [];
-      const compareAnordningar = String(compareRow.anordning || '').split(',').map(a => a.trim());
+      const compareAnordningar = normalizeAnordningar(compareRow.anordning);
 
       const sharedAreas = rowAreas.some((selected, index) => selected && compareAreas[index]);
+      const requiresSamrad = hasSamradDriver(rowAnordningar) || hasSamradDriver(compareAnordningar);
 
-      if (sharedAreas) {
-        const allExcludedA = rowAnordningar.every(an => exclusionSet.includes(an));
-        const allExcludedB = compareAnordningar.every(an => exclusionSet.includes(an));
-        if (allExcludedA && allExcludedB) continue;
-
+      if (sharedAreas && requiresSamrad && !isSamradResolved(avklaradSamrad, row.id, compareRow.id)) {
         newSamradList.push({
   from: i,
   to: j,
@@ -253,7 +302,54 @@ const calculateSamrad = useCallback((rows) => {
   });
 
   return { samradList: newSamradList, avklaradMap: newAvklarad };
-}, []);
+}, [avklaradSamrad]);
+
+const buildSamradEntriesForRow = (rows, rowIndex) => {
+  if (!Array.isArray(rows) || rowIndex < 0 || rowIndex >= rows.length) return [];
+  const currentRow = rows[rowIndex];
+  if (!currentRow) return [];
+  if (currentRow.avslutadRad) return [];
+
+  const currentSelections = Array.isArray(currentRow.selections) ? currentRow.selections : [];
+  const normalizeAnordningar = (value) => {
+    if (Array.isArray(value)) {
+      return value.map((item) => String(item || '').trim().toUpperCase()).filter(Boolean);
+    }
+    if (typeof value === 'string') {
+      return value.split(',').map((item) => item.trim().toUpperCase()).filter(Boolean);
+    }
+    return [];
+  };
+  const currentHasSamradDriver = normalizeAnordningar(currentRow.anordning).some(
+    (item) => item === 'SPF' || item === 'VXL'
+  );
+
+  return rows
+    .map((candidate, candidateIndex) => ({ candidate, candidateIndex }))
+    .filter(({ candidate, candidateIndex }) => {
+      if (!candidate || candidateIndex === rowIndex) return false;
+      if (candidate.avslutadRad) return false;
+      const candidateSelections = Array.isArray(candidate.selections) ? candidate.selections : [];
+      const sharedArea = currentSelections.some((selected, index) => Boolean(selected) && Boolean(candidateSelections[index]));
+      const candidateHasSamradDriver = normalizeAnordningar(candidate.anordning).some(
+        (item) => item === 'SPF' || item === 'VXL'
+      );
+      return (
+        sharedArea &&
+        (currentHasSamradDriver || candidateHasSamradDriver) &&
+        !isSamradResolved(avklaradSamrad, currentRow.id, candidate.id)
+      );
+    })
+    .map(({ candidate }) => ({
+      id: candidate.id,
+      namn: candidate.namn && candidate.namn.trim() !== '' ? candidate.namn : (candidate.btkn || 'Okänt namn'),
+      telefon: candidate.telefon || '',
+      dp: candidate.dp || '',
+      linje: candidate.linje || '',
+      btkn: candidate.btkn || '',
+      bt: candidate.bt || '',
+    }));
+};
 
 const CELL_COLORS = [
   { label: 'Ingen', value: '' },
@@ -387,6 +483,79 @@ const sendCustomSms = () => {
   window.location.href = smsUrl;
 };
 
+const buildAnteckningarEmailContent = useCallback(() => {
+  const draftNote = noteText.trim()
+    ? [
+        {
+          id: 'draft-note',
+          text: noteText.trim(),
+          timestamp: new Date().toISOString(),
+          author: 'Ej sparad anteckning',
+        },
+      ]
+    : [];
+
+  const allNotes = [...anteckningar, ...draftNote].filter(
+    (note) => note && typeof note.text === 'string' && note.text.trim() !== ''
+  );
+
+  const sortedNotes = allNotes.sort(
+    (a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime()
+  );
+
+  const subject = `Anteckningar - ${project?.name || 'Plan'}`;
+  const headerLines = [
+    `Projekt: ${project?.name || 'Ej angivet'}`,
+    `Plats: ${project?.plats || 'Ej angivet'}`,
+    `Startdag: ${project?.startDate || 'Ej angivet'}`,
+    `Starttid: ${project?.startTime || 'Ej angivet'}`,
+    `Slutdag: ${project?.endDate || 'Ej angivet'}`,
+    `Sluttid: ${projectSluttid || 'Ej angivet'}`,
+    '',
+    'Anteckningar:',
+  ];
+
+  const noteLines = sortedNotes.length
+    ? sortedNotes.flatMap((note, index) => {
+        const timestamp = note.timestamp
+          ? new Date(note.timestamp).toLocaleString('sv-SE')
+          : 'Tid saknas';
+        const author = note.author ? ` av ${note.author}` : '';
+        return [
+          `${index + 1}. ${note.text || ''}`,
+          `   ${timestamp}${author}`,
+          '',
+        ];
+      })
+    : ['Inga anteckningar ännu.'];
+
+  const body = [...headerLines, ...noteLines].join('\n');
+  return { subject, body };
+}, [
+  anteckningar,
+  noteText,
+  project?.endDate,
+  project?.name,
+  project?.plats,
+  project?.startDate,
+  project?.startTime,
+  projectSluttid,
+]);
+
+const forwardAnteckningarByMail = useCallback(() => {
+  const { subject, body } = buildAnteckningarEmailContent();
+  window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}, [buildAnteckningarEmailContent]);
+
+const forwardAnteckningarToOutlook = useCallback(() => {
+  const { subject, body } = buildAnteckningarEmailContent();
+  window.open(
+    `https://outlook.office.com/mail/deeplink/compose?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`,
+    '_blank',
+    'noopener,noreferrer'
+  );
+}, [buildAnteckningarEmailContent]);
+
 const addEditDP = () => {
   const newDP = { type: 'DP', name: '' }; // ändrat signal ➜ name
   setEditSections([...editSections, newDP]);
@@ -427,7 +596,7 @@ const addSectionQuick = async (type = 'Linje') => {
   try {
     const token = JSON.parse(localStorage.getItem('user'))?.token;
     await axios.put(
-      `https://railworker-production.up.railway.app/api/projects/${project.id}`,
+      `http://localhost:4000/api/projects/${project.id}`,
       updatedProject,
       {
         headers: { Authorization: `Bearer ${token}` },
@@ -471,15 +640,20 @@ const fetchProject = useCallback(async () => {
     const tokenData = localStorage.getItem('user');
     const token = tokenData ? JSON.parse(tokenData).token : null;
 
-    const response = await axios.get(`https://railworker-production.up.railway.app/api/project/${id}`, {
+    const response = await axios.get(`http://localhost:4000/api/project/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
 
     const current = response.data;
+    const mergedSections = mergeSectionDetails(
+      current.sections || [],
+      current.formState?.sectionDetails || []
+    );
     setProject({
       ...current,
+      sections: mergedSections,
       beteckningar: current.beteckningar || [],
     });
     setAnteckningar(current.anteckningar || []);
@@ -493,10 +667,12 @@ const fetchProject = useCallback(async () => {
     } else {
       setHeaderMerges([]);
     }
-    setUttagningstid(current.uttagningstid || '');
-    setAvslutningstid(current.avslutningstid || '');
-    setAvslutningssignatur(current.avslutningssignatur || '');
-
+    const currentFormState = current.formState || {};
+    setAvstamt(Boolean(currentFormState.avstamt));
+    setObjekt(currentFormState.objekt || '');
+    setUttagningstid(currentFormState.uttagningstid || '');
+    setSignatur(currentFormState.signatur || '');
+    setAvslutaSkyddTid(currentFormState.avslutaSkyddTid || '');
     const enrichedRows = (current.rows || []).map((row) => {
       const selectedAreas = Array.isArray(row.selections)
         ? row.selections.map((val, idx) => (val ? idx : null)).filter((i) => i !== null)
@@ -519,7 +695,7 @@ const approveRow = async (rowId) => {
     const token = tokenData ? JSON.parse(tokenData).token : null;
 
     await axios.put(
-      `https://railworker-production.up.railway.app/api/row/approve/${rowId}`,
+      `http://localhost:4000/api/row/approve/${rowId}`,
       {},
       {
         headers: {
@@ -583,6 +759,11 @@ const handleEditSignalChange = (index, value) => {
 
 
 const openEditProjectModal = () => {
+  const formState = project.formState || {};
+  const mergedSections = mergeSectionDetails(
+    project.sections || [],
+    formState.sectionDetails || []
+  );
   setProjektNamn(project.name);
   setPlats(project.plats);
   setStartDate(project.startDate);
@@ -591,19 +772,25 @@ const openEditProjectModal = () => {
   setEndTime(project.endTime);
     setNamn(project.namn);
     setTelefonnummer(project.telefonnummer);
-    setAvstamt(Boolean(project.avstamt));
-    setObjekt(project.objekt || '');
-    setAvslutaSkyddTid(project.avslutaSkyddTid || '');
-    setUttagningstid(project.uttagningstid || '');
-    setSignatur(project.signatur || '');
-    setAvslutningstid(project.avslutningstid || '');
-    setAvslutningssignatur(project.avslutningssignatur || '');
-  setEditSections(project.sections || []);
+    setAvstamt(Boolean(formState.avstamt));
+    setObjekt(formState.objekt || '');
+    setAvslutaSkyddTid(formState.avslutaSkyddTid || '');
+    setUttagningstid(formState.uttagningstid || '');
+    setSignatur(formState.signatur || '');
+  setEditSections(mergedSections);
   setEditModalOpen(true);
   setEditBeteckningar(project.beteckningar?.map(b => b.label) || []);
 };
 
 const updateProject = async () => {
+  const nextFormState = {
+    ...(project?.formState || {}),
+    avstamt,
+    objekt,
+    avslutaSkyddTid,
+    uttagningstid,
+    signatur,
+  };
   const updated = {
     name: projektNamn,
     plats,
@@ -613,16 +800,10 @@ const updateProject = async () => {
     endTime,
     namn,
     telefonnummer,
+    formState: nextFormState,
     sections: editSections,
     rows,
     beteckningar: editBeteckningar.map(b => ({ label: b })),
-    avstamt,
-    objekt,
-    avslutaSkyddTid,
-    uttagningstid,
-    signatur,
-    avslutningstid,
-    avslutningssignatur,
   };
 
   const token = JSON.parse(localStorage.getItem('user'))?.token;
@@ -630,7 +811,7 @@ const updateProject = async () => {
 
   try {
     await axios.put(
-      `https://railworker-production.up.railway.app/api/projects/${id}`,
+      `http://localhost:4000/api/projects/${id}`,
       updated,
       {
         headers: {
@@ -642,6 +823,35 @@ const updateProject = async () => {
   } catch (error) {
     console.error('Kunde inte uppdatera projekt:', error);
     alert('Fel vid uppdatering.');
+  }
+};
+
+const exportPlanToExcel = async () => {
+  const token = JSON.parse(localStorage.getItem('user'))?.token;
+  if (!token) {
+    alert('Ingen token.');
+    return;
+  }
+
+  try {
+    const response = await fetch(`http://localhost:4000/api/projects/${id}/export-excel`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Kunde inte exportera Excel');
+    }
+
+    const blob = await response.blob();
+    const contentDisposition = response.headers.get('Content-Disposition') || '';
+    const filenameMatch = contentDisposition.match(/filename=\"?([^"]+)\"?/i);
+    const filename = filenameMatch?.[1] || `${project?.name || 'plan'}.xlsx`;
+    downloadBlob(blob, filename);
+  } catch (error) {
+    console.error('Fel vid Excel-export:', error);
+    alert('Kunde inte exportera Excel.');
   }
 };
 
@@ -712,8 +922,8 @@ if (selectedRow && selectedRow.id) {
               .map((selected, i) => (selected ? i : null))
               .filter((i) => i !== null)
           : [],
-      };
-    });
+        };
+    }).filter((row) => !isRowEffectivelyEmpty(row));
 
     // Räkna ut samråd
     const result = calculateSamrad(updatedRows);
@@ -732,6 +942,14 @@ if (selectedRow && selectedRow.id) {
     // Uppdatera projektet
     const updatedProject = {
       ...project,
+      formState: {
+        ...(project?.formState || {}),
+        avstamt,
+        objekt,
+        avslutaSkyddTid,
+        uttagningstid,
+        signatur,
+      },
       rows: rowsWithSamrad,
       sectionHeaderNotes,
       sectionHeaderNotes2,
@@ -739,20 +957,13 @@ if (selectedRow && selectedRow.id) {
       headerNotesTop,
       headerNotesMid,
       headerMerges,
-      avstamt,
-      objekt,
-      avslutaSkyddTid,
-      uttagningstid,
-      signatur,
-      avslutningstid,
-      avslutningssignatur,
     };
 
     rowsWithSamrad.forEach(() => {});
 
 // ✅ Skicka till backend
 await axios.put(
-  `https://railworker-production.up.railway.app/api/projects/${project.id}`,
+  `http://localhost:4000/api/projects/${project.id}`,
   updatedProject,
   {
     headers: { Authorization: `Bearer ${token}` },
@@ -795,8 +1006,6 @@ await axios.put(
   selectedRow,
   uttagningstid,
   signatur,
-  avslutningstid,
-  avslutningssignatur,
   toast,
 ]);
 
@@ -889,21 +1098,7 @@ useEffect(() => {
   const tempRows = [...rows];
   tempRows[realIndex] = updatedRow;
 
-  const result = calculateSamrad(tempRows);
-
-  const relatedSamrad = result.samradList
-    .filter((entry) => entry.from === realIndex)
-    .map((entry) => {
-      const r = tempRows[entry.to];
-      return {
-        id: r.id,
-        namn: r.namn,
-        dp: r.dp,
-        linje: r.linje,
-        btkn: r.btkn,
-        bt: r.bt,
-      };
-    });
+  const relatedSamrad = buildSamradEntriesForRow(tempRows, realIndex);
 
   const updatedRowWithSamrad = {
     ...updatedRow,
@@ -937,20 +1132,8 @@ useEffect(() => {
 useEffect(() => {
   if (!rows || !project?.sections) return;
 
-  const result = calculateSamrad(rows); // ✅ Använd rows, inte project.rows
-
   const updated = rows.map((row, index) => {
-    const related = result.samradList
-      .filter((entry) => entry.from === index)
-      .map((entry) => {
-        const match = rows[entry.to];
-        return {
-          id: match?.id,
-          namn: match?.namn || 'Okänt namn',
-          dp: match?.dp || '',
-          linje: match?.linje || '',
-        };
-      });
+    const related = buildSamradEntriesForRow(rows, index);
 
     const selectedAreas = Array.isArray(row.selections)
       ? row.selections.map((v, i) => (v ? i : null)).filter((v) => v !== null)
@@ -971,7 +1154,7 @@ useEffect(() => {
   if (changed) {
     setRows(updated);
   }
-}, [project, rows, calculateSamrad]);
+}, [project, rows]);
 
 useEffect(() => {
   if (!rows || !Array.isArray(rows)) return;
@@ -1019,11 +1202,40 @@ useEffect(() => {
   setSelectedRow(match);
 }, [selectedRowId, rows]);
 
-const createNewRow = (rows, project) => {
+const getNextBtknForRows = (prefix, sourceRows) => {
+  if (!prefix) return '';
+  const safePrefix = prefix.trim();
+  const regex = new RegExp(`^${safePrefix}(\\d+)$`);
+  let max = 0;
+  (sourceRows || []).forEach((row) => {
+    const match = String(row?.btkn || '').match(regex);
+    if (match && match[1]) {
+      max = Math.max(max, parseInt(match[1], 10));
+    }
+  });
+  const next = String(max + 1).padStart(2, '0');
+  return `${safePrefix}${next}`;
+};
+
+useEffect(() => {
+  if (!project?.sections || !Array.isArray(rows)) return;
+
+  if (rows.length === 0) {
+    setRows([createNewRow([], project, btknPrefix)]);
+    return;
+  }
+
+  const lastRow = rows[rows.length - 1];
+  if (!isRowEffectivelyEmpty(lastRow)) {
+    setRows((prev) => [...prev, createNewRow(prev, project, btknPrefix)]);
+  }
+}, [project, rows, btknPrefix]);
+
+const createNewRow = (rows, project, prefix = '') => {
   const nextId = rows.length > 0 ? Math.max(...rows.map(r => r.id)) + 1 : 1;
   return {
     id: nextId,
-    btkn: '',
+    btkn: getNextBtknForRows(prefix, rows),
     namn: '',
     telefon: '',
     anordning: '',
@@ -1040,33 +1252,45 @@ const createNewRow = (rows, project) => {
   };
 };
 
-const addRow = () => {
-  const getNextBtkn = (prefix) => {
-    if (!prefix) return '';
-    const safePrefix = prefix.trim();
-    const regex = new RegExp(`^${safePrefix}(\\d+)$`);
-    let max = 0;
-    rows.forEach((row) => {
-      const match = String(row.btkn || '').match(regex);
-      if (match && match[1]) {
-        max = Math.max(max, parseInt(match[1], 10));
-      }
-    });
-    const next = String(max + 1).padStart(2, '0');
-    return `${safePrefix}${next}`;
-  };
+const isRowEffectivelyEmpty = (row) => {
+  if (!row) return true;
+  const hasTextValue = [
+    row.namn,
+    row.telefon,
+    row.bt,
+    row.linje,
+    row.dp,
+    row.starttid,
+    row.begard,
+    row.avslutat,
+    row.startdatum,
+    row.begardDatum,
+    row.avslutatDatum,
+    row.anteckning,
+  ].some((value) => String(value || '').trim() !== '');
 
+  const hasAnordning =
+    (Array.isArray(row.anordning) && row.anordning.length > 0) ||
+    (typeof row.anordning === 'string' && row.anordning.trim() !== '');
+
+  const hasSelections =
+    (Array.isArray(row.selections) && row.selections.some(Boolean)) ||
+    (Array.isArray(row.selectedAreas) && row.selectedAreas.length > 0);
+
+  return !hasTextValue && !hasAnordning && !hasSelections;
+};
+
+const addRow = () => {
   const newRow = {
-    ...createNewRow(rows, project),
+    ...createNewRow(rows, project, btknPrefix),
     id: Date.now(),
     dp: '',
     linje: '',
-    btkn: btknPrefix ? getNextBtkn(btknPrefix) : '',
   };
 
   const sameDP = newRow.dp;
   const sameLinje = newRow.linje;
-  const isRelevant = ['Spf', 'Vxl'].includes(
+  const isRelevant = ['SPF', 'VXL'].includes(
     Array.isArray(newRow.anordning) ? newRow.anordning[0] : ''
   );
 
@@ -1140,10 +1364,61 @@ const openRowModal = (row, rowIndex) => {
   onOpen();
 };
 
+const ANORDNING_OPTIONS = ['A-S', 'L-S', 'S-S', 'E-S', 'SPF', 'VXL', 'Tvn'];
+
+const getAnordningColor = (item) => {
+  switch (String(item || '').toUpperCase()) {
+    case 'A-S':
+      return 'blue';
+    case 'L-S':
+      return 'green';
+    case 'S-S':
+      return 'orange';
+    case 'E-S':
+      return 'red';
+    case 'SPF':
+      return 'yellow';
+    case 'VXL':
+      return 'purple';
+    case 'TVN':
+      return 'cyan';
+    default:
+      return 'gray';
+  }
+};
+
 const formatAnordningLabel = (item) => {
   if (!item) return '';
   const upper = item.toUpperCase();
-  return upper === 'SPF' ? 'SPF' : upper === 'VXL' ? 'VXL' : item;
+  switch (upper) {
+    case 'A-S':
+      return 'A-Skydd';
+    case 'L-S':
+      return 'L-Skydd';
+    case 'S-S':
+      return 'S-Skydd';
+    case 'E-S':
+      return 'E-Skydd';
+    case 'SPF':
+      return 'Spärrfärd';
+    case 'VXL':
+      return 'Växling';
+    case 'TVN':
+      return 'Tågvarning';
+    default:
+      return item;
+  }
+};
+
+const downloadBlob = (blob, filename) => {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
 };
 
 const toggleColumn = (col) => {
@@ -1270,13 +1545,9 @@ const setHeaderCellValue = (rowIdx, colKey, value) => {
 };
 
 const getHeaderColBg = (colKey) => {
-  if (colKey.startsWith('section-')) {
-    const idx = Number(colKey.split('-')[1]);
-    const sectionPalette = ['blue.50', 'teal.50', 'purple.50', 'orange.50', 'green.50', 'pink.50'];
-    return sectionPalette[idx % sectionPalette.length];
-  }
-  if (colKey === 'btkn' || colKey === 'namn') return 'purple.50';
-  if (colKey === 'telefon' || colKey === 'anordning') return 'teal.50';
+  if (colKey.startsWith('section-')) return 'blue.50';
+  if (colKey === 'btkn' || colKey === 'namn') return 'gray.50';
+  if (colKey === 'telefon' || colKey === 'anordning') return 'gray.50';
   if (colKey === 'starttid' || colKey === 'begard' || colKey === 'avslutat') return 'blue.50';
   return 'white';
 };
@@ -1551,20 +1822,14 @@ const tempRows = rows.map((r) =>
     : r
 );
 
-const result = calculateSamrad(tempRows);
-
   // ✅ Identifiera korrekt index baserat på ID
   const fromIndex = rows.findIndex(r => r.id === row.id);
 
-  const matched = result.samradList
-    .filter((entry) => entry.from === fromIndex)
-    .map((entry) => {
-      const match = rows[entry.to];
-      return {
-        id: match?.id,
-        namn: match?.namn && match.namn.trim() !== '' ? match.namn : 'Okänt namn',
-      };
-    });
+  const matched = buildSamradEntriesForRow(tempRows, fromIndex).map((entry) => ({
+    id: entry.id,
+    namn: entry.namn,
+    telefon: entry.telefon,
+  }));
 
 
   setSelectedRow({
@@ -1613,18 +1878,9 @@ const filteredRows = rows
   );
 const visibleSectionIndexes = useMemo(() => {
   if (!project?.sections?.length) return [];
-  return project.sections
-    .map((_, index) => {
-      const hasSelection = rows.some((row) => row.selections?.[index]);
-      const hasHeaderText = Boolean(
-        sectionHeaderNotes?.[index]?.trim() ||
-        sectionHeaderNotes2?.[index]?.trim() ||
-        sectionHeaderNotes3?.[index]?.trim()
-      );
-      return hasSelection || hasHeaderText ? index : null;
-    })
-    .filter((index) => index !== null);
-}, [project?.sections, rows, sectionHeaderNotes, sectionHeaderNotes2, sectionHeaderNotes3]);
+  // Always show every saved section so a newly created plan mirrors Skapa Projekt directly.
+  return project.sections.map((_, index) => index);
+}, [project?.sections]);
 
 const headerColumns = useMemo(() => {
   const cols = [];
@@ -1636,7 +1892,6 @@ const headerColumns = useMemo(() => {
   visibleSectionIndexes.forEach((idx) => cols.push({ key: `section-${idx}`, label: `section-${idx}` }));
   if (visibleColumns.starttid) cols.push({ key: 'starttid', label: 'Start' });
   if (visibleColumns.begard) cols.push({ key: 'begard', label: 'Begärd' });
-  if (visibleColumns.avslutat) cols.push({ key: 'avslutat', label: 'Avslutad' });
   cols.push({ key: 'actions', label: 'Åtgärder' });
   return cols;
 }, [visibleColumns, visibleSectionIndexes]);
@@ -1812,11 +2067,11 @@ if (loading || !project) {
   return (
 <Box
   minH="100vh"
-  bg="#F5F6F8"
+  bg="linear-gradient(180deg, #F4F7FB 0%, #E9EEF6 100%)"
   py={6}
   px={[2, 4]}
 >
-  <Box position="fixed" inset={0} bg="#F5F6F8" zIndex={0} />
+  <Box position="fixed" inset={0} bg="linear-gradient(180deg, #F4F7FB 0%, #E9EEF6 100%)" zIndex={0} />
   <Box position="relative" zIndex={1}>
       <Header />
       <Box maxW="1800px" mx="auto" mt={2} pt="52px">
@@ -1838,11 +2093,27 @@ if (loading || !project) {
     <Text><strong>Plats:</strong> {project.plats}</Text>
     <Text><strong>Startdatum:</strong> {project.startDate} {project.startTime}</Text>
     <Text><strong>Slutdatum:</strong> {project.endDate} {project.endTime}</Text>
+    <Text><strong>Sluttid:</strong> {projectSluttid || '—'}</Text>
     <Text><strong>FJTKL:</strong> {project.namn} ({project.telefonnummer})</Text>
+    <Text><strong>Nödnummer:</strong> {projectNodnummer || '—'}</Text>
 <Text>
   <strong>Beteckningar:</strong>{' '}
   {project.beteckningar.map((b) => b.label).join(', ')}
 </Text>
+    <Box mt={3}>
+      <Text fontWeight="bold" mb={1}>Delområden</Text>
+      <Stack spacing={1}>
+        {projectSectionSummaries.length > 0 ? (
+          projectSectionSummaries.map((section) => (
+            <Text key={section.id}>
+              <strong>{section.label}:</strong> {section.signal || '—'}
+            </Text>
+          ))
+        ) : (
+          <Text color="gray.500">Inga delområden sparade.</Text>
+        )}
+      </Stack>
+    </Box>
   </Box>
 </ModalBody>
 
@@ -1858,7 +2129,7 @@ if (loading || !project) {
             try {
               const tokenData = localStorage.getItem('user');
               const token = tokenData ? JSON.parse(tokenData).token : null;
-              await axios.delete(`https://railworker-production.up.railway.app/api/project/${id}`, {
+              await axios.delete(`http://localhost:4000/api/project/${id}`, {
                 headers: { Authorization: `Bearer ${token}` },
               });
               window.location.href = '/dashboard';
@@ -1879,331 +2150,199 @@ if (loading || !project) {
 </Modal>
 
 <Box
-  bg="white"
-  border="1px solid #CBD5E0"
-  borderRadius="md"
-  px={3}
-  py={2}
-  boxShadow="none"
-  mb={2}
+  bg="rgba(255,255,255,0.94)"
+  border="1px solid #D5DEEA"
+  borderRadius="2xl"
+  px={4}
+  py={3}
+  boxShadow="0 18px 45px rgba(15, 23, 42, 0.08)"
+  backdropFilter="blur(12px)"
+  mb={3}
 >
   <Flex align="center" justify="space-between" wrap="wrap" gap={2}>
     <Box>
-      <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="wider">
+      <Text fontSize="xs" color="blue.700" textTransform="uppercase" letterSpacing="0.18em" fontWeight="bold">
         Projekt
       </Text>
-      <Text fontSize="lg" fontWeight="800" color="gray.900">
+      <Text fontSize="xl" fontWeight="900" color="gray.900">
         {project.name}
       </Text>
-      <Text fontSize="sm" color="gray.600">
+      <Text fontSize="sm" color="gray.700" fontWeight="medium">
         {project.plats}
       </Text>
     </Box>
 
     <HStack spacing={2} wrap="wrap">
-      <Button onClick={() => setIsProjectInfoOpen(true)} variant="outline" borderRadius="full" size="sm">
-        Visa projekt
-      </Button>
-      <Button onClick={() => sparaProjekt()} bg="gray.900" color="white" borderRadius="full" _hover={{ bg: 'gray.800' }} size="sm">
+      <Button onClick={() => sparaProjekt()} bg="blue.700" color="white" borderRadius="full" _hover={{ bg: 'blue.800' }} boxShadow="sm" size="sm">
         Spara
       </Button>
-      <Button variant="outline" borderRadius="full" onClick={() => addRow()} size="sm">
+      <Button variant="outline" borderRadius="full" borderColor="blue.200" bg="white" onClick={() => addRow()} size="sm">
         + Lägg till rad
       </Button>
-      <Button
-        variant="outline"
-        borderRadius="full"
-        size="sm"
-        onClick={() => addSectionQuick('Linje')}
-      >
-        + Lägg till delområde
-      </Button>
-      <Button variant="outline" borderRadius="full" onClick={() => setAnteckningarModalOpen(true)} size="sm">
+      <Button variant="outline" borderRadius="full" borderColor="blue.200" bg="white" onClick={() => setAnteckningarModalOpen(true)} size="sm">
         Anteckningar
       </Button>
-      <Button variant="outline" borderRadius="full" onClick={() => setArchivedModalOpen(true)} size="sm">
+      <Button variant="outline" borderRadius="full" borderColor="blue.200" bg="white" onClick={exportPlanToExcel} size="sm">
+        Exportera Excel
+      </Button>
+      <Button variant="outline" borderRadius="full" borderColor="blue.200" bg="white" onClick={() => setArchivedModalOpen(true)} size="sm">
         Avslutade
       </Button>
     </HStack>
 
     <HStack spacing={2} wrap="wrap">
-      <Menu closeOnSelect={false}>
-        <MenuButton as={Button} rightIcon={<ChevronDownIcon />} variant="outline" borderRadius="full" size="sm">
-          Kolumner
-        </MenuButton>
-        <MenuList borderRadius="md" shadow="lg">
-          {Object.keys(visibleColumns).map((col) => (
-            <MenuItem key={col}>
-              <Checkbox isChecked={visibleColumns[col]} onChange={() => toggleColumn(col)}>
-                {col.charAt(0).toUpperCase() + col.slice(1)}
-              </Checkbox>
-            </MenuItem>
-          ))}
-        </MenuList>
-      </Menu>
+      <HStack spacing={1} bg="white" border="1px solid #CBD5E1" borderRadius="full" px={1} py={1}>
+        <Button
+          size="xs"
+          variant="ghost"
+          borderRadius="full"
+          minW="30px"
+          onClick={() => setZoomLevel((z) => Math.max(0.8, Number((z - 0.1).toFixed(2))))}
+        >
+          -
+        </Button>
+        <Text fontSize="xs" fontWeight="bold" color="gray.700" minW="44px" textAlign="center">
+          {Math.round(zoomLevel * 100)}%
+        </Text>
+        <Button
+          size="xs"
+          variant="ghost"
+          borderRadius="full"
+          minW="30px"
+          onClick={() => setZoomLevel(1)}
+        >
+          100
+        </Button>
+        <Button
+          size="xs"
+          variant="ghost"
+          borderRadius="full"
+          minW="30px"
+          onClick={() => setZoomLevel((z) => Math.min(1.4, Number((z + 0.1).toFixed(2))))}
+        >
+          +
+        </Button>
+      </HStack>
 
       <Input
         placeholder="Sök namn eller telefon..."
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         width="220px"
-        bg="gray.50"
+        bg="white"
+        border="1px solid #CBD5E1"
         borderRadius="full"
         px={4}
         py={2}
-        _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px #3182ce' }}
+        _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 2px rgba(49,130,206,0.18)' }}
       />
 
-      <HStack spacing={2} bg="white" border="1px solid #E2E8F0" borderRadius="full" px={3} py={1}>
-        <Input
-          size="xs"
-          type="date"
-          variant="flushed"
-          value={begardDefaultDate}
-          onChange={(e) => setBegardDefaultDate(e.target.value)}
-          width="100px"
-        />
-        <Input
-          size="xs"
-          type="time"
-          variant="flushed"
-          placeholder="Tid"
-          value={begardDefaultTime}
-          onChange={(e) => setBegardDefaultTime(e.target.value)}
-          width="60px"
-        />
-      </HStack>
-
-      <Button variant="outline" borderRadius="full" onClick={() => setHotkeysOpen(true)} size="sm">
+      <Button variant="outline" borderRadius="full" borderColor="blue.200" bg="white" onClick={() => setHotkeysOpen(true)} size="sm">
         Kortkommandon
       </Button>
     </HStack>
   </Flex>
 
-  <Divider my={2} />
+  <Divider my={3} borderColor="blue.100" />
 
-  <HStack spacing={3} wrap="wrap">
-    <HStack spacing={2}>
-      <Text fontSize="xs" color="gray.500">Avstämt</Text>
-      <Checkbox isChecked={avstamt} onChange={(e) => setAvstamt(e.target.checked)} />
-    </HStack>
-
-    <HStack spacing={2}>
-      <Text fontSize="xs" color="gray.500">FJTKL</Text>
+  <HStack spacing={4} wrap="wrap">
+    <HStack spacing={2} bg="blue.50" border="1px solid #BFDBFE" px={3} py={2} borderRadius="xl">
+      <Text fontSize="xs" color="blue.800" fontWeight="bold" textTransform="uppercase" letterSpacing="0.12em">Nödnummer</Text>
       <Input
         size="xs"
-        placeholder="Namn"
-        value={namn}
-        onChange={(e) => setNamn(e.target.value)}
-        width="140px"
-      />
-      <Input
-        size="xs"
-        placeholder="Telefon"
-        value={telefonnummer}
-        onChange={(e) => setTelefonnummer(e.target.value)}
-        width="120px"
+        placeholder="Nödnummer"
+        value={projectNodnummer}
+        isReadOnly
+        bg="white"
+        border="1px solid #BFDBFE"
+        width="170px"
       />
     </HStack>
 
-    <HStack spacing={2}>
-      <Text fontSize="xs" color="gray.500">Objekt</Text>
-      <Input
-        size="xs"
-        placeholder="Objekt"
-        value={objekt}
-        onChange={(e) => setObjekt(e.target.value)}
-        width="140px"
-      />
-    </HStack>
-
-    <HStack spacing={2}>
-      <Text fontSize="xs" color="gray.500">Uttagningstid</Text>
+    <HStack spacing={2} bg="orange.50" border="1px solid #FBD38D" px={3} py={2} borderRadius="xl">
+      <Text fontSize="xs" color="orange.800" fontWeight="bold" textTransform="uppercase" letterSpacing="0.12em">Sluttid</Text>
       <Input
         size="xs"
         type="time"
         placeholder="Tid"
-        value={uttagningstid}
-        onChange={(e) => setUttagningstid(e.target.value)}
+        value={projectSluttid}
+        isReadOnly
+        bg="white"
+        border="1px solid #FBD38D"
         width="90px"
       />
     </HStack>
 
-    <HStack spacing={2}>
-      <Text fontSize="xs" color="gray.500">Signatur</Text>
-      <Input
-        size="xs"
-        placeholder="Signatur"
-        value={signatur}
-        onChange={(e) => setSignatur(e.target.value)}
-        width="120px"
-      />
-    </HStack>
-
-    <HStack spacing={2}>
-      <Text fontSize="xs" color="gray.500">Avslutningstid</Text>
-      <Input
-        size="xs"
-        type="time"
-        placeholder="Tid"
-        value={avslutningstid}
-        onChange={(e) => setAvslutningstid(e.target.value)}
-        width="90px"
-      />
-    </HStack>
-
-    <HStack spacing={2}>
-      <Text fontSize="xs" color="gray.500">Avslutningssignatur</Text>
-      <Input
-        size="xs"
-        placeholder="Signatur"
-        value={avslutningssignatur}
-        onChange={(e) => setAvslutningssignatur(e.target.value)}
-        width="140px"
-      />
-    </HStack>
   </HStack>
 </Box>
 
   <Box overflowX="visible">
       <Flex gap={2} align="start" minW="fit-content" w="full">
     <TableContainer
-      bg="white"
+      bg="rgba(255,255,255,0.96)"
       p={0}
-      borderRadius="md"
-      boxShadow="none"
-      border="1px solid #C9D4E1"
+      borderRadius="2xl"
+      boxShadow="0 20px 55px rgba(15, 23, 42, 0.10)"
+      border="2px solid #5F6F82"
       overflow="auto"
       w="full" 
       minW="100%" 
-      transform={`scale(${zoomLevel})`}
-      transformOrigin="top left"
+      sx={{
+        zoom: zoomLevel,
+        WebkitFontSmoothing: 'antialiased',
+        MozOsxFontSmoothing: 'grayscale',
+        textRendering: 'geometricPrecision',
+      }}
     >
       <Table
         variant="simple"
         size="sm"
         sx={{
           'th, td': {
-            border: '1px solid #C9D4E1',
-            paddingX: '8px',
-            paddingY: '6px',
+            border: '2px solid #6B7C8F',
+            paddingX: '10px',
+            paddingY: '8px',
             fontSize: '12px',
-            fontWeight: '800',
+            fontWeight: '700',
             overflow: 'visible',
             position: 'relative',
+            textRendering: 'geometricPrecision',
           },
           thead: {
-            background: '#F2F6FF',
+            background: 'linear-gradient(180deg, #EDF4FF 0%, #E2EBF7 100%)',
           },
           'tbody tr:nth-of-type(even)': {
-            backgroundColor: '#F7FBFF',
+            backgroundColor: '#E2E8F0',
+          },
+          'tbody tr': {
+            borderBottom: '2px solid #66788C',
           },
           'tbody tr:hover': {
-            backgroundColor: '#E8F7FF !important',
+            backgroundColor: '#E9F2FF !important',
           },
           'tbody input': {
-            height: '20px',
+            height: '28px',
             fontSize: '12px',
+            fontWeight: '600',
+            color: '#0F172A',
+            WebkitFontSmoothing: 'antialiased',
+            textRendering: 'geometricPrecision',
           },
           'input': {
-            border: 'none',
+            border: '1px solid transparent',
             boxShadow: 'none',
+            borderRadius: '8px',
+            background: 'rgba(255,255,255,0.72)',
+            WebkitFontSmoothing: 'antialiased',
+            textRendering: 'geometricPrecision',
+          },
+          'input:focus': {
+            borderColor: '#93C5FD',
+            boxShadow: '0 0 0 2px rgba(59,130,246,0.12)',
           },
         }}
       >
-        <Thead bg="#EEF2F7">
-          {[0, 1].map((rowIdx) => (
-            <Tr key={`header-notes-${rowIdx}`}>
-              {headerColumns.map((col, colIdx) => {
-                if (
-                  rowIdx === 0 &&
-                  col.key === 'avslutat' &&
-                  visibleColumns.begard &&
-                  visibleColumns.avslutat
-                ) {
-                  return null;
-                }
-
-                const mergeInfo = getMergeForCell(rowIdx, colIdx);
-                if (mergeInfo) {
-                  const isTopLeft =
-                    rowIdx === mergeInfo.merge.rowStart && colIdx === mergeInfo.indices.colStart;
-                  if (!isTopLeft) return null;
-                  const colSpan = mergeInfo.indices.colEnd - mergeInfo.indices.colStart + 1;
-                  const rowSpan = mergeInfo.merge.rowEnd - mergeInfo.merge.rowStart + 1;
-                  const selected =
-                    isCellSelected(rowIdx, colIdx) ||
-                    (selectedHeaderCell &&
-                      selectedHeaderCell.row === rowIdx &&
-                      selectedHeaderCell.colKey === col.key);
-                  return (
-                    <Th
-                      key={`merge-${mergeInfo.merge.id}`}
-                      colSpan={colSpan}
-                      rowSpan={rowSpan}
-                      p={0}
-                      bg={selected ? 'blue.100' : getHeaderColBg(col.key)}
-                      verticalAlign="top"
-                      onMouseDown={(e) => beginHeaderSelection(rowIdx, colIdx, e)}
-                      onMouseEnter={() => updateHeaderSelection(rowIdx, colIdx)}
-                      onDoubleClick={(e) => {
-                        e.stopPropagation();
-                        setHeaderEditKey(`merge:${mergeInfo.merge.id}`);
-                      }}
-                    >
-                      {renderMergedCellContent(mergeInfo.merge)}
-                    </Th>
-                  );
-                }
-
-                const selected =
-                  isCellSelected(rowIdx, colIdx) ||
-                  (selectedHeaderCell &&
-                    selectedHeaderCell.row === rowIdx &&
-                    selectedHeaderCell.colKey === col.key);
-
-                if (
-                  rowIdx === 0 &&
-                  col.key === 'begard' &&
-                  visibleColumns.avslutat
-                ) {
-                  return (
-                    <Th
-                      key={`${rowIdx}-${col.key}-span`}
-                      colSpan={2}
-                      p={0}
-                      bg={selected ? 'blue.100' : getHeaderColBg(col.key)}
-                      verticalAlign="top"
-                      onMouseDown={(e) => beginHeaderSelection(rowIdx, colIdx, e)}
-                      onMouseEnter={() => updateHeaderSelection(rowIdx, colIdx)}
-                      onDoubleClick={(e) => {
-                        e.stopPropagation();
-                        setHeaderEditKey(`${rowIdx}:${col.key}`);
-                      }}
-                    >
-                      {renderHeaderCellContent(rowIdx, col.key)}
-                    </Th>
-                  );
-                }
-                return (
-                  <Th
-                    key={`${rowIdx}-${col.key}`}
-                    p={0}
-                    bg={selected ? 'blue.100' : getHeaderColBg(col.key)}
-                    verticalAlign="top"
-                    onMouseDown={(e) => beginHeaderSelection(rowIdx, colIdx, e)}
-                    onMouseEnter={() => updateHeaderSelection(rowIdx, colIdx)}
-                    onDoubleClick={(e) => {
-                      e.stopPropagation();
-                      setHeaderEditKey(`${rowIdx}:${col.key}`);
-                    }}
-                  >
-                    {renderHeaderCellContent(rowIdx, col.key)}
-                  </Th>
-                );
-              })}
-            </Tr>
-          ))}
+        <Thead bg="linear-gradient(180deg, #EDF4FF 0%, #E2EBF7 100%)">
           <Tr>
             {visibleColumns['#'] && <Th />}
             {visibleColumns.btkn && (
@@ -2220,20 +2359,46 @@ if (loading || !project) {
             {visibleColumns.namn && <Th />}
             {visibleColumns.telefon && <Th />}
             {visibleColumns.anordning && <Th />}
-            {visibleSectionIndexes.map((secIdx) => (
-              <Th key={`note1-${secIdx}`} p={1} bg={secIdx % 2 === 0 ? 'blue.50' : 'transparent'}>
-                <Button
-                  size="xs"
-                  variant="ghost"
-                  onClick={() => toggleSectionHeaderType(secIdx)}
+            {visibleSectionIndexes.map((idx) => {
+              const sec = project.sections[idx];
+              const sectionWidth = columnWidths[`section-${idx}`] || columnWidths.sectionDefault || 108;
+              return (
+                <Th
+                  key={`section-label-${idx}`}
+                  w={`${sectionWidth}px`}
+                  minW={`${sectionWidth}px`}
+                  h="24px"
+                  p={0}
+                  m={0}
+                  bg={idx % 2 === 0 ? 'blue.100' : 'rgba(255,255,255,0.92)'}
+                  textAlign="center"
+                  verticalAlign="middle"
                 >
-                  {sectionHeaderNotes[secIdx] || 'Linje'}
-                </Button>
-              </Th>
-            ))}
+                  <Stack spacing={0} align="center" justify="center" h="100%">
+                    <Text
+                      fontSize="7px"
+                      fontWeight="bold"
+                      color="gray.700"
+                      textTransform="uppercase"
+                      letterSpacing="-0.01em"
+                      lineHeight="1"
+                    >
+                      Delomr
+                    </Text>
+                    <Text
+                      fontSize="sm"
+                      fontWeight="extrabold"
+                      color="gray.900"
+                      lineHeight="1"
+                    >
+                      {getSectionMarker(sec, idx)}
+                    </Text>
+                  </Stack>
+                </Th>
+              );
+            })}
             {visibleColumns.starttid && <Th />}
             {visibleColumns.begard && <Th />}
-            {visibleColumns.avslutat && <Th />}
             <Th />
           </Tr>
           <Tr>
@@ -2242,103 +2407,72 @@ if (loading || !project) {
                 width="40px"
                 textAlign="center"
                 py={2}
-        color="gray.700"
-        fontSize="sm"
-        fontWeight="semibold"
-        borderBottom="2px solid #CBD5E0"
+                color="gray.700"
+                fontSize="sm"
+                fontWeight="semibold"
+                borderBottom="2px solid #CBD5E0"
       >
         #
       </Th>
     )}
     {visibleColumns.btkn && (
-      <Th py={2} fontWeight="semibold" color="gray.700" width={`${columnWidths.btkn}px`}>
-        <Flex align="center" gap={2} justify="space-between">
+      <Th py={1} px={1} fontWeight="semibold" color="gray.700" width={`${columnWidths.btkn}px`}>
+        <Flex align="center" gap={2}>
           <Flex align="center" gap={2}>
             <FiHash size={14} />
             BTKN
           </Flex>
-          <Box
-            onMouseDown={(e) => beginColumnResize('btkn', e)}
-            cursor="col-resize"
-            w="2px"
-            h="14px"
-            borderRadius="full"
-            bg="gray.500"
-            _hover={{ bg: 'gray.700' }}
-          />
         </Flex>
       </Th>
     )}
     {visibleColumns.namn && (
-      <Th py={2} fontWeight="semibold" color="gray.700" width={`${columnWidths.namn}px`}>
-        <Flex align="center" gap={2} justify="space-between">
+      <Th py={1} px={1} fontWeight="semibold" color="gray.700" width={`${columnWidths.namn}px`}>
+        <Flex align="center" gap={2}>
           <Flex align="center" gap={2}>
             <FiUser size={14} />
             Namn
           </Flex>
-          <Box
-            onMouseDown={(e) => beginColumnResize('namn', e)}
-            cursor="col-resize"
-            w="2px"
-            h="14px"
-            borderRadius="full"
-            bg="gray.500"
-            _hover={{ bg: 'gray.700' }}
-          />
         </Flex>
       </Th>
     )}
     {visibleColumns.telefon && (
-      <Th py={2} fontWeight="semibold" color="gray.700" width={`${columnWidths.telefon}px`}>
-        <Flex align="center" gap={2} justify="space-between">
+      <Th py={1} px={1} fontWeight="semibold" color="gray.700" width={`${columnWidths.telefon}px`}>
+        <Flex align="center" gap={2}>
           <Flex align="center" gap={2}>
             <FiPhone size={14} />
             Telefon
           </Flex>
-          <Box
-            onMouseDown={(e) => beginColumnResize('telefon', e)}
-            cursor="col-resize"
-            w="2px"
-            h="14px"
-            borderRadius="full"
-            bg="gray.500"
-            _hover={{ bg: 'gray.700' }}
-          />
         </Flex>
       </Th>
     )}
     {visibleColumns.anordning && (
-      <Th py={2} fontWeight="semibold" color="gray.700" width={`${columnWidths.anordning}px`}>
-        <Flex align="center" gap={2} justify="space-between">
+      <Th py={1} px={1} fontWeight="semibold" color="gray.700" width={`${columnWidths.anordning}px`}>
+        <Flex align="center" gap={2}>
           <Flex align="center" gap={2}>
             <FiAperture size={14} />
-            Anordning
+            Anordn
           </Flex>
-          <Box
-            onMouseDown={(e) => beginColumnResize('anordning', e)}
-            cursor="col-resize"
-            w="2px"
-            h="14px"
-            borderRadius="full"
-            bg="gray.500"
-            _hover={{ bg: 'gray.700' }}
-          />
         </Flex>
       </Th>
     )}
 
 {visibleSectionIndexes.map((idx) => {
   const sec = project.sections[idx];
+  const sectionWidth = columnWidths[`section-${idx}`] || columnWidths.sectionDefault || 108;
+  const { signal, spar } = splitSectionSignalAndTrack(sec);
+  const signalText = compactSectionText(signal);
+  const boundaryText = compactSectionText(sec.granspunkter || signalText);
   return (
 <Th
   key={idx}
-  w="40px"
-  h="40px"
-  p="0"
+  w={`${sectionWidth}px`}
+  minW={`${sectionWidth}px`}
+  h="34px"
+  p={0}
   m="0"
-  bg={idx % 2 === 0 ? 'blue.50' : 'transparent'}
-  position="relative"
+  bg={idx % 2 === 0 ? 'gray.100' : 'white'}
   textAlign="center"
+  verticalAlign="middle"
 >
   <Tooltip
     hasArrow
@@ -2351,44 +2485,54 @@ if (loading || !project) {
     p={3}
     label={
       <Box p={2} maxW="300px">
-        <Text fontWeight="bold" mb={1}>Signal:</Text>
-        {sec.name ? (
-          <Text fontSize="sm">{sec.name}</Text>
+        <Text fontWeight="bold" mb={1}>Gränspunkter:</Text>
+        {boundaryText ? (
+          <Text fontSize="sm">{boundaryText}</Text>
         ) : (
           <Text fontSize="sm" color="gray.500">Ej angivet</Text>
         )}
+        <Text fontWeight="bold" mt={2} mb={1}>Spår:</Text>
+        <Text fontSize="sm">{spar || sec.spar || 'Ej angivet'}</Text>
       </Box>
     }
     aria-label="Signal tooltip"
   >
     <Box position="relative" w="100%" h="100%" cursor="help" overflow="hidden">
-      {/* Bakgrundsikon */}
-      <Box
-        position="absolute"
-        top="50%"
-        left="50%"
-        transform="translate(-50%, -50%)"
-        zIndex={0}
-        opacity={0.12}
-      >
-        <Icon
-          as={sec.type === 'DP' ? PiTrainLight : GiRailway}
-          boxSize="32px"
-          color="gray.600"
-        />
-      </Box>
-
-      {/* Bokstav */}
       <Flex
+        direction="column"
+        gap={0.5}
         align="center"
         justify="center"
         position="relative"
         zIndex={1}
         w="100%"
         h="100%"
+        px={0.5}
+        py={0.5}
       >
-        <Text fontSize="xs" fontWeight="bold">
-          {String.fromCharCode(65 + idx)}
+        <Text
+          fontSize="8px"
+          fontWeight="extrabold"
+          color="black"
+          lineHeight="1"
+          textAlign="center"
+          noOfLines={1}
+          letterSpacing="-0.01em"
+          textShadow="0 0 0.6px rgba(0,0,0,0.95)"
+          px={0.5}
+        >
+          {signalText || 'Ej angivet'}
+        </Text>
+        <Text
+          fontSize="7px"
+          fontWeight="bold"
+          color="gray.900"
+          lineHeight="1"
+          textAlign="center"
+          noOfLines={1}
+          px={0.5}
+        >
+          {spar || sec.spar || '—'}
         </Text>
       </Flex>
     </Box>
@@ -2397,63 +2541,26 @@ if (loading || !project) {
   );
 })}
     {visibleColumns.starttid && (
-      <Th py={2} fontWeight="semibold" color="gray.700" width={`${columnWidths.starttid}px`}>
-        <Flex align="center" gap={2} justify="space-between">
+      <Th py={1} px={1} fontWeight="semibold" color="gray.700" width={`${columnWidths.starttid}px`}>
+        <Flex align="center" gap={2}>
           <Flex align="center" gap={2}>
             Start
           </Flex>
-          <Box
-            onMouseDown={(e) => beginColumnResize('starttid', e)}
-            cursor="col-resize"
-            w="2px"
-            h="14px"
-            borderRadius="full"
-            bg="gray.500"
-            _hover={{ bg: 'gray.700' }}
-          />
         </Flex>
       </Th>
     )}
     {visibleColumns.begard && (
-      <Th py={2} fontWeight="semibold" color="gray.700" width={`${columnWidths.begard}px`}>
-        <Flex align="center" gap={2} justify="space-between">
+      <Th py={1} px={1} fontWeight="semibold" color="gray.700" width={`${columnWidths.begard}px`}>
+        <Flex align="center" gap={2}>
           <Flex align="center" gap={2}>
             Begärd
           </Flex>
-          <Box
-            onMouseDown={(e) => beginColumnResize('begard', e)}
-            cursor="col-resize"
-            w="2px"
-            h="14px"
-            borderRadius="full"
-            bg="gray.500"
-            _hover={{ bg: 'gray.700' }}
-          />
         </Flex>
       </Th>
     )}
-    {visibleColumns.avslutat && (
-      <Th py={2} fontWeight="semibold" color="gray.700" width={`${columnWidths.avslutat}px`}>
-        <Flex align="center" gap={2} justify="space-between">
-          <Flex align="center" gap={2}>
-            Avslutad
-          </Flex>
-          <Box
-            onMouseDown={(e) => beginColumnResize('avslutat', e)}
-            cursor="col-resize"
-            w="2px"
-            h="14px"
-            borderRadius="full"
-            bg="gray.500"
-            _hover={{ bg: 'gray.700' }}
-          />
-        </Flex>
-      </Th>
-    )}
-    <Th py={2} fontWeight="semibold" color="gray.700">
+    <Th py={1} px={1} fontWeight="semibold" color="gray.700" width="48px">
       <Flex align="center" gap={2}>
         <FiSliders size={14} />
-        Åtgärder
       </Flex>
     </Th>
   </Tr>
@@ -2474,14 +2581,14 @@ if (loading || !project) {
                 return (
                 <Tr
                   key={row.id}
-                  bg={activeRowId === row.id ? 'blue.50' : 'transparent'}
+                  bg={activeRowId === row.id ? 'blue.100' : 'transparent'}
                   _hover={{ bg: 'blue.50' }}
                   cursor="default"
-                  transition="background 0.2s ease"
+                  transition="background 0.2s ease, box-shadow 0.2s ease"
                   onMouseEnter={() => setActiveRowId(row.id)}
                 >
                   {visibleColumns['#'] && (
-                    <Td width="40px" borderRight="1px solid rgba(0, 0, 0, 0.05)">
+                    <Td width="40px" borderRight="2px solid #6B7C8F">
                       <Text color="gray.800" fontSize="sm" textAlign="center">
                         {rowIndex + 1}
                       </Text>
@@ -2490,7 +2597,9 @@ if (loading || !project) {
 {visibleColumns.btkn && (
   <Td
     width={`${columnWidths.btkn}px`}
-    borderRight="1px solid rgba(0, 0, 0, 0.1)"
+    borderRight="2px solid #6B7C8F"
+    px={1}
+    py={1}
     bg={
       selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === 'btkn'
         ? 'blue.100'
@@ -2512,12 +2621,11 @@ if (loading || !project) {
         variant="flushed"
         value={row.btkn || ''}
         onChange={(e) => updateRowField(row.id, 'btkn', e.target.value)}
-        isReadOnly={hotkeyMode || !isBodyCellEditing(row.id, 'btkn')}
+        isReadOnly={hotkeyMode}
         onFocus={() => setActiveRowId(row.id)}
         onBlur={() => setEditingBodyCell(null)}
-        onDoubleClick={() => setEditingBodyCell({ rowId: row.id, key: 'btkn' })}
-        cursor={isBodyCellEditing(row.id, 'btkn') ? 'text' : 'pointer'}
-        caretColor={isBodyCellEditing(row.id, 'btkn') ? 'auto' : 'transparent'}
+        cursor="text"
+        caretColor="auto"
       />
     </Flex>
   </Td>
@@ -2526,7 +2634,9 @@ if (loading || !project) {
 {visibleColumns.namn && (
   <Td
     maxW={`${columnWidths.namn}px`}
-    borderRight="1px solid rgba(0, 0, 0, 0.05)"
+    borderRight="2px solid #6B7C8F"
+    px={1}
+    py={1}
     bg={
       selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === 'namn'
         ? 'blue.100'
@@ -2548,12 +2658,11 @@ if (loading || !project) {
         variant="flushed"
         value={row.namn || ''}
         onChange={(e) => updateRowField(row.id, 'namn', e.target.value)}
-        isReadOnly={hotkeyMode || !isBodyCellEditing(row.id, 'namn')}
+        isReadOnly={hotkeyMode}
         onFocus={() => setActiveRowId(row.id)}
         onBlur={() => setEditingBodyCell(null)}
-        onDoubleClick={() => setEditingBodyCell({ rowId: row.id, key: 'namn' })}
-        cursor={isBodyCellEditing(row.id, 'namn') ? 'text' : 'pointer'}
-        caretColor={isBodyCellEditing(row.id, 'namn') ? 'auto' : 'transparent'}
+        cursor="text"
+        caretColor="auto"
       />
     </Flex>
   </Td>
@@ -2562,7 +2671,9 @@ if (loading || !project) {
 {visibleColumns.telefon && (
   <Td
     maxW={`${columnWidths.telefon}px`}
-    borderRight="1px solid rgba(0, 0, 0, 0.05)"
+    borderRight="2px solid #6B7C8F"
+    px={1}
+    py={1}
     bg={
       selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === 'telefon'
         ? 'blue.100'
@@ -2584,12 +2695,13 @@ if (loading || !project) {
         variant="flushed"
         value={row.telefon || ''}
         onChange={(e) => updateRowField(row.id, 'telefon', e.target.value)}
-        isReadOnly={hotkeyMode || !isBodyCellEditing(row.id, 'telefon')}
+        isReadOnly={hotkeyMode}
         onFocus={() => setActiveRowId(row.id)}
         onBlur={() => setEditingBodyCell(null)}
-        onDoubleClick={() => setEditingBodyCell({ rowId: row.id, key: 'telefon' })}
-        cursor={isBodyCellEditing(row.id, 'telefon') ? 'text' : 'pointer'}
-        caretColor={isBodyCellEditing(row.id, 'telefon') ? 'auto' : 'transparent'}
+        cursor="text"
+        caretColor="auto"
+        px={0}
+        minW="0"
       />
     </Flex>
   </Td>
@@ -2598,7 +2710,9 @@ if (loading || !project) {
 {visibleColumns.anordning && (
   <Td
     maxW={`${columnWidths.anordning}px`}
-    borderRight="1px solid rgba(0, 0, 0, 0.1)"
+    borderRight="2px solid #6B7C8F"
+    px={1}
+    py={1}
     bg={
       selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === 'anordning'
         ? 'blue.100'
@@ -2618,31 +2732,22 @@ if (loading || !project) {
       <MenuButton
         as={Button}
         size="xs"
-        rightIcon={<ChevronDownIcon />}
         bg="transparent"
         _hover={{ bg: 'transparent' }}
         _active={{ bg: 'transparent' }}
         _focus={{ boxShadow: 'none' }}
         isDisabled={hotkeyMode}
         onClick={() => setActiveRowId(row.id)}
+        minW="0"
+        px={1}
       >
         {Array.isArray(row.anordning) && row.anordning.length > 0 ? (
-          <Flex gap={1} wrap="wrap">
+          <Flex gap={1} wrap="wrap" justify="center">
             {row.anordning.map((item) => {
-              let color = 'gray';
-              switch (item) {
-                case 'A-S': color = 'blue'; break;
-                case 'L-S': color = 'green'; break;
-                case 'S-S': color = 'orange'; break;
-                case 'E-S': color = 'red'; break;
-                case 'Spf': color = 'yellow'; break;
-                case 'Vxl': color = 'purple'; break;
-                default: color = 'gray';
-              }
               return (
                 <Badge
                   key={item}
-                  colorScheme={color}
+                  colorScheme={getAnordningColor(item)}
                   variant="subtle"
                   fontSize="xs"
                   px={2}
@@ -2661,7 +2766,7 @@ if (loading || !project) {
       </MenuButton>
       <Portal>
         <MenuList maxHeight="240px" overflowY="auto">
-          {['A-S', 'L-S', 'S-S', 'E-S', 'Spf', 'Vxl'].map((option) => (
+          {ANORDNING_OPTIONS.map((option) => (
             <MenuItem
               key={option}
               onClick={() => {
@@ -2670,21 +2775,7 @@ if (loading || !project) {
               }}
             >
               <Badge
-                colorScheme={
-                  option === 'A-S'
-                    ? 'blue'
-                    : option === 'L-S'
-                    ? 'green'
-                    : option === 'S-S'
-                    ? 'orange'
-                    : option === 'E-S'
-                    ? 'red'
-                    : option === 'Spf'
-                    ? 'yellow'
-                    : option === 'Vxl'
-                    ? 'purple'
-                    : 'gray'
-                }
+                colorScheme={getAnordningColor(option)}
                 variant="subtle"
                 fontSize="xs"
                 px={2}
@@ -2693,9 +2784,9 @@ if (loading || !project) {
                 textTransform="none"
                 mr={2}
               >
-                {formatAnordningLabel(option)}
+                {option}
               </Badge>
-              {option}
+              {formatAnordningLabel(option)}
             </MenuItem>
           ))}
         </MenuList>
@@ -2708,23 +2799,26 @@ if (loading || !project) {
                   const cellKey = `section-${secIdx}`;
                   const sectionMeta = cell(cellKey);
                   const sectionIcon = cellIcon(cellKey);
-  const sectionPalette = ['blue.50', 'teal.50', 'purple.50', 'orange.50', 'green.50', 'pink.50'];
-  const baseBg = sectionPalette[secIdx % sectionPalette.length];
+                  const sectionWidth = columnWidths[`section-${secIdx}`] || columnWidths.sectionDefault || 14;
+  const baseBg = secIdx % 2 === 0 ? 'gray.100' : 'white';
 
   return (
     <Td
       key={secIdx}
-      width="60px"
+      width={`${sectionWidth}px`}
+      minW={`${sectionWidth}px`}
+      px={0.5}
+      py={1}
       bg={
         selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === cellKey
           ? 'blue.100'
           : sectionMeta?.color || baseBg
       }
-      borderRight="1px solid rgba(0, 0, 0, 0.05)"
+      borderRight="2px solid #6B7C8F"
       onMouseDown={(e) => {
         e.stopPropagation();
         if (hotkeyMode) {
-          handleCellInteraction(row, cellKey, `Delområde ${String.fromCharCode(65 + secIdx)}`);
+          handleCellInteraction(row, cellKey, `Delområde ${getSectionMarker(project.sections[secIdx], secIdx)}`);
           return;
         }
         toggleBodyCellSelection(row.id, cellKey);
@@ -2732,21 +2826,21 @@ if (loading || !project) {
       onContextMenu={(e) => openBodyContextMenu(e, row.id, cellKey)}
       onDoubleClick={() => {
         if (hotkeyMode) {
-          handleCellInteraction(row, cellKey, `Delområde ${String.fromCharCode(65 + secIdx)}`);
+          handleCellInteraction(row, cellKey, `Delområde ${getSectionMarker(project.sections[secIdx], secIdx)}`);
           return;
         }
         toggleDelomrade(row.id, secIdx);
       }}
     >
-      <Flex align="center" justify="center" gap={2}>
-        {row.selections[secIdx] === true && <HiX size={16} color="black" />}
+      <Flex align="center" justify="center" gap={1}>
+        {row.selections[secIdx] === true && <HiX size={16} color="black" style={{ strokeWidth: 1.5 }} />}
         {sectionIcon?.icon && (
-          <Icon as={sectionIcon.icon} color={sectionIcon.color} boxSize="14px" />
+          <Icon as={sectionIcon.icon} color={sectionIcon.color} boxSize="13px" />
         )}
       </Flex>
       {sectionMeta?.comment && (
         <Tooltip label={sectionMeta.comment} hasArrow>
-          <Icon as={FaRegCommentDots} color="gray.500" boxSize="14px" mt={1} />
+          <Icon as={FaRegCommentDots} color="gray.700" boxSize="12px" mt={0.5} />
         </Tooltip>
       )}
     </Td>
@@ -2755,8 +2849,10 @@ if (loading || !project) {
 
   {visibleColumns.starttid && (
     <Td
-      minW={`${columnWidths.starttid}px`}
-      borderRight="1px solid rgba(0, 0, 0, 0.05)"
+        minW={`${columnWidths.starttid}px`}
+      borderRight="2px solid #6B7C8F"
+      px={1}
+      py={1}
       bg={
         selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === 'starttid'
           ? 'blue.100'
@@ -2778,20 +2874,21 @@ if (loading || !project) {
         variant="flushed"
         value={row.starttid || ''}
         onChange={(e) => updateRowField(row.id, 'starttid', e.target.value)}
-        isReadOnly={hotkeyMode || !isBodyCellEditing(row.id, 'starttid')}
+        isReadOnly={hotkeyMode}
         onFocus={() => setActiveRowId(row.id)}
         width="100%"
         onBlur={() => setEditingBodyCell(null)}
-        onDoubleClick={() => setEditingBodyCell({ rowId: row.id, key: 'starttid' })}
-        cursor={isBodyCellEditing(row.id, 'starttid') ? 'text' : 'pointer'}
-        caretColor={isBodyCellEditing(row.id, 'starttid') ? 'auto' : 'transparent'}
+        cursor="text"
+        caretColor="auto"
       />
     </Td>
   )}
   {visibleColumns.begard && (
     <Td
-      minW={`${columnWidths.begard}px`}
-      borderRight="1px solid rgba(0, 0, 0, 0.05)"
+        minW={`${columnWidths.begard}px`}
+      borderRight="2px solid #6B7C8F"
+      px={1}
+      py={1}
       bg={
         selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === 'begard'
           ? 'blue.100'
@@ -2813,53 +2910,17 @@ if (loading || !project) {
         variant="flushed"
         value={row.begard || ''}
         onChange={(e) => updateRowField(row.id, 'begard', e.target.value)}
-        isReadOnly={hotkeyMode || !isBodyCellEditing(row.id, 'begard')}
+        isReadOnly={hotkeyMode}
         onFocus={() => setActiveRowId(row.id)}
         width="100%"
         onBlur={() => setEditingBodyCell(null)}
-        onDoubleClick={() => setEditingBodyCell({ rowId: row.id, key: 'begard' })}
-        cursor={isBodyCellEditing(row.id, 'begard') ? 'text' : 'pointer'}
-        caretColor={isBodyCellEditing(row.id, 'begard') ? 'auto' : 'transparent'}
+        cursor="text"
+        caretColor="auto"
       />
     </Td>
   )}
-  {visibleColumns.avslutat && (
-    <Td
-      minW={`${columnWidths.avslutat}px`}
-      borderRight="1px solid rgba(0, 0, 0, 0.05)"
-      bg={
-        selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === 'avslutat'
-          ? 'blue.100'
-          : 'transparent'
-      }
-      onMouseDown={(e) => {
-        e.stopPropagation();
-        if (hotkeyMode) {
-          handleCellInteraction(row, 'avslutat', 'Avslutad');
-          return;
-        }
-        toggleBodyCellSelection(row.id, 'avslutat');
-      }}
-      onContextMenu={(e) => openBodyContextMenu(e, row.id, 'avslutat')}
-    >
-      <Input
-        size="xs"
-        type="time"
-        variant="flushed"
-        value={row.avslutat || ''}
-        onChange={(e) => updateRowField(row.id, 'avslutat', e.target.value)}
-        isReadOnly={hotkeyMode || !isBodyCellEditing(row.id, 'avslutat')}
-        onFocus={() => setActiveRowId(row.id)}
-        width="100%"
-        onBlur={() => setEditingBodyCell(null)}
-        onDoubleClick={() => setEditingBodyCell({ rowId: row.id, key: 'avslutat' })}
-        cursor={isBodyCellEditing(row.id, 'avslutat') ? 'text' : 'pointer'}
-        caretColor={isBodyCellEditing(row.id, 'avslutat') ? 'auto' : 'transparent'}
-      />
-    </Td>
-  )}
-  <Td borderRight="1px solid rgba(0, 0, 0, 0.05)">
-    <Flex align="center" gap={2}>
+  <Td borderRight="2px solid #6B7C8F" px={1} py={1}>
+    <Flex align="center" gap={1}>
       <IconButton
         size="xs"
         variant="outline"
@@ -2867,17 +2928,16 @@ if (loading || !project) {
         aria-label="Redigera rad"
         onClick={() => openRowModal(row, rowIndex)}
       />
-      <Button
+      <IconButton
         size="xs"
         variant="outline"
-        leftIcon={<FiMessageCircle />}
+        icon={<FiMessageCircle />}
+        aria-label="Samråd"
         onClick={() => {
           setSamradModalRow(row);
           onOpenSamradModal();
         }}
-      >
-        Samråd
-      </Button>
+      />
     </Flex>
   </Td>
     </Tr>
@@ -2926,21 +2986,10 @@ onClick={() => {
             ? row.anordning.split(',').map((a) => a.trim())
             : []
           ).map((item, idx) => {
-            let color = 'gray';
-            switch (item) {
-              case 'A-S': color = 'blue'; break;
-              case 'L-S': color = 'green'; break;
-              case 'S-S': color = 'orange'; break;
-              case 'E-S': color = 'red'; break;
-              case 'Spf': color = 'yellow'; break;
-              case 'Vxl': color = 'purple'; break;
-              default: color = 'gray';
-            }
-
             return (
               <Badge
                 key={idx}
-                colorScheme={color}
+                colorScheme={getAnordningColor(item)}
                 variant="subtle"
                 fontSize="xs"
                 px={2}
@@ -2948,7 +2997,7 @@ onClick={() => {
                 borderRadius="none"
                 textTransform="none"
               >
-                {item}
+                {formatAnordningLabel(item)}
               </Badge>
             );
           })}
@@ -2960,7 +3009,8 @@ onClick={() => {
     {visibleSectionIndexes.map((secIdx) => (
       <Td
         key={secIdx}
-        width="60px"
+        width={`${columnWidths[`section-${secIdx}`] || columnWidths.sectionDefault || 140}px`}
+        minW={`${columnWidths[`section-${secIdx}`] || columnWidths.sectionDefault || 140}px`}
         bg={secIdx % 2 === 0 ? 'blue.50' : 'transparent'}
         borderRight="1px solid rgba(0, 0, 0, 0.05)"
       >
@@ -2978,11 +3028,6 @@ onClick={() => {
     {visibleColumns.begard && (
       <Td borderRight="1px solid rgba(0, 0, 0, 0.05)">
         <Text fontSize="sm">{row.begard || '–'}</Text>
-      </Td>
-    )}
-    {visibleColumns.avslutat && (
-      <Td borderRight="1px solid rgba(0, 0, 0, 0.05)">
-        <Text fontSize="sm">{row.endTime || row.avslutat || '–'}</Text>
       </Td>
     )}
     <Td borderRight="1px solid rgba(0, 0, 0, 0.05)" />
@@ -3207,7 +3252,7 @@ onClick={() => {
           {editSections.map((sec, i) => (
             <Box key={i} mb={3} p={3} bg="gray.50" borderRadius="md" borderWidth="1px">
               <Text mb={1} fontWeight="semibold">
-                {sec.type} {String.fromCharCode(65 + i)}
+                {getSectionLabel(sec, i)}
               </Text>
               <Input
                 value={sec.signal}
@@ -3253,7 +3298,7 @@ onClick={() => {
         : 'Välj anordning(ar)'}
     </MenuButton>
     <MenuList maxHeight="300px" overflowY="auto">
-      {['A-S', 'L-S', 'S-S', 'E-S', 'Spf', 'Vxl'].map((option) => (
+      {ANORDNING_OPTIONS.map((option) => (
         <MenuItem key={option}>
           <Checkbox
             isChecked={selectedRow.anordning?.includes(option)}
@@ -3267,7 +3312,7 @@ onClick={() => {
               );
             }}
           >
-            {option}
+            {option} - {formatAnordningLabel(option)}
           </Checkbox>
         </MenuItem>
       ))}
@@ -3336,7 +3381,7 @@ onClick={() => {
     calculateSamrad(newRows);
   }}
 >
-  {sec.type} {String.fromCharCode(65 + idx)}
+  {getSectionLabel(sec, idx)}
 </Checkbox>
 </MenuItem>
       ))}
@@ -3690,7 +3735,7 @@ onChange={() =>
                       : 'Välj anordning(ar)'}
                   </MenuButton>
                   <MenuList maxHeight="300px" overflowY="auto">
-                    {['A-S', 'L-S', 'S-S', 'E-S', 'Spf', 'Vxl'].map((option) => (
+                    {ANORDNING_OPTIONS.map((option) => (
                       <MenuItem key={option}>
                         <Checkbox
                           isChecked={editableTsmRow.anordning?.includes(option)}
@@ -3702,7 +3747,7 @@ onChange={() =>
                             handleApprovalChange('anordning', updated);
                           }}
                         >
-                          {option}
+                          {option} - {formatAnordningLabel(option)}
                         </Checkbox>
                       </MenuItem>
                     ))}
@@ -3786,7 +3831,7 @@ onChange={() =>
                   isChecked={selectedApprovalAreas.includes(idx)}
                   onChange={() => toggleApprovalArea(idx)}
                 >
-                  {sec.type} {String.fromCharCode(65 + idx)}
+                  {getSectionLabel(sec, idx)}
                 </Checkbox>
               ))}
             </SimpleGrid>
@@ -3922,53 +3967,59 @@ onChange={() =>
       </VStack>
     </ModalBody>
 
-    <ModalFooter>
-<Button
-  onClick={async () => {
-    const token = JSON.parse(localStorage.getItem('user'))?.token;
-    if (!token) return alert('Ingen token.');
+    <ModalFooter justifyContent="space-between" gap={2} flexWrap="wrap">
+      <HStack spacing={2} flexWrap="wrap">
+        <Button variant="outline" colorScheme="blue" onClick={forwardAnteckningarByMail}>
+          Skicka med mail
+        </Button>
+        <Button variant="outline" colorScheme="blue" onClick={forwardAnteckningarToOutlook}>
+          Skicka med Outlook
+        </Button>
+      </HStack>
+      <HStack spacing={2}>
+        <Button
+          onClick={async () => {
+            const token = JSON.parse(localStorage.getItem('user'))?.token;
+            if (!token) return alert('Ingen token.');
 
-    try {
-      // 1. Hämta nuvarande projekt från backend
-      const { data: currentProject } = await axios.get(
-        `https://railworker-production.up.railway.app/api/project/${project.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+            try {
+              const { data: currentProject } = await axios.get(
+                `http://localhost:4000/api/project/${project.id}`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                }
+              );
 
-      // 2. Uppdatera enbart anteckningar
-      const updatedProject = {
-        ...currentProject,
-        anteckningar,
-      };
+              const updatedProject = {
+                ...currentProject,
+                anteckningar,
+              };
 
-      // 3. Skicka tillbaka till korrekt PUT-endpoint
-      await axios.put(
-        `https://railworker-production.up.railway.app/api/projects/${project.id}`,
-        updatedProject,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+              await axios.put(
+                `http://localhost:4000/api/projects/${project.id}`,
+                updatedProject,
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                }
+              );
 
-      // 4. Uppdatera lokal state med backend-data + nya anteckningar
-      setProject({ ...currentProject, anteckningar });
+              setProject({ ...currentProject, anteckningar });
 
-      setAnteckningarModalOpen(false);
-    } catch (error) {
-      console.error('Kunde inte spara anteckningar:', error);
-      alert('Fel vid sparande av anteckningar.');
-    }
-  }}
->
-  Klar
-</Button>
-      <Button variant="ghost" onClick={() => setAnteckningarModalOpen(false)}>Stäng</Button>
+              setAnteckningarModalOpen(false);
+            } catch (error) {
+              console.error('Kunde inte spara anteckningar:', error);
+              alert('Fel vid sparande av anteckningar.');
+            }
+          }}
+        >
+          Klar
+        </Button>
+        <Button variant="ghost" onClick={() => setAnteckningarModalOpen(false)}>Stäng</Button>
+      </HStack>
     </ModalFooter>
   </ModalContent>
 </Modal>
@@ -4027,8 +4078,12 @@ onChange={() =>
             case 'L-S': color = 'green'; break;
             case 'S-S': color = 'orange'; break;
             case 'E-S': color = 'red'; break;
+            case 'SPF':
             case 'Spf': color = 'yellow'; break;
+            case 'VXL':
             case 'Vxl': color = 'purple'; break;
+            case 'TVN':
+            case 'Tvn': color = 'cyan'; break;
             default: color = 'gray';
           }
 
@@ -4044,7 +4099,7 @@ onChange={() =>
               textTransform="none"
               whiteSpace="nowrap"
             >
-              {item}
+              {formatAnordningLabel(item)}
             </Badge>
           );
         })}

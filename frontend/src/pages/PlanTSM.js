@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Header from '../components/Header';
 import axios from 'axios';
+import { getSectionLabel } from '../utils/sectionLabels';
 
 const PlanTSM = () => {
   const { id } = useParams();
@@ -14,7 +15,7 @@ const PlanTSM = () => {
       const tokenData = localStorage.getItem('user');
       const token = tokenData ? JSON.parse(tokenData).token : null;
 
-      const response = await axios.get(`https://railworker-production.up.railway.app/api/project/${id}`, {
+      const response = await axios.get(`http://localhost:4000/api/project/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -112,7 +113,7 @@ const PlanTSM = () => {
                   {project.sections.map((sec, idx) => (
                     <th key={idx} className="border px-2 py-2 min-w-[90px]">
                       <input className="text-center w-full h-[40px] border mb-1" placeholder="Signal" value={sec.signal} readOnly />
-                      {sec.type} {String.fromCharCode(65 + idx)}
+                      {getSectionLabel(sec, idx)}
                     </th>
                   ))}
                   <th className="border px-4 py-2">Starttid</th>

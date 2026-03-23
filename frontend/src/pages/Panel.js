@@ -26,6 +26,7 @@ import {
 import { ChevronDownIcon } from '@chakra-ui/icons';
 import axios from 'axios';
 import Header from '../components/Header';
+import { getSectionLabel } from '../utils/sectionLabels';
 
 export default function Panel() {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -61,7 +62,7 @@ export default function Panel() {
       );
 
       await axios.post(
-        'https://railworker-production.up.railway.app/api/row/self-enroll',
+        'http://localhost:4000/api/row/self-enroll',
         {
           anordning,
           selections,
@@ -107,7 +108,7 @@ export default function Panel() {
   const fetchAllProjects = useCallback(async () => {
     try {
       const response = await axios.get(
-        'https://railworker-production.up.railway.app/api/projects',
+        'http://localhost:4000/api/projects',
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -335,7 +336,7 @@ export default function Panel() {
                               )
                             }
                           >
-                            {sec.type} {String.fromCharCode(65 + i)} ({sec.name})
+                            {getSectionLabel(sec, i)} ({sec.name})
                           </Checkbox>
                         </MenuItem>
                       ))}

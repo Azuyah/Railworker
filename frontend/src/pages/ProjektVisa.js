@@ -2,6 +2,7 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
+import { getSectionLabel } from '../utils/sectionLabels';
 
 const ProjektVisa = () => {
   const { id } = useParams();
@@ -43,7 +44,7 @@ const ProjektVisa = () => {
         <ul className="space-y-2 mt-2">
           {project.sections.map((sec, i) => (
             <li key={i} className="p-3 bg-white rounded shadow">
-              <strong>{sec.type} {String.fromCharCode(65 + i)}:</strong> {sec.signal}
+              <strong>{getSectionLabel(sec, i)}:</strong> {sec.signal}
             </li>
           ))}
         </ul>

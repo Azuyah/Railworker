@@ -19,7 +19,7 @@ const Profil = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await axios.get('https://railworker-production.up.railway.app/api/user', {
+        const res = await axios.get('http://localhost:4000/api/user', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         setLocalUser(res.data);
@@ -32,7 +32,7 @@ const Profil = () => {
 
     const fetchEmployees = async () => {
       try {
-        const res = await axios.get('https://railworker-production.up.railway.app/api/employees', {
+        const res = await axios.get('http://localhost:4000/api/employees', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         setEmployees(res.data);
@@ -50,7 +50,7 @@ const Profil = () => {
 
   const handleDeleteEmployee = async (employeeId) => {
   try {
-    await axios.delete(`https://railworker-production.up.railway.app/api/employees/${employeeId}`, {
+    await axios.delete(`http://localhost:4000/api/employees/${employeeId}`, {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     });
     setEmployees(prev => prev.filter(emp => emp.id !== employeeId));
@@ -61,7 +61,7 @@ const Profil = () => {
 
   const handleSave = async () => {
     try {
-      await axios.put('https://railworker-production.up.railway.app/api/user', localUser, {
+      await axios.put('http://localhost:4000/api/user', localUser, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       setEditing(false);
@@ -75,7 +75,7 @@ const Profil = () => {
 
   const handleAddEmployee = async () => {
     try {
-      const res = await axios.post('https://railworker-production.up.railway.app/api/employees', {
+      const res = await axios.post('http://localhost:4000/api/employees', {
         email: newEmployeeEmail
       }, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }

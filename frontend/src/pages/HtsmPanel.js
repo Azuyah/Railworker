@@ -4,13 +4,12 @@ import axios from 'axios';
 import {
   Box,
   Button,
+  Input,
   Spinner,
   Text,
   VStack,
   HStack,
   Stack,
-  SimpleGrid,
-  Badge,
 } from '@chakra-ui/react';
 import Header from '../components/Header';
 
@@ -18,6 +17,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const fetchUserAndProjects = useCallback(async () => {
   const token = localStorage.getItem('token');
   if (!token) {
@@ -26,14 +26,14 @@ const Dashboard = () => {
   }
 
   try {
-    await axios.get('https://railworker-production.up.railway.app/api/user', {
+    await axios.get('http://localhost:4000/api/user', {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
 
     const projectRes = await axios.get(
-      'https://railworker-production.up.railway.app/api/projects',
+      'http://localhost:4000/api/projects',
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -48,6 +48,10 @@ const Dashboard = () => {
     setLoading(false);
   }
 }, [navigate]);
+
+  const filteredProjects = projects.filter((project) =>
+    project.name?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   useEffect(() => {
     fetchUserAndProjects();
@@ -97,33 +101,6 @@ const Dashboard = () => {
                   + Skapa nytt projekt
                 </Button>
               </HStack>
-
-              <SimpleGrid columns={[1, 3]} spacing={4}>
-                <Box borderRadius="xl" border="1px solid" borderColor="gray.200" p={4} bg="gray.50">
-                  <Text fontSize="xs" color="gray.500" fontWeight="600" textTransform="uppercase" letterSpacing="0.2em">
-                    Projekt
-                  </Text>
-                  <Text fontSize="2xl" fontWeight="700" mt={2}>
-                    {projects.length}
-                  </Text>
-                </Box>
-                <Box borderRadius="xl" border="1px solid" borderColor="gray.200" p={4} bg="gray.50">
-                  <Text fontSize="xs" color="gray.500" fontWeight="600" textTransform="uppercase" letterSpacing="0.2em">
-                    Status
-                  </Text>
-                  <Text fontSize="sm" fontWeight="600" mt={3} color="gray.700">
-                    {loading ? 'Laddar…' : 'Redo'}
-                  </Text>
-                </Box>
-                <Box borderRadius="xl" border="1px solid" borderColor="gray.200" p={4} bg="gray.50">
-                  <Text fontSize="xs" color="gray.500" fontWeight="600" textTransform="uppercase" letterSpacing="0.2em">
-                    Snabbtips
-                  </Text>
-                  <Text fontSize="sm" fontWeight="600" mt={3} color="gray.700">
-                    Öppna en plan för att redigera rader direkt.
-                  </Text>
-                </Box>
-              </SimpleGrid>
             </Stack>
           </Box>
 
@@ -144,9 +121,14 @@ const Dashboard = () => {
                   Öppna ett projekt för att gå till dispositionsplanen.
                 </Text>
               </Box>
-              <Badge colorScheme="gray" variant="subtle" borderRadius="full" px={3} py={1}>
-                {projects.length} projekt
-              </Badge>
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Sök projektnamn"
+                maxW="280px"
+                borderRadius="full"
+                bg="white"
+              />
             </HStack>
 
             {loading ? (
@@ -154,7 +136,7 @@ const Dashboard = () => {
                 <Spinner color="gray.700" size="lg" />
                 <Text color="gray.600">Hämtar projekt...</Text>
               </VStack>
-            ) : projects.length === 0 ? (
+            ) : filteredProjects.length === 0 ? (
               <Box
                 border="1px dashed"
                 borderColor="gray.300"
@@ -164,11 +146,13 @@ const Dashboard = () => {
                 color="gray.500"
                 bg="gray.50"
               >
-                Inga projekt hittades ännu. Skapa ditt första projekt.
+                {projects.length === 0
+                  ? 'Inga projekt hittades ännu. Skapa ditt första projekt.'
+                  : 'Inga projekt matchar din sökning.'}
               </Box>
             ) : (
               <VStack spacing={4} align="stretch">
-                {projects.map((project) => (
+                {filteredProjects.map((project) => (
                   <Box
                     key={project.id}
                     border="1px solid"
@@ -190,14 +174,26 @@ const Dashboard = () => {
                           </Text>
                         )}
                       </Box>
-                      <Button
-                        variant="outline"
-                        borderRadius="full"
-                        size="sm"
-                        onClick={() => navigate(`/plan/${project.id}`)}
-                      >
-                        Visa projekt
-                      </Button>
+                      <HStack spacing={2}>
+                        <Button
+                          variant="outline"
+                          borderRadius="full"
+                          size="sm"
+                          onClick={() => navigate('/skapa-projekt', { state: { projectId: project.id } })}
+                        >
+                          Visa projekt
+                        </Button>
+                        <Button
+                          bg="gray.900"
+                          color="white"
+                          borderRadius="full"
+                          size="sm"
+                          _hover={{ bg: 'gray.800' }}
+                          onClick={() => navigate(`/plan/${project.id}`)}
+                        >
+                          Visa planka
+                        </Button>
+                      </HStack>
                     </HStack>
                   </Box>
                 ))}

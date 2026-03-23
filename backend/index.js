@@ -4,7 +4,11 @@ const bcrypt = require('bcrypt');
 const authMiddleware = require('./middleware/auth');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
+const path = require('path');
 const { PrismaClient } = require('./generated/prisma/client');
+const { parseBlankett31Pdf } = require('./lib/blankett31Parser');
+const { parseDispPdf } = require('./lib/dispParser');
+const { createPlanWorkbookBuffer } = require('./lib/planExcelExport');
 require('dotenv').config();
 
 const app = express();
@@ -19,7 +23,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-app.use(express.json());
+app.use(express.json({ limit: '25mb' }));
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
@@ -285,6 +289,8 @@ app.post('/api/projects', authMiddleware, async (req, res) => {
       plats,
       namn,
       telefonnummer,
+      granspunkter,
+      formState,
       sections = [],
       beteckningar = [],
     } = req.body;
@@ -307,6 +313,8 @@ app.post('/api/projects', authMiddleware, async (req, res) => {
         plats,
         namn,
         telefonnummer,
+        granspunkter,
+        formState,
         user: { connect: { id: userId } },
 
         // 🔥 Koppla in direkt
@@ -318,6 +326,7 @@ app.post('/api/projects', authMiddleware, async (req, res) => {
           create: sections.map((sec) => ({
             name: sec.signal || '',
             type: sec.type,
+            namingMode: sec.namingMode || 'LETTERS',
           })),
         },
       },
@@ -396,6 +405,8 @@ const project = await prisma.project.findUnique({
     plats: true,
     namn: true,
     telefonnummer: true,
+    granspunkter: true,
+    formState: true,
     rows: true,
     sections: true,
     beteckningar: true,
@@ -466,6 +477,8 @@ app.put('/api/projects/:id', async (req, res) => {
       plats,
       namn,
       telefonnummer,
+      granspunkter,
+      formState,
       rows,
       sections = [],
       beteckningar = [],
@@ -488,6 +501,8 @@ app.put('/api/projects/:id', async (req, res) => {
         plats,
         namn,
         telefonnummer,
+        granspunkter,
+        formState,
         rows,
         anteckningar,
       },
@@ -521,8 +536,9 @@ app.put('/api/projects/:id', async (req, res) => {
       if (sections.length > 0) {
         await prisma.section.createMany({
           data: sections.map((s) => ({
-            name: s.name,
+            name: s.name || s.signal || '',
             type: s.type,
+            namingMode: s.namingMode || 'LETTERS',
             projectId,
           })),
         });
@@ -581,6 +597,97 @@ app.put('/api/projects/:projectId/rows/:rowId/complete', authMiddleware, async (
   } catch (err) {
     console.error('Fel vid avslut:', err);
     res.status(500).json({ error: 'Misslyckades med att avsluta rad' });
+  }
+});
+
+app.post('/api/pdf/blankett31/parse', authMiddleware, async (req, res) => {
+  const { fileName, fileData } = req.body;
+
+  if (!fileName || !fileData) {
+    return res.status(400).json({ error: 'PDF-data saknas' });
+  }
+
+  try {
+    const matches = String(fileData).match(/^data:application\/pdf(?:;charset=[^;]+)?;base64,(.+)$/i);
+    const base64Payload = matches?.[1];
+
+    if (!base64Payload) {
+      return res.status(400).json({ error: 'Ogiltigt PDF-format' });
+    }
+
+    const pdfBuffer = Buffer.from(base64Payload, 'base64');
+    const parsed = await parseBlankett31Pdf(pdfBuffer);
+    const { rawText, ...fields } = parsed;
+
+    res.json({
+      fileName: path.basename(fileName),
+      parsed: fields,
+    });
+  } catch (error) {
+    console.error('Fel vid tolkning av Blankett 31:', error);
+    res.status(500).json({ error: 'Kunde inte tolka Blankett 31' });
+  }
+});
+
+app.post('/api/pdf/disp/parse', authMiddleware, async (req, res) => {
+  const { fileName, fileData, blankett31Entries = [] } = req.body;
+
+  if (!fileName || !fileData) {
+    return res.status(400).json({ error: 'PDF-data saknas' });
+  }
+
+  try {
+    const matches = String(fileData).match(/^data:application\/pdf(?:;charset=[^;]+)?;base64,(.+)$/i);
+    const base64Payload = matches?.[1];
+
+    if (!base64Payload) {
+      return res.status(400).json({ error: 'Ogiltigt PDF-format' });
+    }
+
+    const pdfBuffer = Buffer.from(base64Payload, 'base64');
+    const parsed = await parseDispPdf(pdfBuffer, blankett31Entries);
+
+    res.json({
+      fileName: path.basename(fileName),
+      parsed,
+    });
+  } catch (error) {
+    console.error('Fel vid tolkning av Disp:', error);
+    res.status(500).json({ error: 'Kunde inte tolka Disp' });
+  }
+});
+
+app.get('/api/projects/:id/export-excel', authMiddleware, async (req, res) => {
+  try {
+    const projectId = parseInt(req.params.id, 10);
+    if (Number.isNaN(projectId)) {
+      return res.status(400).json({ error: 'Ogiltigt projekt-ID' });
+    }
+
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      include: {
+        sections: true,
+        beteckningar: true,
+      },
+    });
+
+    if (!project) {
+      return res.status(404).json({ error: 'Projekt hittades inte' });
+    }
+
+    const buffer = await createPlanWorkbookBuffer(project);
+    const safeName = String(project.name || 'plan')
+      .replace(/[^\p{L}\p{N}\-_ ]/gu, '')
+      .trim()
+      .replace(/\s+/g, '_');
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename=\"${safeName || 'plan'}.xlsx\"`);
+    res.send(Buffer.from(buffer));
+  } catch (error) {
+    console.error('Fel vid export av Excel:', error);
+    res.status(500).json({ error: 'Kunde inte exportera Excel' });
   }
 });
 
