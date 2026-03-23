@@ -45,10 +45,11 @@ const extractPlats = (pages) => {
   const routeLines = [];
   for (let index = objectIndex + 1; index < firstPageLines.length; index += 1) {
     const line = firstPageLines[index];
+    const normalizedLine = normalizeForMatching(line);
     if (!line || /^\(.*\)$/.test(line)) {
       continue;
     }
-    if (/Förplanera/i.test(line) || /Gränspunkter/i.test(line)) {
+    if (normalizedLine.includes('forplanera') || normalizedLine.includes('granspunkter')) {
       break;
     }
 
@@ -69,6 +70,12 @@ const extractPlats = (pages) => {
 };
 
 const extractPhoneSection = (pages) => pages.slice(-2);
+
+const isDispBeteckning = (value = '') => /^26(?:[_\s-]?\d{4})$/i.test(normalizeText(value));
+const normalizeDispBeteckning = (value = '') =>
+  normalizeText(value)
+    .replace(/\s*([_-])\s*/g, '_')
+    .replace(/\s+/g, '_');
 
 const formatPhone = (value = '') =>
   value
@@ -235,7 +242,7 @@ const extractDispEntries = (pages) => {
   const page = pages.find((item) => Number(item.page) === 3);
   const lines = Array.isArray(page?.lines) ? page.lines : [];
   const labelLines = lines
-    .filter((line) => /^26_[0-9]{4}$/i.test(normalizeText(line.text || '')))
+    .filter((line) => isDispBeteckning(line.text || ''))
     .sort((a, b) => b.y - a.y);
   const dateTimeCandidates = lines
     .flatMap((line) => {
@@ -293,7 +300,7 @@ const extractDispEntries = (pages) => {
     const [endDate = '', endTime = ''] = String(endValue || '').split(/\s+/);
 
     return {
-      beteckning: normalizeText(labelLine.text || ''),
+      beteckning: normalizeDispBeteckning(labelLine.text || ''),
       startDate,
       startTime,
       endDate,
@@ -334,14 +341,15 @@ const extractDispSections = (pages) => {
   const normalizedLines = lines.map((line) => ({
     ...line,
     text: cleanBoundaryToken(line.text || ''),
+    normalized: normalizeForMatching(cleanBoundaryToken(line.text || '')),
   }));
 
   const sectionRows = normalizedLines
-    .filter((line) => /^Delområde\s+\d+/i.test(line.text))
+    .filter((line) => /^delomrade\s+\d+/.test(line.normalized))
     .sort((a, b) => b.y - a.y);
 
   return sectionRows.map((row, index) => {
-    const displayIndex = Number(String(row.text).match(/^Delområde\s+(\d+)/i)?.[1] || index + 1);
+    const displayIndex = Number(String(row.normalized).match(/^delomrade\s+(\d+)/)?.[1] || index + 1);
     const sameRow = normalizedLines.filter((line) => Math.abs(Number(line.y) - Number(row.y)) < 0.015);
     const leftBoundary = sameRow
       .filter(
@@ -357,12 +365,12 @@ const extractDispSections = (pages) => {
         (line) =>
           Number(line.x) >= 0.47 &&
           Number(line.x) < 0.62 &&
-          !/^Spår/i.test(line.text) &&
+          !/^spar/i.test(line.normalized) &&
           (isSignalPointToken(line.text) || /\s-\s/.test(line.text))
       )
       .sort((a, b) => a.x - b.x)[0];
     const spar = sameRow
-      .filter((line) => Number(line.x) >= 0.67 && /^Spår/i.test(line.text))
+      .filter((line) => Number(line.x) >= 0.67 && /^spar/i.test(line.normalized))
       .sort((a, b) => a.x - b.x)[0];
 
     const leftText = cleanBoundaryToken(leftBoundary?.text || '');

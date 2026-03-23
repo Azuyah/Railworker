@@ -26,37 +26,16 @@ const extractGranspunkt = (pages) => {
 };
 
 const extractBeteckning = (text) => {
-  const match = text.match(/Beteckning:\s*([A-Za-z0-9_./-]+)/i);
-  return match?.[1] || '';
-};
+  const lines = String(text || '')
+    .split('\n')
+    .map(normalizeText)
+    .filter(Boolean);
+  const beteckningLine = lines.find((line) => normalizeForMatching(line).startsWith('beteckning:'));
+  const rawValue = beteckningLine ? beteckningLine.replace(/^Beteckning:\s*/i, '') : '';
 
-const extractAllMatches = (text, regex) => {
-  const matches = [];
-  let match;
-  while ((match = regex.exec(text)) !== null) {
-    matches.push(match);
-  }
-  return matches;
-};
-
-const extractEntries = (text, granspunkt) => {
-  const beteckningMatches = extractAllMatches(
-    text,
-    /Beteckning:\s*([A-Za-z0-9_./-]+)\s*Datum\s+fr\.?o\.?m\s*([0-9]{4}-[0-9]{2}-[0-9]{2})\s*([0-9]{2}:[0-9]{2})?/gi
-  );
-  const endMatches = extractAllMatches(
-    text,
-    /t\.?o\.?m\s*([0-9]{4}-[0-9]{2}-[0-9]{2})\s*([0-9]{2}:[0-9]{2})?/gi
-  );
-
-  return beteckningMatches.map((match, index) => ({
-    beteckning: match[1] || '',
-    granspunkt: granspunkt || '',
-    startDate: match[2] || '',
-    startTime: match[3] || '',
-    endDate: endMatches[index]?.[1] || '',
-    endTime: endMatches[index]?.[2] || '',
-  }));
+  return normalizeText(rawValue)
+    .replace(/\s*([_./-])\s*/g, '$1')
+    .replace(/\s+/g, '_');
 };
 
 const extractDateTimePair = (text, labelPattern) => {
@@ -68,18 +47,81 @@ const extractDateTimePair = (text, labelPattern) => {
   };
 };
 
+const extractEntries = (text, granspunkt) => {
+  const lines = String(text || '')
+    .split('\n')
+    .map(normalizeText)
+    .filter(Boolean);
+  const entries = [];
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (!normalizeForMatching(line).startsWith('beteckning:')) {
+      continue;
+    }
+
+    const beteckning = extractBeteckning(line);
+    let start = { date: '', time: '' };
+    let end = { date: '', time: '' };
+
+    for (let lookahead = index; lookahead < Math.min(lines.length, index + 6); lookahead += 1) {
+      const candidate = lines[lookahead];
+      if (lookahead > index && normalizeForMatching(candidate).startsWith('beteckning:')) {
+        break;
+      }
+
+      if (!start.date) {
+        start = extractDateTimePair(candidate, 'Datum\\s+fr\\.?o\\.?m\\s*');
+      }
+      if (!end.date) {
+        end = extractDateTimePair(candidate, 't\\.?o\\.?m\\s*');
+      }
+    }
+
+    if (beteckning || start.date || end.date) {
+      entries.push({
+        beteckning,
+        granspunkt: granspunkt || '',
+        startDate: start.date,
+        startTime: start.time,
+        endDate: end.date,
+        endTime: end.time,
+      });
+    }
+  }
+
+  return entries;
+};
+
 const extractBlankett31Fields = (ocrPayload) => {
   const pages = Array.isArray(ocrPayload?.pages) ? ocrPayload.pages : [];
   const fullText = pages.map((page) => String(page.text || '')).join('\n');
   const granspunkt = extractGranspunkt(pages);
   const entries = extractEntries(fullText, granspunkt);
+  const beteckning = extractBeteckning(fullText);
+  const start = extractDateTimePair(fullText, 'Datum\\s+fr\\.?o\\.?m\\s*');
+  const end = extractDateTimePair(fullText, 't\\.?o\\.?m\\s*');
 
   return {
-    beteckning: extractBeteckning(fullText),
+    beteckning,
     granspunkt,
-    start: extractDateTimePair(fullText, 'Datum\\s+fr\\.?o\\.?m\\s*'),
-    end: extractDateTimePair(fullText, 't\\.?o\\.?m\\s*'),
-    entries,
+    start,
+    end,
+    entries:
+      entries.length > 0
+        ? entries
+        : beteckning || start.date || end.date
+          ? [
+              {
+                beteckning,
+                granspunkt,
+                startDate: start.date,
+                startTime: start.time,
+                endDate: end.date,
+                endTime: end.time,
+              },
+            ]
+          : [],
     rawText: fullText,
   };
 };
