@@ -268,19 +268,6 @@ const SkapaProjekt = () => {
     setSections(updated);
   };
 
-  const updateSectionField = (index, field, value) => {
-    const updated = [...sections];
-    updated[index][field] = value;
-
-    if (field === 'granspunktStart' || field === 'granspunktSlut') {
-      const start = updated[index].granspunktStart?.trim() || '';
-      const end = updated[index].granspunktSlut?.trim() || '';
-      updated[index].granspunkter = [start, end].filter(Boolean).join(' - ');
-    }
-
-    setSections(updated);
-  };
-
   const removeSection = (index) => {
     if (index === 0) {
       return;

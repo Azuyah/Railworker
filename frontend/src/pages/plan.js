@@ -3,9 +3,7 @@ import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import LoadingScreen from '../components/LoadingScreen';
 import { Tooltip } from '@chakra-ui/react';
-import { GiRailway } from 'react-icons/gi';
 import { DeleteIcon } from '@chakra-ui/icons';
-import { PiTrainLight } from 'react-icons/pi'
 import { Tag, TagLabel } from "@chakra-ui/react";
 import {
   FaClock,
@@ -172,15 +170,10 @@ const Plan = () => {
   const [headerNotesTop, setHeaderNotesTop] = useState({});
   const [headerNotesMid, setHeaderNotesMid] = useState({});
   const [headerMerges, setHeaderMerges] = useState([]);
-  const [headerSelection, setHeaderSelection] = useState(null);
-  const [headerEditKey, setHeaderEditKey] = useState(null);
-  const [selectedHeaderCell, setSelectedHeaderCell] = useState(null);
   const [selectedBodyCell, setSelectedBodyCell] = useState(null);
-  const [editingBodyCell, setEditingBodyCell] = useState(null);
+  const [, setEditingBodyCell] = useState(null);
   const [bodyContextMenu, setBodyContextMenu] = useState({ open: false, x: 0, y: 0 });
   const bodyContextRef = useRef(null);
-  const [begardDefaultTime, setBegardDefaultTime] = useState('');
-  const [begardDefaultDate, setBegardDefaultDate] = useState('');
   const [activeRowId, setActiveRowId] = useState(null);
   const [hotkeysOpen, setHotkeysOpen] = useState(false);
   const [btknPrefix, setBtknPrefix] = useState('');
@@ -198,7 +191,7 @@ const Plan = () => {
   });
   const [resizingColumn, setResizingColumn] = useState(null);
   const [zoomLevel, setZoomLevel] = useState(1);
-  const [visibleColumns, setVisibleColumns] = useState({
+  const [visibleColumns] = useState({
     '#': false,
     btkn: true,
     namn: true,
@@ -401,7 +394,7 @@ const calculateSamrad = useCallback((rows) => {
   return { samradList: newSamradList, avklaradMap: newAvklarad };
 }, [avklaradSamrad]);
 
-const buildSamradEntriesForRow = (rows, rowIndex) => {
+const buildSamradEntriesForRow = useCallback((rows, rowIndex) => {
   if (!Array.isArray(rows) || rowIndex < 0 || rowIndex >= rows.length) return [];
   const currentRow = rows[rowIndex];
   if (!currentRow) return [];
@@ -446,7 +439,7 @@ const buildSamradEntriesForRow = (rows, rowIndex) => {
       btkn: candidate.btkn || '',
       bt: candidate.bt || '',
     }));
-};
+}, [avklaradSamrad]);
 
 const CELL_COLORS = [
   { label: 'Ingen', value: '' },
@@ -510,15 +503,6 @@ const updateCellMeta = (rowId, cellKey, patch) => {
 
 const getIconConfig = (iconKey) =>
   CELL_ICONS.find((option) => option.key === iconKey);
-
-const toggleSectionHeaderType = (index) => {
-  setSectionHeaderNotes((prev) => {
-    const next = [...prev];
-    const current = (next[index] || '').toLowerCase();
-    next[index] = current === 'linje' ? 'DP' : 'Linje';
-    return next;
-  });
-};
 
 const handleCellInteraction = () => {};
 
@@ -673,61 +657,6 @@ const buildSectionsWithInsert = (sections, type) => {
   }
   next.push({ type: 'DP', name: '' });
   return next;
-};
-
-const addSectionQuick = async (type = 'Linje') => {
-  if (!project) return;
-  const newSections = buildSectionsWithInsert(project.sections, type);
-  const updatedRows = (rows || []).map((row) => ({
-    ...row,
-    selections: Array.isArray(row.selections) ? [...row.selections, false] : Array(newSections.length).fill(false),
-    selectedAreas: Array.isArray(row.selectedAreas) ? [...row.selectedAreas] : [],
-  }));
-
-  const updatedProject = {
-    ...project,
-    sections: newSections,
-    rows: updatedRows,
-  };
-
-  try {
-    const token = JSON.parse(localStorage.getItem('user'))?.token;
-    await axios.put(
-      apiUrl(`/api/projects/${project.id}`),
-      updatedProject,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-
-    setProject(updatedProject);
-    setRows(updatedRows);
-    setEditSections(newSections);
-    setSectionHeaderNotes((prev) => {
-      const next = [...prev];
-      next[newSections.length - 1] = type === 'DP' ? 'DP' : 'Linje';
-      return next;
-    });
-    setSectionHeaderNotes2((prev) => {
-      const next = [...prev];
-      if (next.length < newSections.length) next.length = newSections.length;
-      return next.map((value) => value || '');
-    });
-    setSectionHeaderNotes3((prev) => {
-      const next = [...prev];
-      if (next.length < newSections.length) next.length = newSections.length;
-      return next.map((value) => value || '');
-    });
-  } catch (error) {
-    console.error('Kunde inte lägga till delområde:', error);
-    toast({
-      title: 'Fel',
-      description: 'Kunde inte lägga till delområde.',
-      status: 'error',
-      duration: 3000,
-      isClosable: true,
-    });
-  }
 };
 
 const fetchProject = useCallback(async () => {
@@ -943,7 +872,7 @@ const exportPlanToExcel = async () => {
 
     const blob = await response.blob();
     const contentDisposition = response.headers.get('Content-Disposition') || '';
-    const filenameMatch = contentDisposition.match(/filename=\"?([^"]+)\"?/i);
+    const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/i);
     const filename = filenameMatch?.[1] || `${project?.name || 'plan'}.xlsx`;
     downloadBlob(blob, filename);
   } catch (error) {
@@ -1127,7 +1056,7 @@ useEffect(() => {
 
     setRows(restoredRows);
   }
-}, [project, rows]);
+}, [buildSamradEntriesForRow, project, rows]);
 
 useEffect(() => {
   if (selectedRow?.id) {
@@ -1219,7 +1148,7 @@ useEffect(() => {
     setRows(updatedRows);
     setSelectedRow(updatedRowWithSamrad);
   }
-}, [rows, selectedAreas, selectedRow, project?.sections, calculateSamrad]);
+}, [buildSamradEntriesForRow, project?.sections, rows, selectedAreas, selectedRow]);
 
 useEffect(() => {
   if (selectedRowId == null) return;
@@ -1265,7 +1194,7 @@ useEffect(() => {
   if (changed) {
     setRows(updated);
   }
-}, [project, rows]);
+}, [buildSamradEntriesForRow, project, rows]);
 
 useEffect(() => {
   if (!rows || !Array.isArray(rows)) return;
@@ -1360,6 +1289,30 @@ const getBegardForPlanEntry = useCallback((planEntry) => {
   return `${String(Math.floor(totalMinutes / 60)).padStart(2, '0')}:${String(totalMinutes % 60).padStart(2, '0')}`;
 }, [activePlanEntry, project?.endTime, projectFormState.avslutningstid, projectPlanEntries]);
 
+const createNewRow = useCallback((rows, project, prefix = '', planEntry = null) => {
+  const nextId = rows.length > 0 ? Math.max(...rows.map(r => r.id)) + 1 : 1;
+  return {
+    id: nextId,
+    btkn: getNextBtknForRows(prefix, rows),
+    namn: '',
+    telefon: '',
+    anordning: '',
+    bt: '',
+    linje: '',
+    starttid: '',
+    begard: getBegardForPlanEntry(planEntry),
+    begardDatum: planEntry?.startDate || '',
+    avslutat: '',
+    avslutadRad: false,
+    anteckning: '',
+    planDate: planEntry?.startDate || '',
+    planEntryKey: planEntry?.key || '',
+    selections: project.sections.map(() => false),
+    selectedAreas: [],
+    cellMeta: {},
+  };
+}, [getBegardForPlanEntry]);
+
 useEffect(() => {
   if (!project?.sections || !Array.isArray(rows)) return;
 
@@ -1382,31 +1335,7 @@ useEffect(() => {
   if (!isRowEffectivelyEmpty(lastRow)) {
     setRows((prev) => [...prev, createNewRow(prev, project, btknPrefix, activePlanEntry)]);
   }
-}, [project, rows, btknPrefix, activePlanDate, activePlanEntry, projectPlanEntries]);
-
-const createNewRow = (rows, project, prefix = '', planEntry = null) => {
-  const nextId = rows.length > 0 ? Math.max(...rows.map(r => r.id)) + 1 : 1;
-  return {
-    id: nextId,
-    btkn: getNextBtknForRows(prefix, rows),
-    namn: '',
-    telefon: '',
-    anordning: '',
-    bt: '',
-    linje: '',
-    starttid: '',
-    begard: getBegardForPlanEntry(planEntry),
-    begardDatum: planEntry?.startDate || '',
-    avslutat: '',
-    avslutadRad: false,
-    anteckning: '',
-    planDate: planEntry?.startDate || '',
-    planEntryKey: planEntry?.key || '',
-    selections: project.sections.map(() => false),
-    selectedAreas: [],
-    cellMeta: {},
-  };
-};
+}, [activePlanDate, activePlanEntry, btknPrefix, createNewRow, project, projectPlanEntries, rows]);
 
 const isRowEffectivelyEmpty = (row) => {
   if (!row) return true;
@@ -1513,7 +1442,6 @@ const completeSelectedRow = useCallback(async (targetPlanEntry = null) => {
         ? [...completedRow.selections]
         : project.sections.map(() => false),
       selectedAreas: buildSelectedAreasFromRow(completedRow),
-      begard: getBegardForPlanEntry(targetPlanEntry),
       begardDatum: targetPlanEntry?.startDate || '',
       anteckning: '',
       isSavedPlan: false,
@@ -1543,6 +1471,7 @@ const completeSelectedRow = useCallback(async (targetPlanEntry = null) => {
   await sparaProjekt(nextRows);
 }, [
   btknPrefix,
+  createNewRow,
   getCurrentDate,
   getCurrentTime,
   onClose,
@@ -1667,20 +1596,6 @@ const downloadBlob = (blob, filename) => {
   window.URL.revokeObjectURL(url);
 };
 
-const toggleColumn = (col) => {
-  setVisibleColumns((prev) => ({ ...prev, [col]: !prev[col] }));
-};
-
-const beginColumnResize = (key, event) => {
-  event.preventDefault();
-  event.stopPropagation();
-  setResizingColumn({
-    key,
-    startX: event.clientX,
-    startWidth: columnWidths[key] || 120,
-  });
-};
-
 useEffect(() => {
   if (!resizingColumn) return;
   const handleMove = (event) => {
@@ -1696,156 +1611,6 @@ useEffect(() => {
     window.removeEventListener('mouseup', handleUp);
   };
 }, [resizingColumn]);
-
-const autoGrowTextarea = (event) => {
-  const el = event.currentTarget;
-  el.style.height = '0px';
-  el.style.height = `${el.scrollHeight}px`;
-};
-
-const HeaderNoteInput = ({ value, onChange, isEditing, onRequestEdit, onSelect }) => {
-  const inputRef = useRef(null);
-
-  useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [isEditing]);
-
-  return (
-    <Box
-      position="relative"
-      w="100%"
-      h="100%"
-      cursor={isEditing ? 'text' : 'pointer'}
-      onDoubleClick={(e) => {
-        e.stopPropagation();
-        onRequestEdit?.();
-      }}
-      onClick={(e) => {
-        e.stopPropagation();
-        onSelect?.();
-      }}
-    >
-      <Textarea
-        ref={inputRef}
-        size="xs"
-        variant="unstyled"
-        value={value}
-        onChange={onChange}
-        isReadOnly={!isEditing}
-        pointerEvents={isEditing ? 'auto' : 'none'}
-        onBlur={() => {
-          if (isEditing) onRequestEdit?.(null);
-        }}
-        onInput={autoGrowTextarea}
-        resize="none"
-        overflow="hidden"
-        rows={1}
-        w="100%"
-        minH="24px"
-        px={2}
-        py={1}
-        lineHeight="1.2"
-        bg="transparent"
-        cursor={isEditing ? 'text' : 'pointer'}
-        caretColor={isEditing ? 'auto' : 'transparent'}
-      />
-    </Box>
-  );
-};
-
-const getHeaderCellValue = useCallback((rowIdx, colKey) => {
-  if (colKey.startsWith('section-')) {
-    const idx = Number(colKey.split('-')[1]);
-    return rowIdx === 0 ? sectionHeaderNotes3[idx] || '' : sectionHeaderNotes2[idx] || '';
-  }
-  if (rowIdx === 0) return headerNotesTop[colKey] || '';
-  return headerNotesMid[colKey] || '';
-}, [headerNotesMid, headerNotesTop, sectionHeaderNotes2, sectionHeaderNotes3]);
-
-const setHeaderCellValue = (rowIdx, colKey, value) => {
-  if (colKey.startsWith('section-')) {
-    const idx = Number(colKey.split('-')[1]);
-    if (rowIdx === 0) {
-      setSectionHeaderNotes3((prev) => {
-        const next = [...prev];
-        next[idx] = value;
-        return next;
-      });
-    } else {
-      setSectionHeaderNotes2((prev) => {
-        const next = [...prev];
-        next[idx] = value;
-        return next;
-      });
-    }
-    return;
-  }
-  if (rowIdx === 0) {
-    setHeaderNotesTop((prev) => ({ ...prev, [colKey]: value }));
-  } else {
-    setHeaderNotesMid((prev) => ({ ...prev, [colKey]: value }));
-  }
-};
-
-const getHeaderColBg = (colKey) => {
-  if (colKey.startsWith('section-')) return 'blue.50';
-  if (colKey === 'btkn' || colKey === 'namn') return 'gray.50';
-  if (colKey === 'telefon' || colKey === 'anordning') return 'gray.50';
-  if (colKey === 'starttid' || colKey === 'begard' || colKey === 'avslutat') return 'blue.50';
-  return 'white';
-};
-
-const updateMergeText = (id, value) => {
-  setHeaderMerges((prev) =>
-    prev.map((merge) => (merge.id === id ? { ...merge, text: value } : merge))
-  );
-};
-
-const renderMergedCellContent = (merge) => {
-  return (
-    <HeaderNoteInput
-      value={merge.text || ''}
-      onChange={(e) => updateMergeText(merge.id, e.target.value)}
-      isEditing={headerEditKey === `merge:${merge.id}`}
-      onRequestEdit={(val) => setHeaderEditKey(val === null ? null : `merge:${merge.id}`)}
-      onSelect={() => setSelectedHeaderCell({ row: merge.rowStart, colKey: merge.colStartKey })}
-    />
-  );
-};
-
-const renderHeaderCellContent = (rowIdx, colKey) => {
-  if (rowIdx === 0 && colKey === 'begard') {
-    return (
-      <HStack spacing={2} px={2} py={1}>
-        <Text fontSize="xs" color="gray.500" whiteSpace="nowrap">
-          Avsluta senast
-        </Text>
-        <Input
-          size="xs"
-          type="time"
-          value={avslutaSkyddTid}
-          onChange={(e) => setAvslutaSkyddTid(e.target.value)}
-          width="90px"
-        />
-      </HStack>
-    );
-  }
-  return (
-    <HeaderNoteInput
-      value={getHeaderCellValue(rowIdx, colKey)}
-      onChange={(e) => setHeaderCellValue(rowIdx, colKey, e.target.value)}
-      isEditing={headerEditKey === `${rowIdx}:${colKey}`}
-      onRequestEdit={(val) => setHeaderEditKey(val === null ? null : `${rowIdx}:${colKey}`)}
-      onSelect={() => setSelectedHeaderCell({ row: rowIdx, colKey })}
-    />
-  );
-};
-
-const isBodyCellEditing = (rowId, key) =>
-  editingBodyCell && editingBodyCell.rowId === rowId && editingBodyCell.key === key;
 
 const selectedBodyMeta = useMemo(() => {
   if (!selectedBodyCell) return {};
@@ -2189,136 +1954,6 @@ const visibleSectionIndexes = useMemo(() => {
   // Always show every saved section so a newly created plan mirrors Skapa Projekt directly.
   return project.sections.map((_, index) => index);
 }, [project?.sections]);
-
-const headerColumns = useMemo(() => {
-  const cols = [];
-  if (visibleColumns['#']) cols.push({ key: '#', label: '#' });
-  if (visibleColumns.btkn) cols.push({ key: 'btkn', label: 'BTKN' });
-  if (visibleColumns.namn) cols.push({ key: 'namn', label: 'Namn' });
-  if (visibleColumns.telefon) cols.push({ key: 'telefon', label: 'Telefon' });
-  if (visibleColumns.anordning) cols.push({ key: 'anordning', label: 'Anordning' });
-  visibleSectionIndexes.forEach((idx) => cols.push({ key: `section-${idx}`, label: `section-${idx}` }));
-  if (visibleColumns.starttid) cols.push({ key: 'starttid', label: 'Start' });
-  if (visibleColumns.begard) cols.push({ key: 'begard', label: 'Begärd' });
-  cols.push({ key: 'actions', label: 'Åtgärder' });
-  return cols;
-}, [visibleColumns, visibleSectionIndexes]);
-
-const headerColumnIndex = useMemo(() => {
-  const map = {};
-  headerColumns.forEach((col, idx) => {
-    map[col.key] = idx;
-  });
-  return map;
-}, [headerColumns]);
-
-const getMergeIndices = useCallback((merge) => {
-  const startIdx = headerColumnIndex[merge.colStartKey];
-  const endIdx = headerColumnIndex[merge.colEndKey];
-  if (startIdx === undefined || endIdx === undefined) return null;
-  return {
-    colStart: Math.min(startIdx, endIdx),
-    colEnd: Math.max(startIdx, endIdx),
-  };
-}, [headerColumnIndex]);
-
-const getMergeForCell = (rowIdx, colIdx) => {
-  for (const merge of headerMerges) {
-    const indices = getMergeIndices(merge);
-    if (!indices) continue;
-    if (
-      rowIdx >= merge.rowStart &&
-      rowIdx <= merge.rowEnd &&
-      colIdx >= indices.colStart &&
-      colIdx <= indices.colEnd
-    ) {
-      return { merge, indices };
-    }
-  }
-  return null;
-};
-
-const isCellSelected = (rowIdx, colIdx) => {
-  if (!headerSelection?.active) return false;
-  const rowStart = Math.min(headerSelection.start.row, headerSelection.end.row);
-  const rowEnd = Math.max(headerSelection.start.row, headerSelection.end.row);
-  const colStart = Math.min(headerSelection.start.col, headerSelection.end.col);
-  const colEnd = Math.max(headerSelection.start.col, headerSelection.end.col);
-  return rowIdx >= rowStart && rowIdx <= rowEnd && colIdx >= colStart && colIdx <= colEnd;
-};
-
-const beginHeaderSelection = (rowIdx, colIdx, event) => {
-  if (event.button !== 0) return;
-  if (event.detail > 1) return;
-  if (event.target.closest('input, textarea, button')) return;
-  if (headerEditKey) return;
-  setHeaderSelection({
-    active: true,
-    start: { row: rowIdx, col: colIdx },
-    end: { row: rowIdx, col: colIdx },
-  });
-};
-
-const updateHeaderSelection = (rowIdx, colIdx) => {
-  if (!headerSelection?.active) return;
-  if (headerEditKey) return;
-  setHeaderSelection((prev) => ({
-    ...prev,
-    end: { row: rowIdx, col: colIdx },
-  }));
-};
-
-const finalizeHeaderSelection = useCallback(() => {
-  if (!headerSelection?.active) return;
-  const rowStart = Math.min(headerSelection.start.row, headerSelection.end.row);
-  const rowEnd = Math.max(headerSelection.start.row, headerSelection.end.row);
-  const colStart = Math.min(headerSelection.start.col, headerSelection.end.col);
-  const colEnd = Math.max(headerSelection.start.col, headerSelection.end.col);
-  if (rowStart === rowEnd && colStart === colEnd) {
-    setHeaderSelection(null);
-    return;
-  }
-
-  const colStartKey = headerColumns[colStart]?.key;
-  const colEndKey = headerColumns[colEnd]?.key;
-  if (!colStartKey || !colEndKey) {
-    setHeaderSelection(null);
-    return;
-  }
-
-  const newMerge = {
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-    rowStart,
-    rowEnd,
-    colStartKey,
-    colEndKey,
-    type: 'text',
-    text: getHeaderCellValue(rowStart, colStartKey) || '',
-  };
-
-  setHeaderMerges((prev) => {
-    const filtered = prev.filter((merge) => {
-      const indices = getMergeIndices(merge);
-      if (!indices) return true;
-      const overlaps =
-        rowStart <= merge.rowEnd &&
-        rowEnd >= merge.rowStart &&
-        colStart <= indices.colEnd &&
-        colEnd >= indices.colStart;
-      return !overlaps;
-    });
-    return [...filtered, newMerge];
-  });
-
-  setHeaderSelection(null);
-}, [getHeaderCellValue, getMergeIndices, headerColumns, headerSelection]);
-
-useEffect(() => {
-  if (!headerSelection?.active) return;
-  const handleMouseUp = () => finalizeHeaderSelection();
-  window.addEventListener('mouseup', handleMouseUp);
-  return () => window.removeEventListener('mouseup', handleMouseUp);
-}, [headerSelection, finalizeHeaderSelection]);
 
 useEffect(() => {
   if (!bodyContextMenu.open) return;

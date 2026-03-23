@@ -317,7 +317,7 @@ const PlanTSM = () => {
       Array.isArray(row?.selections) &&
       row.selections.some((value, idx) => value && firstRow.selections?.[idx])
     );
-  }, [rowMatchesActivePlan, rows]);
+  }, [rows]);
 
   if (!project) return <div className="p-6">Inget projekt hittades.</div>;
 
