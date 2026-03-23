@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { apiUrl } from '../lib/api';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -9,7 +10,7 @@ export default function Login() {
 
 const handleLogin = async () => {
   try {
-    const res = await axios.post('http://localhost:4000/api/login', {
+    const res = await axios.post(apiUrl('/api/login'), {
       email,
       password,
     });
@@ -17,8 +18,9 @@ const handleLogin = async () => {
     const token = res.data.token;
 
     if (token) {
-      // 🔑 SPARA TOKEN BÅDE I user-objektet OCH som separat key
-      localStorage.setItem('token', token); // ✅ detta saknas
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      localStorage.setItem('token', token);
 
 localStorage.setItem('user', JSON.stringify({
   token,

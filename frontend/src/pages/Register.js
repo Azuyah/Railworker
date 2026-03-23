@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Header from '../components/Header';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { apiUrl } from '../lib/api';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ const Register = () => {
     setLoading(true);
     setError('');
     try {
-      const response = await axios.post('http://localhost:4000/api/register', formData);
+      const response = await axios.post(apiUrl('/api/register'), formData);
       if (response.status === 201) {
         alert('Registrering lyckades!');
         navigate('/');

@@ -6,6 +6,7 @@ import {
 } from '@chakra-ui/react';
 import axios from 'axios';
 import Header from '../components/Header';
+import { apiUrl } from '../lib/api';
 
 const Profil = () => {
   const [editing, setEditing] = useState(false);
@@ -19,7 +20,7 @@ const Profil = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await axios.get('http://localhost:4000/api/user', {
+        const res = await axios.get(apiUrl('/api/user'), {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         setLocalUser(res.data);
@@ -32,7 +33,7 @@ const Profil = () => {
 
     const fetchEmployees = async () => {
       try {
-        const res = await axios.get('http://localhost:4000/api/employees', {
+        const res = await axios.get(apiUrl('/api/employees'), {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         setEmployees(res.data);
@@ -50,7 +51,7 @@ const Profil = () => {
 
   const handleDeleteEmployee = async (employeeId) => {
   try {
-    await axios.delete(`http://localhost:4000/api/employees/${employeeId}`, {
+    await axios.delete(apiUrl(`/api/employees/${employeeId}`), {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     });
     setEmployees(prev => prev.filter(emp => emp.id !== employeeId));
@@ -61,7 +62,7 @@ const Profil = () => {
 
   const handleSave = async () => {
     try {
-      await axios.put('http://localhost:4000/api/user', localUser, {
+      await axios.put(apiUrl('/api/user'), localUser, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       setEditing(false);
@@ -75,7 +76,7 @@ const Profil = () => {
 
   const handleAddEmployee = async () => {
     try {
-      const res = await axios.post('http://localhost:4000/api/employees', {
+      const res = await axios.post(apiUrl('/api/employees'), {
         email: newEmployeeEmail
       }, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }

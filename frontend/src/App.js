@@ -12,6 +12,7 @@ import Plan from './pages/plan';
 import PlanTSM from './pages/PlanTSM';
 import Profil from './pages/profil';
 import Preview from "./pages/preview";
+import { apiUrl } from './lib/api';
 
 function AppRoutes() {
   const location = useLocation();
@@ -96,7 +97,7 @@ function RoleBasedPlan() {
     }
 
     axios
-      .get('http://localhost:4000/api/user', {
+      .get(apiUrl('/api/user'), {
         headers: {
           Authorization: `Bearer ${token}`,
         },

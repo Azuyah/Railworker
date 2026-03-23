@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import Header from '../components/Header';
 import axios from 'axios';
 import { getSectionLabel } from '../utils/sectionLabels';
+import { apiUrl } from '../lib/api';
 import {
   Button,
   Checkbox,
@@ -169,7 +170,7 @@ const PlanTSM = () => {
       const tokenData = localStorage.getItem('user');
       const token = tokenData ? JSON.parse(tokenData).token : null;
 
-      const response = await axios.get(`http://localhost:4000/api/project/${id}`, {
+      const response = await axios.get(apiUrl(`/api/project/${id}`), {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -265,7 +266,7 @@ const PlanTSM = () => {
       );
 
       await axios.post(
-        'http://localhost:4000/api/row/self-enroll',
+        apiUrl('/api/row/self-enroll'),
         {
           datum: activePlanEntry?.startDate || '',
           anordning,

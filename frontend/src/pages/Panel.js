@@ -27,6 +27,7 @@ import { ChevronDownIcon } from '@chakra-ui/icons';
 import axios from 'axios';
 import Header from '../components/Header';
 import { getSectionLabel } from '../utils/sectionLabels';
+import { apiUrl } from '../lib/api';
 
 const ANORDNING_OPTIONS = [
   { value: 'A-S', label: 'A-Skydd' },
@@ -238,7 +239,7 @@ export default function Panel() {
       );
 
       const response = await axios.post(
-        'http://localhost:4000/api/row/self-enroll',
+        apiUrl('/api/row/self-enroll'),
         {
           anordning,
           selections,
@@ -299,7 +300,7 @@ export default function Panel() {
   const fetchAllProjects = useCallback(async () => {
     try {
       const response = await axios.get(
-        'http://localhost:4000/api/projects',
+        apiUrl('/api/projects'),
         {
           headers: {
             Authorization: `Bearer ${token}`,

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import { getSectionLabel } from '../utils/sectionLabels';
+import { apiUrl } from '../lib/api';
 
 const fjtklNameOptions = [
   'Malmö',
@@ -334,7 +335,7 @@ const SkapaProjekt = () => {
 
       for (const file of files) {
         const fileData = await readFileAsDataUrl(file);
-        const response = await fetch('http://localhost:4000/api/pdf/blankett31/parse', {
+        const response = await fetch(apiUrl('/api/pdf/blankett31/parse'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -450,7 +451,7 @@ const SkapaProjekt = () => {
     try {
       const firstFile = files[0];
       const fileData = await readFileAsDataUrl(firstFile);
-      const response = await fetch('http://localhost:4000/api/pdf/disp/parse', {
+      const response = await fetch(apiUrl('/api/pdf/disp/parse'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -602,8 +603,8 @@ const SkapaProjekt = () => {
       const isEditingProject = Boolean(currentProjectId);
       const response = await fetch(
         isEditingProject
-          ? `http://localhost:4000/api/projects/${currentProjectId}`
-          : 'http://localhost:4000/api/projects',
+          ? apiUrl(`/api/projects/${currentProjectId}`)
+          : apiUrl('/api/projects'),
         {
         method: isEditingProject ? 'PUT' : 'POST',
         headers: {
@@ -639,7 +640,7 @@ const SkapaProjekt = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:4000/api/project/${currentProjectId}`, {
+      const response = await fetch(apiUrl(`/api/project/${currentProjectId}`), {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -677,7 +678,7 @@ const SkapaProjekt = () => {
       setIsLoadingProject(true);
 
       try {
-        const response = await fetch(`http://localhost:4000/api/project/${currentProjectId}`, {
+        const response = await fetch(apiUrl(`/api/project/${currentProjectId}`), {
           headers: {
             Authorization: `Bearer ${token}`,
           },

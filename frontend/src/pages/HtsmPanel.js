@@ -12,42 +12,47 @@ import {
   Stack,
 } from '@chakra-ui/react';
 import Header from '../components/Header';
+import { apiUrl } from '../lib/api';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [loadError, setLoadError] = useState('');
   const fetchUserAndProjects = useCallback(async () => {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    navigate('/');
-    return;
-  }
+    let storedUser = null;
+    try {
+      storedUser = JSON.parse(localStorage.getItem('user') || 'null');
+    } catch (error) {
+      storedUser = null;
+    }
 
-  try {
-    await axios.get('http://localhost:4000/api/user', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const token = storedUser?.token || localStorage.getItem('token');
+    if (!token) {
+      setLoading(false);
+      setLoadError('Ingen aktiv inloggning hittades.');
+      return;
+    }
 
-    const projectRes = await axios.get(
-      'http://localhost:4000/api/projects',
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    setProjects(projectRes.data);
-  } catch (error) {
-    console.error('Kunde inte hämta användare eller projekt:', error);
-    navigate('/'); // Tillbaka till login vid fel
-  } finally {
-    setLoading(false);
-  }
-}, [navigate]);
+    try {
+      setLoadError('');
+      const projectRes = await axios.get(
+        apiUrl('/api/projects'),
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setProjects(Array.isArray(projectRes.data) ? projectRes.data : []);
+    } catch (error) {
+      console.error('Kunde inte hämta projekt för HTSM-panelen:', error);
+      setLoadError('Kunde inte hämta projekten just nu.');
+    } finally {
+      setLoading(false);
+    }
+  }, [navigate]);
 
   const filteredProjects = projects.filter((project) =>
     project.name?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -136,6 +141,26 @@ const Dashboard = () => {
                 <Spinner color="gray.700" size="lg" />
                 <Text color="gray.600">Hämtar projekt...</Text>
               </VStack>
+            ) : loadError ? (
+              <Box
+                border="1px solid"
+                borderColor="red.200"
+                borderRadius="xl"
+                p={6}
+                textAlign="center"
+                color="red.600"
+                bg="red.50"
+              >
+                <Text fontWeight="700">{loadError}</Text>
+                <Button
+                  mt={4}
+                  size="sm"
+                  borderRadius="full"
+                  onClick={fetchUserAndProjects}
+                >
+                  Försök igen
+                </Button>
+              </Box>
             ) : filteredProjects.length === 0 ? (
               <Box
                 border="1px dashed"

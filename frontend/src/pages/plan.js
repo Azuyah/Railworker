@@ -61,6 +61,7 @@ import {
 import { ChevronDownIcon } from '@chakra-ui/icons';
 import Header from '../components/Header';
 import { getSectionLabel, getSectionMarker } from '../utils/sectionLabels';
+import { apiUrl } from '../lib/api';
 
 const mergeSectionDetails = (sections = [], sectionDetails = []) =>
   sections.map((section, index) => ({
@@ -692,7 +693,7 @@ const addSectionQuick = async (type = 'Linje') => {
   try {
     const token = JSON.parse(localStorage.getItem('user'))?.token;
     await axios.put(
-      `http://localhost:4000/api/projects/${project.id}`,
+      apiUrl(`/api/projects/${project.id}`),
       updatedProject,
       {
         headers: { Authorization: `Bearer ${token}` },
@@ -736,7 +737,7 @@ const fetchProject = useCallback(async () => {
     const tokenData = localStorage.getItem('user');
     const token = tokenData ? JSON.parse(tokenData).token : null;
 
-    const response = await axios.get(`http://localhost:4000/api/project/${id}`, {
+    const response = await axios.get(apiUrl(`/api/project/${id}`), {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -791,7 +792,7 @@ const approveRow = async (rowId) => {
     const token = tokenData ? JSON.parse(tokenData).token : null;
 
     await axios.put(
-      `http://localhost:4000/api/row/approve/${rowId}`,
+      apiUrl(`/api/row/approve/${rowId}`),
       {},
       {
         headers: {
@@ -907,7 +908,7 @@ const updateProject = async () => {
 
   try {
     await axios.put(
-      `http://localhost:4000/api/projects/${id}`,
+      apiUrl(`/api/projects/${id}`),
       updated,
       {
         headers: {
@@ -930,7 +931,7 @@ const exportPlanToExcel = async () => {
   }
 
   try {
-    const response = await fetch(`http://localhost:4000/api/projects/${id}/export-excel`, {
+    const response = await fetch(apiUrl(`/api/projects/${id}/export-excel`), {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -1059,7 +1060,7 @@ if (selectedRow && selectedRow.id) {
 
 // ✅ Skicka till backend
 await axios.put(
-  `http://localhost:4000/api/projects/${project.id}`,
+  apiUrl(`/api/projects/${project.id}`),
   updatedProject,
   {
     headers: { Authorization: `Bearer ${token}` },
@@ -2448,7 +2449,7 @@ if (loading || !project) {
             try {
               const tokenData = localStorage.getItem('user');
               const token = tokenData ? JSON.parse(tokenData).token : null;
-              await axios.delete(`http://localhost:4000/api/project/${id}`, {
+              await axios.delete(apiUrl(`/api/project/${id}`), {
                 headers: { Authorization: `Bearer ${token}` },
               });
               window.location.href = '/dashboard';
@@ -4518,7 +4519,7 @@ onChange={() =>
 
             try {
               const { data: currentProject } = await axios.get(
-                `http://localhost:4000/api/project/${project.id}`,
+                apiUrl(`/api/project/${project.id}`),
                 {
                   headers: {
                     Authorization: `Bearer ${token}`,
@@ -4532,7 +4533,7 @@ onChange={() =>
               };
 
               await axios.put(
-                `http://localhost:4000/api/projects/${project.id}`,
+                apiUrl(`/api/projects/${project.id}`),
                 updatedProject,
                 {
                   headers: {
