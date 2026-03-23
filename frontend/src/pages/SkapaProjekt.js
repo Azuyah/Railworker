@@ -847,23 +847,6 @@ const SkapaProjekt = () => {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm backdrop-blur">
-              <div className="text-xs font-semibold uppercase tracking-widest text-slate-500">Sammanfattning</div>
-              <div className="mt-4 space-y-2 text-sm text-slate-700">
-                <div className="flex items-center justify-between">
-                  <span>Start</span>
-                  <span className="font-semibold text-slate-900">{startDate || '—'} {startTime || ''}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Slut</span>
-                  <span className="font-semibold text-slate-900">{endDate || '—'} {endTime || ''}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Delområden</span>
-                  <span className="font-semibold text-slate-900">{sections.length}</span>
-                </div>
-              </div>
-            </div>
           </aside>
 
           <main className="space-y-6">
