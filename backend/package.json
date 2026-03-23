@@ -7,6 +7,9 @@
     "start": "npm run migrate:deploy && node index.js",
     "postinstall": "npx prisma generate"
   },
+  "engines": {
+    "node": ">=22.3.0"
+  },
   "dependencies": {
     "@prisma/client": "^6.9.0",
     "bcrypt": "^6.0.0",
