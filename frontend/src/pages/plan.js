@@ -91,6 +91,59 @@ const compactSectionText = (value = '') =>
     .replace(/\s*,\s*/g, ',')
     .trim();
 
+const normalizePlanDate = (value = '') => {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  const slashMatch = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (slashMatch) {
+    const [, day, month, year] = slashMatch;
+    return `${year}-${month}-${day}`;
+  }
+  return raw;
+};
+
+const buildPlanEntryKey = (entry = {}, index = 0) =>
+  `${entry.beteckning || 'entry'}|${entry.startDate || ''}|${index}`;
+
+const buildPlanEntries = (project) => {
+  const entries = Array.isArray(project?.formState?.blankett31Entries)
+    ? project.formState.blankett31Entries.filter((entry) => entry?.startDate || entry?.beteckning)
+    : [];
+
+  if (entries.length) {
+    return entries.map((entry, index) => ({
+      ...entry,
+      key: buildPlanEntryKey(entry, index),
+    }));
+  }
+
+  return [
+    {
+      key: 'default-entry',
+      beteckning: project?.beteckningar?.[0]?.label || '',
+      startDate: project?.startDate || '',
+      startTime: project?.startTime || '',
+      endDate: project?.endDate || '',
+      endTime: project?.endTime || '',
+    },
+  ];
+};
+
+const formatPlanEntryLabel = (entry = {}) => {
+  const date = normalizePlanDate(entry.startDate || '');
+  const shortDate = /^\d{4}-\d{2}-\d{2}$/.test(date) ? date.slice(5) : date;
+  return [shortDate, entry.beteckning].filter(Boolean).join(' ');
+};
+
+const formatClockLabel = (value = '') => String(value || '').replace(':', '.');
+const extractBtknPrefix = (value = '') =>
+  String(value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\d+$/, '')
+    .trim();
+
 const Plan = () => {
   const { id } = useParams();
   const [project, setProject] = useState(null);
@@ -130,6 +183,9 @@ const Plan = () => {
   const [activeRowId, setActiveRowId] = useState(null);
   const [hotkeysOpen, setHotkeysOpen] = useState(false);
   const [btknPrefix, setBtknPrefix] = useState('');
+  const [activePlanEntryKey, setActivePlanEntryKey] = useState('');
+  const [hoveredSectionInfo, setHoveredSectionInfo] = useState(null);
+  const [topPanelCollapsed, setTopPanelCollapsed] = useState(false);
   const [columnWidths, setColumnWidths] = useState({
     btkn: 54,
     namn: 96,
@@ -147,13 +203,19 @@ const Plan = () => {
     namn: true,
     telefon: true,
     anordning: true,
-    starttid: true,
+    starttid: false,
     begard: true,
   });
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const {
+    isOpen: isFollowUpChoiceOpen,
+    onOpen: onOpenFollowUpChoice,
+    onClose: onCloseFollowUpChoice,
+  } = useDisclosure();
   const [selectedRow, setSelectedRow] = useState(null);
   const [selectedAreas, setSelectedAreas] = useState([]);
+  const [pendingCompletionRow, setPendingCompletionRow] = useState(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [projektNamn, setProjektNamn] = useState(project?.name || '');
   const [plats, setPlats] = useState(project?.plats || '');
@@ -170,13 +232,35 @@ const Plan = () => {
   const [signatur, setSignatur] = useState(project?.signatur || '');
   const [editSections, setEditSections] = useState(project?.sections || []);
   const projectFormState = project?.formState || {};
+  const projectPlanEntries = useMemo(() => buildPlanEntries(project), [project]);
+  const activePlanEntry = useMemo(
+    () =>
+      projectPlanEntries.find((entry) => entry.key === activePlanEntryKey) ||
+      projectPlanEntries[0] ||
+      null,
+    [activePlanEntryKey, projectPlanEntries]
+  );
+  const activePlanDate = normalizePlanDate(activePlanEntry?.startDate || '');
   const projectNodnummer = projectFormState.nodnummer || '';
-  const projectSluttid = project?.endTime || projectFormState.avslutningstid || '';
+  const projectSluttid = activePlanEntry?.endTime || project?.endTime || projectFormState.avslutningstid || '';
   const projectSectionSummaries = (project?.sections || []).map((sec, idx) => ({
     id: sec.id || `${sec.type || 'section'}-${idx}`,
     label: getSectionLabel(sec, idx),
     signal: sec.name || sec.signal || '',
   }));
+
+useEffect(() => {
+  if (!projectPlanEntries.length) {
+    setActivePlanEntryKey('');
+    return;
+  }
+
+  setActivePlanEntryKey((current) =>
+    projectPlanEntries.some((entry) => entry.key === current)
+      ? current
+      : projectPlanEntries[0].key
+  );
+}, [projectPlanEntries]);
 
 function formatDateOnly(datetimeStr) {
   const match = datetimeStr.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
@@ -197,6 +281,16 @@ function formatDateOnly(datetimeStr) {
 
   return `${d}/${m}/${y}`;
 }
+
+const getRowPlanDate = (row) =>
+  normalizePlanDate(
+    row?.planDate ||
+    row?.begardDatum ||
+    row?.startdatum ||
+    row?.startDate ||
+    row?.datum ||
+    ''
+  );
 
 const updateRow = useCallback((updatedRow) => {
   const updatedRows = rows.map((row) =>
@@ -276,11 +370,13 @@ const calculateSamrad = useCallback((rows) => {
 
     const rowAreas = row.selections || [];
     const rowAnordningar = normalizeAnordningar(row.anordning);
+    const rowPlanDate = getRowPlanDate(row);
 
     for (let j = 0; j < i; j++) {
       const compareRow = rows[j];
       if (compareRow.avslutadRad) continue;
       if (isRowExpired(compareRow)) continue;
+      if (rowPlanDate && getRowPlanDate(compareRow) && rowPlanDate !== getRowPlanDate(compareRow)) continue;
 
       const compareAreas = compareRow.selections || [];
       const compareAnordningar = normalizeAnordningar(compareRow.anordning);
@@ -1034,10 +1130,17 @@ useEffect(() => {
 
 useEffect(() => {
   if (selectedRow?.id) {
-    setSelectedRow((prev) => ({
-      ...prev,
-      selectedAreas: [...selectedAreas],
-    }));
+    setSelectedRow((prev) => {
+      if (!prev) return prev;
+      const nextSelectedAreas = [...selectedAreas];
+      if (JSON.stringify(prev.selectedAreas || []) === JSON.stringify(nextSelectedAreas)) {
+        return prev;
+      }
+      return {
+        ...prev,
+        selectedAreas: nextSelectedAreas,
+      };
+    });
   }
 }, [selectedAreas, selectedRow?.id]);
 
@@ -1122,10 +1225,17 @@ useEffect(() => {
 
   const matchingRow = rows.find((r) => r.id === selectedRowId);
   if (matchingRow) {
-    setSelectedRow((prev) => ({
-      ...prev,
-      samrad: matchingRow.samrad || [],
-    }));
+    setSelectedRow((prev) => {
+      if (!prev) return prev;
+      const nextSamrad = matchingRow.samrad || [];
+      if (JSON.stringify(prev.samrad || []) === JSON.stringify(nextSamrad)) {
+        return prev;
+      }
+      return {
+        ...prev,
+        samrad: nextSamrad,
+      };
+    });
   }
 }, [rows, selectedRowId]);
 
@@ -1199,7 +1309,12 @@ useEffect(() => {
   const match = rows.find((r) => r.id === selectedRowId);
   if (!match) return;
 
-  setSelectedRow(match);
+  setSelectedRow((prev) => {
+    if (prev && JSON.stringify(prev) === JSON.stringify(match)) {
+      return prev;
+    }
+    return match;
+  });
 }, [selectedRowId, rows]);
 
 const getNextBtknForRows = (prefix, sourceRows) => {
@@ -1217,21 +1332,58 @@ const getNextBtknForRows = (prefix, sourceRows) => {
   return `${safePrefix}${next}`;
 };
 
+const getBegardForPlanEntry = useCallback((planEntry) => {
+  const resolvedPlanEntry =
+    projectPlanEntries.find((entry) => entry.key === planEntry?.key) ||
+    projectPlanEntries.find(
+      (entry) =>
+        normalizePlanDate(entry.startDate || '') === normalizePlanDate(planEntry?.startDate || '') &&
+        String(entry.beteckning || '') === String(planEntry?.beteckning || '')
+    ) ||
+    planEntry ||
+    activePlanEntry ||
+    null;
+
+  const rawEndTime =
+    String(
+      resolvedPlanEntry?.endTime ||
+      project?.endTime ||
+      projectFormState.avslutningstid ||
+      ''
+    ).trim();
+  const match = rawEndTime.match(/^(\d{1,2})[:.](\d{2})$/);
+  if (!match) return '';
+
+  const totalMinutes =
+    ((Number(match[1]) * 60 + Number(match[2]) - 10) + 24 * 60) % (24 * 60);
+  return `${String(Math.floor(totalMinutes / 60)).padStart(2, '0')}:${String(totalMinutes % 60).padStart(2, '0')}`;
+}, [activePlanEntry, project?.endTime, projectFormState.avslutningstid, projectPlanEntries]);
+
 useEffect(() => {
   if (!project?.sections || !Array.isArray(rows)) return;
 
-  if (rows.length === 0) {
-    setRows([createNewRow([], project, btknPrefix)]);
+  const matchesCurrentEntry = (row) => {
+    if (!projectPlanEntries.length || !activePlanDate) return true;
+    const rowPlanDate = getRowPlanDate(row);
+    if (!rowPlanDate) {
+      return projectPlanEntries[0]?.key === activePlanEntry?.key;
+    }
+    return rowPlanDate === activePlanDate;
+  };
+  const activeRows = rows.filter((row) => matchesCurrentEntry(row));
+
+  if (rows.length === 0 || activeRows.length === 0) {
+    setRows((prev) => [...prev, createNewRow(prev, project, btknPrefix, activePlanEntry)]);
     return;
   }
 
-  const lastRow = rows[rows.length - 1];
+  const lastRow = activeRows[activeRows.length - 1];
   if (!isRowEffectivelyEmpty(lastRow)) {
-    setRows((prev) => [...prev, createNewRow(prev, project, btknPrefix)]);
+    setRows((prev) => [...prev, createNewRow(prev, project, btknPrefix, activePlanEntry)]);
   }
-}, [project, rows, btknPrefix]);
+}, [project, rows, btknPrefix, activePlanDate, activePlanEntry, projectPlanEntries]);
 
-const createNewRow = (rows, project, prefix = '') => {
+const createNewRow = (rows, project, prefix = '', planEntry = null) => {
   const nextId = rows.length > 0 ? Math.max(...rows.map(r => r.id)) + 1 : 1;
   return {
     id: nextId,
@@ -1242,10 +1394,13 @@ const createNewRow = (rows, project, prefix = '') => {
     bt: '',
     linje: '',
     starttid: '',
-    begard: '',
+    begard: getBegardForPlanEntry(planEntry),
+    begardDatum: planEntry?.startDate || '',
     avslutat: '',
     avslutadRad: false,
     anteckning: '',
+    planDate: planEntry?.startDate || '',
+    planEntryKey: planEntry?.key || '',
     selections: project.sections.map(() => false),
     selectedAreas: [],
     cellMeta: {},
@@ -1261,10 +1416,8 @@ const isRowEffectivelyEmpty = (row) => {
     row.linje,
     row.dp,
     row.starttid,
-    row.begard,
     row.avslutat,
     row.startdatum,
-    row.begardDatum,
     row.avslutatDatum,
     row.anteckning,
   ].some((value) => String(value || '').trim() !== '');
@@ -1282,7 +1435,7 @@ const isRowEffectivelyEmpty = (row) => {
 
 const addRow = () => {
   const newRow = {
-    ...createNewRow(rows, project, btknPrefix),
+    ...createNewRow(rows, project, btknPrefix, activePlanEntry),
     id: Date.now(),
     dp: '',
     linje: '',
@@ -1325,7 +1478,85 @@ const addRow = () => {
 
 };
 
+const completeSelectedRow = useCallback(async (targetPlanEntry = null) => {
+  if (!selectedRow || !project) return;
+
+  const currentUser = JSON.parse(localStorage.getItem('user'));
+  const initials = `${currentUser?.firstName?.[0] || ''}${currentUser?.lastName?.[0] || ''}`.toUpperCase();
+  const completedRow = {
+    ...selectedRow,
+    selectedAreas: [...selectedAreas],
+    avslutadRad: true,
+    avslutadAv: initials,
+    avslutatDatum: selectedRow.avslutatDatum || getCurrentDate(),
+    avslutat: selectedRow.avslutat || getCurrentTime(),
+    isSavedPlan: false,
+  };
+
+  const currentRows = rows.map((row) =>
+    row.id === completedRow.id ? { ...row, ...completedRow } : row
+  );
+
+  let nextRows = currentRows;
+  let nextRow = null;
+
+  if (targetPlanEntry) {
+    nextRow = {
+      ...createNewRow(currentRows, project, btknPrefix, targetPlanEntry),
+      namn: completedRow.namn || '',
+      telefon: completedRow.telefon || '',
+      anordning: Array.isArray(completedRow.anordning)
+        ? [...completedRow.anordning]
+        : completedRow.anordning || '',
+      selections: Array.isArray(completedRow.selections)
+        ? [...completedRow.selections]
+        : project.sections.map(() => false),
+      selectedAreas: buildSelectedAreasFromRow(completedRow),
+      begard: getBegardForPlanEntry(targetPlanEntry),
+      begardDatum: targetPlanEntry?.startDate || '',
+      anteckning: '',
+      isSavedPlan: false,
+      cellMeta: {},
+    };
+    nextRows = [...currentRows, nextRow];
+  }
+
+  if (targetPlanEntry?.key) {
+    setActivePlanEntryKey(targetPlanEntry.key);
+  }
+
+  setRows(nextRows);
+  setPendingCompletionRow(null);
+  onCloseFollowUpChoice();
+
+  if (nextRow) {
+    setSelectedRow(nextRow);
+    setSelectedRowId(nextRow.id);
+    setSelectedAreas([...nextRow.selectedAreas]);
+  } else {
+    setSelectedRow(completedRow);
+    setSelectedAreas([...completedRow.selectedAreas]);
+    onClose();
+  }
+
+  await sparaProjekt(nextRows);
+}, [
+  btknPrefix,
+  getCurrentDate,
+  getCurrentTime,
+  onClose,
+  onCloseFollowUpChoice,
+  project,
+  rows,
+  selectedAreas,
+  selectedRow,
+  sparaProjekt,
+]);
+
 const updateRowField = useCallback((rowId, field, value) => {
+  if (field === 'btkn') {
+    setBtknPrefix(extractBtknPrefix(value));
+  }
   setRows((prev) =>
     prev.map((row) => (row.id === rowId ? { ...row, [field]: value } : row))
   );
@@ -1362,6 +1593,20 @@ const avslutaRow = useCallback(async (row) => {
 const openRowModal = (row, rowIndex) => {
   handleRowClick(row, rowIndex);
   onOpen();
+};
+
+const buildSelectedAreasFromRow = (row) => {
+  if (Array.isArray(row?.selectedAreas) && row.selectedAreas.length) {
+    return [...row.selectedAreas];
+  }
+
+  if (Array.isArray(row?.selections)) {
+    return row.selections
+      .map((selected, index) => (selected ? index : null))
+      .filter((index) => index !== null);
+  }
+
+  return [];
 };
 
 const ANORDNING_OPTIONS = ['A-S', 'L-S', 'S-S', 'E-S', 'SPF', 'VXL', 'Tvn'];
@@ -1811,11 +2056,20 @@ const showDeleteRowConfirm = (rowId) => {
 };
 
 const handleRowClick = (row, rowIndex) => {
+  const resolvedBtkn =
+    row.btkn ||
+    (btknPrefix
+      ? getNextBtknForRows(
+          btknPrefix,
+          rows.filter((candidate) => candidate.id !== row.id)
+        )
+      : '');
   // 🔁 Skapa en temporärt uppdaterad lista där aktuell rad speglar vad som syns i modalen
 const tempRows = rows.map((r) =>
   r.id === row.id
     ? {
         ...r,
+        btkn: resolvedBtkn,
         selectedAreas: selectedAreas,
         anordning: Array.isArray(row.anordning) ? row.anordning : [],
       }
@@ -1834,6 +2088,7 @@ const tempRows = rows.map((r) =>
 
   setSelectedRow({
     ...row,
+    btkn: resolvedBtkn,
     dp: row.dp || '',
     linje: row.linje || '',
     index: rowIndex,
@@ -1860,6 +2115,10 @@ const handleModalChange = (field, value) => {
     value = parseInt(value);
   }
 
+  if (field === 'btkn') {
+    setBtknPrefix(extractBtknPrefix(value));
+  }
+
   const updatedRows = rows.map((r) =>
     r.id === selectedRowId ? { ...r, [field]: value } : r
   );
@@ -1868,7 +2127,55 @@ const handleModalChange = (field, value) => {
   setSelectedRow((prev) => ({ ...prev, [field]: value }));
 };
 
+const rowMatchesActivePlan = useCallback((row) => {
+  if (!projectPlanEntries.length || !activePlanDate) return true;
+  const rowPlanDate = getRowPlanDate(row);
+  if (!rowPlanDate) {
+    return projectPlanEntries[0]?.key === activePlanEntry?.key;
+  }
+  return rowPlanDate === activePlanDate;
+}, [activePlanDate, activePlanEntry, projectPlanEntries]);
+
+const archivedRowsForActivePlan = useMemo(
+  () => rows.filter((row) => row.avslutadRad === true && rowMatchesActivePlan(row)),
+  [rowMatchesActivePlan, rows]
+);
+
+const chooseFollowUpPlanEntry = useCallback(() => {
+  if (!projectPlanEntries.length) return activePlanEntry;
+  if (projectPlanEntries.length === 1) return projectPlanEntries[0];
+
+  const currentIndex = Math.max(
+    projectPlanEntries.findIndex((entry) => entry.key === activePlanEntry?.key),
+    0
+  );
+  const suggestedIndex =
+    currentIndex < projectPlanEntries.length - 1 ? currentIndex + 1 : currentIndex;
+  const optionsText = projectPlanEntries
+    .map((entry, index) => `${index + 1}. ${formatPlanEntryLabel(entry)}`)
+    .join('\n');
+  const response = window.prompt(
+    `I vilken post ska den förplaneras in?\n${optionsText}`,
+    String(suggestedIndex + 1)
+  );
+
+  if (response == null) return null;
+
+  const selectedIndex = Number.parseInt(String(response).trim(), 10);
+  if (
+    !Number.isInteger(selectedIndex) ||
+    selectedIndex < 1 ||
+    selectedIndex > projectPlanEntries.length
+  ) {
+    window.alert('Ogiltigt val av post.');
+    return null;
+  }
+
+  return projectPlanEntries[selectedIndex - 1];
+}, [activePlanEntry, projectPlanEntries]);
+
 const filteredRows = rows
+  .filter((row) => rowMatchesActivePlan(row))
   .filter((row) =>
     filterValue === 'all' || (row.namn || '').toLowerCase() === filterValue.toLowerCase()
   )
@@ -2075,6 +2382,18 @@ if (loading || !project) {
   <Box position="relative" zIndex={1}>
       <Header />
       <Box maxW="1800px" mx="auto" mt={2} pt="52px">
+      <Flex justify="flex-end" mb={2}>
+        <Button
+          size="xs"
+          borderRadius="full"
+          variant="outline"
+          bg="white"
+          borderColor="blue.200"
+          onClick={() => setTopPanelCollapsed((prev) => !prev)}
+        >
+          {topPanelCollapsed ? 'Visa panel' : 'Dölj panel'}
+        </Button>
+      </Flex>
 
 <Modal isOpen={isProjectInfoOpen} onClose={() => setIsProjectInfoOpen(false)} size="xl">
   <ModalOverlay />
@@ -2091,8 +2410,8 @@ if (loading || !project) {
   <Box>
     <Text><strong>Projektnamn:</strong> {project.name}</Text>
     <Text><strong>Plats:</strong> {project.plats}</Text>
-    <Text><strong>Startdatum:</strong> {project.startDate} {project.startTime}</Text>
-    <Text><strong>Slutdatum:</strong> {project.endDate} {project.endTime}</Text>
+    <Text><strong>Startdatum:</strong> {activePlanEntry?.startDate || project.startDate} {activePlanEntry?.startTime || project.startTime}</Text>
+    <Text><strong>Slutdatum:</strong> {activePlanEntry?.endDate || project.endDate} {activePlanEntry?.endTime || project.endTime}</Text>
     <Text><strong>Sluttid:</strong> {projectSluttid || '—'}</Text>
     <Text><strong>FJTKL:</strong> {project.namn} ({project.telefonnummer})</Text>
     <Text><strong>Nödnummer:</strong> {projectNodnummer || '—'}</Text>
@@ -2149,131 +2468,182 @@ if (loading || !project) {
   </ModalContent>
 </Modal>
 
-<Box
-  bg="rgba(255,255,255,0.94)"
-  border="1px solid #D5DEEA"
-  borderRadius="2xl"
-  px={4}
-  py={3}
-  boxShadow="0 18px 45px rgba(15, 23, 42, 0.08)"
-  backdropFilter="blur(12px)"
-  mb={3}
->
-  <Flex align="center" justify="space-between" wrap="wrap" gap={2}>
-    <Box>
-      <Text fontSize="xs" color="blue.700" textTransform="uppercase" letterSpacing="0.18em" fontWeight="bold">
-        Projekt
-      </Text>
-      <Text fontSize="xl" fontWeight="900" color="gray.900">
-        {project.name}
-      </Text>
-      <Text fontSize="sm" color="gray.700" fontWeight="medium">
-        {project.plats}
-      </Text>
+<Box mb={3}>
+  {topPanelCollapsed ? (
+    <Box
+      bg="rgba(255,255,255,0.94)"
+      border="1px solid #D5DEEA"
+      borderRadius="2xl"
+      px={4}
+      py={2}
+      boxShadow="0 12px 28px rgba(15, 23, 42, 0.06)"
+    >
+      <Flex align="center" justify="space-between" wrap="wrap" gap={2}>
+        <Box>
+          <Text fontSize="sm" fontWeight="800" color="gray.900">
+            {project.name}
+          </Text>
+          <Text fontSize="xs" color="gray.600" fontWeight="semibold">
+            {activePlanEntry?.startDate || '—'} {activePlanEntry?.beteckning ? `• ${activePlanEntry.beteckning}` : ''}
+          </Text>
+        </Box>
+        <HStack spacing={3} wrap="wrap">
+          <Text fontSize="xs" color="gray.700" fontWeight="semibold">
+            Nödnummer: {projectNodnummer || '—'}
+          </Text>
+          <Text fontSize="xs" color="gray.700" fontWeight="semibold">
+            Sluttid: {projectSluttid || '—'}
+          </Text>
+        </HStack>
+      </Flex>
     </Box>
+  ) : (
+    <Box
+      bg="rgba(255,255,255,0.94)"
+      border="1px solid #D5DEEA"
+      borderRadius="2xl"
+      px={4}
+      py={3}
+      boxShadow="0 18px 45px rgba(15, 23, 42, 0.08)"
+      backdropFilter="blur(12px)"
+    >
+      {projectPlanEntries.length > 1 && (
+        <HStack spacing={2} wrap="wrap" mb={3}>
+          {projectPlanEntries.map((entry) => (
+            <Button
+              key={entry.key}
+              size="sm"
+              borderRadius="full"
+              colorScheme={entry.key === activePlanEntry?.key ? 'blue' : 'gray'}
+              variant={entry.key === activePlanEntry?.key ? 'solid' : 'outline'}
+              onClick={() => setActivePlanEntryKey(entry.key)}
+            >
+              {formatPlanEntryLabel(entry)}
+            </Button>
+          ))}
+        </HStack>
+      )}
+      <Flex align="center" justify="space-between" wrap="wrap" gap={2}>
+        <Box>
+          <Text fontSize="xs" color="blue.700" textTransform="uppercase" letterSpacing="0.18em" fontWeight="bold">
+            Projekt
+          </Text>
+          <Text fontSize="xl" fontWeight="900" color="gray.900">
+            {project.name}
+          </Text>
+          <Text fontSize="sm" color="gray.700" fontWeight="medium">
+            {project.plats}
+          </Text>
+          {activePlanEntry && (
+            <Text fontSize="sm" color="gray.600" fontWeight="semibold">
+              {activePlanEntry.startDate || '—'} {activePlanEntry.beteckning ? `• ${activePlanEntry.beteckning}` : ''}
+            </Text>
+          )}
+        </Box>
 
-    <HStack spacing={2} wrap="wrap">
-      <Button onClick={() => sparaProjekt()} bg="blue.700" color="white" borderRadius="full" _hover={{ bg: 'blue.800' }} boxShadow="sm" size="sm">
-        Spara
-      </Button>
-      <Button variant="outline" borderRadius="full" borderColor="blue.200" bg="white" onClick={() => addRow()} size="sm">
-        + Lägg till rad
-      </Button>
-      <Button variant="outline" borderRadius="full" borderColor="blue.200" bg="white" onClick={() => setAnteckningarModalOpen(true)} size="sm">
-        Anteckningar
-      </Button>
-      <Button variant="outline" borderRadius="full" borderColor="blue.200" bg="white" onClick={exportPlanToExcel} size="sm">
-        Exportera Excel
-      </Button>
-      <Button variant="outline" borderRadius="full" borderColor="blue.200" bg="white" onClick={() => setArchivedModalOpen(true)} size="sm">
-        Avslutade
-      </Button>
-    </HStack>
+        <HStack spacing={2} wrap="wrap">
+          <Button onClick={() => sparaProjekt()} bg="blue.700" color="white" borderRadius="full" _hover={{ bg: 'blue.800' }} boxShadow="sm" size="sm">
+            Spara
+          </Button>
+          <Button variant="outline" borderRadius="full" borderColor="blue.200" bg="white" onClick={() => addRow()} size="sm">
+            + Lägg till rad
+          </Button>
+          <Button variant="outline" borderRadius="full" borderColor="blue.200" bg="white" onClick={() => setAnteckningarModalOpen(true)} size="sm">
+            Anteckningar
+          </Button>
+          <Button variant="outline" borderRadius="full" borderColor="blue.200" bg="white" onClick={exportPlanToExcel} size="sm">
+            Exportera Excel
+          </Button>
+          <Button variant="outline" borderRadius="full" borderColor="blue.200" bg="white" onClick={() => setArchivedModalOpen(true)} size="sm">
+            Avslutade
+          </Button>
+        </HStack>
 
-    <HStack spacing={2} wrap="wrap">
-      <HStack spacing={1} bg="white" border="1px solid #CBD5E1" borderRadius="full" px={1} py={1}>
-        <Button
-          size="xs"
-          variant="ghost"
-          borderRadius="full"
-          minW="30px"
-          onClick={() => setZoomLevel((z) => Math.max(0.8, Number((z - 0.1).toFixed(2))))}
-        >
-          -
-        </Button>
-        <Text fontSize="xs" fontWeight="bold" color="gray.700" minW="44px" textAlign="center">
-          {Math.round(zoomLevel * 100)}%
-        </Text>
-        <Button
-          size="xs"
-          variant="ghost"
-          borderRadius="full"
-          minW="30px"
-          onClick={() => setZoomLevel(1)}
-        >
-          100
-        </Button>
-        <Button
-          size="xs"
-          variant="ghost"
-          borderRadius="full"
-          minW="30px"
-          onClick={() => setZoomLevel((z) => Math.min(1.4, Number((z + 0.1).toFixed(2))))}
-        >
-          +
-        </Button>
+        <HStack spacing={2} wrap="wrap">
+          <HStack spacing={1} bg="white" border="1px solid #CBD5E1" borderRadius="full" px={1} py={1}>
+            <Button
+              size="xs"
+              variant="ghost"
+              borderRadius="full"
+              minW="30px"
+              onClick={() => setZoomLevel((z) => Math.max(0.8, Number((z - 0.1).toFixed(2))))}
+            >
+              -
+            </Button>
+            <Text fontSize="xs" fontWeight="bold" color="gray.700" minW="44px" textAlign="center">
+              {Math.round(zoomLevel * 100)}%
+            </Text>
+            <Button
+              size="xs"
+              variant="ghost"
+              borderRadius="full"
+              minW="30px"
+              onClick={() => setZoomLevel(1)}
+            >
+              100
+            </Button>
+            <Button
+              size="xs"
+              variant="ghost"
+              borderRadius="full"
+              minW="30px"
+              onClick={() => setZoomLevel((z) => Math.min(1.4, Number((z + 0.1).toFixed(2))))}
+            >
+              +
+            </Button>
+          </HStack>
+
+          <Input
+            placeholder="Sök namn eller telefon..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            width="220px"
+            bg="white"
+            border="1px solid #CBD5E1"
+            borderRadius="full"
+            px={4}
+            py={2}
+            _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 2px rgba(49,130,206,0.18)' }}
+          />
+
+          <Button variant="outline" borderRadius="full" borderColor="blue.200" bg="white" onClick={() => setHotkeysOpen(true)} size="sm">
+            Kortkommandon
+          </Button>
+        </HStack>
+      </Flex>
+
+      <Divider my={3} borderColor="blue.100" />
+
+      <HStack spacing={4} wrap="wrap">
+        <HStack spacing={2} bg="blue.50" border="1px solid #BFDBFE" px={3} py={2} borderRadius="xl">
+          <Text fontSize="xs" color="blue.800" fontWeight="bold" textTransform="uppercase" letterSpacing="0.12em">Nödnummer</Text>
+          <Input
+            size="xs"
+            placeholder="Nödnummer"
+            value={projectNodnummer}
+            isReadOnly
+            bg="white"
+            border="1px solid #BFDBFE"
+            width="170px"
+          />
+        </HStack>
+
+        <HStack spacing={2} bg="orange.50" border="1px solid #FBD38D" px={3} py={2} borderRadius="xl">
+          <Text fontSize="xs" color="orange.800" fontWeight="bold" textTransform="uppercase" letterSpacing="0.12em">Sluttid</Text>
+          <Input
+            size="xs"
+            type="time"
+            placeholder="Tid"
+            value={projectSluttid}
+            isReadOnly
+            bg="white"
+            border="1px solid #FBD38D"
+            width="90px"
+          />
+        </HStack>
       </HStack>
-
-      <Input
-        placeholder="Sök namn eller telefon..."
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        width="220px"
-        bg="white"
-        border="1px solid #CBD5E1"
-        borderRadius="full"
-        px={4}
-        py={2}
-        _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 2px rgba(49,130,206,0.18)' }}
-      />
-
-      <Button variant="outline" borderRadius="full" borderColor="blue.200" bg="white" onClick={() => setHotkeysOpen(true)} size="sm">
-        Kortkommandon
-      </Button>
-    </HStack>
-  </Flex>
-
-  <Divider my={3} borderColor="blue.100" />
-
-  <HStack spacing={4} wrap="wrap">
-    <HStack spacing={2} bg="blue.50" border="1px solid #BFDBFE" px={3} py={2} borderRadius="xl">
-      <Text fontSize="xs" color="blue.800" fontWeight="bold" textTransform="uppercase" letterSpacing="0.12em">Nödnummer</Text>
-      <Input
-        size="xs"
-        placeholder="Nödnummer"
-        value={projectNodnummer}
-        isReadOnly
-        bg="white"
-        border="1px solid #BFDBFE"
-        width="170px"
-      />
-    </HStack>
-
-    <HStack spacing={2} bg="orange.50" border="1px solid #FBD38D" px={3} py={2} borderRadius="xl">
-      <Text fontSize="xs" color="orange.800" fontWeight="bold" textTransform="uppercase" letterSpacing="0.12em">Sluttid</Text>
-      <Input
-        size="xs"
-        type="time"
-        placeholder="Tid"
-        value={projectSluttid}
-        isReadOnly
-        bg="white"
-        border="1px solid #FBD38D"
-        width="90px"
-      />
-    </HStack>
-
-  </HStack>
+    </Box>
+  )}
 </Box>
 
   <Box overflowX="visible">
@@ -2283,15 +2653,33 @@ if (loading || !project) {
       p={0}
       borderRadius="2xl"
       boxShadow="0 20px 55px rgba(15, 23, 42, 0.10)"
-      border="2px solid #5F6F82"
-      overflow="auto"
+      border="2px solid #475569"
+      overflowX="auto"
+      overflowY="scroll"
+      maxH="calc(100vh - 170px)"
       w="full" 
       minW="100%" 
       sx={{
         zoom: zoomLevel,
-        WebkitFontSmoothing: 'antialiased',
-        MozOsxFontSmoothing: 'grayscale',
-        textRendering: 'geometricPrecision',
+        WebkitFontSmoothing: 'subpixel-antialiased',
+        MozOsxFontSmoothing: 'auto',
+        textRendering: 'auto',
+        '&::-webkit-scrollbar': {
+          width: '12px',
+          height: '12px',
+        },
+        '&::-webkit-scrollbar-track': {
+          background: '#E2E8F0',
+          borderRadius: '999px',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: '#64748B',
+          borderRadius: '999px',
+          border: '2px solid #E2E8F0',
+        },
+        '&::-webkit-scrollbar-thumb:hover': {
+          background: '#475569',
+        },
       }}
     >
       <Table
@@ -2299,23 +2687,35 @@ if (loading || !project) {
         size="sm"
         sx={{
           'th, td': {
-            border: '2px solid #6B7C8F',
+            border: '2px solid #475569',
             paddingX: '10px',
             paddingY: '8px',
             fontSize: '12px',
             fontWeight: '700',
             overflow: 'visible',
             position: 'relative',
-            textRendering: 'geometricPrecision',
+            textRendering: 'auto',
           },
           thead: {
+            background: 'linear-gradient(180deg, #EDF4FF 0%, #E2EBF7 100%)',
+          },
+          'thead tr:nth-of-type(1) th': {
+            position: 'sticky',
+            top: 0,
+            zIndex: 8,
+            background: 'linear-gradient(180deg, #EDF4FF 0%, #E2EBF7 100%)',
+          },
+          'thead tr:nth-of-type(2) th': {
+            position: 'sticky',
+            top: '34px',
+            zIndex: 7,
             background: 'linear-gradient(180deg, #EDF4FF 0%, #E2EBF7 100%)',
           },
           'tbody tr:nth-of-type(even)': {
             backgroundColor: '#E2E8F0',
           },
           'tbody tr': {
-            borderBottom: '2px solid #66788C',
+            borderBottom: '2px solid #475569',
           },
           'tbody tr:hover': {
             backgroundColor: '#E9F2FF !important',
@@ -2325,16 +2725,16 @@ if (loading || !project) {
             fontSize: '12px',
             fontWeight: '600',
             color: '#0F172A',
-            WebkitFontSmoothing: 'antialiased',
-            textRendering: 'geometricPrecision',
+            WebkitFontSmoothing: 'subpixel-antialiased',
+            textRendering: 'auto',
           },
           'input': {
             border: '1px solid transparent',
             boxShadow: 'none',
             borderRadius: '8px',
             background: 'rgba(255,255,255,0.72)',
-            WebkitFontSmoothing: 'antialiased',
-            textRendering: 'geometricPrecision',
+            WebkitFontSmoothing: 'subpixel-antialiased',
+            textRendering: 'auto',
           },
           'input:focus': {
             borderColor: '#93C5FD',
@@ -2474,30 +2874,24 @@ if (loading || !project) {
   textAlign="center"
   verticalAlign="middle"
 >
-  <Tooltip
-    hasArrow
-    placement="top"
-    bg="white"
-    color="black"
-    border="1px solid #ccc"
-    borderRadius="md"
-    shadow="md"
-    p={3}
-    label={
-      <Box p={2} maxW="300px">
-        <Text fontWeight="bold" mb={1}>Gränspunkter:</Text>
-        {boundaryText ? (
-          <Text fontSize="sm">{boundaryText}</Text>
-        ) : (
-          <Text fontSize="sm" color="gray.500">Ej angivet</Text>
-        )}
-        <Text fontWeight="bold" mt={2} mb={1}>Spår:</Text>
-        <Text fontSize="sm">{spar || sec.spar || 'Ej angivet'}</Text>
-      </Box>
-    }
-    aria-label="Signal tooltip"
-  >
-    <Box position="relative" w="100%" h="100%" cursor="help" overflow="hidden">
+    <Box
+      position="relative"
+      w="100%"
+      h="100%"
+      cursor="help"
+      overflow="visible"
+      aria-label="Signalinfo"
+      onMouseEnter={() =>
+        setHoveredSectionInfo({
+          index: idx,
+          label: `Del ${getSectionMarker(sec, idx)}`,
+          signal: signalText,
+          boundary: boundaryText,
+          track: spar || sec.spar || '',
+        })
+      }
+      onMouseLeave={() => setHoveredSectionInfo((current) => (current?.index === idx ? null : current))}
+    >
       <Flex
         direction="column"
         gap={0.5}
@@ -2518,7 +2912,6 @@ if (loading || !project) {
           textAlign="center"
           noOfLines={1}
           letterSpacing="-0.01em"
-          textShadow="0 0 0.6px rgba(0,0,0,0.95)"
           px={0.5}
         >
           {signalText || 'Ej angivet'}
@@ -2535,8 +2928,35 @@ if (loading || !project) {
           {spar || sec.spar || '—'}
         </Text>
       </Flex>
+      {hoveredSectionInfo?.index === idx && (
+        <Box
+          position="absolute"
+          top="calc(100% + 4px)"
+          left="50%"
+          transform="translateX(-50%)"
+          minW="200px"
+          maxW="280px"
+          px={3}
+          py={3}
+          bg="rgba(255,255,255,0.98)"
+          border="2px solid #64748B"
+          borderRadius="lg"
+          boxShadow="0 14px 28px rgba(15, 23, 42, 0.22)"
+          zIndex={20}
+          pointerEvents="none"
+        >
+          <Text fontSize="11px" fontWeight="extrabold" color="blue.800" mb={1.5} textAlign="left">
+            {hoveredSectionInfo.label}
+          </Text>
+          <Text fontSize="12px" fontWeight="extrabold" color="gray.900" lineHeight="1.3" textAlign="left">
+            {hoveredSectionInfo.signal || 'Ej angivet'}
+          </Text>
+          <Text fontSize="11px" fontWeight="bold" color="gray.700" lineHeight="1.3" textAlign="left" mt={1}>
+            {hoveredSectionInfo.track || 'Ej angivet'}
+          </Text>
+        </Box>
+      )}
     </Box>
-  </Tooltip>
 </Th>
   );
 })}
@@ -2573,16 +2993,33 @@ if (loading || !project) {
                 const cell = (key) => getCellMeta(row, key);
                 const cellIcon = (key) => getIconConfig(cell(key).icon);
                 const btknMeta = cell('btkn');
-                const namnMeta = cell('namn');
-                const telefonMeta = cell('telefon');
-                const anordningMeta = cell('anordning');
-                const hotkeyMode = false;
+	                const namnMeta = cell('namn');
+	                const telefonMeta = cell('telefon');
+	                const anordningMeta = cell('anordning');
+	                const hotkeyMode = false;
+	                const savedRowBg = row.isSavedPlan
+	                  ? activeRowId === row.id
+	                    ? 'green.200'
+	                    : 'green.100'
+	                  : null;
+	                const startedBegardBg =
+	                  !row.isSavedPlan && (row.startdatum || row.starttid)
+	                    ? activeRowId === row.id
+	                      ? 'yellow.200'
+	                      : 'yellow.100'
+	                    : null;
 
-                return (
-                <Tr
-                  key={row.id}
-                  bg={activeRowId === row.id ? 'blue.100' : 'transparent'}
-                  _hover={{ bg: 'blue.50' }}
+	                return (
+	                <Tr
+	                  key={row.id}
+	                  bg={
+	                    savedRowBg
+	                      ? savedRowBg
+	                      : activeRowId === row.id
+	                        ? 'blue.100'
+	                        : 'transparent'
+	                  }
+                  _hover={{ bg: row.isSavedPlan ? 'green.50' : 'blue.50' }}
                   cursor="default"
                   transition="background 0.2s ease, box-shadow 0.2s ease"
                   onMouseEnter={() => setActiveRowId(row.id)}
@@ -2600,11 +3037,11 @@ if (loading || !project) {
     borderRight="2px solid #6B7C8F"
     px={1}
     py={1}
-    bg={
-      selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === 'btkn'
-        ? 'blue.100'
-        : btknMeta?.color || 'transparent'
-    }
+	    bg={
+	      selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === 'btkn'
+	        ? 'blue.100'
+	        : btknMeta?.color || savedRowBg || 'transparent'
+	    }
     onMouseDown={(e) => {
       e.stopPropagation();
       if (hotkeyMode) {
@@ -2637,11 +3074,11 @@ if (loading || !project) {
     borderRight="2px solid #6B7C8F"
     px={1}
     py={1}
-    bg={
-      selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === 'namn'
-        ? 'blue.100'
-        : namnMeta?.color || 'transparent'
-    }
+	    bg={
+	      selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === 'namn'
+	        ? 'blue.100'
+	        : namnMeta?.color || savedRowBg || 'transparent'
+	    }
     onMouseDown={(e) => {
       e.stopPropagation();
       if (hotkeyMode) {
@@ -2674,11 +3111,11 @@ if (loading || !project) {
     borderRight="2px solid #6B7C8F"
     px={1}
     py={1}
-    bg={
-      selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === 'telefon'
-        ? 'blue.100'
-        : telefonMeta?.color || 'transparent'
-    }
+	    bg={
+	      selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === 'telefon'
+	        ? 'blue.100'
+	        : telefonMeta?.color || savedRowBg || 'transparent'
+	    }
     onMouseDown={(e) => {
       e.stopPropagation();
       if (hotkeyMode) {
@@ -2713,11 +3150,11 @@ if (loading || !project) {
     borderRight="2px solid #6B7C8F"
     px={1}
     py={1}
-    bg={
-      selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === 'anordning'
-        ? 'blue.100'
-        : anordningMeta?.color || 'transparent'
-    }
+	    bg={
+	      selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === 'anordning'
+	        ? 'blue.100'
+	        : anordningMeta?.color || savedRowBg || 'transparent'
+	    }
     onMouseDown={(e) => {
       e.stopPropagation();
       if (hotkeyMode) {
@@ -2809,11 +3246,11 @@ if (loading || !project) {
       minW={`${sectionWidth}px`}
       px={0.5}
       py={1}
-      bg={
-        selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === cellKey
-          ? 'blue.100'
-          : sectionMeta?.color || baseBg
-      }
+	      bg={
+	        selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === cellKey
+	          ? 'blue.100'
+	          : sectionMeta?.color || savedRowBg || baseBg
+	      }
       borderRight="2px solid #6B7C8F"
       onMouseDown={(e) => {
         e.stopPropagation();
@@ -2853,11 +3290,11 @@ if (loading || !project) {
       borderRight="2px solid #6B7C8F"
       px={1}
       py={1}
-      bg={
-        selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === 'starttid'
-          ? 'blue.100'
-          : 'transparent'
-      }
+	      bg={
+	        selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === 'starttid'
+	          ? 'blue.100'
+	          : savedRowBg || 'transparent'
+	      }
       onMouseDown={(e) => {
         e.stopPropagation();
         if (hotkeyMode) {
@@ -2889,11 +3326,11 @@ if (loading || !project) {
       borderRight="2px solid #6B7C8F"
       px={1}
       py={1}
-      bg={
-        selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === 'begard'
-          ? 'blue.100'
-          : 'transparent'
-      }
+	      bg={
+	        selectedBodyCell?.rowId === row.id && selectedBodyCell?.key === 'begard'
+	          ? 'blue.100'
+	          : savedRowBg || startedBegardBg || 'transparent'
+	      }
       onMouseDown={(e) => {
         e.stopPropagation();
         if (hotkeyMode) {
@@ -2903,22 +3340,29 @@ if (loading || !project) {
         toggleBodyCellSelection(row.id, 'begard');
       }}
       onContextMenu={(e) => openBodyContextMenu(e, row.id, 'begard')}
-    >
-      <Input
-        size="xs"
-        type="time"
-        variant="flushed"
-        value={row.begard || ''}
-        onChange={(e) => updateRowField(row.id, 'begard', e.target.value)}
-        isReadOnly={hotkeyMode}
-        onFocus={() => setActiveRowId(row.id)}
-        width="100%"
-        onBlur={() => setEditingBodyCell(null)}
-        cursor="text"
-        caretColor="auto"
-      />
-    </Td>
-  )}
+	    >
+	      <VStack align="stretch" spacing={0}>
+	        <Input
+	          size="xs"
+	          type="time"
+	          variant="flushed"
+	          value={row.begard || ''}
+	          onChange={(e) => updateRowField(row.id, 'begard', e.target.value)}
+	          isReadOnly={hotkeyMode}
+	          onFocus={() => setActiveRowId(row.id)}
+	          width="100%"
+	          onBlur={() => setEditingBodyCell(null)}
+	          cursor="text"
+	          caretColor="auto"
+	        />
+	        {row.starttid && (
+	          <Text fontSize="9px" lineHeight="1.1" color="gray.700" fontWeight="semibold">
+	            {`Start kl ${formatClockLabel(row.starttid)}`}
+	          </Text>
+	        )}
+	      </VStack>
+	    </Td>
+	  )}
   <Td borderRight="2px solid #6B7C8F" px={1} py={1}>
     <Flex align="center" gap={1}>
       <IconButton
@@ -2943,7 +3387,7 @@ if (loading || !project) {
     </Tr>
   );
 })}
-{project?.tsmRows?.map((row, rowIndex) => (
+{project?.tsmRows?.filter((row) => rowMatchesActivePlan(row)).map((row, rowIndex) => (
   <Tr
     key={`tsm-${row.id}`}
     bg="#C6F6D5"
@@ -3025,11 +3469,18 @@ onClick={() => {
         <Text fontSize="sm">{row.startTime || row.starttid || '–'}</Text>
       </Td>
     )}
-    {visibleColumns.begard && (
-      <Td borderRight="1px solid rgba(0, 0, 0, 0.05)">
-        <Text fontSize="sm">{row.begard || '–'}</Text>
-      </Td>
-    )}
+	    {visibleColumns.begard && (
+	      <Td borderRight="1px solid rgba(0, 0, 0, 0.05)">
+	        <VStack align="start" spacing={0}>
+	          <Text fontSize="sm">{row.begard || '–'}</Text>
+	          {row.starttid && (
+	            <Text fontSize="xs" color="gray.600" fontWeight="semibold">
+	              {`Start kl ${formatClockLabel(row.starttid)}`}
+	            </Text>
+	          )}
+	        </VStack>
+	      </Td>
+	    )}
     <Td borderRight="1px solid rgba(0, 0, 0, 0.05)" />
   </Tr>
 ))}
@@ -3289,36 +3740,6 @@ onClick={() => {
                 <FormLabel>BTKN</FormLabel>
                 <Input value={selectedRow.btkn} onChange={(e) => handleModalChange('btkn', e.target.value)} />
               </FormControl>
-<FormControl>
-  <FormLabel>Anordning</FormLabel>
-  <Menu closeOnSelect={false}>
-    <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
-      {Array.isArray(selectedRow.anordning) && selectedRow.anordning.length > 0
-        ? `${selectedRow.anordning.length} valda`
-        : 'Välj anordning(ar)'}
-    </MenuButton>
-    <MenuList maxHeight="300px" overflowY="auto">
-      {ANORDNING_OPTIONS.map((option) => (
-        <MenuItem key={option}>
-          <Checkbox
-            isChecked={selectedRow.anordning?.includes(option)}
-            onChange={(e) => {
-              const isChecked = e.target.checked;
-              handleModalChange(
-                'anordning',
-                isChecked
-                  ? [...(selectedRow.anordning || []), option]
-                  : selectedRow.anordning.filter((val) => val !== option)
-              );
-            }}
-          >
-            {option} - {formatAnordningLabel(option)}
-          </Checkbox>
-        </MenuItem>
-      ))}
-    </MenuList>
-  </Menu>
-</FormControl>
               <FormControl>
                 <FormLabel>Namn</FormLabel>
                 <Input value={selectedRow.namn} onChange={(e) => handleModalChange('namn', e.target.value)} />
@@ -3326,6 +3747,31 @@ onClick={() => {
               <FormControl>
                 <FormLabel>Telefon</FormLabel>
                 <Input value={selectedRow.telefon} onChange={(e) => handleModalChange('telefon', e.target.value)} />
+              </FormControl>
+              <FormControl>
+                <FormLabel visibility="hidden">Spara</FormLabel>
+                <Button
+                  colorScheme="blue"
+                  onClick={async () => {
+                    const updatedRows = rows.map((row) =>
+                      row.id === selectedRow.id
+                        ? {
+                            ...row,
+                            ...selectedRow,
+                            selectedAreas: [...selectedAreas],
+                            planDate: activePlanEntry?.startDate || row.planDate || '',
+                            planEntryKey: activePlanEntry?.key || row.planEntryKey || '',
+                            begardDatum: selectedRow.begardDatum || activePlanEntry?.startDate || '',
+                            isSavedPlan: true,
+                          }
+                        : row
+                    );
+                    await sparaProjekt(updatedRows);
+                    onClose();
+                  }}
+                >
+                  Spara
+                </Button>
               </FormControl>
             </SimpleGrid>
 
@@ -3341,9 +3787,9 @@ onClick={() => {
     <MenuList maxHeight="300px" overflowY="auto">
       {project.sections.map((sec, idx) => (
 <MenuItem key={idx}>
-<Checkbox
-  isChecked={selectedAreas.includes(Number(idx))}
-  onChange={(e) => {
+	<Checkbox
+	  isChecked={selectedAreas.includes(Number(idx))}
+	  onChange={(e) => {
     const isChecked = e.target.checked;
 
     const updatedAreas = isChecked
@@ -3379,30 +3825,85 @@ onClick={() => {
     setRows(newRows);
 
     calculateSamrad(newRows);
-  }}
->
-  {getSectionLabel(sec, idx)}
-</Checkbox>
+	  }}
+	>
+	  {[String(getSectionLabel(sec, idx) || '').replace(/^Delområde\s*/i, 'Del '), compactSectionText(sec?.signal || sec?.name || '')].filter(Boolean).join(' ')}
+	</Checkbox>
 </MenuItem>
+	      ))}
+    </MenuList>
+  </Menu>
+</FormControl>
+<FormControl>
+  <FormLabel>Skyddsanordning</FormLabel>
+  <Menu closeOnSelect={false}>
+    <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
+      {Array.isArray(selectedRow.anordning) && selectedRow.anordning.length > 0
+        ? `${selectedRow.anordning.length} valda`
+        : 'Välj skyddsanordning'}
+    </MenuButton>
+    <MenuList maxHeight="300px" overflowY="auto">
+      {ANORDNING_OPTIONS.map((option) => (
+        <MenuItem key={option}>
+          <Checkbox
+            isChecked={selectedRow.anordning?.includes(option)}
+            onChange={(e) => {
+              const isChecked = e.target.checked;
+              handleModalChange(
+                'anordning',
+                isChecked
+                  ? [...(selectedRow.anordning || []), option]
+                  : selectedRow.anordning.filter((val) => val !== option)
+              );
+            }}
+          >
+            {option} - {formatAnordningLabel(option)}
+          </Checkbox>
+        </MenuItem>
       ))}
     </MenuList>
   </Menu>
 </FormControl>
             </SimpleGrid>
 
-<SimpleGrid columns={3} spacing={4}>
-  {/* Startdatum */}
-  <FormControl>
-    <FormLabel>Startdatum</FormLabel>
-    <Input
-      type="date"
-      value={selectedRow.startdatum || ''}
-      onChange={(e) => handleModalChange('startdatum', e.target.value)}
-    />
-    <Button size="xs" mt={1} onClick={() => handleModalChange('startdatum', getCurrentDate())}>
-      Sätt dagens datum
-    </Button>
-  </FormControl>
+<SimpleGrid columns={2} spacing={4}>
+	  <FormControl>
+	    <FormLabel>Starta</FormLabel>
+	    <VStack align="stretch" spacing={1}>
+	      <Button
+	        colorScheme="green"
+	        onClick={async () => {
+	          const today = getCurrentDate();
+	          const now = getCurrentTime();
+	          if (!selectedRowId) return;
+	          const updatedRows = rows.map((row) =>
+	            row.id === selectedRowId
+	              ? {
+	                  ...row,
+	                  startdatum: today,
+	                  starttid: now,
+	                  isSavedPlan: false,
+	                }
+	              : row
+	          );
+	          const nextSelectedRow = updatedRows.find((row) => row.id === selectedRowId);
+	          setRows(updatedRows);
+	          if (nextSelectedRow) {
+	            setSelectedRow(nextSelectedRow);
+	          }
+	          await sparaProjekt(updatedRows);
+	          onClose();
+	        }}
+	      >
+	        Starta nu
+	      </Button>
+	      {selectedRow.starttid && (
+	        <Text fontSize="sm" color="gray.700" fontWeight="semibold">
+	          {`Start kl ${formatClockLabel(selectedRow.starttid)}`}
+	        </Text>
+	      )}
+	    </VStack>
+	  </FormControl>
 
   {/* Begärd till datum */}
 <FormControl>
@@ -3431,30 +3932,28 @@ onClick={() => {
   </Button>
 </FormControl>
 
-  {/* Avslutat datum */}
-  <FormControl>
-    <FormLabel>Avslutat datum</FormLabel>
-    <Input
-      type="date"
-      value={selectedRow.avslutatDatum || ''}
-      onChange={(e) => handleModalChange('avslutatDatum', e.target.value)}
-    />
-    <Button size="xs" mt={1} onClick={() => handleModalChange('avslutatDatum', getCurrentDate())}>
-      Sätt dagens datum
-    </Button>
-  </FormControl>
-
-  {/* Starttid */}
-  <FormControl>
-    <FormLabel>Starttid</FormLabel>
-    <Input
-      type="time"
-      value={selectedRow.starttid || '00:00'}
-      onChange={(e) => handleModalChange('starttid', e.target.value)}
-    />
-    <Button size="xs" mt={1} onClick={() => handleModalChange('starttid', getCurrentTime())}>
-      Sätt aktuell tid
-    </Button>
+	  <FormControl>
+	    <FormLabel>Avsluta</FormLabel>
+		    <Button
+		      colorScheme="red"
+		      onClick={() => {
+		        const today = getCurrentDate();
+		        const now = getCurrentTime();
+	        handleModalChange('avslutatDatum', today);
+	        handleModalChange('avslutat', now);
+	        handleModalChange('isSavedPlan', false);
+	        setPendingCompletionRow({
+	          ...selectedRow,
+	          avslutatDatum: today,
+	          avslutat: now,
+	          isSavedPlan: false,
+	          selectedAreas: [...selectedAreas],
+	        });
+	        onOpenFollowUpChoice();
+		      }}
+	    >
+	      Avsluta nu
+	    </Button>
   </FormControl>
 
   {/* Begärd till */}
@@ -3480,19 +3979,6 @@ onClick={() => {
     Tillsvidare
   </Button>
 </FormControl>
-
-  {/* Avslutat */}
-  <FormControl>
-    <FormLabel>Avslutat</FormLabel>
-    <Input
-      type="time"
-      value={selectedRow.avslutat || '00:00'}
-      onChange={(e) => handleModalChange('avslutat', e.target.value)}
-    />
-    <Button size="xs" mt={1} onClick={() => handleModalChange('avslutat', getCurrentTime())}>
-      Sätt aktuell tid
-    </Button>
-  </FormControl>
 </SimpleGrid>
 
             <FormControl>
@@ -3649,20 +4135,66 @@ onChange={() =>
 </Button>
 </Flex>
 
-  {/* Högersida: Spara och Stäng */}
+  {/* Högersida: Stäng */}
   <Flex gap={2}>
-<Button
-  colorScheme="blue"
-  onClick={async () => {
-    await sparaProjekt(); // Vänta på sparande
-    onClose(); // Stäng modalen
-  }}
->
-  Spara
-</Button>
     <Button onClick={onClose}>Stäng</Button>
   </Flex>
 </ModalFooter>
+  </ModalContent>
+</Modal>
+
+<Modal
+  isOpen={isFollowUpChoiceOpen}
+  onClose={() => {
+    setPendingCompletionRow(null);
+    onCloseFollowUpChoice();
+  }}
+  size="md"
+>
+  <ModalOverlay />
+  <ModalContent>
+    <ModalHeader>Förplanera annan dag?</ModalHeader>
+    <ModalCloseButton />
+    <ModalBody>
+      <Text>
+        Vill du förplanera inför en annan dag/post, eller ska raden avslutas nu?
+      </Text>
+      {pendingCompletionRow?.btkn && (
+        <Text mt={3} fontSize="sm" color="gray.600">
+          Beteckning: {pendingCompletionRow.btkn}
+        </Text>
+      )}
+    </ModalBody>
+    <ModalFooter gap={2}>
+      <Button
+        colorScheme="blue"
+        onClick={async () => {
+          const targetPlanEntry = chooseFollowUpPlanEntry();
+          if (!targetPlanEntry) return;
+          await completeSelectedRow(targetPlanEntry);
+        }}
+      >
+        Ja, förplanera
+      </Button>
+      <Button
+        colorScheme="red"
+        variant="outline"
+        onClick={async () => {
+          await completeSelectedRow(null);
+        }}
+      >
+        Nej, avsluta nu
+      </Button>
+      <Button
+        variant="ghost"
+        onClick={() => {
+          setPendingCompletionRow(null);
+          onCloseFollowUpChoice();
+        }}
+      >
+        Avbryt
+      </Button>
+    </ModalFooter>
   </ModalContent>
 </Modal>
 
@@ -3726,13 +4258,33 @@ onChange={() =>
                   onChange={(e) => handleApprovalChange('telefon', e.target.value)}
                 />
               </FormControl>
+            </SimpleGrid>
+
+            <SimpleGrid columns={2} spacing={4}>
               <FormControl>
-                <FormLabel>Anordning</FormLabel>
+                <FormLabel>Delområde</FormLabel>
+                <Box bg="gray.50" p={4} borderRadius="md" border="1px solid #ccc" minH="120px">
+                  <SimpleGrid spacing={2}>
+                    {project.sections.map((sec, idx) => (
+	                      <Checkbox
+	                        key={idx}
+	                        isChecked={selectedApprovalAreas.includes(idx)}
+	                        onChange={() => toggleApprovalArea(idx)}
+	                      >
+	                        {[String(getSectionLabel(sec, idx) || '').replace(/^Delområde\s*/i, 'Del '), compactSectionText(sec?.signal || sec?.name || '')].filter(Boolean).join(' ')}
+	                      </Checkbox>
+	                    ))}
+                  </SimpleGrid>
+                </Box>
+              </FormControl>
+
+              <FormControl>
+                <FormLabel>Skyddsanordning</FormLabel>
                 <Menu closeOnSelect={false}>
                   <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
                     {Array.isArray(editableTsmRow.anordning) && editableTsmRow.anordning.length > 0
                       ? `${editableTsmRow.anordning.length} valda`
-                      : 'Välj anordning(ar)'}
+                      : 'Välj skyddsanordning'}
                   </MenuButton>
                   <MenuList maxHeight="300px" overflowY="auto">
                     {ANORDNING_OPTIONS.map((option) => (
@@ -3754,9 +4306,7 @@ onChange={() =>
                   </MenuList>
                 </Menu>
               </FormControl>
-            </SimpleGrid>
 
-            <SimpleGrid columns={2} spacing={4}>
               {/* Begärd datum */}
               <FormControl>
                 <FormLabel>Begärd datum</FormLabel>
@@ -3820,22 +4370,6 @@ onChange={() =>
               />
             </FormControl>
           </Stack>
-
-          {/* Högerkolumn: Delområden */}
-          <Box bg="gray.50" p={4} borderRadius="md" maxW="400px" border="1px solid #ccc" height="100%">
-            <Text fontWeight="bold" mb={2}>Delområden</Text>
-            <SimpleGrid spacing={2}>
-              {project.sections.map((sec, idx) => (
-                <Checkbox
-                  key={idx}
-                  isChecked={selectedApprovalAreas.includes(idx)}
-                  onChange={() => toggleApprovalArea(idx)}
-                >
-                  {getSectionLabel(sec, idx)}
-                </Checkbox>
-              ))}
-            </SimpleGrid>
-          </Box>
         </SimpleGrid>
       )}
     </ModalBody>
@@ -4038,19 +4572,16 @@ onChange={() =>
           onChange={(e) => setSearchQuery(e.target.value)}
         />
 
-        <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-          {rows
-            .filter(
-              (row) =>
-                row.avslutadRad === true &&
-                (
-                  (row.namn || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  (row.telefon || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  (row.anordning?.join(', ') || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  (row.btkn || '').toLowerCase().includes(searchQuery.toLowerCase())
-                )
-            )
-            .map((row, index) => (
+	        <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+	          {archivedRowsForActivePlan
+	            .filter(
+	              (row) =>
+	                (row.namn || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+	                (row.telefon || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+	                (row.anordning?.join(', ') || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+	                (row.btkn || '').toLowerCase().includes(searchQuery.toLowerCase())
+	            )
+	            .map((row, index) => (
     <Box
       key={index}
       p={3}
@@ -4120,14 +4651,9 @@ onChange={() =>
         <TagLabel isTruncated>{row.btkn || '–'}</TagLabel>
       </Tag>
     </Flex>
-    {row.startDatum && row.startTid && (
-      <Text>
-        <strong>Start:</strong> {formatDateOnly(row.startDatum)} kl. {row.startTid}
-      </Text>
-    )}
-    <Text>
-      <strong>Start:</strong>{' '}
-      {row.startdatum && row.starttid ? (
+	    <Text>
+	      <strong>Start:</strong>{' '}
+	      {row.startdatum && row.starttid ? (
         <>
           {formatDateOnly(row.startdatum)} kl. {row.starttid}
         </>
@@ -4168,19 +4694,16 @@ onChange={() =>
     </Box>
           ))}
 
-          {rows.filter(
-            (row) =>
-              row.avslutadRad === true &&
-              (
-                (row.namn || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (row.telefon || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (row.anordning?.join(', ') || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (row.btkn || '').toLowerCase().includes(searchQuery.toLowerCase())
-              )
-          ).length === 0 && (
-            <Text color="gray.500">Inga träffar.</Text>
-          )}
-        </SimpleGrid>
+	          {archivedRowsForActivePlan.filter(
+	            (row) =>
+	              (row.namn || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+	              (row.telefon || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+	              (row.anordning?.join(', ') || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+	              (row.btkn || '').toLowerCase().includes(searchQuery.toLowerCase())
+	          ).length === 0 && (
+	            <Text color="gray.500">Inga träffar.</Text>
+	          )}
+	        </SimpleGrid>
       </Stack>
     </ModalBody>
     <ModalFooter justifyContent="space-between">

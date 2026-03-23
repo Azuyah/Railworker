@@ -112,6 +112,7 @@ const SkapaProjekt = () => {
   const [namn, setNamn] = useState('');
   const [telefonnummer, setTelefonnummer] = useState('');
   const [nodnummer, setNodnummer] = useState('');
+  const [htsmTelefon, setHtsmTelefon] = useState('');
   const [avstamt, setAvstamt] = useState(false);
   const [objekt, setObjekt] = useState('');
   const [uttagningstid, setUttagningstid] = useState('');
@@ -410,6 +411,10 @@ const SkapaProjekt = () => {
       setNodnummer(parsed.nodnummer);
     }
 
+    if (parsed?.htsmTelefon) {
+      setHtsmTelefon(parsed.htsmTelefon);
+    }
+
     if (Array.isArray(parsed?.sections) && parsed.sections.length) {
       setSections(
         parsed.sections.map((section) => ({
@@ -558,6 +563,7 @@ const SkapaProjekt = () => {
         avslutningssignatur,
         formState: {
           nodnummer,
+          htsmTelefon,
           avstamt,
           objekt,
           uttagningstid,
@@ -693,6 +699,7 @@ const SkapaProjekt = () => {
         setNamn(project.namn || '');
         setTelefonnummer(project.telefonnummer || '');
         setNodnummer(project.formState?.nodnummer || '');
+        setHtsmTelefon(project.formState?.htsmTelefon || '');
         setAvstamt(Boolean(project.formState?.avstamt));
         setObjekt(project.formState?.objekt || '');
         setUttagningstid(project.formState?.uttagningstid || '');
@@ -923,7 +930,7 @@ const SkapaProjekt = () => {
                     </span>
                   </div>
                 </div>
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-4">
                   <div>
                     <label className="mb-1 block text-sm font-semibold text-slate-700">FJTKL namn</label>
                     <input
@@ -954,6 +961,16 @@ const SkapaProjekt = () => {
                       value={nodnummer}
                       onChange={(e) => setNodnummer(e.target.value)}
                       placeholder="Nödnummer"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-semibold text-slate-700">HTSM telefon</label>
+                    <input
+                      type="text"
+                      value={htsmTelefon}
+                      onChange={(e) => setHtsmTelefon(e.target.value)}
+                      placeholder="HTSM telefon"
                       className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
                     />
                   </div>

@@ -356,9 +356,22 @@ app.get('/api/projects', async (req, res) => {
     console.log('🔓 Token verifierad:', decoded);
 
 const projects = await prisma.project.findMany({
-  include: {
+  select: {
+    id: true,
+    name: true,
+    startDate: true,
+    startTime: true,
+    endDate: true,
+    endTime: true,
+    plats: true,
+    namn: true,
+    telefonnummer: true,
+    granspunkter: true,
+    formState: true,
+    rows: true,
     sections: true,
     beteckningar: true,
+    tsmRows: true,
     user: {
       select: {
         id: true,
@@ -761,6 +774,8 @@ app.put('/api/row/approve/:rowId', authMiddleware, async (req, res) => {
 
 const newRow = {
   id: Date.now(),
+  userId: row.userId || null,
+  sourceRowId: row.id,
   datum: row.datum,
   anordning: row.anordning,
   section: row.section?.name || '',

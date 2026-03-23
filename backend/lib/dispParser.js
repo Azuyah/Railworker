@@ -68,10 +68,7 @@ const extractPlats = (pages) => {
   return '';
 };
 
-const extractPhoneSection = (pages) => {
-  const lastPagesText = pages.slice(-2).map((page) => String(page.text || '')).join('\n');
-  return lastPagesText;
-};
+const extractPhoneSection = (pages) => pages.slice(-2);
 
 const formatPhone = (value = '') =>
   value
@@ -79,28 +76,158 @@ const formatPhone = (value = '') =>
     .replace(/\s+/g, ' ')
     .trim();
 
-const extractPhoneNumbers = (text) => {
+const extractPhoneNumbers = (phoneSection) => {
+  const pages = Array.isArray(phoneSection) ? phoneSection : [];
+  const text = Array.isArray(phoneSection)
+    ? phoneSection.map((page) => String(page.text || '')).join('\n')
+    : String(phoneSection || '');
   const lines = text.split('\n').map(normalizeText).filter(Boolean);
   const telIndex = lines.findIndex((line) => normalizeForMatching(line) === 'telefonnummer.');
+
+  const extractPhoneFromLine = (line = '') => {
+    const match = String(line || '').match(/(010[- ]\s*\d{3}\s*\d{2}\s*\d{2}(?:\s*\(\s*010[- ]\s*\d{3}\s*\d{2}\s*\d{2}\s*\))?)/);
+    return match ? formatPhone(match[1]) : '';
+  };
+
+  const extractPhonesByCoordinates = (sourcePages = []) => {
+    const pageWithPhoneSection = sourcePages
+      .map((page) => ({
+        ...page,
+        lines: Array.isArray(page?.lines) ? page.lines : [],
+      }))
+      .find((page) =>
+        page.lines.some((line) => normalizeForMatching(line.text || '') === 'telefonnummer.')
+      );
+
+    if (!pageWithPhoneSection) {
+      return {};
+    }
+
+    const normalizedLines = pageWithPhoneSection.lines
+      .map((line) => ({
+        text: normalizeText(line.text || ''),
+        normalized: normalizeForMatching(line.text || ''),
+        x: Number(line.x),
+        y: Number(line.y),
+      }))
+      .filter((line) => line.text);
+
+    const phoneHeader = normalizedLines.find((line) => line.normalized === 'telefonnummer.');
+    const scopedLines = normalizedLines.filter((line) => line.y <= (phoneHeader?.y ?? 1) + 0.01);
+    const phoneCandidates = scopedLines.filter((line) => extractPhoneFromLine(line.text));
+
+    const pickNearestPhone = (pattern) => {
+      const labelLine = scopedLines.find((line) => pattern.test(line.normalized));
+      if (!labelLine) return '';
+
+      const sameRowPhone = phoneCandidates
+        .filter((candidate) => candidate.x > labelLine.x && Math.abs(candidate.y - labelLine.y) <= 0.008)
+        .sort((left, right) => Math.abs(left.y - labelLine.y) - Math.abs(right.y - labelLine.y))[0];
+
+      if (sameRowPhone) {
+        return extractPhoneFromLine(sameRowPhone.text);
+      }
+
+      const nearbyPhone = phoneCandidates
+        .filter((candidate) => candidate.x > labelLine.x && candidate.y <= labelLine.y + 0.01 && candidate.y >= labelLine.y - 0.04)
+        .sort((left, right) => Math.abs(left.y - labelLine.y) - Math.abs(right.y - labelLine.y))[0];
+
+      return nearbyPhone ? extractPhoneFromLine(nearbyPhone.text) : '';
+    };
+
+    const fjtklLine = scopedLines.find((line) => /^fjtkl\b/.test(line.normalized));
+
+    return {
+      namn: fjtklLine ? normalizeText(fjtklLine.text.replace(/^Fjtkl\s+/i, '')) : '',
+      nodnummer: pickNearestPhone(/^2\.\s*larm\s+tlc\b/),
+      htsmTelefon: pickNearestPhone(/^2\.\s*htsm\b/),
+      telefonnummer: pickNearestPhone(/^fjtkl\b/),
+    };
+  };
+
+  const extractPhoneNearLabel = (scope = [], pattern) => {
+    const labelIndex = scope.findIndex((line) => pattern.test(normalizeForMatching(line)));
+    if (labelIndex === -1) return '';
+
+    for (let index = labelIndex; index < Math.min(scope.length, labelIndex + 3); index += 1) {
+      const phone = extractPhoneFromLine(scope[index]);
+      if (phone) return phone;
+    }
+
+    return '';
+  };
+
+  const extractOrderedLabelPhones = (scope = []) => {
+    const labelPatterns = [
+      { key: 'sos', pattern: /^1\.\s*sos\s+alarm\b/ },
+      { key: 'larmTlc', pattern: /^2\.\s*larm\s+tlc\b/ },
+      { key: 'htsm', pattern: /^2\.\s*htsm\b/ },
+      { key: 'arbetsledare', pattern: /^3\.\s*ansvarig\s+arbetsledare\b/ },
+      { key: 'fjtkl', pattern: /^fjtkl\b/ },
+    ];
+
+    const labels = scope
+      .map((line) => {
+        const normalized = normalizeForMatching(line);
+        const label = labelPatterns.find((item) => item.pattern.test(normalized));
+        return label ? label.key : null;
+      })
+      .filter(Boolean);
+
+    const phones = scope
+      .map((line) => extractPhoneFromLine(line))
+      .filter(Boolean);
+
+    if (!labels.length || phones.length < labels.length) {
+      return {};
+    }
+
+    return labels.reduce((accumulator, key, index) => {
+      if (!accumulator[key] && phones[index]) {
+        accumulator[key] = phones[index];
+      }
+      return accumulator;
+    }, {});
+  };
 
   if (telIndex === -1) {
     return {
       namn: '',
       telefonnummer: '',
       nodnummer: '',
+      htsmTelefon: '',
     };
   }
 
   const scope = lines.slice(telIndex, telIndex + 30);
+  const coordinatePhones = extractPhonesByCoordinates(pages);
+  const orderedPhones = extractOrderedLabelPhones(scope);
   const numbers = scope
     .filter((line) => /^010[- ]\s*\d{3}\s*\d{2}\s*\d{2}/.test(line))
     .map(formatPhone);
   const fjtklLine = scope.find((line) => /^Fjtkl\s+/i.test(line));
 
   return {
-    namn: fjtklLine ? normalizeText(fjtklLine.replace(/^Fjtkl\s+/i, '')) : '',
-    nodnummer: numbers[0] || '',
-    telefonnummer: numbers[numbers.length - 1] || '',
+    namn:
+      coordinatePhones.namn ||
+      (fjtklLine ? normalizeText(fjtklLine.replace(/^Fjtkl\s+/i, '')) : ''),
+    nodnummer:
+      coordinatePhones.nodnummer ||
+      orderedPhones.larmTlc ||
+      extractPhoneNearLabel(scope, /^2\.\s*larm\s+tlc\b/) ||
+      numbers[0] ||
+      '',
+    htsmTelefon:
+      coordinatePhones.htsmTelefon ||
+      orderedPhones.htsm ||
+      extractPhoneNearLabel(scope, /^2\.\s*htsm\b/) ||
+      '',
+    telefonnummer:
+      coordinatePhones.telefonnummer ||
+      orderedPhones.fjtkl ||
+      extractPhoneNearLabel(scope, /^fjtkl\b/) ||
+      numbers[numbers.length - 1] ||
+      '',
   };
 };
 
@@ -322,6 +449,7 @@ const parseDispPdf = async (buffer, blankett31Entries = []) => {
     namn: phones.namn,
     telefonnummer: phones.telefonnummer,
     nodnummer: phones.nodnummer,
+    htsmTelefon: phones.htsmTelefon,
     entries,
     sections: extractDispSections(pages),
     match: compareDispWithBlankett31(entries, blankett31Entries),
