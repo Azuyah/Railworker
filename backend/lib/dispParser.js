@@ -603,6 +603,7 @@ const entryMatchesPeriod = (left = {}, right = {}) =>
 
 const cleanBoundaryToken = (value = '') =>
   normalizeText(value)
+    .replace(/[\u2012\u2013\u2014\u2212]+/g, '-')
     .replace(/\.+/g, '')
     .replace(/B[Il1]b/gi, 'Blb')
     .replace(/Тр/gi, 'Tp')
@@ -615,6 +616,20 @@ const isSignalPointToken = (value = '') => /\d/.test(cleanBoundaryToken(value));
 const extractSignalTokens = (value = '') =>
   cleanBoundaryToken(value)
     .match(/[A-Za-zÅÄÖåäö]{1,4}\d+(?:,\s*[A-Za-zÅÄÖåäö]{1,4}\d+)*/g) || [];
+
+const DISP_SECTION_POINT_TOKEN_PATTERN = '[A-Za-z\\u00C5\\u00C4\\u00D6\\u00E5\\u00E4\\u00F6]{1,4}\\d+(?:,\\s*[A-Za-z\\u00C5\\u00C4\\u00D6\\u00E5\\u00E4\\u00F6]{1,4}\\d+)*';
+const DISP_SECTION_BOUNDARY_RANGE_REGEX = new RegExp(
+  `(${DISP_SECTION_POINT_TOKEN_PATTERN})\\s+-\\s+(${DISP_SECTION_POINT_TOKEN_PATTERN})$`,
+  'i'
+);
+
+const normalizeSectionRowText = (value = '') =>
+  normalizeText(value)
+    .replace(/[\u2012\u2013\u2014\u2212]+/g, '-')
+    .replace(/\s*,\s*/g, ', ')
+    .replace(/\s*-\s*/g, ' - ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
 const dedupeDispSections = (sections = []) =>
   [...sections]
@@ -701,6 +716,42 @@ const buildDispSection = ({
     granspunkter: normalizedBoundaries,
     spar: normalizedTrack,
   };
+};
+
+const parseInlineDispSectionText = (value = '') => {
+  const normalizedRow = normalizeSectionRowText(value);
+  if (!normalizedRow) {
+    return null;
+  }
+
+  const rowMatch = normalizedRow.match(/^Delomr(?:\u00E5de|ade)\s+(\d+)\s+(.+)$/i);
+  if (!rowMatch) {
+    return null;
+  }
+
+  const displayIndex = Number(rowMatch[1] || 0);
+  const remainder = rowMatch[2] || '';
+  const trackMatch = remainder.match(/^(.*?)\s+Sp(?:\u00E5|a)r\s+(.+)$/i);
+  if (!trackMatch) {
+    return null;
+  }
+
+  const body = normalizeSectionRowText(trackMatch[1] || '');
+  const spar = normalizeSectionRowText(trackMatch[2] || '');
+  const boundaryMatch = body.match(DISP_SECTION_BOUNDARY_RANGE_REGEX);
+  if (!boundaryMatch) {
+    return null;
+  }
+
+  const signal = normalizeSectionRowText(body.slice(0, boundaryMatch.index));
+  const granspunkter = `${cleanBoundaryToken(boundaryMatch[1] || '')} - ${cleanBoundaryToken(boundaryMatch[2] || '')}`;
+
+  return buildDispSection({
+    displayIndex,
+    signal,
+    granspunkter,
+    spar,
+  });
 };
 
 const groupLinesByApproximateRow = (lines = [], tolerance = 0.012) => {
@@ -820,14 +871,21 @@ const extractDispSectionsFromText = (pages = []) =>
 
       for (let index = 0; index < lines.length; index += 1) {
         const line = lines[index];
-        const match = line.match(/Delomr(?:åde|ade)\s+(\d+)/i) || line.match(/Delomrade\s+(\d+)/i);
+        const inlineSection = parseInlineDispSectionText(line);
+        if (inlineSection) {
+          sections.push(inlineSection);
+          continue;
+        }
+
+        const normalizedLine = normalizeForMatching(line);
+        const match = normalizedLine.match(/^delomrade\s+(\d+)/i);
         if (!match) {
           continue;
         }
 
         const blockLines = [line];
         for (let lookahead = index + 1; lookahead < Math.min(lines.length, index + 5); lookahead += 1) {
-          if (/Delomr(?:åde|ade)\s+\d+/i.test(lines[lookahead]) || /Delomrade\s+\d+/i.test(lines[lookahead])) {
+          if (/^delomrade\s+\d+/i.test(normalizeForMatching(lines[lookahead]))) {
             break;
           }
 
@@ -835,6 +893,9 @@ const extractDispSectionsFromText = (pages = []) =>
         }
 
         const blockText = blockLines.join(' ');
+        if (!/(signal|gr[aä]nspunkter?|sp[aå]r)/i.test(blockText)) {
+          continue;
+        }
         const signal = blockText.match(/signal(?:er)?\s*[:\-]?\s*(.+?)(?=\s+gr[aä]nspunkter?\b|\s+sp[aå]r\b|$)/i)?.[1] || '';
         const granspunkter = blockText.match(/gr[aä]nspunkter?\s*[:\-]?\s*(.+?)(?=\s+sp[aå]r\b|$)/i)?.[1] || '';
         const spar = blockText.match(/sp[aå]r\s*[:\-]?\s*(.+)$/i)?.[1] || '';
@@ -848,6 +909,34 @@ const extractDispSectionsFromText = (pages = []) =>
       }
 
       return sections;
+    })
+  );
+
+const extractDispSectionsFromRows = (pages = []) =>
+  mergeDispSections(
+    getDispTablePages(pages).flatMap((page) => {
+      const normalizedLines = (Array.isArray(page?.lines) ? page.lines : []).map((line) => ({
+        ...line,
+        text: normalizeSectionRowText(line.text || ''),
+        normalized: normalizeForMatching(normalizeSectionRowText(line.text || '')),
+      }));
+
+      const sectionRows = normalizedLines
+        .filter((line) => /^delomrade\s+\d+/.test(line.normalized))
+        .sort((a, b) => Number(b.y) - Number(a.y));
+
+      return sectionRows
+        .map((row) => {
+          const sameRowText = normalizedLines
+            .filter((line) => Math.abs(Number(line.y) - Number(row.y)) < 0.02)
+            .sort((a, b) => Number(a.x) - Number(b.x))
+            .map((line) => line.text)
+            .filter(Boolean)
+            .join(' ');
+
+          return parseInlineDispSectionText(sameRowText);
+        })
+        .filter(Boolean);
     })
   );
 
@@ -984,12 +1073,19 @@ const extractAllDispSections = (pages = []) =>
     })
   );
 
-const extractMergedDispSections = (textPages = [], ocrPages = []) =>
-  mergeDispSections([
+const extractMergedDispSections = (textPages = [], ocrPages = []) => {
+  const primarySections = mergeDispSections([
     ...extractDispSectionsFromText(textPages),
+    ...extractDispSectionsFromRows(ocrPages),
     ...extractDispSectionsFromColumns(ocrPages),
-    ...extractAllDispSections(ocrPages),
   ]);
+
+  if (primarySections.length) {
+    return primarySections;
+  }
+
+  return mergeDispSections(extractAllDispSections(ocrPages));
+};
 
 const compareDispWithBlankett31 = (dispEntries = [], blankett31Entries = []) => {
   if (!blankett31Entries.length) {
