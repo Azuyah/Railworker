@@ -311,6 +311,33 @@ const SkapaProjekt = () => {
     return parsedEntries.map(normalizeBlankett31Entry);
   };
 
+  const applyDispEntries = (parsed) => {
+    const parsedEntries = sortBlankett31Entries(dedupeBlankett31Entries(
+      (Array.isArray(parsed?.entries) ? parsed.entries : [])
+        .map((entry) => normalizeBlankett31Entry({
+          ...entry,
+          granspunkt: '',
+          uttagningstid: '',
+          signatur: '',
+          avslutningstid: '',
+          avslutningssignatur: '',
+        }))
+        .filter((entry) => entry.beteckning || entry.startDate || entry.endDate)
+    ));
+
+    if (!parsedEntries.length) {
+      return;
+    }
+
+    setBeteckningar(parsedEntries.map((entry) => ({ value: entry.beteckning || '' })));
+    syncSummaryDatesFromEntries(parsedEntries);
+
+    const hasExistingBlankett31Data = blankett31Entries.some((entry) => Object.values(entry || {}).some(Boolean));
+    if (!hasExistingBlankett31Data) {
+      setBlankett31Entries(parsedEntries);
+    }
+  };
+
   const handleBlankett31Upload = async (event) => {
     const files = Array.from(event.target.files || []).filter(
       (file) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
@@ -415,6 +442,8 @@ const SkapaProjekt = () => {
     if (parsed?.htsmTelefon) {
       setHtsmTelefon(parsed.htsmTelefon);
     }
+
+    applyDispEntries(parsed);
 
     if (Array.isArray(parsed?.sections) && parsed.sections.length) {
       setSections(

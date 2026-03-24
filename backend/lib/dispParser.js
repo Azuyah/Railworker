@@ -1,4 +1,9 @@
-const { normalizeText, normalizeForMatching, parsePdfWithOcr } = require('./ocrPdf');
+const {
+  normalizeText,
+  normalizeForMatching,
+  parsePdfText,
+  parsePdfWithOcr,
+} = require('./ocrPdf');
 
 const extractAllMatches = (text, regex) => {
   const matches = [];
@@ -76,6 +81,98 @@ const normalizeDispBeteckning = (value = '') =>
   normalizeText(value)
     .replace(/\s*([_-])\s*/g, '_')
     .replace(/\s+/g, '_');
+const hasUsefulTextPages = (pages = []) =>
+  pages.some((page) => {
+    const text = String(page?.text || '');
+    const normalized = normalizeForMatching(text);
+
+    return (
+      normalizeText(text).length > 20 &&
+      (
+        normalized.includes('dispositionsarbetsplan') ||
+        normalized.includes('banobjekt-vnr') ||
+        normalized.includes('telefonnummer') ||
+        /26(?:[_\s-]?\d{4})/.test(text) ||
+        /delomrade\s+\d+/.test(normalized)
+      )
+    );
+  });
+const getPageLines = (page) =>
+  String(page?.text || '')
+    .split('\n')
+    .map(normalizeText)
+    .filter(Boolean);
+const getDispTablePageScore = (page = {}) => {
+  const text = String(page?.text || '');
+  const normalized = normalizeForMatching(text);
+  const beteckningMatches = text.match(/26(?:[_\s-]?\d{4})/gi)?.length || 0;
+  const dateTimeMatches = text.match(/\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}/g)?.length || 0;
+
+  let score = 0;
+  if (/delomrade\s+\d+/.test(normalized)) {
+    score += 5;
+  }
+  if (beteckningMatches) {
+    score += beteckningMatches * 2;
+  }
+  if (dateTimeMatches) {
+    score += Math.min(dateTimeMatches, 4);
+  }
+
+  return score;
+};
+const findDispTablePage = (pages = []) => {
+  const candidates = pages
+    .map((page) => ({
+      page,
+      score: getDispTablePageScore(page),
+    }))
+    .filter((candidate) => candidate.score > 0)
+    .sort((left, right) => right.score - left.score || Number(left.page?.page || 0) - Number(right.page?.page || 0));
+
+  if (candidates.length) {
+    return candidates[0].page;
+  }
+
+  return pages.find((page) => Number(page?.page) === 3) || pages[0] || null;
+};
+const extractDateTimeValues = (text = '') =>
+  Array.from(
+    normalizeText(text).matchAll(/(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})/g),
+    (match) => match[1]
+  );
+const createDispEntry = (beteckning, startValue, endValue) => {
+  const [startDate = '', startTime = ''] = String(startValue || '').split(/\s+/);
+  const [endDate = '', endTime = ''] = String(endValue || '').split(/\s+/);
+
+  return {
+    beteckning: normalizeDispBeteckning(beteckning),
+    startDate,
+    startTime,
+    endDate,
+    endTime,
+  };
+};
+const dedupeDispEntries = (entries = []) =>
+  entries.filter((entry, index, array) => {
+    const key = [
+      entry.beteckning,
+      entry.startDate,
+      entry.startTime,
+      entry.endDate,
+      entry.endTime,
+    ].join('|');
+
+    return index === array.findIndex((candidate) => (
+      [
+        candidate.beteckning,
+        candidate.startDate,
+        candidate.startTime,
+        candidate.endDate,
+        candidate.endTime,
+      ].join('|') === key
+    ));
+  });
 
 const formatPhone = (value = '') =>
   value
@@ -238,8 +335,46 @@ const extractPhoneNumbers = (phoneSection) => {
   };
 };
 
-const extractDispEntries = (pages) => {
-  const page = pages.find((item) => Number(item.page) === 3);
+const extractDispEntriesFromText = (pages = []) => {
+  const page = findDispTablePage(pages);
+  const lines = getPageLines(page);
+  const entries = [];
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    const labels = Array.from(line.matchAll(/(26(?:[_\s-]?\d{4}))/gi), (match) => match[1]);
+
+    if (!labels.length) {
+      continue;
+    }
+
+    const blockLines = [line];
+    for (let lookahead = index + 1; lookahead < Math.min(lines.length, index + 3); lookahead += 1) {
+      if (/(26(?:[_\s-]?\d{4}))/i.test(lines[lookahead])) {
+        break;
+      }
+
+      blockLines.push(lines[lookahead]);
+    }
+
+    const dateTimes = extractDateTimeValues(blockLines.join(' '));
+    if (!dateTimes.length) {
+      continue;
+    }
+
+    labels.forEach((label, labelIndex) => {
+      const startValue = dateTimes[labelIndex * 2] || dateTimes[0] || '';
+      const endValue = dateTimes[(labelIndex * 2) + 1] || dateTimes[1] || '';
+
+      entries.push(createDispEntry(label, startValue, endValue));
+    });
+  }
+
+  return dedupeDispEntries(entries).filter((entry) => entry.beteckning && entry.startDate && entry.endDate);
+};
+
+const extractDispEntriesFromCoordinates = (pages = []) => {
+  const page = findDispTablePage(pages);
   const lines = Array.isArray(page?.lines) ? page.lines : [];
   const labelLines = lines
     .filter((line) => isDispBeteckning(line.text || ''))
@@ -296,17 +431,27 @@ const extractDispEntries = (pages) => {
       endValue = endCandidates[index]?.text || '';
     }
 
-    const [startDate = '', startTime = ''] = String(startValue || '').split(/\s+/);
-    const [endDate = '', endTime = ''] = String(endValue || '').split(/\s+/);
-
-    return {
-      beteckning: normalizeDispBeteckning(labelLine.text || ''),
-      startDate,
-      startTime,
-      endDate,
-      endTime,
-    };
+    return createDispEntry(labelLine.text || '', startValue, endValue);
   }).filter((entry) => entry.beteckning && entry.startDate && entry.endDate);
+};
+
+const extractDispEntries = (pages = [], fallbackPages = []) => {
+  const textEntries = extractDispEntriesFromText(pages);
+  if (textEntries.length) {
+    return textEntries;
+  }
+
+  const fallbackTextEntries = extractDispEntriesFromText(fallbackPages);
+  if (fallbackTextEntries.length) {
+    return fallbackTextEntries;
+  }
+
+  const coordinateEntries = extractDispEntriesFromCoordinates(pages);
+  if (coordinateEntries.length) {
+    return dedupeDispEntries(coordinateEntries);
+  }
+
+  return dedupeDispEntries(extractDispEntriesFromCoordinates(fallbackPages));
 };
 
 const normalizeBeteckningKey = (value = '') =>
@@ -336,7 +481,7 @@ const extractSignalTokens = (value = '') =>
     .match(/[A-Za-zÅÄÖåäö]{1,4}\d+(?:,\s*[A-Za-zÅÄÖåäö]{1,4}\d+)*/g) || [];
 
 const extractDispSections = (pages) => {
-  const page = pages.find((item) => Number(item.page) === 3);
+  const page = findDispTablePage(pages);
   const lines = Array.isArray(page?.lines) ? page.lines : [];
   const normalizedLines = lines.map((line) => ({
     ...line,
@@ -445,21 +590,25 @@ const compareDispWithBlankett31 = (dispEntries = [], blankett31Entries = []) => 
 };
 
 const parseDispPdf = async (buffer, blankett31Entries = []) => {
-  const payload = await parsePdfWithOcr(buffer, 'disp-');
-  const pages = Array.isArray(payload?.pages) ? payload.pages : [];
-  const entries = extractDispEntries(pages);
-  const phoneSection = extractPhoneSection(pages);
+  const textPayload = await parsePdfText(buffer);
+  const textPages = Array.isArray(textPayload?.pages) ? textPayload.pages : [];
+  const ocrPayload = await parsePdfWithOcr(buffer, 'disp-');
+  const ocrPages = Array.isArray(ocrPayload?.pages) ? ocrPayload.pages : [];
+  const preferredPages = hasUsefulTextPages(textPages) ? textPages : ocrPages;
+  const entries = extractDispEntries(preferredPages, ocrPages);
+  const phoneSection = extractPhoneSection(preferredPages);
   const phones = extractPhoneNumbers(phoneSection);
+  const sections = extractDispSections(ocrPages);
 
   return {
-    projectName: extractProjectName(pages),
-    plats: extractPlats(pages),
+    projectName: extractProjectName(preferredPages),
+    plats: extractPlats(preferredPages),
     namn: phones.namn,
     telefonnummer: phones.telefonnummer,
     nodnummer: phones.nodnummer,
     htsmTelefon: phones.htsmTelefon,
     entries,
-    sections: extractDispSections(pages),
+    sections,
     match: compareDispWithBlankett31(entries, blankett31Entries),
   };
 };
