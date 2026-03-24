@@ -743,15 +743,19 @@ const parseInlineDispSectionText = (value = '') => {
     return null;
   }
 
-  const signal = normalizeSectionRowText(body.slice(0, boundaryMatch.index));
+  const sectionName = normalizeSectionRowText(body.slice(0, boundaryMatch.index));
   const granspunkter = `${cleanBoundaryToken(boundaryMatch[1] || '')} - ${cleanBoundaryToken(boundaryMatch[2] || '')}`;
 
-  return buildDispSection({
+  return {
+    ...buildDispSection({
+      displayIndex,
+      signal: granspunkter,
+      granspunkter,
+      spar,
+    }),
     displayIndex,
-    signal,
-    granspunkter,
-    spar,
-  });
+    name: sectionName,
+  };
 };
 
 const groupLinesByApproximateRow = (lines = [], tolerance = 0.012) => {
