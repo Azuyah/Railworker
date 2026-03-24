@@ -1340,18 +1340,6 @@ const SkapaProjekt = () => {
                         className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm focus:border-slate-900 focus:outline-none"
                       />
                     </div>
-                    {(sec.granspunkter || sec.spar || sec.granspunktStart || sec.granspunktSlut) && (
-                      <div className="mt-3 grid gap-3 text-xs text-slate-600 md:grid-cols-2">
-                        <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-                          <span className="font-semibold text-slate-700">Gränspunkter:</span>{' '}
-                          {sec.granspunkter || [sec.granspunktStart, sec.granspunktSlut].filter(Boolean).join(' - ') || 'Ej hittad'}
-                        </div>
-                        <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
-                          <span className="font-semibold text-slate-700">Spår:</span>{' '}
-                          {sec.spar || 'Ej hittad'}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
