@@ -20,11 +20,42 @@ const normalizeProjectTitle = (text = '') =>
     .replace(/\s{2,}/g, ' ')
     .trim();
 
+const getMatchingPages = (pages = [], scorePage, isRelevant = (score) => score > 0) =>
+  pages
+    .map((page) => ({
+      page,
+      score: Number(scorePage(page)) || 0,
+    }))
+    .filter(({ page, score }) => isRelevant(score, page))
+    .sort((left, right) => right.score - left.score || Number(left.page?.page || 0) - Number(right.page?.page || 0))
+    .map(({ page }) => page);
+
+const getOverviewPageScore = (page = {}) => {
+  const text = String(page?.text || '');
+  const normalized = normalizeForMatching(text);
+
+  let score = 0;
+  if (normalized.includes('dispositionsarbetsplan')) {
+    score += 5;
+  }
+  if (normalized.includes('banobjekt-vnr')) {
+    score += 4;
+  }
+  if (/^v\d+\s+/im.test(text)) {
+    score += 2;
+  }
+  if (normalized.includes('granspunkter')) {
+    score += 1;
+  }
+
+  return score;
+};
+
+const findOverviewPage = (pages = []) =>
+  getMatchingPages(pages, getOverviewPageScore)[0] || pages[0] || null;
+
 const extractProjectName = (pages) => {
-  const firstPageLines = String(pages[0]?.text || '')
-    .split('\n')
-    .map(normalizeText)
-    .filter(Boolean);
+  const firstPageLines = getPageLines(findOverviewPage(pages));
 
   const lineName = firstPageLines.find((line) => normalizeForMatching(line).startsWith('dispositionsarbetsplan '));
   const weekAndDays = firstPageLines.find((line) => /^V\d+\s+/i.test(line));
@@ -38,10 +69,7 @@ const extractProjectName = (pages) => {
 };
 
 const extractPlats = (pages) => {
-  const firstPageLines = String(pages[0]?.text || '')
-    .split('\n')
-    .map(normalizeText)
-    .filter(Boolean);
+  const firstPageLines = getPageLines(findOverviewPage(pages));
   const objectIndex = firstPageLines.findIndex((line) => /Banobjekt-Vnr/i.test(line));
   if (objectIndex === -1) {
     return '';
@@ -74,7 +102,55 @@ const extractPlats = (pages) => {
   return '';
 };
 
-const extractPhoneSection = (pages) => pages.slice(-2);
+const getPhoneSectionPageScore = (page = {}) => {
+  const text = String(page?.text || '');
+  const normalized = normalizeForMatching(text);
+  const phoneMatches = text.match(/010[- ]\s*\d{3}\s*\d{2}\s*\d{2}/g)?.length || 0;
+
+  let score = 0;
+  if (normalized.includes('telefonnummer')) {
+    score += 5;
+  }
+  if (normalized.includes('fjtkl')) {
+    score += 3;
+  }
+  if (normalized.includes('larm tlc')) {
+    score += 2;
+  }
+  if (/\bhtsm\b/.test(normalized)) {
+    score += 2;
+  }
+  if (normalized.includes('sos alarm')) {
+    score += 1;
+  }
+  if (phoneMatches) {
+    score += Math.min(phoneMatches, 4);
+  }
+
+  return score;
+};
+
+const extractPhoneSection = (pages) => {
+  const matches = getMatchingPages(pages, getPhoneSectionPageScore);
+  if (!matches.length) {
+    return pages.slice(-2);
+  }
+
+  const pageNumbers = new Set();
+  matches.forEach((page) => {
+    const pageNumber = Number(page?.page) || 0;
+    if (!pageNumber) {
+      return;
+    }
+
+    pageNumbers.add(pageNumber);
+    pageNumbers.add(pageNumber + 1);
+  });
+
+  return pages
+    .filter((page) => pageNumbers.has(Number(page?.page) || 0))
+    .sort((left, right) => Number(left?.page || 0) - Number(right?.page || 0));
+};
 
 const isDispBeteckning = (value = '') => /^26(?:[_\s-]?\d{4})$/i.test(normalizeText(value));
 const normalizeDispBeteckning = (value = '') =>
@@ -102,6 +178,18 @@ const getPageLines = (page) =>
     .split('\n')
     .map(normalizeText)
     .filter(Boolean);
+const isDispTablePage = (page = {}) => {
+  const text = String(page?.text || '');
+  const normalized = normalizeForMatching(text);
+  const beteckningMatches = text.match(/26(?:[_\s-]?\d{4})/gi)?.length || 0;
+  const dateTimeMatches = text.match(/\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}/g)?.length || 0;
+
+  return (
+    beteckningMatches > 0 ||
+    dateTimeMatches >= 2 ||
+    /delomrade\s+\d+/.test(normalized)
+  );
+};
 const getDispTablePageScore = (page = {}) => {
   const text = String(page?.text || '');
   const normalized = normalizeForMatching(text);
@@ -121,21 +209,17 @@ const getDispTablePageScore = (page = {}) => {
 
   return score;
 };
-const findDispTablePage = (pages = []) => {
-  const candidates = pages
-    .map((page) => ({
-      page,
-      score: getDispTablePageScore(page),
-    }))
-    .filter((candidate) => candidate.score > 0)
-    .sort((left, right) => right.score - left.score || Number(left.page?.page || 0) - Number(right.page?.page || 0));
+const getDispTablePages = (pages = []) => {
+  const matches = getMatchingPages(pages, getDispTablePageScore, (score, page) => score > 0 && isDispTablePage(page))
+    .sort((left, right) => Number(left?.page || 0) - Number(right?.page || 0));
 
-  if (candidates.length) {
-    return candidates[0].page;
+  if (matches.length) {
+    return matches;
   }
 
-  return pages.find((page) => Number(page?.page) === 3) || pages[0] || null;
+  return [pages.find((page) => Number(page?.page) === 3) || pages[0]].filter(Boolean);
 };
+const findDispTablePage = (pages = []) => getDispTablePages(pages)[0] || null;
 const extractDateTimeValues = (text = '') =>
   Array.from(
     normalizeText(text).matchAll(/(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})/g),
@@ -153,26 +237,47 @@ const createDispEntry = (beteckning, startValue, endValue) => {
     endTime,
   };
 };
+const sortDispEntries = (entries = []) =>
+  [...entries].sort((left, right) => {
+    const leftKey = `${left.startDate || '9999-99-99'} ${left.startTime || '99:99'} ${left.beteckning || ''}`;
+    const rightKey = `${right.startDate || '9999-99-99'} ${right.startTime || '99:99'} ${right.beteckning || ''}`;
+    return leftKey.localeCompare(rightKey, 'sv');
+  });
 const dedupeDispEntries = (entries = []) =>
-  entries.filter((entry, index, array) => {
+  sortDispEntries(entries).reduce((accumulator, entry) => {
     const key = [
-      entry.beteckning,
-      entry.startDate,
-      entry.startTime,
-      entry.endDate,
-      entry.endTime,
+      normalizeDispBeteckning(entry?.beteckning || ''),
+      entry?.startDate || '',
+      entry?.endDate || '',
     ].join('|');
 
-    return index === array.findIndex((candidate) => (
+    if (!key.replace(/\|/g, '')) {
+      return accumulator;
+    }
+
+    const existingIndex = accumulator.findIndex((candidate) => (
       [
-        candidate.beteckning,
-        candidate.startDate,
-        candidate.startTime,
-        candidate.endDate,
-        candidate.endTime,
+        normalizeDispBeteckning(candidate?.beteckning || ''),
+        candidate?.startDate || '',
+        candidate?.endDate || '',
       ].join('|') === key
     ));
-  });
+
+    if (existingIndex === -1) {
+      accumulator.push({ ...entry });
+      return accumulator;
+    }
+
+    accumulator[existingIndex] = {
+      ...entry,
+      ...accumulator[existingIndex],
+      beteckning: accumulator[existingIndex].beteckning || entry.beteckning,
+      startTime: accumulator[existingIndex].startTime || entry.startTime,
+      endTime: accumulator[existingIndex].endTime || entry.endTime,
+    };
+
+    return accumulator;
+  }, []);
 
 const formatPhone = (value = '') =>
   value
@@ -294,7 +399,19 @@ const extractPhoneNumbers = (phoneSection) => {
     }, {});
   };
 
-  if (telIndex === -1) {
+  const scope = telIndex === -1
+    ? lines
+        .filter((line) => (
+          /^010[- ]\s*\d{3}\s*\d{2}\s*\d{2}/.test(line) ||
+          /^fjtkl\b/i.test(line) ||
+          /^2\.\s*larm\s+tlc\b/i.test(line) ||
+          /^2\.\s*htsm\b/i.test(line) ||
+          /^1\.\s*sos\s+alarm\b/i.test(line)
+        ))
+        .slice(0, 30)
+    : lines.slice(telIndex, telIndex + 30);
+
+  if (!scope.length) {
     return {
       namn: '',
       telefonnummer: '',
@@ -303,7 +420,6 @@ const extractPhoneNumbers = (phoneSection) => {
     };
   }
 
-  const scope = lines.slice(telIndex, telIndex + 30);
   const coordinatePhones = extractPhonesByCoordinates(pages);
   const orderedPhones = extractOrderedLabelPhones(scope);
   const numbers = scope
@@ -335,123 +451,143 @@ const extractPhoneNumbers = (phoneSection) => {
   };
 };
 
+const pickParsedValue = (...values) =>
+  values
+    .map((value) => normalizeText(String(value || '')))
+    .find(Boolean) || '';
+
+const mergeParsedPhones = (...sources) => ({
+  namn: pickParsedValue(...sources.map((source) => source?.namn)),
+  telefonnummer: pickParsedValue(...sources.map((source) => source?.telefonnummer)),
+  nodnummer: pickParsedValue(...sources.map((source) => source?.nodnummer)),
+  htsmTelefon: pickParsedValue(...sources.map((source) => source?.htsmTelefon)),
+});
+
 const extractDispEntriesFromText = (pages = []) => {
-  const page = findDispTablePage(pages);
-  const lines = getPageLines(page);
   const entries = [];
+  const pagesWithTables = getDispTablePages(pages);
 
-  for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index];
-    const labels = Array.from(line.matchAll(/(26(?:[_\s-]?\d{4}))/gi), (match) => match[1]);
+  pagesWithTables.forEach((page) => {
+    const lines = getPageLines(page);
 
-    if (!labels.length) {
-      continue;
-    }
+    for (let index = 0; index < lines.length; index += 1) {
+      const line = lines[index];
+      const labels = Array.from(line.matchAll(/(26(?:[_\s-]?\d{4}))/gi), (match) => match[1]);
 
-    const blockLines = [line];
-    for (let lookahead = index + 1; lookahead < Math.min(lines.length, index + 3); lookahead += 1) {
-      if (/(26(?:[_\s-]?\d{4}))/i.test(lines[lookahead])) {
-        break;
+      if (!labels.length) {
+        continue;
       }
 
-      blockLines.push(lines[lookahead]);
+      const blockLines = [line];
+      for (let lookahead = index + 1; lookahead < Math.min(lines.length, index + 6); lookahead += 1) {
+        const nextLine = lines[lookahead];
+        const normalizedNextLine = normalizeForMatching(nextLine);
+        if (
+          /(26(?:[_\s-]?\d{4}))/i.test(nextLine) ||
+          /^delomrade\s+\d+/.test(normalizedNextLine) ||
+          normalizedNextLine.includes('telefonnummer')
+        ) {
+          break;
+        }
+
+        blockLines.push(nextLine);
+
+        if (extractDateTimeValues(blockLines.join(' ')).length >= labels.length * 2) {
+          break;
+        }
+      }
+
+      const dateTimes = extractDateTimeValues(blockLines.join(' '));
+      if (!dateTimes.length) {
+        continue;
+      }
+
+      labels.forEach((label, labelIndex) => {
+        const startValue = dateTimes[labelIndex * 2] || dateTimes[0] || '';
+        const endValue = dateTimes[(labelIndex * 2) + 1] || dateTimes[1] || '';
+
+        entries.push(createDispEntry(label, startValue, endValue));
+      });
     }
-
-    const dateTimes = extractDateTimeValues(blockLines.join(' '));
-    if (!dateTimes.length) {
-      continue;
-    }
-
-    labels.forEach((label, labelIndex) => {
-      const startValue = dateTimes[labelIndex * 2] || dateTimes[0] || '';
-      const endValue = dateTimes[(labelIndex * 2) + 1] || dateTimes[1] || '';
-
-      entries.push(createDispEntry(label, startValue, endValue));
-    });
-  }
+  });
 
   return dedupeDispEntries(entries).filter((entry) => entry.beteckning && entry.startDate && entry.endDate);
 };
 
 const extractDispEntriesFromCoordinates = (pages = []) => {
-  const page = findDispTablePage(pages);
-  const lines = Array.isArray(page?.lines) ? page.lines : [];
-  const labelLines = lines
-    .filter((line) => isDispBeteckning(line.text || ''))
-    .sort((a, b) => b.y - a.y);
-  const dateTimeCandidates = lines
-    .flatMap((line) => {
-      const rawText = String(line.text || '');
-      const normalized = normalizeText(rawText);
-      const matches = Array.from(normalized.matchAll(/(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})/g));
+  const pagesWithTables = getDispTablePages(pages);
 
-      if (!matches.length) {
-        return [];
-      }
+  return dedupeDispEntries(
+    pagesWithTables.flatMap((page) => {
+      const lines = Array.isArray(page?.lines) ? page.lines : [];
+      const labelLines = lines
+        .filter((line) => isDispBeteckning(line.text || ''))
+        .sort((a, b) => b.y - a.y);
+      const dateTimeCandidates = lines
+        .flatMap((line) => {
+          const rawText = String(line.text || '');
+          const normalized = normalizeText(rawText);
+          const matches = Array.from(normalized.matchAll(/(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})/g));
 
-      return matches.map((match, matchIndex) => ({
-        x: Number(line.x) + (matchIndex * 0.2),
-        y: Number(line.y),
-        rawText,
-        text: match[1],
-      }));
+          if (!matches.length) {
+            return [];
+          }
+
+          return matches.map((match, matchIndex) => ({
+            x: Number(line.x) + (matchIndex * 0.2),
+            y: Number(line.y),
+            rawText,
+            text: match[1],
+          }));
+        })
+        .sort((a, b) => b.y - a.y || a.x - b.x);
+      const startCandidates = dateTimeCandidates
+        .filter((line) => line.x < 0.55)
+        .sort((a, b) => b.y - a.y || a.x - b.x);
+      const endCandidates = dateTimeCandidates
+        .filter((line) => line.x >= 0.45 || /^[\-\u2022]/.test(normalizeText(line.rawText || '')))
+        .sort((a, b) => b.y - a.y || a.x - b.x);
+
+      return labelLines.map((labelLine, index) => {
+        const rowY = Number(labelLine.y);
+        const sameRowValues = dateTimeCandidates
+          .filter((candidate) => Math.abs(candidate.y - rowY) < 0.013)
+          .sort((a, b) => a.x - b.x);
+
+        let startValue = '';
+        let endValue = '';
+
+        if (sameRowValues.length >= 2) {
+          startValue = sameRowValues[0].text;
+          endValue = sameRowValues[sameRowValues.length - 1].text;
+        } else if (sameRowValues.length === 1) {
+          if (sameRowValues[0].x < 0.5) {
+            startValue = sameRowValues[0].text;
+          } else {
+            endValue = sameRowValues[0].text;
+          }
+        }
+
+        if (!startValue) {
+          startValue = startCandidates[index]?.text || '';
+        }
+        if (!endValue) {
+          endValue = endCandidates[index]?.text || '';
+        }
+
+        return createDispEntry(labelLine.text || '', startValue, endValue);
+      }).filter((entry) => entry.beteckning && entry.startDate && entry.endDate);
     })
-    .sort((a, b) => b.y - a.y || a.x - b.x);
-  const startCandidates = dateTimeCandidates
-    .filter((line) => line.x < 0.55)
-    .sort((a, b) => b.y - a.y || a.x - b.x);
-  const endCandidates = dateTimeCandidates
-    .filter((line) => line.x >= 0.45 || /^[\-\u2022]/.test(normalizeText(line.rawText || '')))
-    .sort((a, b) => b.y - a.y || a.x - b.x);
-
-  return labelLines.map((labelLine, index) => {
-    const rowY = Number(labelLine.y);
-    const sameRowValues = dateTimeCandidates
-      .filter((candidate) => Math.abs(candidate.y - rowY) < 0.013)
-      .sort((a, b) => a.x - b.x);
-
-    let startValue = '';
-    let endValue = '';
-
-    if (sameRowValues.length >= 2) {
-      startValue = sameRowValues[0].text;
-      endValue = sameRowValues[sameRowValues.length - 1].text;
-    } else if (sameRowValues.length === 1) {
-      if (sameRowValues[0].x < 0.5) {
-        startValue = sameRowValues[0].text;
-      } else {
-        endValue = sameRowValues[0].text;
-      }
-    }
-
-    if (!startValue) {
-      startValue = startCandidates[index]?.text || '';
-    }
-    if (!endValue) {
-      endValue = endCandidates[index]?.text || '';
-    }
-
-    return createDispEntry(labelLine.text || '', startValue, endValue);
-  }).filter((entry) => entry.beteckning && entry.startDate && entry.endDate);
+  );
 };
 
 const extractDispEntries = (pages = [], fallbackPages = []) => {
-  const textEntries = extractDispEntriesFromText(pages);
-  if (textEntries.length) {
-    return textEntries;
-  }
-
-  const fallbackTextEntries = extractDispEntriesFromText(fallbackPages);
-  if (fallbackTextEntries.length) {
-    return fallbackTextEntries;
-  }
-
-  const coordinateEntries = extractDispEntriesFromCoordinates(pages);
-  if (coordinateEntries.length) {
-    return dedupeDispEntries(coordinateEntries);
-  }
-
-  return dedupeDispEntries(extractDispEntriesFromCoordinates(fallbackPages));
+  return dedupeDispEntries([
+    ...extractDispEntriesFromText(pages),
+    ...extractDispEntriesFromText(fallbackPages),
+    ...extractDispEntriesFromCoordinates(pages),
+    ...extractDispEntriesFromCoordinates(fallbackPages),
+  ]).filter((entry) => entry.beteckning && entry.startDate && entry.endDate);
 };
 
 const normalizeBeteckningKey = (value = '') =>
@@ -479,6 +615,20 @@ const isSignalPointToken = (value = '') => /\d/.test(cleanBoundaryToken(value));
 const extractSignalTokens = (value = '') =>
   cleanBoundaryToken(value)
     .match(/[A-Za-zÅÄÖåäö]{1,4}\d+(?:,\s*[A-Za-zÅÄÖåäö]{1,4}\d+)*/g) || [];
+
+const dedupeDispSections = (sections = []) =>
+  [...sections]
+    .filter((section, index, array) => {
+      const key = `${section.displayIndex || ''}|${section.granspunkter || ''}|${section.spar || ''}`;
+      return index === array.findIndex((candidate) => (
+        `${candidate.displayIndex || ''}|${candidate.granspunkter || ''}|${candidate.spar || ''}` === key
+      ));
+    })
+    .sort((left, right) => Number(left.displayIndex || 999) - Number(right.displayIndex || 999))
+    .map((section, index) => ({
+      ...section,
+      index,
+    }));
 
 const extractDispSections = (pages) => {
   const page = findDispTablePage(pages);
@@ -546,6 +696,73 @@ const extractDispSections = (pages) => {
   }).filter((section) => section.granspunkter || section.spar);
 };
 
+const extractAllDispSections = (pages = []) =>
+  dedupeDispSections(
+    getDispTablePages(pages).flatMap((page) => {
+      const lines = Array.isArray(page?.lines) ? page.lines : [];
+      const normalizedLines = lines.map((line) => ({
+        ...line,
+        text: cleanBoundaryToken(line.text || ''),
+        normalized: normalizeForMatching(cleanBoundaryToken(line.text || '')),
+      }));
+
+      const sectionRows = normalizedLines
+        .filter((line) => /^delomrade\s+\d+/.test(line.normalized))
+        .sort((a, b) => b.y - a.y);
+
+      return sectionRows.map((row, index) => {
+        const displayIndex = Number(String(row.normalized).match(/^delomrade\s+(\d+)/)?.[1] || index + 1);
+        const sameRow = normalizedLines.filter((line) => Math.abs(Number(line.y) - Number(row.y)) < 0.015);
+        const leftBoundary = sameRow
+          .filter(
+            (line) =>
+              Number(line.x) >= 0.34 &&
+              Number(line.x) < 0.45 &&
+              line.text !== '-' &&
+              isSignalPointToken(line.text)
+          )
+          .sort((a, b) => a.x - b.x)[0];
+        const rightBoundary = sameRow
+          .filter(
+            (line) =>
+              Number(line.x) >= 0.47 &&
+              Number(line.x) < 0.62 &&
+              !/^spar/i.test(line.normalized) &&
+              (isSignalPointToken(line.text) || /\s-\s/.test(line.text))
+          )
+          .sort((a, b) => a.x - b.x)[0];
+        const spar = sameRow
+          .filter((line) => Number(line.x) >= 0.67 && /^spar/i.test(line.normalized))
+          .sort((a, b) => a.x - b.x)[0];
+
+        const leftText = cleanBoundaryToken(leftBoundary?.text || '');
+        const rightText = cleanBoundaryToken(rightBoundary?.text || '');
+        const rightContainsFullRange = /\s-\s/.test(rightText);
+        const mergedSignalTokens = extractSignalTokens(leftText);
+        let startBoundary = rightContainsFullRange ? cleanBoundaryToken(rightText.split(/\s-\s/)[0] || '') : leftText;
+        let endBoundary = rightContainsFullRange ? cleanBoundaryToken(rightText.split(/\s-\s/).slice(1).join(' - ') || '') : rightText;
+
+        if (!rightText && mergedSignalTokens.length >= 2) {
+          startBoundary = mergedSignalTokens[mergedSignalTokens.length - 2];
+          endBoundary = mergedSignalTokens[mergedSignalTokens.length - 1];
+        }
+
+        const boundaryText = [startBoundary, endBoundary].filter(Boolean).join(' - ');
+
+        return {
+          displayIndex,
+          type: 'Delområde',
+          namingMode: 'NUMBERS',
+          signal: [boundaryText, cleanBoundaryToken(spar?.text || '')].filter(Boolean).join(', '),
+          granspunktStart: startBoundary,
+          granspunktSlut: endBoundary,
+          granspunkter: boundaryText,
+          spar: cleanBoundaryToken(spar?.text || ''),
+        };
+      }).filter((section) => section.granspunkter || section.spar);
+    })
+  );
+
 const compareDispWithBlankett31 = (dispEntries = [], blankett31Entries = []) => {
   if (!blankett31Entries.length) {
     return { matches: true, issues: [] };
@@ -594,15 +811,26 @@ const parseDispPdf = async (buffer, blankett31Entries = []) => {
   const textPages = Array.isArray(textPayload?.pages) ? textPayload.pages : [];
   const ocrPayload = await parsePdfWithOcr(buffer, 'disp-');
   const ocrPages = Array.isArray(ocrPayload?.pages) ? ocrPayload.pages : [];
-  const preferredPages = hasUsefulTextPages(textPages) ? textPages : ocrPages;
-  const entries = extractDispEntries(preferredPages, ocrPages);
-  const phoneSection = extractPhoneSection(preferredPages);
-  const phones = extractPhoneNumbers(phoneSection);
-  const sections = extractDispSections(ocrPages);
+  const hasUsefulText = hasUsefulTextPages(textPages);
+  const preferredPages = hasUsefulText ? textPages : ocrPages;
+  const entries = extractDispEntries(textPages, ocrPages);
+  const phones = mergeParsedPhones(
+    extractPhoneNumbers(extractPhoneSection(textPages)),
+    extractPhoneNumbers(extractPhoneSection(ocrPages))
+  );
+  const sections = extractAllDispSections(ocrPages);
 
   return {
-    projectName: extractProjectName(preferredPages),
-    plats: extractPlats(preferredPages),
+    projectName: pickParsedValue(
+      hasUsefulText ? extractProjectName(textPages) : '',
+      extractProjectName(ocrPages),
+      extractProjectName(preferredPages)
+    ),
+    plats: pickParsedValue(
+      hasUsefulText ? extractPlats(textPages) : '',
+      extractPlats(ocrPages),
+      extractPlats(preferredPages)
+    ),
     namn: phones.namn,
     telefonnummer: phones.telefonnummer,
     nodnummer: phones.nodnummer,
