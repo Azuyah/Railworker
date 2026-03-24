@@ -29,6 +29,31 @@ const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
   throw new Error('JWT_SECRET is not defined in your .env file');
 }
+
+const decodeUploadedPdf = (fileData, fileName = '') => {
+  const raw = String(fileData || '').trim();
+  if (!raw) {
+    throw new Error('PDF-data saknas');
+  }
+
+  const dataUrlMatch = raw.match(/^data:([^;,]+)?(?:;charset=[^;]+)?;base64,(.+)$/i);
+  const base64Payload = (dataUrlMatch ? dataUrlMatch[2] : raw).replace(/\s+/g, '');
+  if (!base64Payload) {
+    throw new Error('Ogiltigt PDF-format');
+  }
+
+  const pdfBuffer = Buffer.from(base64Payload, 'base64');
+  const headerSample = pdfBuffer.subarray(0, 1024).toString('latin1');
+  const fileExt = path.extname(String(fileName || '')).toLowerCase();
+  const looksLikePdf = headerSample.includes('%PDF-');
+
+  if (!pdfBuffer.length || (!looksLikePdf && fileExt !== '.pdf')) {
+    throw new Error('Ogiltigt PDF-format');
+  }
+
+  return pdfBuffer;
+};
+
 // Register user
 app.post('/api/register', async (req, res) => {
   const { email, password, firstName, lastName, phone, company } = req.body;
@@ -621,14 +646,7 @@ app.post('/api/pdf/blankett31/parse', authMiddleware, async (req, res) => {
   }
 
   try {
-    const matches = String(fileData).match(/^data:application\/pdf(?:;charset=[^;]+)?;base64,(.+)$/i);
-    const base64Payload = matches?.[1];
-
-    if (!base64Payload) {
-      return res.status(400).json({ error: 'Ogiltigt PDF-format' });
-    }
-
-    const pdfBuffer = Buffer.from(base64Payload, 'base64');
+    const pdfBuffer = decodeUploadedPdf(fileData, fileName);
     const parsed = await parseBlankett31Pdf(pdfBuffer);
     const { rawText, ...fields } = parsed;
 
@@ -638,6 +656,9 @@ app.post('/api/pdf/blankett31/parse', authMiddleware, async (req, res) => {
     });
   } catch (error) {
     console.error('Fel vid tolkning av Blankett 31:', error);
+    if (error?.message === 'PDF-data saknas' || error?.message === 'Ogiltigt PDF-format') {
+      return res.status(400).json({ error: error.message });
+    }
     res.status(500).json({ error: 'Kunde inte tolka Blankett 31' });
   }
 });
@@ -650,14 +671,7 @@ app.post('/api/pdf/disp/parse', authMiddleware, async (req, res) => {
   }
 
   try {
-    const matches = String(fileData).match(/^data:application\/pdf(?:;charset=[^;]+)?;base64,(.+)$/i);
-    const base64Payload = matches?.[1];
-
-    if (!base64Payload) {
-      return res.status(400).json({ error: 'Ogiltigt PDF-format' });
-    }
-
-    const pdfBuffer = Buffer.from(base64Payload, 'base64');
+    const pdfBuffer = decodeUploadedPdf(fileData, fileName);
     const parsed = await parseDispPdf(pdfBuffer, blankett31Entries);
 
     res.json({
@@ -666,6 +680,9 @@ app.post('/api/pdf/disp/parse', authMiddleware, async (req, res) => {
     });
   } catch (error) {
     console.error('Fel vid tolkning av Disp:', error);
+    if (error?.message === 'PDF-data saknas' || error?.message === 'Ogiltigt PDF-format') {
+      return res.status(400).json({ error: error.message });
+    }
     res.status(500).json({ error: 'Kunde inte tolka Disp' });
   }
 });

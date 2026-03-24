@@ -44,6 +44,19 @@ const readFileAsDataUrl = (file) =>
     reader.readAsDataURL(file);
   });
 
+const getApiErrorMessage = async (response, fallbackMessage) => {
+  try {
+    const data = await response.json();
+    if (typeof data?.error === 'string' && data.error.trim()) {
+      return data.error.trim();
+    }
+  } catch (error) {
+    void error;
+  }
+
+  return fallbackMessage;
+};
+
 const defaultBlankett31Entry = () => ({
   beteckning: '',
   granspunkt: '',
@@ -335,7 +348,7 @@ const SkapaProjekt = () => {
         });
 
         if (!response.ok) {
-          throw new Error(`Kunde inte tolka ${file.name}`);
+          throw new Error(await getApiErrorMessage(response, `Kunde inte tolka ${file.name}`));
         }
 
         const data = await response.json();
@@ -452,7 +465,7 @@ const SkapaProjekt = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Kunde inte tolka Disp');
+        throw new Error(await getApiErrorMessage(response, 'Kunde inte tolka Disp'));
       }
 
       const data = await response.json();
@@ -467,7 +480,7 @@ const SkapaProjekt = () => {
       }
     } catch (error) {
       console.error('Fel vid tolkning av Disp:', error);
-      setDispStatus('Disp kunde inte tolkas automatiskt.');
+      setDispStatus(error?.message || 'Disp kunde inte tolkas automatiskt.');
     } finally {
       setIsParsingDisp(false);
     }
