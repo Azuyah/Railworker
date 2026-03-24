@@ -630,6 +630,227 @@ const dedupeDispSections = (sections = []) =>
       index,
     }));
 
+const hasSectionContent = (section = {}) =>
+  Boolean(section?.signal || section?.granspunkter || section?.spar);
+
+const mergeDispSections = (sections = []) =>
+  [...sections]
+    .filter(hasSectionContent)
+    .sort((left, right) => Number(left.displayIndex || 999) - Number(right.displayIndex || 999))
+    .reduce((accumulator, section) => {
+      const key = Number(section.displayIndex || 0) || Number(accumulator.length + 1);
+      const existingIndex = accumulator.findIndex((candidate) => Number(candidate.displayIndex || 0) === key);
+
+      if (existingIndex === -1) {
+        accumulator.push({
+          ...section,
+          displayIndex: key,
+        });
+        return accumulator;
+      }
+
+      const current = accumulator[existingIndex];
+      accumulator[existingIndex] = {
+        ...current,
+        ...section,
+        displayIndex: current.displayIndex || section.displayIndex || key,
+        type: pickParsedValue(current.type, section.type) || 'Delområde',
+        namingMode: pickParsedValue(current.namingMode, section.namingMode) || 'NUMBERS',
+        signal: pickParsedValue(current.signal, section.signal),
+        granspunkter: pickParsedValue(current.granspunkter, section.granspunkter),
+        granspunktStart: pickParsedValue(current.granspunktStart, section.granspunktStart),
+        granspunktSlut: pickParsedValue(current.granspunktSlut, section.granspunktSlut),
+        spar: pickParsedValue(current.spar, section.spar),
+      };
+
+      return accumulator;
+    }, [])
+    .map((section, index) => ({
+      ...section,
+      index,
+    }));
+
+const normalizeSectionField = (value = '') =>
+  cleanBoundaryToken(value)
+    .replace(/^(signaler?|granspunkter?|spar)\s*[:\-]?\s*/i, '')
+    .trim();
+
+const buildDispSection = ({
+  displayIndex,
+  signal = '',
+  granspunkter = '',
+  spar = '',
+  type = 'Delområde',
+  namingMode = 'NUMBERS',
+} = {}) => {
+  const normalizedSignal = normalizeSectionField(signal);
+  const normalizedBoundaries = normalizeSectionField(granspunkter);
+  const normalizedTrack = normalizeSectionField(spar);
+  const boundaryTokens = normalizedBoundaries.split(/\s+-\s+/).map((part) => cleanBoundaryToken(part)).filter(Boolean);
+  const mergedSignalTokens = extractSignalTokens(normalizedBoundaries);
+  const granspunktStart = boundaryTokens[0] || mergedSignalTokens[mergedSignalTokens.length - 2] || '';
+  const granspunktSlut = boundaryTokens[1] || mergedSignalTokens[mergedSignalTokens.length - 1] || '';
+
+  return {
+    displayIndex: Number(displayIndex || 0) || null,
+    type,
+    namingMode,
+    signal: normalizedSignal || [normalizedBoundaries, normalizedTrack].filter(Boolean).join(', '),
+    granspunktStart,
+    granspunktSlut,
+    granspunkter: normalizedBoundaries,
+    spar: normalizedTrack,
+  };
+};
+
+const groupLinesByApproximateRow = (lines = [], tolerance = 0.012) => {
+  const groups = [];
+
+  lines
+    .filter((line) => line?.text)
+    .sort((left, right) => Number(right.y) - Number(left.y) || Number(left.x) - Number(right.x))
+    .forEach((line) => {
+      const existingGroup = groups.find((group) => Math.abs(Number(group.y) - Number(line.y)) <= tolerance);
+      if (existingGroup) {
+        existingGroup.lines.push(line);
+        return;
+      }
+
+      groups.push({
+        y: Number(line.y),
+        lines: [line],
+      });
+    });
+
+  return groups.map((group) => ({
+    ...group,
+    lines: group.lines.sort((left, right) => Number(left.x) - Number(right.x)),
+  }));
+};
+
+const findSectionHeaderColumns = (lines = []) => {
+  const headerPatterns = [
+    { key: 'delomrade', pattern: /^delomrade\b/ },
+    { key: 'signal', pattern: /^signal(?:er)?\b/ },
+    { key: 'granspunkter', pattern: /^granspunkter?\b/ },
+    { key: 'spar', pattern: /^spar\b/ },
+  ];
+
+  const rowGroups = groupLinesByApproximateRow(lines);
+  const bestGroup = rowGroups
+    .map((group) => {
+      const matches = headerPatterns.reduce((accumulator, item) => {
+        const line = group.lines.find((candidate) => item.pattern.test(candidate.normalized || ''));
+        if (line) {
+          accumulator[item.key] = line;
+        }
+        return accumulator;
+      }, {});
+
+      return {
+        group,
+        matches,
+        score: Object.keys(matches).length,
+      };
+    })
+    .filter((candidate) => candidate.score >= 2)
+    .sort((left, right) => right.score - left.score || Number(right.group.y) - Number(left.group.y))[0];
+
+  if (!bestGroup) {
+    return null;
+  }
+
+  const delomradeX = Number(bestGroup.matches.delomrade?.x ?? 0.04);
+  const signalX = Number(bestGroup.matches.signal?.x ?? (delomradeX + 0.18));
+  const granspunkterX = Number(bestGroup.matches.granspunkter?.x ?? (signalX + 0.18));
+  const sparX = Number(bestGroup.matches.spar?.x ?? (granspunkterX + 0.22));
+
+  return {
+    delomrade: delomradeX,
+    signal: signalX,
+    granspunkter: granspunkterX,
+    spar: sparX,
+  };
+};
+
+const extractColumnText = (lines = [], startX = 0, endX = 1) =>
+  [...new Set(
+    lines
+      .filter((line) => Number(line.x) >= startX - 0.02 && Number(line.x) < endX - 0.01)
+      .map((line) => normalizeSectionField(line.text || ''))
+      .filter(Boolean)
+  )].join(' ');
+
+const extractDispSectionsFromColumns = (pages = []) =>
+  mergeDispSections(
+    getDispTablePages(pages).flatMap((page) => {
+      const normalizedLines = (Array.isArray(page?.lines) ? page.lines : []).map((line) => ({
+        ...line,
+        text: cleanBoundaryToken(line.text || ''),
+        normalized: normalizeForMatching(cleanBoundaryToken(line.text || '')),
+      }));
+      const columns = findSectionHeaderColumns(normalizedLines);
+      if (!columns) {
+        return [];
+      }
+
+      const sectionRows = normalizedLines
+        .filter((line) => /^delomrade\s+\d+/.test(line.normalized))
+        .sort((a, b) => Number(b.y) - Number(a.y));
+
+      return sectionRows.map((row, index) => {
+        const displayIndex = Number(String(row.normalized).match(/^delomrade\s+(\d+)/)?.[1] || index + 1);
+        const sameRow = normalizedLines.filter((line) => Math.abs(Number(line.y) - Number(row.y)) < 0.02);
+
+        return buildDispSection({
+          displayIndex,
+          signal: extractColumnText(sameRow, columns.signal, columns.granspunkter),
+          granspunkter: extractColumnText(sameRow, columns.granspunkter, columns.spar),
+          spar: extractColumnText(sameRow, columns.spar, 1.01),
+        });
+      });
+    })
+  );
+
+const extractDispSectionsFromText = (pages = []) =>
+  mergeDispSections(
+    getDispTablePages(pages).flatMap((page) => {
+      const lines = getPageLines(page);
+      const sections = [];
+
+      for (let index = 0; index < lines.length; index += 1) {
+        const line = lines[index];
+        const match = line.match(/Delomr(?:åde|ade)\s+(\d+)/i) || line.match(/Delomrade\s+(\d+)/i);
+        if (!match) {
+          continue;
+        }
+
+        const blockLines = [line];
+        for (let lookahead = index + 1; lookahead < Math.min(lines.length, index + 5); lookahead += 1) {
+          if (/Delomr(?:åde|ade)\s+\d+/i.test(lines[lookahead]) || /Delomrade\s+\d+/i.test(lines[lookahead])) {
+            break;
+          }
+
+          blockLines.push(lines[lookahead]);
+        }
+
+        const blockText = blockLines.join(' ');
+        const signal = blockText.match(/signal(?:er)?\s*[:\-]?\s*(.+?)(?=\s+gr[aä]nspunkter?\b|\s+sp[aå]r\b|$)/i)?.[1] || '';
+        const granspunkter = blockText.match(/gr[aä]nspunkter?\s*[:\-]?\s*(.+?)(?=\s+sp[aå]r\b|$)/i)?.[1] || '';
+        const spar = blockText.match(/sp[aå]r\s*[:\-]?\s*(.+)$/i)?.[1] || '';
+
+        sections.push(buildDispSection({
+          displayIndex: Number(match[1] || sections.length + 1),
+          signal,
+          granspunkter,
+          spar,
+        }));
+      }
+
+      return sections;
+    })
+  );
+
 const extractDispSections = (pages) => {
   const page = findDispTablePage(pages);
   const lines = Array.isArray(page?.lines) ? page.lines : [];
@@ -763,6 +984,13 @@ const extractAllDispSections = (pages = []) =>
     })
   );
 
+const extractMergedDispSections = (textPages = [], ocrPages = []) =>
+  mergeDispSections([
+    ...extractDispSectionsFromText(textPages),
+    ...extractDispSectionsFromColumns(ocrPages),
+    ...extractAllDispSections(ocrPages),
+  ]);
+
 const compareDispWithBlankett31 = (dispEntries = [], blankett31Entries = []) => {
   if (!blankett31Entries.length) {
     return { matches: true, issues: [] };
@@ -818,7 +1046,7 @@ const parseDispPdf = async (buffer, blankett31Entries = []) => {
     extractPhoneNumbers(extractPhoneSection(textPages)),
     extractPhoneNumbers(extractPhoneSection(ocrPages))
   );
-  const sections = extractAllDispSections(ocrPages);
+  const sections = extractMergedDispSections(textPages, ocrPages);
 
   return {
     projectName: pickParsedValue(
