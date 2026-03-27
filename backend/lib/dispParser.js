@@ -68,6 +68,59 @@ const extractProjectName = (pages) => {
   return normalizeProjectTitle([projectBase, projectWeek, objectValue].filter(Boolean).join(' '));
 };
 
+function cleanMatchedValue(value = '') {
+  return normalizeText(value)
+    .replace(/\s+/g, ' ')
+    .replace(/^[\s:;,\-]+/, '')
+    .trim();
+}
+
+const extractOverviewMeta = (pages) => {
+  const firstPageLines = getPageLines(findOverviewPage(pages));
+  const normalizedLines = firstPageLines.map((line) => ({
+    raw: line,
+    normalized: normalizeForMatching(line),
+  }));
+
+  const topTitleLine = normalizedLines.find((line) => line.normalized.startsWith('dispositionsarbetsplan '))?.raw || '';
+  const standaloneTitleIndex = normalizedLines.findIndex((line) => line.normalized === 'dispositionsarbetsplan');
+  const mainWeekLine =
+    standaloneTitleIndex >= 0 &&
+    /^v\d+/i.test(firstPageLines[standaloneTitleIndex + 2] || '')
+      ? firstPageLines[standaloneTitleIndex + 2]
+      : '';
+  const weekLine =
+    mainWeekLine ||
+    normalizedLines.find(
+      (line) =>
+        /^v\d+/i.test(line.raw) &&
+        !line.normalized.includes('versionsnummer') &&
+        !line.normalized.includes('antal sidor')
+    )?.raw || '';
+  const banobjektLine = normalizedLines.find((line) => line.normalized.includes('banobjekt-vnr'))?.raw || '';
+  const forplaneraLine = normalizedLines.find((line) => line.normalized.includes('forplanera ca'))?.raw || '';
+  const outerBoundaryIndex = normalizedLines.findIndex((line) =>
+    line.normalized.includes('granspunkter som ej far passeras utan tkl')
+  );
+
+  const outerGranspunkter =
+    outerBoundaryIndex >= 0
+      ? normalizedLines.slice(outerBoundaryIndex + 1).find((line) => line.raw && !line.normalized.startsWith('('))?.raw || ''
+      : '';
+
+  return {
+    banName: normalizeProjectTitle(topTitleLine.replace(/^Dispositionsarbetsplan\s+/i, '')),
+    stracka:
+      standaloneTitleIndex >= 0
+        ? normalizeProjectTitle(firstPageLines[standaloneTitleIndex + 1] || '')
+        : '',
+    weekLine: normalizeProjectTitle(weekLine),
+    banobjektVnr: cleanMatchedValue(banobjektLine.replace(/^.*Banobjekt-Vnr\s*/i, '')),
+    forplaneraCa: cleanMatchedValue(forplaneraLine.replace(/^.*Förplanera ca\s*:?\s*/i, '')),
+    outerGranspunkter: normalizeProjectTitle(outerGranspunkter),
+  };
+};
+
 const extractPlats = (pages) => {
   const firstPageLines = getPageLines(findOverviewPage(pages));
   const objectIndex = firstPageLines.findIndex((line) => /Banobjekt-Vnr/i.test(line));
@@ -1147,6 +1200,41 @@ const parseDispPdf = async (buffer, blankett31Entries = []) => {
     extractPhoneNumbers(extractPhoneSection(ocrPages))
   );
   const sections = extractMergedDispSections(textPages, ocrPages);
+  const textOverview = hasUsefulText ? extractOverviewMeta(textPages) : {};
+  const ocrOverview = extractOverviewMeta(ocrPages);
+  const preferredOverview = extractOverviewMeta(preferredPages);
+  const overview = {
+    banName: pickParsedValue(
+      textOverview.banName,
+      ocrOverview.banName,
+      preferredOverview.banName
+    ),
+    stracka: pickParsedValue(
+      textOverview.stracka,
+      ocrOverview.stracka,
+      preferredOverview.stracka
+    ),
+    weekLine: pickParsedValue(
+      textOverview.weekLine,
+      ocrOverview.weekLine,
+      preferredOverview.weekLine
+    ),
+    banobjektVnr: pickParsedValue(
+      textOverview.banobjektVnr,
+      ocrOverview.banobjektVnr,
+      preferredOverview.banobjektVnr
+    ),
+    forplaneraCa: pickParsedValue(
+      textOverview.forplaneraCa,
+      ocrOverview.forplaneraCa,
+      preferredOverview.forplaneraCa
+    ),
+    outerGranspunkter: pickParsedValue(
+      textOverview.outerGranspunkter,
+      ocrOverview.outerGranspunkter,
+      preferredOverview.outerGranspunkter
+    ),
+  };
 
   return {
     projectName: pickParsedValue(
@@ -1163,6 +1251,7 @@ const parseDispPdf = async (buffer, blankett31Entries = []) => {
     telefonnummer: phones.telefonnummer,
     nodnummer: phones.nodnummer,
     htsmTelefon: phones.htsmTelefon,
+    overview,
     entries,
     sections,
     match: compareDispWithBlankett31(entries, blankett31Entries),

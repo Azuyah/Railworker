@@ -91,10 +91,10 @@ const dedupeBlankett31Entries = (entries = []) =>
   });
 
 const defaultSection = () => ({
-  type: 'Linje',
+  type: 'Delområde',
   name: '',
   signal: '',
-  namingMode: 'LETTERS',
+  namingMode: 'NUMBERS',
   displayIndex: null,
   granspunktStart: '',
   granspunktSlut: '',
@@ -102,12 +102,56 @@ const defaultSection = () => ({
   spar: '',
 });
 
+const createDefaultSections = (count = 10) =>
+  Array.from({ length: count }, (_, index) => ({
+    ...defaultSection(),
+    displayIndex: index + 1,
+  }));
+
+const defaultDispSettings = () => ({
+  rubrik: '',
+  banNamn: '',
+  veckaOchDagar: '',
+  banobjektVnr: '',
+  forplaneraCa: '1 tim innan start',
+});
+
+const getIsoWeek = (dateValue = '') => {
+  const match = String(dateValue || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) {
+    return '';
+  }
+
+  const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
+  const day = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+  return `V${String(weekNo).padStart(2, '0')}`;
+};
+
+const swedishShortDays = ['Sön', 'Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör'];
+
+const buildSuggestedWeekLine = (entries = [], explicitWeek = '') => {
+  const weekValue = explicitWeek || getIsoWeek(entries[0]?.startDate || '');
+  const uniqueDates = [...new Set(entries.map((entry) => entry.startDate).filter(Boolean))].sort();
+  const dayLabels = uniqueDates
+    .map((dateValue) => {
+      const date = new Date(`${dateValue}T00:00:00Z`);
+      return Number.isNaN(date.getTime()) ? '' : swedishShortDays[date.getUTCDay()];
+    })
+    .filter(Boolean);
+
+  const dayValue = dayLabels.length ? dayLabels.join(', ') : '';
+  return [weekValue, dayValue].filter(Boolean).join(' ');
+};
+
 const mergeSectionDetails = (sections = [], sectionDetails = []) =>
   sections.map((section, index) => ({
     ...defaultSection(),
     ...section,
     ...(sectionDetails[index] || {}),
-    signal: section?.signal || section?.name || sectionDetails[index]?.signal || '',
+    signal: sectionDetails[index]?.signal || section?.signal || section?.name || '',
   }));
 
 const SkapaProjekt = () => {
@@ -135,7 +179,9 @@ const SkapaProjekt = () => {
   const [avslutningstid, setAvslutningstid] = useState('');
   const [avslutningssignatur, setAvslutningssignatur] = useState('');
   const [beteckningar, setBeteckningar] = useState([{ value: '' }]);
-  const [sections, setSections] = useState([]);
+  const [sections, setSections] = useState(() => createDefaultSections());
+  const [blankett31Meta, setBlankett31Meta] = useState({});
+  const [dispSettings, setDispSettings] = useState(() => defaultDispSettings());
   const [fjtklBlocks, setFjtklBlocks] = useState([]);
   const [blankett31Files, setBlankett31Files] = useState([]);
   const [blankett31Entries, setBlankett31Entries] = useState([defaultBlankett31Entry()]);
@@ -233,40 +279,18 @@ const SkapaProjekt = () => {
   };
 
   const addSection = () => {
-    const lastSection = sections[sections.length - 1];
-    const nextType =
-      lastSection?.type === 'Linje'
-        ? 'DP'
-        : lastSection?.type === 'DP'
-          ? 'Linje'
-          : 'Linje';
-    const nextNamingMode = lastSection?.namingMode || 'LETTERS';
-    const lastSignal = (lastSection?.signal || lastSection?.name || '').trim();
-    const signalParts = lastSignal.split(/\s*[-–—]\s*/).filter(Boolean);
-    const inheritedSignal = signalParts.length > 1 ? signalParts[signalParts.length - 1] : '';
-    const nextDisplayIndex =
-      nextNamingMode === 'NUMBERS' && Number.isFinite(Number(lastSection?.displayIndex))
-        ? Number(lastSection.displayIndex) + 1
-        : null;
-    const updated = [
-      ...sections,
+    const highestDisplayIndex = sections.reduce((maxValue, section) => {
+      const parsed = Number(section?.displayIndex);
+      return Number.isFinite(parsed) ? Math.max(maxValue, parsed) : maxValue;
+    }, 0);
+
+    setSections((current) => [
+      ...current,
       {
         ...defaultSection(),
-        type: nextType,
-        name: inheritedSignal,
-        signal: inheritedSignal,
-        namingMode: nextNamingMode,
-        displayIndex: nextDisplayIndex,
+        displayIndex: highestDisplayIndex + 1,
       },
-    ];
-    setSections(updated);
-  };
-
-  const updateSignal = (index, value) => {
-    const updated = [...sections];
-    updated[index].signal = value;
-    updated[index].name = value;
-    setSections(updated);
+    ]);
   };
 
   const updateSectionType = (index, type) => {
@@ -278,14 +302,43 @@ const SkapaProjekt = () => {
   const updateSectionNamingMode = (index, namingMode) => {
     const updated = [...sections];
     updated[index].namingMode = namingMode;
+    if (namingMode === 'NUMBERS' && !updated[index].displayIndex) {
+      updated[index].displayIndex = index + 1;
+    }
     setSections(updated);
   };
 
-  const removeSection = (index) => {
-    if (index === 0) {
-      return;
-    }
+  const updateSectionField = (index, field, value) => {
+    setSections((current) => current.map((section, sectionIndex) => {
+      if (sectionIndex !== index) {
+        return section;
+      }
 
+      const updatedSection = {
+        ...section,
+        [field]: value,
+      };
+
+      if (field === 'signal' || field === 'name') {
+        updatedSection.name = value;
+        updatedSection.signal = value;
+      }
+
+      if (field === 'displayIndex') {
+        updatedSection.displayIndex = value === '' ? null : Number(value);
+      }
+
+      if (field === 'granspunktStart' || field === 'granspunktSlut') {
+        updatedSection.granspunkter = [updatedSection.granspunktStart, updatedSection.granspunktSlut]
+          .filter(Boolean)
+          .join(' - ');
+      }
+
+      return updatedSection;
+    }));
+  };
+
+  const removeSection = (index) => {
     const updated = sections.filter((_, i) => i !== index);
     setSections(updated);
   };
@@ -309,6 +362,19 @@ const SkapaProjekt = () => {
         ].filter((entry) => Object.values(entry).some(Boolean));
 
     return parsedEntries.map(normalizeBlankett31Entry);
+  };
+
+  const applyBlankett31Meta = (parsed = {}, nextEntries = []) => {
+    const parsedMeta = parsed?.meta || {};
+    setBlankett31Meta(parsedMeta);
+
+    setDispSettings((current) => ({
+      ...current,
+      rubrik: current.rubrik || parsedMeta.projectLabel || '',
+      veckaOchDagar: current.veckaOchDagar || buildSuggestedWeekLine(nextEntries, parsedMeta.referenceWeek),
+      banobjektVnr:
+        current.banobjektVnr || (parsedMeta.banarbetsobjektsId ? `${parsedMeta.banarbetsobjektsId}-1` : ''),
+    }));
   };
 
   const applyDispEntries = (parsed) => {
@@ -359,6 +425,7 @@ const SkapaProjekt = () => {
 
     try {
       const parsedFileEntries = [];
+      let parsedMeta = null;
 
       for (const file of files) {
         const fileData = await readFileAsDataUrl(file);
@@ -380,6 +447,9 @@ const SkapaProjekt = () => {
 
         const data = await response.json();
         parsedFileEntries.push(...applyBlankett31Data(data.parsed));
+        if (!parsedMeta && data?.parsed?.meta) {
+          parsedMeta = data.parsed.meta;
+        }
       }
 
       const combinedEntries = sortBlankett31Entries(dedupeBlankett31Entries([
@@ -402,6 +472,9 @@ const SkapaProjekt = () => {
         if (firstGranspunkt) {
           setGranspunktFritext(firstGranspunkt);
         }
+      }
+      if (parsedMeta) {
+        applyBlankett31Meta({ meta: parsedMeta }, nextEntries);
       }
       syncSummaryDatesFromEntries(nextEntries);
       syncProtectionFieldsFromEntries(nextEntries);
@@ -443,6 +516,20 @@ const SkapaProjekt = () => {
       setHtsmTelefon(parsed.htsmTelefon);
     }
 
+    if (parsed?.overview) {
+      setDispSettings((current) => ({
+        ...current,
+        banNamn: current.banNamn || parsed.overview.banName || '',
+        veckaOchDagar: current.veckaOchDagar || parsed.overview.weekLine || '',
+        banobjektVnr: current.banobjektVnr || parsed.overview.banobjektVnr || '',
+        forplaneraCa: current.forplaneraCa || parsed.overview.forplaneraCa || '1 tim innan start',
+      }));
+
+      if (!granspunktFritext && parsed.overview.outerGranspunkter) {
+        setGranspunktFritext(parsed.overview.outerGranspunkter);
+      }
+    }
+
     applyDispEntries(parsed);
 
     if (Array.isArray(parsed?.sections) && parsed.sections.length) {
@@ -450,8 +537,8 @@ const SkapaProjekt = () => {
         parsed.sections.map((section) => ({
           ...defaultSection(),
           ...section,
-          name: section.signal || [section.granspunkter, section.spar].filter(Boolean).join(', '),
-          signal: section.signal || [section.granspunkter, section.spar].filter(Boolean).join(', '),
+          name: section.name || '',
+          signal: section.name || '',
         }))
       );
     }
@@ -602,6 +689,8 @@ const SkapaProjekt = () => {
           avslutningstid,
           avslutningssignatur,
           fjtklBlocks,
+          blankett31Meta,
+          dispSettings,
           blankett31Entries,
           sectionDetails: sections.map((sec) => ({
             signal: sec.signal || sec.name || '',
@@ -688,12 +777,6 @@ const SkapaProjekt = () => {
   };
 
   useEffect(() => {
-    if (sections.length === 0) {
-      setSections([defaultSection()]);
-    }
-  }, [sections]);
-
-  useEffect(() => {
     if (!currentProjectId) {
       return;
     }
@@ -738,6 +821,11 @@ const SkapaProjekt = () => {
         setAvslutningstid(project.formState?.avslutningstid || '');
         setAvslutningssignatur(project.formState?.avslutningssignatur || '');
         setFjtklBlocks(project.formState?.fjtklBlocks || []);
+        setBlankett31Meta(project.formState?.blankett31Meta || {});
+        setDispSettings({
+          ...defaultDispSettings(),
+          ...(project.formState?.dispSettings || {}),
+        });
         setBlankett31Entries(
           ((project.formState?.blankett31Entries || []).length
             ? project.formState.blankett31Entries
@@ -771,7 +859,7 @@ const SkapaProjekt = () => {
                 })),
                 project.formState?.sectionDetails || []
               )
-            : [defaultSection()]
+            : createDefaultSections()
         );
       } catch (error) {
         console.error('Fel vid hämtning av projekt i skapa-projekt:', error);
@@ -922,6 +1010,68 @@ const SkapaProjekt = () => {
                     placeholder="Ex. Råå, Marieholm, Teckomatorp"
                     className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
                   />
+                </div>
+              </div>
+              <div className="mt-5 border-t border-slate-200 pt-6">
+                <div className="mb-4">
+                  <h3 className="text-base font-semibold text-slate-900">Disp-inställningar</h3>
+                  <p className="text-xs text-slate-500">
+                    Rubrik och sidhuvud för den färdiga dispositionsarbetsplanen.
+                  </p>
+                </div>
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-sm font-semibold text-slate-700">
+                      Rubrik efter "Dispositionsarbetsplan"
+                    </label>
+                    <input
+                      type="text"
+                      value={dispSettings.rubrik}
+                      onChange={(e) => setDispSettings((current) => ({ ...current, rubrik: e.target.value }))}
+                      placeholder="Ex. Projekt Hbgb-Tp"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-semibold text-slate-700">Banans namn</label>
+                    <input
+                      type="text"
+                      value={dispSettings.banNamn}
+                      onChange={(e) => setDispSettings((current) => ({ ...current, banNamn: e.target.value }))}
+                      placeholder="Ex. Rååbanan"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-semibold text-slate-700">Vecka / dagar / nätter</label>
+                    <input
+                      type="text"
+                      value={dispSettings.veckaOchDagar}
+                      onChange={(e) => setDispSettings((current) => ({ ...current, veckaOchDagar: e.target.value }))}
+                      placeholder="Ex. V13 Tis, Lör-Sön"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-semibold text-slate-700">Banobjekt-Vnr</label>
+                    <input
+                      type="text"
+                      value={dispSettings.banobjektVnr}
+                      onChange={(e) => setDispSettings((current) => ({ ...current, banobjektVnr: e.target.value }))}
+                      placeholder="Ex. 17096-1"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-semibold text-slate-700">Förplanera ca</label>
+                    <input
+                      type="text"
+                      value={dispSettings.forplaneraCa}
+                      onChange={(e) => setDispSettings((current) => ({ ...current, forplaneraCa: e.target.value }))}
+                      placeholder="Ex. 1 tim innan start"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
+                    />
+                  </div>
                 </div>
               </div>
               <div className="mt-5 border-t border-slate-200 pt-6">
@@ -1314,7 +1464,7 @@ const SkapaProjekt = () => {
                         </button>
                       )}
                     </div>
-                    <div className="grid gap-3 md:grid-cols-[140px_180px_1fr]">
+                    <div className="grid gap-3 md:grid-cols-[140px_180px_120px_1fr]">
                       <select
                         value={sec.type}
                         onChange={(e) => updateSectionType(i, e.target.value)}
@@ -1333,12 +1483,46 @@ const SkapaProjekt = () => {
                         <option value="NUMBERS">Siffror: 1, 2, 3</option>
                       </select>
                       <input
+                        type="number"
+                        min="1"
+                        value={sec.displayIndex ?? ''}
+                        onChange={(e) => updateSectionField(i, 'displayIndex', e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-900 focus:outline-none"
+                        placeholder="Nr"
+                      />
+                      <input
                         type="text"
-                        placeholder="Signal / benämning"
+                        placeholder="Delområde / sträcka"
                         value={sec.signal || sec.name || ''}
-                        onChange={(e) => updateSignal(i, e.target.value)}
+                        onChange={(e) => updateSectionField(i, 'signal', e.target.value)}
                         className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm focus:border-slate-900 focus:outline-none"
                       />
+                    </div>
+                    <div className="mt-3 grid gap-3 md:grid-cols-3">
+                      <input
+                        type="text"
+                        placeholder="Gränspunkt start"
+                        value={sec.granspunktStart || ''}
+                        onChange={(e) => updateSectionField(i, 'granspunktStart', e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm focus:border-slate-900 focus:outline-none"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Gränspunkt slut"
+                        value={sec.granspunktSlut || ''}
+                        onChange={(e) => updateSectionField(i, 'granspunktSlut', e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm focus:border-slate-900 focus:outline-none"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Spår"
+                        value={sec.spar || ''}
+                        onChange={(e) => updateSectionField(i, 'spar', e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm focus:border-slate-900 focus:outline-none"
+                      />
+                    </div>
+                    <div className="mt-2 text-xs text-slate-500">
+                      Gränspunkter: {sec.granspunkter || [sec.granspunktStart, sec.granspunktSlut].filter(Boolean).join(' - ') || 'Ej angivet'}
                     </div>
                   </div>
                 ))}

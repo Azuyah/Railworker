@@ -9,6 +9,7 @@ const { PrismaClient } = require('./generated/prisma/client');
 const { parseBlankett31Pdf } = require('./lib/blankett31Parser');
 const { parseDispPdf } = require('./lib/dispParser');
 const { createPlanWorkbookBuffer } = require('./lib/planExcelExport');
+const { createDispPdfBuffer } = require('./lib/dispPdfExport');
 require('dotenv').config();
 
 const app = express();
@@ -525,7 +526,16 @@ app.put('/api/projects/:id', async (req, res) => {
 
     const projectId = parseInt(id);
     const filteredBeteckningar = Array.isArray(beteckningar)
-      ? beteckningar.filter((b) => typeof b.label === 'string' && b.label.trim() !== '')
+      ? beteckningar
+          .map((b) => ({
+            label:
+              typeof b?.label === 'string' && b.label.trim()
+                ? b.label.trim()
+                : typeof b?.value === 'string' && b.value.trim()
+                  ? b.value.trim()
+                  : '',
+          }))
+          .filter((b) => b.label)
       : [];
 
     const updatedProject = await prisma.project.update({
@@ -718,6 +728,40 @@ app.get('/api/projects/:id/export-excel', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Fel vid export av Excel:', error);
     res.status(500).json({ error: 'Kunde inte exportera Excel' });
+  }
+});
+
+app.get('/api/projects/:id/export-disp', authMiddleware, async (req, res) => {
+  try {
+    const projectId = parseInt(req.params.id, 10);
+    if (Number.isNaN(projectId)) {
+      return res.status(400).json({ error: 'Ogiltigt projekt-ID' });
+    }
+
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      include: {
+        sections: true,
+        beteckningar: true,
+      },
+    });
+
+    if (!project) {
+      return res.status(404).json({ error: 'Projekt hittades inte' });
+    }
+
+    const buffer = await createDispPdfBuffer(project);
+    const safeName = String(project.name || 'dispositionsarbetsplan')
+      .replace(/[^\p{L}\p{N}\-_ ]/gu, '')
+      .trim()
+      .replace(/\s+/g, '_');
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=\"${safeName || 'dispositionsarbetsplan'}.pdf\"`);
+    res.send(Buffer.from(buffer));
+  } catch (error) {
+    console.error('Fel vid export av dispositionsarbetsplan:', error);
+    res.status(500).json({ error: 'Kunde inte exportera dispositionsarbetsplan' });
   }
 });
 

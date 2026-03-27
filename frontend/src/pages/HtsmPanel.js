@@ -20,6 +20,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [loadError, setLoadError] = useState('');
+  const [exportingProjectId, setExportingProjectId] = useState(null);
   const fetchUserAndProjects = useCallback(async () => {
     let storedUser = null;
     try {
@@ -61,6 +62,49 @@ const Dashboard = () => {
   useEffect(() => {
     fetchUserAndProjects();
   }, [fetchUserAndProjects]);
+
+  const handleExportDisp = async (project) => {
+    let storedUser = null;
+    try {
+      storedUser = JSON.parse(localStorage.getItem('user') || 'null');
+    } catch (error) {
+      storedUser = null;
+    }
+
+    const token = storedUser?.token || localStorage.getItem('token');
+    if (!token || !project?.id) {
+      setLoadError('Logga in igen för att skapa disp.');
+      return;
+    }
+
+    try {
+      setExportingProjectId(project.id);
+      const response = await fetch(apiUrl(`/api/projects/${project.id}/export-disp`), {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Kunde inte skapa disp');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${project.name || 'dispositionsarbetsplan'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Kunde inte exportera dispositionsarbetsplan:', error);
+      setLoadError('Kunde inte skapa disp just nu.');
+    } finally {
+      setExportingProjectId(null);
+    }
+  };
 
   return (
     <Box minH="100vh" bg="#F4F6FA">
@@ -200,6 +244,16 @@ const Dashboard = () => {
                         )}
                       </Box>
                       <HStack spacing={2}>
+                        <Button
+                          variant="outline"
+                          borderRadius="full"
+                          size="sm"
+                          onClick={() => handleExportDisp(project)}
+                          isLoading={exportingProjectId === project.id}
+                          loadingText="Skapar disp"
+                        >
+                          Skapa disp
+                        </Button>
                         <Button
                           variant="outline"
                           borderRadius="full"
