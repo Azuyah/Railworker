@@ -1,0 +1,6404 @@
+{
+  "generatedAt": "2026-03-28T12:25:45.147Z",
+  "count": 914,
+  "items": [
+    {
+      "name": "Abborrträsk",
+      "code": "Abb",
+      "kind": "Driftplats",
+      "x": 704467.9149000002,
+      "y": 7265312.591600001
+    },
+    {
+      "name": "Abisko östra",
+      "code": "Ak",
+      "kind": "Driftplats",
+      "x": 657624.3400999997,
+      "y": 7586638.5801
+    },
+    {
+      "name": "Agnesberg",
+      "code": "Agb",
+      "kind": "Driftplats",
+      "x": 322044.2452999996,
+      "y": 6408246.136600001
+    },
+    {
+      "name": "Alby",
+      "code": "Ay",
+      "kind": "Driftplats",
+      "x": 524463.4435999999,
+      "y": 6928877.2467
+    },
+    {
+      "name": "Aleholm",
+      "code": "Ahm",
+      "kind": "Driftplats",
+      "x": 479770.07189999986,
+      "y": 6361748.292099999
+    },
+    {
+      "name": "Algutsgården",
+      "code": "Agg",
+      "kind": "Driftplats",
+      "x": 361577.07380000036,
+      "y": 6429980.492000001
+    },
+    {
+      "name": "Alingsås",
+      "code": "A",
+      "kind": "Driftplats",
+      "x": 353981.00659999996,
+      "y": 6423216.2896
+    },
+    {
+      "name": "Almnäs",
+      "code": "Alä",
+      "kind": "Driftplats",
+      "x": 643350.7411000002,
+      "y": 6561610.397399999
+    },
+    {
+      "name": "Alvesta",
+      "code": "Av",
+      "kind": "Driftplats",
+      "x": 473001.31520000007,
+      "y": 6306159.3725000005
+    },
+    {
+      "name": "Alvhem",
+      "code": "Alh",
+      "kind": "Driftplats",
+      "x": 332166.11569999997,
+      "y": 6433556.4277
+    },
+    {
+      "name": "Alväng",
+      "code": "Aä",
+      "kind": "Driftplats",
+      "x": 532158.4583999999,
+      "y": 6582393.9
+    },
+    {
+      "name": "Anundsjö",
+      "code": "Anö",
+      "kind": "Driftplats",
+      "x": 656858.6607999997,
+      "y": 7036980.1598000005
+    },
+    {
+      "name": "Aptas",
+      "code": "Apt",
+      "kind": "Driftplats",
+      "x": 729622.1814000001,
+      "y": 7526673.4177
+    },
+    {
+      "name": "Arboga",
+      "code": "Arb",
+      "kind": "Driftplats",
+      "x": 547739.6308000004,
+      "y": 6584581.4969999995
+    },
+    {
+      "name": "Arbrå",
+      "code": "Ab",
+      "kind": "Driftplats",
+      "x": 573518.1769000003,
+      "y": 6816034.1699
+    },
+    {
+      "name": "Arlanda",
+      "code": "Arn",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 664477,
+      "y": 6614127.5
+    },
+    {
+      "name": "Arnemark",
+      "code": "Amk",
+      "kind": "Driftplats",
+      "x": 787462.8739999998,
+      "y": 7277425.485199999
+    },
+    {
+      "name": "Arnäsvall",
+      "code": "Ara",
+      "kind": "Driftplats",
+      "x": 689670.8795999996,
+      "y": 7025513.375700001
+    },
+    {
+      "name": "Arvidsjaur",
+      "code": "Ajr",
+      "kind": "Driftplats",
+      "x": 692145.4999000002,
+      "y": 7280444.5185
+    },
+    {
+      "name": "Arvika",
+      "code": "Ar",
+      "kind": "Driftplats",
+      "x": 364254.6166000003,
+      "y": 6615297.3905
+    },
+    {
+      "name": "Aspeå",
+      "code": "Ap",
+      "kind": "Driftplats",
+      "x": 625606.8982999995,
+      "y": 7031250.5929000005
+    },
+    {
+      "name": "Attarp",
+      "code": "Atp",
+      "kind": "Driftplats",
+      "x": 428452.20600000024,
+      "y": 6221950.5528
+    },
+    {
+      "name": "Avesta Krylbo",
+      "code": "Avky",
+      "kind": "Driftplats",
+      "x": 567570.2039000001,
+      "y": 6666462.8026
+    },
+    {
+      "name": "Axmarby",
+      "code": "Ax",
+      "kind": "Driftplats",
+      "x": 614270.2533999998,
+      "y": 6765451.2644
+    },
+    {
+      "name": "Backsjön",
+      "code": "Baö",
+      "kind": "Driftplats",
+      "x": 615161.1752000004,
+      "y": 7023834.998399999
+    },
+    {
+      "name": "Baggetorp",
+      "code": "Bt",
+      "kind": "Driftplats",
+      "x": 561171.5639000004,
+      "y": 6541608.339500001
+    },
+    {
+      "name": "Bankeryd",
+      "code": "Bry",
+      "kind": "Driftplats",
+      "x": 448273.6956000002,
+      "y": 6413501.4526
+    },
+    {
+      "name": "Barkarby",
+      "code": "Bkb",
+      "kind": "Driftplats",
+      "x": 662548.5855999999,
+      "y": 6588691.463300001
+    },
+    {
+      "name": "Barva",
+      "code": "Bva",
+      "kind": "Driftplats",
+      "x": 601963.1651999997,
+      "y": 6579664.261499999
+    },
+    {
+      "name": "Bastuträsk",
+      "code": "Bst",
+      "kind": "Driftplats",
+      "x": 739421.5378,
+      "y": 7194465.476300001
+    },
+    {
+      "name": "Bengtsfors",
+      "code": "Bef",
+      "kind": "Driftplats",
+      "x": 341305.01379999984,
+      "y": 6546520.4124
+    },
+    {
+      "name": "Bensjöbacken",
+      "code": "Bsb",
+      "kind": "Driftplats",
+      "x": 523243.3267999999,
+      "y": 6952643.0843
+    },
+    {
+      "name": "Berga",
+      "code": "Bg",
+      "kind": "Driftplats",
+      "x": 562422.1168999998,
+      "y": 6341964.921399999
+    },
+    {
+      "name": "Bergfors",
+      "code": "Bfs",
+      "kind": "Driftplats",
+      "x": 698504.5577999996,
+      "y": 7566978.273600001
+    },
+    {
+      "name": "Billeberga",
+      "code": "Bib",
+      "kind": "Driftplats",
+      "x": 374645.1880999999,
+      "y": 6194953.267999999
+    },
+    {
+      "name": "Billesholm",
+      "code": "Bih",
+      "kind": "Driftplats",
+      "x": 374008.38040000014,
+      "y": 6214199.637800001
+    },
+    {
+      "name": "Billingsfors",
+      "code": "Bfo",
+      "kind": "Driftplats",
+      "x": 341931.09779999964,
+      "y": 6541290.9024
+    },
+    {
+      "name": "Birsta",
+      "code": "Bia",
+      "kind": "Driftplats",
+      "x": 619553.9400000004,
+      "y": 6926212.614799999
+    },
+    {
+      "name": "Biskopstorp",
+      "code": "Btp",
+      "kind": "Driftplats",
+      "x": 369072.68939999957,
+      "y": 6291562.2531
+    },
+    {
+      "name": "Bispgården",
+      "code": "Bsg",
+      "kind": "Driftplats",
+      "x": 582014.1601,
+      "y": 6989816.6664
+    },
+    {
+      "name": "Bjurhem",
+      "code": "Bjh",
+      "kind": "Driftplats",
+      "x": 341177.31070000026,
+      "y": 6479630.3431
+    },
+    {
+      "name": "Bjurå",
+      "code": "Brå",
+      "kind": "Driftplats",
+      "x": 823472.2603000002,
+      "y": 7342345.0759
+    },
+    {
+      "name": "Bjuv",
+      "code": "Bjuv",
+      "kind": "Driftplats",
+      "x": 370013.32689999975,
+      "y": 6217241.725400001
+    },
+    {
+      "name": "Bjärka-Säby",
+      "code": "Bsä",
+      "kind": "Driftplats",
+      "x": 544162.7439000001,
+      "y": 6459093.4144
+    },
+    {
+      "name": "Bjärnum",
+      "code": "Bjm",
+      "kind": "Driftplats",
+      "x": 419958.29279999994,
+      "y": 6239282.8375
+    },
+    {
+      "name": "Bjästa",
+      "code": "Bja",
+      "kind": "Driftplats",
+      "x": 673138.8666000003,
+      "y": 7013808.854499999
+    },
+    {
+      "name": "Björbo",
+      "code": "Böo",
+      "kind": "Driftplats",
+      "x": 485088.4790000003,
+      "y": 6701905.791300001
+    },
+    {
+      "name": "Björkliden",
+      "code": "Bln",
+      "kind": "Driftplats",
+      "x": 651312.6558999997,
+      "y": 7592915.9602999985
+    },
+    {
+      "name": "Björna",
+      "code": "Bj",
+      "kind": "Driftplats",
+      "x": 678657.6032999996,
+      "y": 7052019.7086
+    },
+    {
+      "name": "Björneborg",
+      "code": "Bjb",
+      "kind": "Driftplats",
+      "x": 457256.2965000002,
+      "y": 6567500.725299999
+    },
+    {
+      "name": "Bjørnfjell",
+      "code": "Bjf",
+      "kind": "Driftplats",
+      "x": 626090.8328999998,
+      "y": 7594131.245499998
+    },
+    {
+      "name": "Björnkulla",
+      "code": "Bjn",
+      "kind": "Driftplats",
+      "x": 667231.3925999999,
+      "y": 6566411.7136
+    },
+    {
+      "name": "Björnlunda",
+      "code": "B",
+      "kind": "Driftplats",
+      "x": 623543.8130000001,
+      "y": 6549342.081499999
+    },
+    {
+      "name": "Björnsjö",
+      "code": "Bjö",
+      "kind": "Driftplats",
+      "x": 672120.1084000003,
+      "y": 7046803.2414
+    },
+    {
+      "name": "Blomstermåla",
+      "code": "Bma",
+      "kind": "Driftplats",
+      "x": 580968.8235999998,
+      "y": 6316026.8335
+    },
+    {
+      "name": "Blädinge",
+      "code": "Bld",
+      "kind": "Driftplats",
+      "x": 469758.55420000013,
+      "y": 6299848.201199999
+    },
+    {
+      "name": "Boda",
+      "code": "Boda",
+      "kind": "Driftplats",
+      "x": 606571.8805,
+      "y": 6830201.236900002
+    },
+    {
+      "name": "Boden",
+      "code": "Bdn",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 806103.9050000003,
+      "y": 7319941.66
+    },
+    {
+      "name": "Bodens södra",
+      "code": "Bds",
+      "kind": "Driftplats",
+      "x": 803323.2411000002,
+      "y": 7316529.535500001
+    },
+    {
+      "name": "Bodsjön",
+      "code": "Bön",
+      "kind": "Driftplats",
+      "x": 521474.7648,
+      "y": 6965008.171999998
+    },
+    {
+      "name": "Bofors",
+      "code": "Bof",
+      "kind": "Driftplats",
+      "x": 474235.2313000001,
+      "y": 6577286.736199999
+    },
+    {
+      "name": "Bohus",
+      "code": "Bhs",
+      "kind": "Driftplats",
+      "x": 322803.2405000003,
+      "y": 6416233.444499999
+    },
+    {
+      "name": "Bollnäs",
+      "code": "Bn",
+      "kind": "Driftplats",
+      "x": 574439.1709000003,
+      "y": 6802515.281399999
+    },
+    {
+      "name": "Bomansberget",
+      "code": "Bom",
+      "kind": "Driftplats",
+      "x": 622383.4255999997,
+      "y": 6725998.7508000005
+    },
+    {
+      "name": "Bor",
+      "code": "Bor",
+      "kind": "Driftplats",
+      "x": 449662.2117999997,
+      "y": 6330609.646299999
+    },
+    {
+      "name": "Borgstena",
+      "code": "Boa",
+      "kind": "Driftplats",
+      "x": 382285.4451000001,
+      "y": 6417408.2051
+    },
+    {
+      "name": "Borlänge",
+      "code": "Blg",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 523545,
+      "y": 6706983
+    },
+    {
+      "name": "Borås",
+      "code": "Bs",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 376822.0099999998,
+      "y": 6399951.5
+    },
+    {
+      "name": "Boxholm",
+      "code": "Bx",
+      "kind": "Driftplats",
+      "x": 503151.1172000002,
+      "y": 6450179.4384
+    },
+    {
+      "name": "Brattby",
+      "code": "Btb",
+      "kind": "Driftplats",
+      "x": 739348.8432,
+      "y": 7096271.0616
+    },
+    {
+      "name": "Brattheden",
+      "code": "Brh",
+      "kind": "Driftplats",
+      "x": 566314.9315999998,
+      "y": 6628370.8795
+    },
+    {
+      "name": "Brattsbacka",
+      "code": "Brs",
+      "kind": "Driftplats",
+      "x": 706197.9790000003,
+      "y": 7079794.4065000005
+    },
+    {
+      "name": "Bredviken",
+      "code": "Ben",
+      "kind": "Driftplats",
+      "x": 875454.6105000004,
+      "y": 7326239.850499999
+    },
+    {
+      "name": "Brista",
+      "code": "Bra",
+      "kind": "Driftplats",
+      "x": 661771.6288000001,
+      "y": 6611471.037699999
+    },
+    {
+      "name": "Bro",
+      "code": "Bro",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 649962.8200000003,
+      "y": 6599226.26
+    },
+    {
+      "name": "Broddbo",
+      "code": "Bdo",
+      "kind": "Driftplats",
+      "x": 582687.0290000001,
+      "y": 6650878.1084
+    },
+    {
+      "name": "Bromölla",
+      "code": "Bml",
+      "kind": "Driftplats",
+      "x": 467717.5773,
+      "y": 6213677.872099999
+    },
+    {
+      "name": "Bruksberget",
+      "code": "Bet",
+      "kind": "Driftplats",
+      "x": 849341.4500000002,
+      "y": 7341834.41
+    },
+    {
+      "name": "Brunflo",
+      "code": "Bf",
+      "kind": "Driftplats",
+      "x": 491537.45880000014,
+      "y": 6994069.305300001
+    },
+    {
+      "name": "Brunna",
+      "code": "Bna",
+      "kind": "Driftplats",
+      "x": 636031.6282000002,
+      "y": 6638467.3587
+    },
+    {
+      "name": "Bryngenäs",
+      "code": "Bgs",
+      "kind": "Driftplats",
+      "x": 351091.38320000004,
+      "y": 6420099.659700001
+    },
+    {
+      "name": "Brålanda",
+      "code": "Brl",
+      "kind": "Driftplats",
+      "x": 345780.60890000034,
+      "y": 6494112.0715
+    },
+    {
+      "name": "Bräcke",
+      "code": "Bä",
+      "kind": "Driftplats",
+      "x": 521331.2679000003,
+      "y": 6957809.2359
+    },
+    {
+      "name": "Bräkne-Hoby",
+      "code": "Bhb",
+      "kind": "Driftplats",
+      "x": 507191.4176000003,
+      "y": 6231831.3465
+    },
+    {
+      "name": "Brännarp",
+      "code": "Bp",
+      "kind": "Driftplats",
+      "x": 361218.5636999998,
+      "y": 6296111.386499999
+    },
+    {
+      "name": "Brännberg",
+      "code": "Brg",
+      "kind": "Driftplats",
+      "x": 784588.7257000003,
+      "y": 7309850.8136
+    },
+    {
+      "name": "Bränninge",
+      "code": "Bre",
+      "kind": "Driftplats",
+      "x": 650757.4987000003,
+      "y": 6558670.496300001
+    },
+    {
+      "name": "Brännland",
+      "code": "Brd",
+      "kind": "Driftplats",
+      "x": 748181.4680000003,
+      "y": 7093562.464899998
+    },
+    {
+      "name": "Byvalla",
+      "code": "By",
+      "kind": "Driftplats",
+      "x": 578166.6013000002,
+      "y": 6690900.75
+    },
+    {
+      "name": "Bålsta",
+      "code": "Bål",
+      "kind": "Driftplats",
+      "x": 643034.8391000004,
+      "y": 6606183.341600001
+    },
+    {
+      "name": "Båramo",
+      "code": "Bmo",
+      "kind": "Driftplats",
+      "x": 445316.17090000026,
+      "y": 6367565.8651
+    },
+    {
+      "name": "Båstad norra",
+      "code": "Bån",
+      "kind": "Driftplats",
+      "x": 370816.8850999996,
+      "y": 6256006.444
+    },
+    {
+      "name": "Bäckebron",
+      "code": "Bäb",
+      "kind": "Driftplats",
+      "x": 396673.74010000005,
+      "y": 6615078.792300001
+    },
+    {
+      "name": "Bäckefors",
+      "code": "Bäf",
+      "kind": "Driftplats",
+      "x": 335903.21389999986,
+      "y": 6521741.5768
+    },
+    {
+      "name": "Bälgviken",
+      "code": "Bgv",
+      "kind": "Driftplats",
+      "x": 583295.0910999998,
+      "y": 6569096.725299999
+    },
+    {
+      "name": "Charlottenberg",
+      "code": "Cg",
+      "kind": "Driftplats",
+      "x": 348852.6348000001,
+      "y": 6641483.2388
+    },
+    {
+      "name": "Copenhagen Airport",
+      "code": "Cph",
+      "kind": "Driftplats",
+      "x": 353498.17260000017,
+      "y": 6167540.9429
+    },
+    {
+      "name": "Dagarn",
+      "code": "Dn",
+      "kind": "Driftplats",
+      "x": 540107.8609999996,
+      "y": 6641392.0878
+    },
+    {
+      "name": "Daglösen",
+      "code": "Dgö",
+      "kind": "Driftplats",
+      "x": 454337.0197999999,
+      "y": 6611705.1008
+    },
+    {
+      "name": "Dala-Järna",
+      "code": "Dj",
+      "kind": "Driftplats",
+      "x": 465043.2614000002,
+      "y": 6712577.1877
+    },
+    {
+      "name": "Dalgränsen",
+      "code": "Dgn",
+      "kind": "Driftplats",
+      "x": 580130.6026999997,
+      "y": 6694927.210899999
+    },
+    {
+      "name": "Dals Långed",
+      "code": "Dld",
+      "kind": "Driftplats",
+      "x": 344925.05840000045,
+      "y": 6534649.7905
+    },
+    {
+      "name": "Dammstorp",
+      "code": "Dat",
+      "kind": "Driftplats",
+      "x": 392382.47580000013,
+      "y": 6185366.5304000005
+    },
+    {
+      "name": "Degerbäcken",
+      "code": "Dbn",
+      "kind": "Driftplats",
+      "x": 791978.6278999997,
+      "y": 7316923.911699999
+    },
+    {
+      "name": "Degerfors",
+      "code": "Dg",
+      "kind": "Driftplats",
+      "x": 468063.65859999973,
+      "y": 6565664.9398
+    },
+    {
+      "name": "Degermyr",
+      "code": "Dgm",
+      "kind": "Driftplats",
+      "x": 726167.7544999998,
+      "y": 7090908.479200002
+    },
+    {
+      "name": "Degerön",
+      "code": "D",
+      "kind": "Driftplats",
+      "x": 508774.19489999954,
+      "y": 6505855.0493
+    },
+    {
+      "name": "Dingle",
+      "code": "Dl",
+      "kind": "Driftplats",
+      "x": 300845.1546,
+      "y": 6492739.5459
+    },
+    {
+      "name": "Dingtuna",
+      "code": "Dt",
+      "kind": "Driftplats",
+      "x": 578513.8512000004,
+      "y": 6604517.8267
+    },
+    {
+      "name": "Diö norra",
+      "code": "Diö",
+      "kind": "Driftplats",
+      "x": 452221.04839999974,
+      "y": 6277149.732999999
+    },
+    {
+      "name": "Dockmyr",
+      "code": "Dk",
+      "kind": "Driftplats",
+      "x": 537490.5218000002,
+      "y": 6980745.4597
+    },
+    {
+      "name": "Dorotea",
+      "code": "Dta",
+      "kind": "Driftplats",
+      "x": 568092.0588999996,
+      "y": 7126537.316199999
+    },
+    {
+      "name": "Drömme",
+      "code": "Döe",
+      "kind": "Driftplats",
+      "x": 661647.2642000001,
+      "y": 7017564.074700002
+    },
+    {
+      "name": "Duvbo",
+      "code": "Duo",
+      "kind": "Driftplats",
+      "x": 666609.4404999996,
+      "y": 6585009.6456
+    },
+    {
+      "name": "Duved",
+      "code": "Du",
+      "kind": "Driftplats",
+      "x": 395944.3043999998,
+      "y": 7030707.966200002
+    },
+    {
+      "name": "Dynäs",
+      "code": "Dns",
+      "kind": "Driftplats",
+      "x": 638703.2840999998,
+      "y": 6984867.412700001
+    },
+    {
+      "name": "Dysjön",
+      "code": "Dy",
+      "kind": "Driftplats",
+      "x": 526444.7999999998,
+      "y": 6944246.4802
+    },
+    {
+      "name": "Dånviken",
+      "code": "Dån",
+      "kind": "Driftplats",
+      "x": 655068.4683999997,
+      "y": 6564358.986300001
+    },
+    {
+      "name": "Döljebro",
+      "code": "Döl",
+      "kind": "Driftplats",
+      "x": 591244.9446,
+      "y": 6763300.283600001
+    },
+    {
+      "name": "Ed",
+      "code": "Ed",
+      "kind": "Driftplats",
+      "x": 323378.02020000014,
+      "y": 6534469.2721
+    },
+    {
+      "name": "Edane",
+      "code": "En",
+      "kind": "Driftplats",
+      "x": 377644.5242999997,
+      "y": 6611788.2929
+    },
+    {
+      "name": "Edsvalla",
+      "code": "El",
+      "kind": "Driftplats",
+      "x": 398621.00650000013,
+      "y": 6589944.7818
+    },
+    {
+      "name": "Ekeby",
+      "code": "Eby",
+      "kind": "Driftplats",
+      "x": 654690.1843999997,
+      "y": 6629783.7938
+    },
+    {
+      "name": "Ekolsund",
+      "code": "Eko",
+      "kind": "Driftplats",
+      "x": 633720.1786000002,
+      "y": 6610819.3683
+    },
+    {
+      "name": "Eksjö",
+      "code": "Ek",
+      "kind": "Driftplats",
+      "x": 498533.8312999997,
+      "y": 6391278.360099999
+    },
+    {
+      "name": "Ekträsk",
+      "code": "Etk",
+      "kind": "Driftplats",
+      "x": 730891.7894000001,
+      "y": 7161054.918499999
+    },
+    {
+      "name": "Eldsberga",
+      "code": "Ea",
+      "kind": "Driftplats",
+      "x": 377056.70550000016,
+      "y": 6273649.1329
+    },
+    {
+      "name": "Emmaboda",
+      "code": "Em",
+      "kind": "Driftplats",
+      "x": 532757.8415000001,
+      "y": 6276320.9997000005
+    },
+    {
+      "name": "Enafors",
+      "code": "Ens",
+      "kind": "Driftplats",
+      "x": 366492.9919999996,
+      "y": 7020648.4553
+    },
+    {
+      "name": "Eneryda",
+      "code": "Era",
+      "kind": "Driftplats",
+      "x": 459574.6350999996,
+      "y": 6285064.4045
+    },
+    {
+      "name": "Enköping",
+      "code": "Ep",
+      "kind": "Driftplats",
+      "x": 617734.8673999999,
+      "y": 6613685.385199999
+    },
+    {
+      "name": "Enstaberga",
+      "code": "Ebg",
+      "kind": "Driftplats",
+      "x": 606992.2389000002,
+      "y": 6513805.16
+    },
+    {
+      "name": "Erikslund",
+      "code": "Ei",
+      "kind": "Driftplats",
+      "x": 546969.1886999998,
+      "y": 6933264.451699998
+    },
+    {
+      "name": "Erikstad",
+      "code": "Erk",
+      "kind": "Driftplats",
+      "x": 349669.96270000003,
+      "y": 6501916.613
+    },
+    {
+      "name": "Ervalla",
+      "code": "Er",
+      "kind": "Driftplats",
+      "x": 514052.6635999996,
+      "y": 6586510.249
+    },
+    {
+      "name": "Eskilstuna central",
+      "code": "Et",
+      "kind": "Driftplats",
+      "x": 585560.5774999997,
+      "y": 6582153.552300001
+    },
+    {
+      "name": "Eslöv",
+      "code": "E",
+      "kind": "Driftplats",
+      "x": 393870.3147,
+      "y": 6189311.5221
+    },
+    {
+      "name": "f.d. Köpingebro",
+      "code": "Köp",
+      "kind": "Driftplats",
+      "x": 432724.18180000037,
+      "y": 6146198.3728
+    },
+    {
+      "name": "Fagersta central",
+      "code": "Fgc",
+      "kind": "Driftplats",
+      "x": 545552.5749000004,
+      "y": 6650645.341600001
+    },
+    {
+      "name": "Falerum",
+      "code": "Fal",
+      "kind": "Driftplats",
+      "x": 571075.6328999996,
+      "y": 6445338.7761
+    },
+    {
+      "name": "Falkenberg personstation",
+      "code": "Fabp",
+      "kind": "Driftplats",
+      "x": 348348.7048000004,
+      "y": 6311190.6592
+    },
+    {
+      "name": "Falkenbergs godsstation",
+      "code": "Fabg",
+      "kind": "Driftplats",
+      "x": 346988.1588000003,
+      "y": 6309248.0043
+    },
+    {
+      "name": "Falköpings central",
+      "code": "F",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 415097.5,
+      "y": 6449865.960000001
+    },
+    {
+      "name": "Falun central",
+      "code": "Fln",
+      "kind": "Driftplats",
+      "x": 535138.4461000003,
+      "y": 6718768.011600001
+    },
+    {
+      "name": "Farsta strand",
+      "code": "Fas",
+      "kind": "Driftplats",
+      "x": 677069.5590000004,
+      "y": 6570532.6313000005
+    },
+    {
+      "name": "Fellingsbro",
+      "code": "Feb",
+      "kind": "Driftplats",
+      "x": 533751.6639999999,
+      "y": 6588403.087200001
+    },
+    {
+      "name": "Fillan",
+      "code": "Fil",
+      "kind": "Driftplats",
+      "x": 622899.4365999997,
+      "y": 6923634.1371
+    },
+    {
+      "name": "Finja",
+      "code": "Fin",
+      "kind": "Driftplats",
+      "x": 419002.4940999998,
+      "y": 6225728.436899999
+    },
+    {
+      "name": "Finnerödja",
+      "code": "Fa",
+      "kind": "Driftplats",
+      "x": 467922.5114000002,
+      "y": 6531962.064200001
+    },
+    {
+      "name": "Finnforsfallet",
+      "code": "Ffs",
+      "kind": "Driftplats",
+      "x": 753356.5100999996,
+      "y": 7194316.181899998
+    },
+    {
+      "name": "Fiskeby",
+      "code": "Fi",
+      "kind": "Driftplats",
+      "x": 565309.8311000001,
+      "y": 6496625.886700001
+    },
+    {
+      "name": "Fjälkinge",
+      "code": "Fki",
+      "kind": "Driftplats",
+      "x": 455199.5767999999,
+      "y": 6211171.6535
+    },
+    {
+      "name": "Fjällåsen",
+      "code": "Fjå",
+      "kind": "Driftplats",
+      "x": 717136.4677999998,
+      "y": 7498074.825300001
+    },
+    {
+      "name": "Flemingsberg",
+      "code": "Flb",
+      "kind": "Driftplats",
+      "x": 668245.4716999996,
+      "y": 6568194.5907000005
+    },
+    {
+      "name": "Flen",
+      "code": "Fle",
+      "kind": "Driftplats",
+      "x": 590933.7317000004,
+      "y": 6547463.070900001
+    },
+    {
+      "name": "Flens övre",
+      "code": "Fsö",
+      "kind": "Driftplats",
+      "x": 591458.7394000003,
+      "y": 6548002.965299999
+    },
+    {
+      "name": "Flisby",
+      "code": "Fls",
+      "kind": "Driftplats",
+      "x": 488156.7379999999,
+      "y": 6405116.775800001
+    },
+    {
+      "name": "Floby",
+      "code": "Fby",
+      "kind": "Driftplats",
+      "x": 401956.03259999957,
+      "y": 6445409.988299999
+    },
+    {
+      "name": "Floda",
+      "code": "Fd",
+      "kind": "Driftplats",
+      "x": 343239.6593000004,
+      "y": 6410613.564200001
+    },
+    {
+      "name": "Flädie",
+      "code": "Fl",
+      "kind": "Driftplats",
+      "x": 379030.7022000002,
+      "y": 6177011.099400001
+    },
+    {
+      "name": "Folkesta",
+      "code": "Fok",
+      "kind": "Driftplats",
+      "x": 580301.5317000002,
+      "y": 6585753.1446
+    },
+    {
+      "name": "Fors",
+      "code": "Fs",
+      "kind": "Driftplats",
+      "x": 572696.0948999999,
+      "y": 6675133.283299999
+    },
+    {
+      "name": "Forsbacka",
+      "code": "Fb",
+      "kind": "Driftplats",
+      "x": 603279.6754000001,
+      "y": 6724143.0745
+    },
+    {
+      "name": "Forserum",
+      "code": "Fm",
+      "kind": "Driftplats",
+      "x": 468659.6327999998,
+      "y": 6395196.709899999
+    },
+    {
+      "name": "Forsheda",
+      "code": "Fod",
+      "kind": "Driftplats",
+      "x": 429403.6573999999,
+      "y": 6336169.836300001
+    },
+    {
+      "name": "Forshem",
+      "code": "Fhm",
+      "kind": "Driftplats",
+      "x": 412400.47979999986,
+      "y": 6498512.0701
+    },
+    {
+      "name": "Forsmo",
+      "code": "Fsm",
+      "kind": "Driftplats",
+      "x": 609387.2187999999,
+      "y": 7016856.757300001
+    },
+    {
+      "name": "Frillesås",
+      "code": "Få",
+      "kind": "Driftplats",
+      "x": 329561.66060000006,
+      "y": 6356398.933700001
+    },
+    {
+      "name": "Frinnaryd",
+      "code": "Frd",
+      "kind": "Driftplats",
+      "x": 489499.9258000003,
+      "y": 6421861.242699999
+    },
+    {
+      "name": "Fristad",
+      "code": "Fra",
+      "kind": "Driftplats",
+      "x": 381738.0067999996,
+      "y": 6411249.440300001
+    },
+    {
+      "name": "Frånö",
+      "code": "Fnö",
+      "kind": "Driftplats",
+      "x": 643655.3410999998,
+      "y": 6978290.122900002
+    },
+    {
+      "name": "Frändefors",
+      "code": "Fdf",
+      "kind": "Driftplats",
+      "x": 341456.9116000002,
+      "y": 6486954.0013
+    },
+    {
+      "name": "Fränsta",
+      "code": "Ft",
+      "kind": "Driftplats",
+      "x": 560146.1014999999,
+      "y": 6929980.648200002
+    },
+    {
+      "name": "Frövi",
+      "code": "Fv",
+      "kind": "Driftplats",
+      "x": 520605.6568,
+      "y": 6592171.8035
+    },
+    {
+      "name": "Fågelsjö",
+      "code": "Feö",
+      "kind": "Driftplats",
+      "x": 483239.75100000016,
+      "y": 6852121.046300001
+    },
+    {
+      "name": "Fågelsta",
+      "code": "Fgl",
+      "kind": "Driftplats",
+      "x": 502105.96079999954,
+      "y": 6480499.799699999
+    },
+    {
+      "name": "Fåker",
+      "code": "Fkr",
+      "kind": "Driftplats",
+      "x": 478437.33029999956,
+      "y": 6984901.997099999
+    },
+    {
+      "name": "Fångsjöbacken",
+      "code": "Fgö",
+      "kind": "Driftplats",
+      "x": 590035.3498,
+      "y": 6992859.1919
+    },
+    {
+      "name": "Gagnef",
+      "code": "Gnf",
+      "kind": "Driftplats",
+      "x": 504447.96719999984,
+      "y": 6718090.909399999
+    },
+    {
+      "name": "Gamlarp",
+      "code": "Gmp",
+      "kind": "Driftplats",
+      "x": 481326.0159999998,
+      "y": 6393215.174799999
+    },
+    {
+      "name": "Gamleby",
+      "code": "Gal",
+      "kind": "Driftplats",
+      "x": 583570.2252000002,
+      "y": 6418107.2798
+    },
+    {
+      "name": "Gammelstad",
+      "code": "Gst",
+      "kind": "Driftplats",
+      "x": 823227.1941999998,
+      "y": 7297657.937600002
+    },
+    {
+      "name": "Gantofta",
+      "code": "Gan",
+      "kind": "Driftplats",
+      "x": 363333.40469999984,
+      "y": 6207019.0002999995
+    },
+    {
+      "name": "Garnudden",
+      "code": "Gau",
+      "kind": "Driftplats",
+      "x": 658266.7991000004,
+      "y": 6564869.528899999
+    },
+    {
+      "name": "Garsås",
+      "code": "Gså",
+      "kind": "Driftplats",
+      "x": 490198.8097000001,
+      "y": 6753150.401699999
+    },
+    {
+      "name": "Gastsjön",
+      "code": "Gsn",
+      "kind": "Driftplats",
+      "x": 543444.4008,
+      "y": 6981230.157200001
+    },
+    {
+      "name": "Geijersdal",
+      "code": "Gdl",
+      "kind": "Driftplats",
+      "x": 442132.9364,
+      "y": 6607186.497199999
+    },
+    {
+      "name": "Gemla",
+      "code": "Gm",
+      "kind": "Driftplats",
+      "x": 478436.2571999999,
+      "y": 6303053.640000001
+    },
+    {
+      "name": "Genevad",
+      "code": "Gnd",
+      "kind": "Driftplats",
+      "x": 379067.35890000034,
+      "y": 6271366.5483
+    },
+    {
+      "name": "Getå",
+      "code": "Gtå",
+      "kind": "Driftplats",
+      "x": 573285.0525000002,
+      "y": 6503617.137499999
+    },
+    {
+      "name": "Gideåbacka",
+      "code": "Gia",
+      "kind": "Driftplats",
+      "x": 704351.5787000004,
+      "y": 7029721.912599999
+    },
+    {
+      "name": "Gimonäs",
+      "code": "Gim",
+      "kind": "Driftplats",
+      "x": 761763.1730000004,
+      "y": 7084210.653999999
+    },
+    {
+      "name": "Gistad",
+      "code": "Gi",
+      "kind": "Driftplats",
+      "x": 553325.1111000003,
+      "y": 6482344.0833
+    },
+    {
+      "name": "Glommersträsk",
+      "code": "Glk",
+      "kind": "Driftplats",
+      "x": 715086.1453,
+      "y": 7245999.4969
+    },
+    {
+      "name": "Gnarp",
+      "code": "Gnp",
+      "kind": "Driftplats",
+      "x": 617264.5596000003,
+      "y": 6882378.441599999
+    },
+    {
+      "name": "Gnesta",
+      "code": "Gn",
+      "kind": "Driftplats",
+      "x": 632674.9446999999,
+      "y": 6547756.364
+    },
+    {
+      "name": "Gnosjö",
+      "code": "Gnö",
+      "kind": "Driftplats",
+      "x": 423883.5393000003,
+      "y": 6358015.751499999
+    },
+    {
+      "name": "Gottne",
+      "code": "Ge",
+      "kind": "Driftplats",
+      "x": 669111.6704000002,
+      "y": 7038616.425900001
+    },
+    {
+      "name": "Graninge",
+      "code": "Ga",
+      "kind": "Driftplats",
+      "x": 593962.2517999997,
+      "y": 6996979.8926
+    },
+    {
+      "name": "Gransjö",
+      "code": "Grs",
+      "kind": "Driftplats",
+      "x": 789775.3024000004,
+      "y": 7341775.5189
+    },
+    {
+      "name": "Granstanda",
+      "code": "Gad",
+      "kind": "Driftplats",
+      "x": 574838.6703000003,
+      "y": 6717317.1194
+    },
+    {
+      "name": "Grevaryd",
+      "code": "Grd",
+      "kind": "Driftplats",
+      "x": 475124.68479999993,
+      "y": 6334134.9465
+    },
+    {
+      "name": "Grillby",
+      "code": "Gib",
+      "kind": "Driftplats",
+      "x": 625985.0296,
+      "y": 6612213.0483
+    },
+    {
+      "name": "Grimstorp",
+      "code": "Gt",
+      "kind": "Driftplats",
+      "x": 481879.83999999985,
+      "y": 6379400.864399999
+    },
+    {
+      "name": "Gripenberg",
+      "code": "Gp",
+      "kind": "Driftplats",
+      "x": 492020,
+      "y": 6428556
+    },
+    {
+      "name": "Grohed",
+      "code": "Ghd",
+      "kind": "Driftplats",
+      "x": 317872.6660000002,
+      "y": 6465986.3795
+    },
+    {
+      "name": "Grums",
+      "code": "Gms",
+      "kind": "Driftplats",
+      "x": 392752.6217,
+      "y": 6580882.6753
+    },
+    {
+      "name": "Grundbro",
+      "code": "Gru",
+      "kind": "Driftplats",
+      "x": 619749.7188999997,
+      "y": 6574276.718800001
+    },
+    {
+      "name": "Grängesberg",
+      "code": "Gg",
+      "kind": "Driftplats",
+      "x": 500202.5250000004,
+      "y": 6659765.262700001
+    },
+    {
+      "name": "Gräsberg",
+      "code": "Gäg",
+      "kind": "Driftplats",
+      "x": 512365.9183,
+      "y": 6676419.909399999
+    },
+    {
+      "name": "Grästorp",
+      "code": "Gop",
+      "kind": "Driftplats",
+      "x": 364505.0259999996,
+      "y": 6468289.8806
+    },
+    {
+      "name": "Grönåsen",
+      "code": "Gnå",
+      "kind": "Driftplats",
+      "x": 619624.7912999997,
+      "y": 7025207.2914
+    },
+    {
+      "name": "Grötingen",
+      "code": "Grö",
+      "kind": "Driftplats",
+      "x": 524676.0796999997,
+      "y": 6969414.0251
+    },
+    {
+      "name": "Gullträsk",
+      "code": "Glt",
+      "kind": "Driftplats",
+      "x": 778330.3548999997,
+      "y": 7355637.709399998
+    },
+    {
+      "name": "Gussi",
+      "code": "Gui",
+      "kind": "Driftplats",
+      "x": 612542.1349999998,
+      "y": 6790710.839200001
+    },
+    {
+      "name": "Gustafs",
+      "code": "Gtf",
+      "kind": "Driftplats",
+      "x": 532713.1642000005,
+      "y": 6696292.6883000005
+    },
+    {
+      "name": "Gålnäs",
+      "code": "Gån",
+      "kind": "Driftplats",
+      "x": 680925.9347999999,
+      "y": 7022091.0918000005
+    },
+    {
+      "name": "Gårdsjö",
+      "code": "Gdö",
+      "kind": "Driftplats",
+      "x": 461582.6349999998,
+      "y": 6526003.434900001
+    },
+    {
+      "name": "Gårdsjön",
+      "code": "Gön",
+      "kind": "Driftplats",
+      "x": 623718.648,
+      "y": 6899243.4362
+    },
+    {
+      "name": "Gåsträsken",
+      "code": "Gen",
+      "kind": "Driftplats",
+      "x": 832282.0658999998,
+      "y": 7344697.0909
+    },
+    {
+      "name": "Gåvetorp",
+      "code": "Gåp",
+      "kind": "Driftplats",
+      "x": 474406.30900000036,
+      "y": 6311059.7059
+    },
+    {
+      "name": "Gäddmyr",
+      "code": "Gy",
+      "kind": "Driftplats",
+      "x": 719878.3169999998,
+      "y": 7516360.353700001
+    },
+    {
+      "name": "Gällivare",
+      "code": "Gv",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 746681.4400000004,
+      "y": 7456611
+    },
+    {
+      "name": "Gällö",
+      "code": "Gö",
+      "kind": "Driftplats",
+      "x": 511657.34530000016,
+      "y": 6975720.9923
+    },
+    {
+      "name": "Gärsnäs",
+      "code": "Gss",
+      "kind": "Driftplats",
+      "x": 448357.5329,
+      "y": 6155911.4728999995
+    },
+    {
+      "name": "Gävle",
+      "code": "Gä",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 620591.5,
+      "y": 6729887.16
+    },
+    {
+      "name": "Göteborg",
+      "code": "G",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 319556.5,
+      "y": 6401340
+    },
+    {
+      "name": "Habo",
+      "code": "Ho",
+      "kind": "Driftplats",
+      "x": 445295.64020000026,
+      "y": 6418664.4166
+    },
+    {
+      "name": "Hagaström",
+      "code": "Hg",
+      "kind": "Driftplats",
+      "x": 613013.6933000004,
+      "y": 6727867.3605
+    },
+    {
+      "name": "Hagge",
+      "code": "Hge",
+      "kind": "Driftplats",
+      "x": 517231.6037999997,
+      "y": 6666087.732100001
+    },
+    {
+      "name": "Hallandsås",
+      "code": "Has",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 367022.9391999999,
+      "y": 6246318.880000001
+    },
+    {
+      "name": "Hallsberg",
+      "code": "H",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 503005,
+      "y": 6546373
+    },
+    {
+      "name": "Hallstahammar",
+      "code": "Hh",
+      "kind": "Driftplats",
+      "x": 568849.0683000004,
+      "y": 6609122.322799999
+    },
+    {
+      "name": "Halmstad",
+      "code": "Hd",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 371291.5,
+      "y": 6281684.865
+    },
+    {
+      "name": "Hamrångefjärden",
+      "code": "Hfj",
+      "kind": "Driftplats",
+      "x": 611890.0515000001,
+      "y": 6753530.978
+    },
+    {
+      "name": "Handen",
+      "code": "Hnd",
+      "kind": "Driftplats",
+      "x": 679149.3364000004,
+      "y": 6562774.1458
+    },
+    {
+      "name": "Haparanda södra",
+      "code": "Hp",
+      "kind": "Driftplats",
+      "x": 916036.6553999996,
+      "y": 7331048.0397000015
+    },
+    {
+      "name": "Harasjön",
+      "code": "Han",
+      "kind": "Driftplats",
+      "x": 642989.5054000001,
+      "y": 7008068.944800001
+    },
+    {
+      "name": "Harmånger",
+      "code": "Håg",
+      "kind": "Driftplats",
+      "x": 619195.6116000004,
+      "y": 6865515.5956000015
+    },
+    {
+      "name": "Harrträsk",
+      "code": "Hrt",
+      "kind": "Driftplats",
+      "x": 748529.3628000002,
+      "y": 7446535.323100001
+    },
+    {
+      "name": "Harrå",
+      "code": "Har",
+      "kind": "Driftplats",
+      "x": 718591.0295000002,
+      "y": 7485441.559700001
+    },
+    {
+      "name": "Hasselfors",
+      "code": "Hs",
+      "kind": "Driftplats",
+      "x": 479737.63960000034,
+      "y": 6549636.225
+    },
+    {
+      "name": "Hasslarp",
+      "code": "Hlp",
+      "kind": "Driftplats",
+      "x": 364296.7954000002,
+      "y": 6223330.311000001
+    },
+    {
+      "name": "Heberg",
+      "code": "He",
+      "kind": "Driftplats",
+      "x": 356416.0499,
+      "y": 6305776.5472
+    },
+    {
+      "name": "Hedemora",
+      "code": "Hdm",
+      "kind": "Driftplats",
+      "x": 554215.7583999997,
+      "y": 6682348.396199999
+    },
+    {
+      "name": "Hednoret",
+      "code": "Ht",
+      "kind": "Driftplats",
+      "x": 798078.2455000002,
+      "y": 7315756.252700001
+    },
+    {
+      "name": "Helenelund",
+      "code": "Hel",
+      "kind": "Driftplats",
+      "x": 668181.432,
+      "y": 6589295.668099999
+    },
+    {
+      "name": "Helgum",
+      "code": "Hlm",
+      "kind": "Driftplats",
+      "x": 598246.9419,
+      "y": 7003907.485399999
+    },
+    {
+      "name": "Helsingborg",
+      "code": "Hb",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 357865.5,
+      "y": 6211199.5
+    },
+    {
+      "name": "Hemfosa",
+      "code": "Hfa",
+      "kind": "Driftplats",
+      "x": 670638.1473000003,
+      "y": 6551503.278100001
+    },
+    {
+      "name": "Hennan",
+      "code": "Hnn",
+      "kind": "Driftplats",
+      "x": 547229.6524,
+      "y": 6876944.431899998
+    },
+    {
+      "name": "Herrhult",
+      "code": "Hlt",
+      "kind": "Driftplats",
+      "x": 461135.8638000004,
+      "y": 6612357.843800001
+    },
+    {
+      "name": "Herrljunga",
+      "code": "Hr",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 381867.5,
+      "y": 6438779.460000001
+    },
+    {
+      "name": "Hestra",
+      "code": "Het",
+      "kind": "Driftplats",
+      "x": 415709.875,
+      "y": 6367597.3222
+    },
+    {
+      "name": "Hillared",
+      "code": "Hil",
+      "kind": "Driftplats",
+      "x": 389993.2149,
+      "y": 6388996.7305
+    },
+    {
+      "name": "Hilleby",
+      "code": "Hly",
+      "kind": "Driftplats",
+      "x": 618424.6469999999,
+      "y": 6734710.2026
+    },
+    {
+      "name": "Hillerstorp",
+      "code": "Hto",
+      "kind": "Driftplats",
+      "x": 432754.50600000005,
+      "y": 6352846.4059999995
+    },
+    {
+      "name": "Hindås",
+      "code": "Hås",
+      "kind": "Driftplats",
+      "x": 348115.7810000004,
+      "y": 6398662.641100001
+    },
+    {
+      "name": "Hinsnoret",
+      "code": "Hno",
+      "kind": "Driftplats",
+      "x": 534469.9609000003,
+      "y": 6711989.825200001
+    },
+    {
+      "name": "Hjulsbro",
+      "code": "Hj",
+      "kind": "Driftplats",
+      "x": 541900.9847999997,
+      "y": 6471168.083799999
+    },
+    {
+      "name": "Hjältevad",
+      "code": "Hvd",
+      "kind": "Driftplats",
+      "x": 520525.1133000003,
+      "y": 6387452.1724
+    },
+    {
+      "name": "Hofors",
+      "code": "Hfr",
+      "kind": "Driftplats",
+      "x": 569401.2006000001,
+      "y": 6715509.748400001
+    },
+    {
+      "name": "Holmfors",
+      "code": "Hfs",
+      "kind": "Driftplats",
+      "x": 804218.5421000002,
+      "y": 7325346.245299999
+    },
+    {
+      "name": "Holmsjö",
+      "code": "Hmö",
+      "kind": "Driftplats",
+      "x": 533462.9949000003,
+      "y": 6253176.2815000005
+    },
+    {
+      "name": "Holmsund",
+      "code": "Hod",
+      "kind": "Driftplats",
+      "x": 765155.6923000002,
+      "y": 7075712.879799999
+    },
+    {
+      "name": "Holmsveden",
+      "code": "Hdn",
+      "kind": "Driftplats",
+      "x": 592618.8304000003,
+      "y": 6777341.2775
+    },
+    {
+      "name": "Holmån",
+      "code": "Hoå",
+      "kind": "Driftplats",
+      "x": 632317.0270999996,
+      "y": 7031920.8191
+    },
+    {
+      "name": "Horndal",
+      "code": "Hl",
+      "kind": "Driftplats",
+      "x": 578122.5515000001,
+      "y": 6686194.488399999
+    },
+    {
+      "name": "Horred",
+      "code": "Hre",
+      "kind": "Driftplats",
+      "x": 348236.9017000003,
+      "y": 6359551.4669
+    },
+    {
+      "name": "Hoting",
+      "code": "Htg",
+      "kind": "Driftplats",
+      "x": 558504.9811000004,
+      "y": 7110380.668000001
+    },
+    {
+      "name": "Hova",
+      "code": "Hova",
+      "kind": "Driftplats",
+      "x": 454722.1244999999,
+      "y": 6524146.160800001
+    },
+    {
+      "name": "Hovmantorp",
+      "code": "Hvp",
+      "kind": "Driftplats",
+      "x": 508532.7026000004,
+      "y": 6293594.672900001
+    },
+    {
+      "name": "Hovsta",
+      "code": "Hsa",
+      "kind": "Driftplats",
+      "x": 512434.79279999994,
+      "y": 6578942.904200001
+    },
+    {
+      "name": "Huddinge",
+      "code": "Hu",
+      "kind": "Driftplats",
+      "x": 669882.2970000003,
+      "y": 6570087.5921
+    },
+    {
+      "name": "Hudiksvall",
+      "code": "Hkl",
+      "kind": "Driftplats",
+      "x": 611429.8805,
+      "y": 6845240.814800002
+    },
+    {
+      "name": "Hultsfred",
+      "code": "Hf",
+      "kind": "Driftplats",
+      "x": 550750.5210999995,
+      "y": 6371872.4322
+    },
+    {
+      "name": "Hundsjön",
+      "code": "Huö",
+      "kind": "Driftplats",
+      "x": 808690.1651999997,
+      "y": 7332807.642299999
+    },
+    {
+      "name": "Huskvarna",
+      "code": "Hka",
+      "kind": "Driftplats",
+      "x": 456280.5407999996,
+      "y": 6404717.5056
+    },
+    {
+      "name": "Hussjöby",
+      "code": "Hsy",
+      "kind": "Driftplats",
+      "x": 634180.6363000004,
+      "y": 6938013.760699999
+    },
+    {
+      "name": "Husums norra",
+      "code": "Humn",
+      "kind": "Driftplats",
+      "x": 708458.8528000005,
+      "y": 7031171.8741
+    },
+    {
+      "name": "Hyllstofta",
+      "code": "Hyl",
+      "kind": "Driftplats",
+      "x": 393466.42569999956,
+      "y": 6222147.4078
+    },
+    {
+      "name": "Håkantorp",
+      "code": "Håp",
+      "kind": "Driftplats",
+      "x": 377396.4623999996,
+      "y": 6464756.9112
+    },
+    {
+      "name": "Hålbergsliden",
+      "code": "Håb",
+      "kind": "Driftplats",
+      "x": 710075.8009000001,
+      "y": 7257151.1413
+    },
+    {
+      "name": "Hållsta",
+      "code": "Hål",
+      "kind": "Driftplats",
+      "x": 583079.5241999999,
+      "y": 6573831.423
+    },
+    {
+      "name": "Håmojåkk",
+      "code": "Håk",
+      "kind": "Driftplats",
+      "x": 722310.8631999996,
+      "y": 7476735.5918000005
+    },
+    {
+      "name": "Håsjö",
+      "code": "Hå",
+      "kind": "Driftplats",
+      "x": 564424.1427999996,
+      "y": 6988833.985399999
+    },
+    {
+      "name": "Häggsjön",
+      "code": "Hän",
+      "kind": "Driftplats",
+      "x": 640323.9855000004,
+      "y": 6941151.278499998
+    },
+    {
+      "name": "Häggvik",
+      "code": "Hgv",
+      "kind": "Driftplats",
+      "x": 666328.0460999999,
+      "y": 6593058.8983
+    },
+    {
+      "name": "Hällefors",
+      "code": "Hlf",
+      "kind": "Driftplats",
+      "x": 472931.3362999996,
+      "y": 6626703.5096
+    },
+    {
+      "name": "Hälleforsnäs",
+      "code": "Hnä",
+      "kind": "Driftplats",
+      "x": 585914.1953999996,
+      "y": 6559058.6066
+    },
+    {
+      "name": "Hällenyland",
+      "code": "Hnl",
+      "kind": "Driftplats",
+      "x": 643128.9707000004,
+      "y": 6944492.758499999
+    },
+    {
+      "name": "Hällnäs",
+      "code": "Hls",
+      "kind": "Driftplats",
+      "x": 723637.5807999996,
+      "y": 7139188.9221
+    },
+    {
+      "name": "Hälsingenybo",
+      "code": "Hnb",
+      "kind": "Driftplats",
+      "x": 543526.7210999997,
+      "y": 6882327.863499999
+    },
+    {
+      "name": "Hämrasviken",
+      "code": "Häb",
+      "kind": "Driftplats",
+      "x": 652786.9439000003,
+      "y": 7014175.771400001
+    },
+    {
+      "name": "Härad",
+      "code": "Häd",
+      "kind": "Driftplats",
+      "x": 608767.4512,
+      "y": 6581371.6445
+    },
+    {
+      "name": "Härnösands central",
+      "code": "Hsd",
+      "kind": "Driftplats",
+      "x": 650135.1085999999,
+      "y": 6948357.173300002
+    },
+    {
+      "name": "Härryda",
+      "code": "Häy",
+      "kind": "Driftplats",
+      "x": 339269.3543999996,
+      "y": 6397359.456599999
+    },
+    {
+      "name": "Hässleholm",
+      "code": "Hm",
+      "kind": "Driftplats",
+      "x": 423176.9687999999,
+      "y": 6224334.4375
+    },
+    {
+      "name": "Hästbo",
+      "code": "Hä",
+      "kind": "Driftplats",
+      "x": 580065.3428999996,
+      "y": 6702308.9497
+    },
+    {
+      "name": "Hästveda",
+      "code": "Hv",
+      "kind": "Driftplats",
+      "x": 434060.8602,
+      "y": 6238707.606699999
+    },
+    {
+      "name": "Högboda",
+      "code": "Hbd",
+      "kind": "Driftplats",
+      "x": 389933.8535000002,
+      "y": 6603732.3824000005
+    },
+    {
+      "name": "Högbränna",
+      "code": "Hbä",
+      "kind": "Driftplats",
+      "x": 718265.3616000004,
+      "y": 7078812.8259
+    },
+    {
+      "name": "Högbysjön",
+      "code": "Hög",
+      "kind": "Driftplats",
+      "x": 694832.8869000003,
+      "y": 7026342.198600002
+    },
+    {
+      "name": "Högdalen",
+      "code": "Hön",
+      "kind": "Driftplats",
+      "x": 673431.3382000001,
+      "y": 6572664.6501
+    },
+    {
+      "name": "Högsjö",
+      "code": "Hgö",
+      "kind": "Driftplats",
+      "x": 541471.0702999998,
+      "y": 6545851.1535
+    },
+    {
+      "name": "Hökmora",
+      "code": "Hma",
+      "kind": "Driftplats",
+      "x": 564428.9820999997,
+      "y": 6658894.646
+    },
+    {
+      "name": "Hölö",
+      "code": "Hlö",
+      "kind": "Driftplats",
+      "x": 645502.6074999999,
+      "y": 6545707.729800001
+    },
+    {
+      "name": "Hörle",
+      "code": "Hrl",
+      "kind": "Driftplats",
+      "x": 442925.98479999974,
+      "y": 6346627.8364
+    },
+    {
+      "name": "Hörnsjö",
+      "code": "Hsö",
+      "kind": "Driftplats",
+      "x": 721945.3119999999,
+      "y": 7082046.440200001
+    },
+    {
+      "name": "Hössjön",
+      "code": "Hös",
+      "kind": "Driftplats",
+      "x": 746003.6407000003,
+      "y": 7068170.0315999985
+    },
+    {
+      "name": "Höör",
+      "code": "Hö",
+      "kind": "Driftplats",
+      "x": 409007.38040000014,
+      "y": 6200099.198100001
+    },
+    {
+      "name": "Iggesund",
+      "code": "Id",
+      "kind": "Driftplats",
+      "x": 610269.4811000004,
+      "y": 6836365.058400001
+    },
+    {
+      "name": "Insjön",
+      "code": "In",
+      "kind": "Driftplats",
+      "x": 505151.0937000001,
+      "y": 6726661.1965
+    },
+    {
+      "name": "Isätra",
+      "code": "Ist",
+      "kind": "Driftplats",
+      "x": 597459.2068999996,
+      "y": 6645755.218699999
+    },
+    {
+      "name": "Jakobsberg",
+      "code": "Jkb",
+      "kind": "Driftplats",
+      "x": 660735.5481000002,
+      "y": 6590667.2763
+    },
+    {
+      "name": "Jakobshyttan",
+      "code": "Jho",
+      "kind": "Driftplats",
+      "x": 509216.4693,
+      "y": 6518689.078500001
+    },
+    {
+      "name": "Johannisberg",
+      "code": "Jbg",
+      "kind": "Driftplats",
+      "x": 552995.2368999999,
+      "y": 6930750.338799998
+    },
+    {
+      "name": "Jokkmokk",
+      "code": "Jk",
+      "kind": "Driftplats",
+      "x": 714266.4139999999,
+      "y": 7395894.892099999
+    },
+    {
+      "name": "Jonsered östra",
+      "code": "J",
+      "kind": "Driftplats",
+      "x": 332913.60140000004,
+      "y": 6404475.386700001
+    },
+    {
+      "name": "Jordbro",
+      "code": "Jbo",
+      "kind": "Driftplats",
+      "x": 678848.2791999998,
+      "y": 6560092.874600001
+    },
+    {
+      "name": "Jularbo",
+      "code": "Ju",
+      "kind": "Driftplats",
+      "x": 569815.0751,
+      "y": 6669708.895199999
+    },
+    {
+      "name": "Juån",
+      "code": "Jå",
+      "kind": "Driftplats",
+      "x": 529092.8618000001,
+      "y": 6915445.861200001
+    },
+    {
+      "name": "Jädersbruk",
+      "code": "Jbk",
+      "kind": "Driftplats",
+      "x": 545326.5691999998,
+      "y": 6585671.1361
+    },
+    {
+      "name": "Jämtlands Sikås",
+      "code": "Js",
+      "kind": "Driftplats",
+      "x": 510227.75349999964,
+      "y": 7055377.73
+    },
+    {
+      "name": "Järbo",
+      "code": "Jb",
+      "kind": "Driftplats",
+      "x": 587474.7642999999,
+      "y": 6732104.769300001
+    },
+    {
+      "name": "Järlebo",
+      "code": "Jlo",
+      "kind": "Driftplats",
+      "x": 652288.1573000001,
+      "y": 6669542.104499999
+    },
+    {
+      "name": "Järlåsa",
+      "code": "Jla",
+      "kind": "Driftplats",
+      "x": 623301.6875999998,
+      "y": 6640657.1318
+    },
+    {
+      "name": "Järna",
+      "code": "Jn",
+      "kind": "Driftplats",
+      "x": 647114.6370999999,
+      "y": 6553307.6371
+    },
+    {
+      "name": "Järneträsk",
+      "code": "Jnt",
+      "kind": "Driftplats",
+      "x": 763910.7278000005,
+      "y": 7291726.7809999995
+    },
+    {
+      "name": "Järpen",
+      "code": "Jpn",
+      "kind": "Driftplats",
+      "x": 423524.3077999996,
+      "y": 7024650.217
+    },
+    {
+      "name": "Järpås",
+      "code": "Jps",
+      "kind": "Driftplats",
+      "x": 381289.0099999998,
+      "y": 6472698.1523
+    },
+    {
+      "name": "Järvsö",
+      "code": "Jr",
+      "kind": "Driftplats",
+      "x": 561959.6172000002,
+      "y": 6843072.719700001
+    },
+    {
+      "name": "Jönköpings central",
+      "code": "Jö",
+      "kind": "Driftplats",
+      "x": 450336.3356999997,
+      "y": 6405015.817399999
+    },
+    {
+      "name": "Jönköpings godsbangård",
+      "code": "Jögb",
+      "kind": "Driftplats",
+      "x": 450819.5067999996,
+      "y": 6402744.4355
+    },
+    {
+      "name": "Jönåker",
+      "code": "Jår",
+      "kind": "Driftplats",
+      "x": 599817.8812999995,
+      "y": 6512758.8828
+    },
+    {
+      "name": "Jörn",
+      "code": "Jrn",
+      "kind": "Driftplats",
+      "x": 736500.1575999996,
+      "y": 7223815.828200001
+    },
+    {
+      "name": "Kaisepakte",
+      "code": "Kpe",
+      "kind": "Driftplats",
+      "x": 677561.3925000001,
+      "y": 7580913.521400001
+    },
+    {
+      "name": "Kalix östra",
+      "code": "Klx",
+      "kind": "Driftplats",
+      "x": 872584.9568999996,
+      "y": 7328219.592700001
+    },
+    {
+      "name": "Kalixfors",
+      "code": "Kx",
+      "kind": "Driftplats",
+      "x": 719948.6995000001,
+      "y": 7523294.708900001
+    },
+    {
+      "name": "Kallhäll",
+      "code": "Khä",
+      "kind": "Driftplats",
+      "x": 659138.0116999997,
+      "y": 6593729.196900001
+    },
+    {
+      "name": "Kalmar",
+      "code": "Kac",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 582342.5,
+      "y": 6281981.5
+    },
+    {
+      "name": "Karbenning",
+      "code": "Kbn",
+      "kind": "Driftplats",
+      "x": 559794.9408,
+      "y": 6656001.829500001
+    },
+    {
+      "name": "Karlsberg",
+      "code": "Ksg",
+      "kind": "Driftplats",
+      "x": 532519.6437999997,
+      "y": 6979210.469700001
+    },
+    {
+      "name": "Karlshamn",
+      "code": "Kh",
+      "kind": "Driftplats",
+      "x": 491695.9293999998,
+      "y": 6225809.078400001
+    },
+    {
+      "name": "Karlskrona",
+      "code": "Ck",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 538524,
+      "y": 6226634.525
+    },
+    {
+      "name": "Karlstad",
+      "code": "Ks",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 417095.6699999999,
+      "y": 6583239.08
+    },
+    {
+      "name": "Karsbäcken",
+      "code": "Krb",
+      "kind": "Driftplats",
+      "x": 736256.3935000002,
+      "y": 7206969.603500001
+    },
+    {
+      "name": "Karsjö",
+      "code": "Ksö",
+      "kind": "Driftplats",
+      "x": 566850.0345000001,
+      "y": 6834750.3572
+    },
+    {
+      "name": "Karungi",
+      "code": "Kri",
+      "kind": "Driftplats",
+      "x": 904688.5735999998,
+      "y": 7353161.5944
+    },
+    {
+      "name": "Katrineholms central",
+      "code": "K",
+      "kind": "Driftplats",
+      "x": 569475.6264000004,
+      "y": 6540293.980699999
+    },
+    {
+      "name": "Kattarp",
+      "code": "Ka",
+      "kind": "Driftplats",
+      "x": 361911.6536999997,
+      "y": 6223971.9165
+    },
+    {
+      "name": "Kattisträsk",
+      "code": "Kaä",
+      "kind": "Driftplats",
+      "x": 739889.2499000002,
+      "y": 7183365.7927
+    },
+    {
+      "name": "Kejsarbäcken",
+      "code": "Keb",
+      "kind": "Driftplats",
+      "x": 483318.60199999996,
+      "y": 6633170.3399
+    },
+    {
+      "name": "Keräsjoki",
+      "code": "Kei",
+      "kind": "Driftplats",
+      "x": 905741.1962000001,
+      "y": 7331845.806000002
+    },
+    {
+      "name": "Kil",
+      "code": "Kil",
+      "kind": "Driftplats",
+      "x": 404677.5410000002,
+      "y": 6597467.980699999
+    },
+    {
+      "name": "Kilafors",
+      "code": "Kls",
+      "kind": "Driftplats",
+      "x": 584316.9656999996,
+      "y": 6789495.093199998
+    },
+    {
+      "name": "Kilsmo",
+      "code": "Km",
+      "kind": "Driftplats",
+      "x": 530719.6749999998,
+      "y": 6547489.103399999
+    },
+    {
+      "name": "Kilvo",
+      "code": "Klv",
+      "kind": "Driftplats",
+      "x": 758493.1810999997,
+      "y": 7424755.1197
+    },
+    {
+      "name": "Kimstad",
+      "code": "Kms",
+      "kind": "Driftplats",
+      "x": 556409.0406,
+      "y": 6488819.2466
+    },
+    {
+      "name": "Kiruna",
+      "code": "Kra",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 717216.1900000004,
+      "y": 7537247.109999999
+    },
+    {
+      "name": "Kirunavaara",
+      "code": "Kia",
+      "kind": "Driftplats",
+      "x": 718979.1316,
+      "y": 7530001.546
+    },
+    {
+      "name": "Kisa",
+      "code": "Kisa",
+      "kind": "Driftplats",
+      "x": 537495.6810999997,
+      "y": 6427187.7487
+    },
+    {
+      "name": "Kjula",
+      "code": "Kju",
+      "kind": "Driftplats",
+      "x": 594512.3409000002,
+      "y": 6578783.2568
+    },
+    {
+      "name": "Klenshyttan",
+      "code": "Khy",
+      "kind": "Driftplats",
+      "x": 505802.26829999965,
+      "y": 6663430.7491999995
+    },
+    {
+      "name": "Klevshult",
+      "code": "Kvh",
+      "kind": "Driftplats",
+      "x": 445685.3613999998,
+      "y": 6356893.320900001
+    },
+    {
+      "name": "Klingerud",
+      "code": "Kud",
+      "kind": "Driftplats",
+      "x": 407146.48450000025,
+      "y": 6595066.388599999
+    },
+    {
+      "name": "Klippan",
+      "code": "Kl",
+      "kind": "Driftplats",
+      "x": 383776.7408999996,
+      "y": 6222204.105799999
+    },
+    {
+      "name": "Klockarbäcken",
+      "code": "Klbn",
+      "kind": "Driftplats",
+      "x": 752594.2153000003,
+      "y": 7091180.196899999
+    },
+    {
+      "name": "Knivsta",
+      "code": "Kn",
+      "kind": "Driftplats",
+      "x": 656716.7231999999,
+      "y": 6624123.627699999
+    },
+    {
+      "name": "Kode",
+      "code": "Kde",
+      "kind": "Driftplats",
+      "x": 313603.88659999985,
+      "y": 6426885.9717
+    },
+    {
+      "name": "Kolbäck",
+      "code": "Kbä",
+      "kind": "Driftplats",
+      "x": 569691.7346000001,
+      "y": 6603531.486400001
+    },
+    {
+      "name": "Koler",
+      "code": "Klr",
+      "kind": "Driftplats",
+      "x": 753977.4484000001,
+      "y": 7274792.2228999995
+    },
+    {
+      "name": "Kolforsen",
+      "code": "Kfn",
+      "kind": "Driftplats",
+      "x": 600608.6113999998,
+      "y": 6746729.816299999
+    },
+    {
+      "name": "Kolke",
+      "code": "Koe",
+      "kind": "Driftplats",
+      "x": 627013.0151000004,
+      "y": 6548662.572899999
+    },
+    {
+      "name": "Kolmården",
+      "code": "Kon",
+      "kind": "Driftplats",
+      "x": 579014.4379000003,
+      "y": 6504632.333900001
+    },
+    {
+      "name": "Kopparberg",
+      "code": "Kpg",
+      "kind": "Driftplats",
+      "x": 499256.5767000001,
+      "y": 6637228.281099999
+    },
+    {
+      "name": "Kopparåsen",
+      "code": "Kå",
+      "kind": "Driftplats",
+      "x": 643703.5380999995,
+      "y": 7594479.992899999
+    },
+    {
+      "name": "Kornsjö gränsen",
+      "code": "Ko",
+      "kind": "Driftplats",
+      "x": 307795.82830000017,
+      "y": 6538313.911800001
+    },
+    {
+      "name": "Korsnäs",
+      "code": "Koä",
+      "kind": "Driftplats",
+      "x": 539041.9453999996,
+      "y": 6716897.385
+    },
+    {
+      "name": "Korsträsk",
+      "code": "Ktä",
+      "kind": "Driftplats",
+      "x": 769351.0007999996,
+      "y": 7295111.3935
+    },
+    {
+      "name": "Kosjärv",
+      "code": "Koj",
+      "kind": "Driftplats",
+      "x": 856120.1319000004,
+      "y": 7334545.017200001
+    },
+    {
+      "name": "Koskivaara",
+      "code": "Kva",
+      "kind": "Driftplats",
+      "x": 764360.6184,
+      "y": 7404991.3664
+    },
+    {
+      "name": "Kramfors",
+      "code": "Krf",
+      "kind": "Driftplats",
+      "x": 641033.1158999996,
+      "y": 6980724.670299999
+    },
+    {
+      "name": "Krampen",
+      "code": "Krn",
+      "kind": "Driftplats",
+      "x": 532583.1884000003,
+      "y": 6622849.630899999
+    },
+    {
+      "name": "Kringlan",
+      "code": "Krl",
+      "kind": "Driftplats",
+      "x": 611180.3424000004,
+      "y": 6760831.215600001
+    },
+    {
+      "name": "Kristianstad",
+      "code": "Cr",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 445390.5,
+      "y": 6210639.5
+    },
+    {
+      "name": "Kristinehamn",
+      "code": "Khn",
+      "kind": "Driftplats",
+      "x": 449175.0575000001,
+      "y": 6575732.1336
+    },
+    {
+      "name": "Krokvik",
+      "code": "Kv",
+      "kind": "Driftplats",
+      "x": 712248.1509999996,
+      "y": 7543898.702500001
+    },
+    {
+      "name": "Kumla",
+      "code": "Kla",
+      "kind": "Driftplats",
+      "x": 508066.86930000037,
+      "y": 6554257.5493
+    },
+    {
+      "name": "Kungsbacka",
+      "code": "Kb",
+      "kind": "Driftplats",
+      "x": 324985.3454999998,
+      "y": 6375759.117900001
+    },
+    {
+      "name": "Kungsgården",
+      "code": "Kgd",
+      "kind": "Driftplats",
+      "x": 588762.1719000004,
+      "y": 6719589.759
+    },
+    {
+      "name": "Kungsängen",
+      "code": "Kän",
+      "kind": "Driftplats",
+      "x": 655937.6957999999,
+      "y": 6596529.7378
+    },
+    {
+      "name": "Kungsör",
+      "code": "Kör",
+      "kind": "Driftplats",
+      "x": 562582.8190000001,
+      "y": 6588208.6811
+    },
+    {
+      "name": "Kvicksund",
+      "code": "Ksu",
+      "kind": "Driftplats",
+      "x": 574233.9590999996,
+      "y": 6591794.385199999
+    },
+    {
+      "name": "Kvidinge",
+      "code": "Kvi",
+      "kind": "Driftplats",
+      "x": 378578.04250000045,
+      "y": 6223071.008199999
+    },
+    {
+      "name": "Kåbdalis",
+      "code": "Kåb",
+      "kind": "Driftplats",
+      "x": 724873.9397,
+      "y": 7345902.5088
+    },
+    {
+      "name": "Kågeröd",
+      "code": "Kd",
+      "kind": "Driftplats",
+      "x": 380461.73429999966,
+      "y": 6207550.147399999
+    },
+    {
+      "name": "Kållered",
+      "code": "Krd",
+      "kind": "Driftplats",
+      "x": 323684.1995000001,
+      "y": 6389172.361300001
+    },
+    {
+      "name": "Kälarne",
+      "code": "Kln",
+      "kind": "Driftplats",
+      "x": 554901.6837999998,
+      "y": 6983894.016899999
+    },
+    {
+      "name": "Källene",
+      "code": "Käe",
+      "kind": "Driftplats",
+      "x": 607962.3812999995,
+      "y": 6801741.7151999995
+    },
+    {
+      "name": "Källeryd",
+      "code": "Kä",
+      "kind": "Driftplats",
+      "x": 393570.94010000024,
+      "y": 6442898.9541
+    },
+    {
+      "name": "Kälvattnet",
+      "code": "Käv",
+      "kind": "Driftplats",
+      "x": 648615.3404000001,
+      "y": 7036002.572299998
+    },
+    {
+      "name": "Kärreberga",
+      "code": "Käb",
+      "kind": "Driftplats",
+      "x": 374694.88769999985,
+      "y": 6223310.3923
+    },
+    {
+      "name": "Kärrgruvan",
+      "code": "Kär",
+      "kind": "Driftplats",
+      "x": 552305.5043000001,
+      "y": 6661680.795299999
+    },
+    {
+      "name": "Kävlinge",
+      "code": "Kg",
+      "kind": "Driftplats",
+      "x": 381597.61429999955,
+      "y": 6184803.7684
+    },
+    {
+      "name": "Könsa",
+      "code": "Köa",
+      "kind": "Driftplats",
+      "x": 709272.5653999997,
+      "y": 7036000.4175
+    },
+    {
+      "name": "Köping",
+      "code": "Kp",
+      "kind": "Driftplats",
+      "x": 556981.5120999999,
+      "y": 6596850.626800001
+    },
+    {
+      "name": "Köpmannebro",
+      "code": "Kpm",
+      "kind": "Driftplats",
+      "x": 355841.78249999974,
+      "y": 6516961.9604
+    },
+    {
+      "name": "Laduberg",
+      "code": "Lrg",
+      "kind": "Driftplats",
+      "x": 779977.4649,
+      "y": 7302533.203899998
+    },
+    {
+      "name": "Laholm västra",
+      "code": "Laov",
+      "kind": "Driftplats",
+      "x": 376859.13150000013,
+      "y": 6263817.211300001
+    },
+    {
+      "name": "Lakaträsk",
+      "code": "Lkä",
+      "kind": "Driftplats",
+      "x": 774655.1287000002,
+      "y": 7364054.054299999
+    },
+    {
+      "name": "Landeryd",
+      "code": "Lrd",
+      "kind": "Driftplats",
+      "x": 394859.17140000034,
+      "y": 6327266.680199999
+    },
+    {
+      "name": "Landskrona Östra",
+      "code": "Lkö",
+      "kind": "Driftplats",
+      "x": 365961.9957999997,
+      "y": 6194705.1108
+    },
+    {
+      "name": "Lappberg",
+      "code": "Lab",
+      "kind": "Driftplats",
+      "x": 720952.8706,
+      "y": 7506951.073100001
+    },
+    {
+      "name": "Laxå",
+      "code": "Lå",
+      "kind": "Driftplats",
+      "x": 477855.07919999957,
+      "y": 6538883.047700001
+    },
+    {
+      "name": "Ledsgård",
+      "code": "Lgd",
+      "kind": "Driftplats",
+      "x": 325961.9031999996,
+      "y": 6379606.048
+    },
+    {
+      "name": "Lekarekulle",
+      "code": "Lek",
+      "kind": "Driftplats",
+      "x": 328699.3102000002,
+      "y": 6365681.614399999
+    },
+    {
+      "name": "Leksand",
+      "code": "Lsd",
+      "kind": "Driftplats",
+      "x": 500157.60539999977,
+      "y": 6733181.677300001
+    },
+    {
+      "name": "Leksboda",
+      "code": "Lea",
+      "kind": "Driftplats",
+      "x": 501102.2525000004,
+      "y": 6737906.4508
+    },
+    {
+      "name": "Lemmeströ",
+      "code": "Lmm",
+      "kind": "Driftplats",
+      "x": 396619.4057,
+      "y": 6150714.7524
+    },
+    {
+      "name": "Lerum",
+      "code": "Lr",
+      "kind": "Driftplats",
+      "x": 337638.73450000025,
+      "y": 6406217.932
+    },
+    {
+      "name": "Lessebo",
+      "code": "Lo",
+      "kind": "Driftplats",
+      "x": 515808.98199999984,
+      "y": 6289653.7739
+    },
+    {
+      "name": "Lidköping",
+      "code": "Lkp",
+      "kind": "Driftplats",
+      "x": 393075.26460000034,
+      "y": 6486330.8397
+    },
+    {
+      "name": "Lidlund",
+      "code": "Ldl",
+      "kind": "Driftplats",
+      "x": 736945.2471000003,
+      "y": 7215882.047499999
+    },
+    {
+      "name": "Lidnäs",
+      "code": "Lns",
+      "kind": "Driftplats",
+      "x": 475758.7849000003,
+      "y": 6325253.452299999
+    },
+    {
+      "name": "Limmared",
+      "code": "Lme",
+      "kind": "Driftplats",
+      "x": 401397.6174999997,
+      "y": 6378182.999
+    },
+    {
+      "name": "Linaälv",
+      "code": "Lin",
+      "kind": "Driftplats",
+      "x": 725812.1087999996,
+      "y": 7469540.5348000005
+    },
+    {
+      "name": "Linddalen",
+      "code": "Lln",
+      "kind": "Driftplats",
+      "x": 486737.73259999976,
+      "y": 6541344.4683
+    },
+    {
+      "name": "Lindekullen",
+      "code": "Lkn",
+      "kind": "Driftplats",
+      "x": 505632.30040000007,
+      "y": 6457139.5715
+    },
+    {
+      "name": "Lindesberg",
+      "code": "Ld",
+      "kind": "Driftplats",
+      "x": 512910.42980000004,
+      "y": 6606268.771199999
+    },
+    {
+      "name": "Lindome",
+      "code": "Ldo",
+      "kind": "Driftplats",
+      "x": 325322.3507000003,
+      "y": 6385268.773499999
+    },
+    {
+      "name": "Linghem",
+      "code": "Lgm",
+      "kind": "Driftplats",
+      "x": 545841.0100999996,
+      "y": 6477553.642100001
+    },
+    {
+      "name": "Linköpings central",
+      "code": "Lp",
+      "kind": "Driftplats",
+      "x": 536477.1294999998,
+      "y": 6475317.762399999
+    },
+    {
+      "name": "Lit",
+      "code": "Lit",
+      "kind": "Driftplats",
+      "x": 492822.6202999996,
+      "y": 7021074.6369
+    },
+    {
+      "name": "Ljung",
+      "code": "Lju",
+      "kind": "Driftplats",
+      "x": 384899.60830000043,
+      "y": 6428865.014599999
+    },
+    {
+      "name": "Ljungskile",
+      "code": "Lj",
+      "kind": "Driftplats",
+      "x": 319191.90110000037,
+      "y": 6457782.2247
+    },
+    {
+      "name": "Ljusdal",
+      "code": "Ls",
+      "kind": "Driftplats",
+      "x": 557756.6278999997,
+      "y": 6855374.8915
+    },
+    {
+      "name": "Ljuså",
+      "code": "Lså",
+      "kind": "Driftplats",
+      "x": 799377.0696999999,
+      "y": 7333233.470400002
+    },
+    {
+      "name": "Lomma",
+      "code": "Lma",
+      "kind": "Driftplats",
+      "x": 378893.8892000001,
+      "y": 6171143.4618999995
+    },
+    {
+      "name": "Lomselenäs",
+      "code": "Lms",
+      "kind": "Driftplats",
+      "x": 623769.1668999996,
+      "y": 7235082.952599999
+    },
+    {
+      "name": "Losesjön",
+      "code": "Lsn",
+      "kind": "Driftplats",
+      "x": 606466.1827999996,
+      "y": 6810143.1558
+    },
+    {
+      "name": "Loster",
+      "code": "Ltr",
+      "kind": "Driftplats",
+      "x": 549817.5636999998,
+      "y": 6867820.5975
+    },
+    {
+      "name": "Lottefors",
+      "code": "Lot",
+      "kind": "Driftplats",
+      "x": 575330.1754000001,
+      "y": 6810406.5447
+    },
+    {
+      "name": "Lubboträsk",
+      "code": "Luä",
+      "kind": "Driftplats",
+      "x": 736094.3949999996,
+      "y": 7168495.545299999
+    },
+    {
+      "name": "Ludvika",
+      "code": "La",
+      "kind": "Driftplats",
+      "x": 510131.3744999999,
+      "y": 6668116.710000001
+    },
+    {
+      "name": "Luleå",
+      "code": "Le",
+      "kind": "Driftplats",
+      "x": 829951.2839000002,
+      "y": 7292377.976799998
+    },
+    {
+      "name": "Lund c",
+      "code": "Lu",
+      "kind": "Driftplats",
+      "x": 386051.03610000014,
+      "y": 6174998.9716
+    },
+    {
+      "name": "Lundby",
+      "code": "Lub",
+      "kind": "Driftplats",
+      "x": 608634.7783000004,
+      "y": 6614524.5217
+    },
+    {
+      "name": "Lustån",
+      "code": "Luå",
+      "kind": "Driftplats",
+      "x": 555816.1496000001,
+      "y": 6678032.2861
+    },
+    {
+      "name": "Lycksele",
+      "code": "Ly",
+      "kind": "Driftplats",
+      "x": 675552.9884000001,
+      "y": 7168318.803100001
+    },
+    {
+      "name": "Lyrestad",
+      "code": "Lyd",
+      "kind": "Driftplats",
+      "x": 445493.0173000004,
+      "y": 6518716.7753
+    },
+    {
+      "name": "Lysvik",
+      "code": "Lyv",
+      "kind": "Driftplats",
+      "x": 396190.01549999975,
+      "y": 6654634.4871
+    },
+    {
+      "name": "Långsele",
+      "code": "Lsl",
+      "kind": "Driftplats",
+      "x": 604065.9869999997,
+      "y": 7006918.8719
+    },
+    {
+      "name": "Långsjön",
+      "code": "Lsj",
+      "kind": "Driftplats",
+      "x": 559795.8413000004,
+      "y": 6717322.2261
+    },
+    {
+      "name": "Långträsk",
+      "code": "Ltk",
+      "kind": "Driftplats",
+      "x": 747853.7686999999,
+      "y": 7261005.922600001
+    },
+    {
+      "name": "Långvattnet",
+      "code": "Lnv",
+      "kind": "Driftplats",
+      "x": 684646.1791000003,
+      "y": 7063719.743299998
+    },
+    {
+      "name": "Långviksmon",
+      "code": "Lmn",
+      "kind": "Driftplats",
+      "x": 682899.2492000004,
+      "y": 7061443.6581000015
+    },
+    {
+      "name": "Läggesta",
+      "code": "Lg",
+      "kind": "Driftplats",
+      "x": 623713.0854000002,
+      "y": 6569627.7195999995
+    },
+    {
+      "name": "Lästringe",
+      "code": "Lre",
+      "kind": "Driftplats",
+      "x": 634167.6061000004,
+      "y": 6528481.2532
+    },
+    {
+      "name": "Löcknamon",
+      "code": "Lmo",
+      "kind": "Driftplats",
+      "x": 504102.49810000043,
+      "y": 6530408.770500001
+    },
+    {
+      "name": "Lörstrand",
+      "code": "Lö",
+      "kind": "Driftplats",
+      "x": 561725.4859999996,
+      "y": 6836720.4586
+    },
+    {
+      "name": "Maj",
+      "code": "Maj",
+      "kind": "Driftplats",
+      "x": 624790.9689999996,
+      "y": 6902462.7853999995
+    },
+    {
+      "name": "Malmby",
+      "code": "Mby",
+      "kind": "Driftplats",
+      "x": 616784.9001000002,
+      "y": 6580147.685799999
+    },
+    {
+      "name": "Malmbäck",
+      "code": "Mbä",
+      "kind": "Driftplats",
+      "x": 467731.53920000046,
+      "y": 6381857.9352
+    },
+    {
+      "name": "Malmsjö",
+      "code": "Msj",
+      "kind": "Driftplats",
+      "x": 657983.3025000002,
+      "y": 6560482.3291
+    },
+    {
+      "name": "Malmö",
+      "code": "M",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 373119.5099999998,
+      "y": 6162111.4399999995
+    },
+    {
+      "name": "Malung",
+      "code": "Mlg",
+      "kind": "Driftplats",
+      "x": 429585.93680000026,
+      "y": 6728204.9976
+    },
+    {
+      "name": "Mantorp",
+      "code": "Mt",
+      "kind": "Driftplats",
+      "x": 516862.5974000003,
+      "y": 6467488.4573
+    },
+    {
+      "name": "Maria",
+      "code": "Mia",
+      "kind": "Driftplats",
+      "x": 357149.05429999996,
+      "y": 6216574.008199999
+    },
+    {
+      "name": "Mariannelund",
+      "code": "Mnd",
+      "kind": "Driftplats",
+      "x": 534940.7955999998,
+      "y": 6386135.090600001
+    },
+    {
+      "name": "Mariestad",
+      "code": "Mst",
+      "kind": "Driftplats",
+      "x": 431984.9956,
+      "y": 6508532.9081
+    },
+    {
+      "name": "Markaryd",
+      "code": "Mrd",
+      "kind": "Driftplats",
+      "x": 413353.199,
+      "y": 6258122.3956
+    },
+    {
+      "name": "Marma",
+      "code": "Mrm",
+      "kind": "Driftplats",
+      "x": 633055.7218000004,
+      "y": 6707324.989399999
+    },
+    {
+      "name": "Marmaverken",
+      "code": "Me",
+      "kind": "Driftplats",
+      "x": 600247.0004000003,
+      "y": 6794581.5493
+    },
+    {
+      "name": "Medskogsheden",
+      "code": "Msn",
+      "kind": "Driftplats",
+      "x": 592501.7602000004,
+      "y": 6740737.575999999
+    },
+    {
+      "name": "Mellansel",
+      "code": "Msl",
+      "kind": "Driftplats",
+      "x": 664981.2412,
+      "y": 7037562.130899999
+    },
+    {
+      "name": "Mellansjö",
+      "code": "Msö",
+      "kind": "Driftplats",
+      "x": 535372.3384999996,
+      "y": 6908662.971500002
+    },
+    {
+      "name": "Mellby",
+      "code": "Mlb",
+      "kind": "Driftplats",
+      "x": 421402.6229999997,
+      "y": 6215136.5943
+    },
+    {
+      "name": "Mellerud",
+      "code": "Ml",
+      "kind": "Driftplats",
+      "x": 353115.0926000001,
+      "y": 6509638.775900001
+    },
+    {
+      "name": "Mellösa",
+      "code": "Mlö",
+      "kind": "Driftplats",
+      "x": 589337.7302999999,
+      "y": 6552327.5386
+    },
+    {
+      "name": "Mertainen",
+      "code": "Mtn",
+      "kind": "Driftplats",
+      "x": 746960.8811999997,
+      "y": 7519203.678300001
+    },
+    {
+      "name": "Meselefors",
+      "code": "Mlf",
+      "kind": "Driftplats",
+      "x": 587439.5800999999,
+      "y": 7147630.9602999985
+    },
+    {
+      "name": "Mjölby",
+      "code": "My",
+      "kind": "Driftplats",
+      "x": 507729.46410000045,
+      "y": 6464595.169500001
+    },
+    {
+      "name": "Mo grindar",
+      "code": "Mog",
+      "kind": "Driftplats",
+      "x": 592741.1091,
+      "y": 6757546.5447
+    },
+    {
+      "name": "Mobodarne",
+      "code": "Mb",
+      "kind": "Driftplats",
+      "x": 592311.0728000002,
+      "y": 6795250.323899999
+    },
+    {
+      "name": "Mockfjärd",
+      "code": "Mfj",
+      "kind": "Driftplats",
+      "x": 497857.19290000014,
+      "y": 6706724.5045
+    },
+    {
+      "name": "Moheda",
+      "code": "Mo",
+      "kind": "Driftplats",
+      "x": 474280.50850000046,
+      "y": 6317809.773800001
+    },
+    {
+      "name": "Moholm",
+      "code": "Mh",
+      "kind": "Driftplats",
+      "x": 444231.4124999996,
+      "y": 6496706.3961
+    },
+    {
+      "name": "Mora",
+      "code": "Mra",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 475836.5,
+      "y": 6763231.742699999
+    },
+    {
+      "name": "Moradal",
+      "code": "Mdl",
+      "kind": "Driftplats",
+      "x": 528152.7015000004,
+      "y": 6937114.408300001
+    },
+    {
+      "name": "Morgongåva",
+      "code": "Må",
+      "kind": "Driftplats",
+      "x": 609615.9853999997,
+      "y": 6645562.4627
+    },
+    {
+      "name": "Morjärv",
+      "code": "Mjv",
+      "kind": "Driftplats",
+      "x": 847657.7388000004,
+      "y": 7349076.331900001
+    },
+    {
+      "name": "Morshyttan",
+      "code": "Mrs",
+      "kind": "Driftplats",
+      "x": 576109.2131000003,
+      "y": 6681368.425100001
+    },
+    {
+      "name": "Moskosel",
+      "code": "Mos",
+      "kind": "Driftplats",
+      "x": 701701.7949999999,
+      "y": 7313920.123399999
+    },
+    {
+      "name": "Mosselund",
+      "code": "Mud",
+      "kind": "Driftplats",
+      "x": 428704.8663999997,
+      "y": 6230696.952400001
+    },
+    {
+      "name": "Mosås",
+      "code": "Ms",
+      "kind": "Driftplats",
+      "x": 509292.8010999998,
+      "y": 6562090.101199999
+    },
+    {
+      "name": "Motala central",
+      "code": "Mot",
+      "kind": "Driftplats",
+      "x": 502818.3669999996,
+      "y": 6488547.4943
+    },
+    {
+      "name": "Mullsjö",
+      "code": "Mu",
+      "kind": "Driftplats",
+      "x": 433727.7246000003,
+      "y": 6419801.016100001
+    },
+    {
+      "name": "Munkedal",
+      "code": "Mkl",
+      "kind": "Driftplats",
+      "x": 306244.1771999998,
+      "y": 6485249.176000001
+    },
+    {
+      "name": "Munktorp",
+      "code": "Morp",
+      "kind": "Driftplats",
+      "x": 564143.1453999998,
+      "y": 6599978.1044
+    },
+    {
+      "name": "Murjek",
+      "code": "Mk",
+      "kind": "Driftplats",
+      "x": 761526.9549000002,
+      "y": 7386207.759
+    },
+    {
+      "name": "Myra",
+      "code": "Myra",
+      "kind": "Driftplats",
+      "x": 605756.6568999998,
+      "y": 6820819.3314
+    },
+    {
+      "name": "Myrbacken",
+      "code": "Myn",
+      "kind": "Driftplats",
+      "x": 658022.1349,
+      "y": 6620673.9812
+    },
+    {
+      "name": "Myrheden",
+      "code": "Mhn",
+      "kind": "Driftplats",
+      "x": 742992.5625,
+      "y": 7251891.300500002
+    },
+    {
+      "name": "Månsarp",
+      "code": "Måp",
+      "kind": "Driftplats",
+      "x": 444558.2039999999,
+      "y": 6390578.356899999
+    },
+    {
+      "name": "Märsta",
+      "code": "Mr",
+      "kind": "Driftplats",
+      "x": 661368.6277000001,
+      "y": 6613430.443299999
+    },
+    {
+      "name": "Mölnbo",
+      "code": "Mö",
+      "kind": "Driftplats",
+      "x": 638731.7427000003,
+      "y": 6547840.631899999
+    },
+    {
+      "name": "Mölndals nedre",
+      "code": "Mdn",
+      "kind": "Driftplats",
+      "x": 322122.48500000034,
+      "y": 6394400.839199999
+    },
+    {
+      "name": "Mölndals övre",
+      "code": "Mdö",
+      "kind": "Driftplats",
+      "x": 322872.53830000013,
+      "y": 6394565.6008
+    },
+    {
+      "name": "Mölnlycke",
+      "code": "Myk",
+      "kind": "Driftplats",
+      "x": 328090.65950000007,
+      "y": 6394181.4197
+    },
+    {
+      "name": "Mönsterås",
+      "code": "Mss",
+      "kind": "Driftplats",
+      "x": 587792.4944000002,
+      "y": 6322805.5572
+    },
+    {
+      "name": "Mörarp",
+      "code": "Mör",
+      "kind": "Driftplats",
+      "x": 367582.1303000003,
+      "y": 6214283.8751
+    },
+    {
+      "name": "Mörlunda",
+      "code": "Möa",
+      "kind": "Driftplats",
+      "x": 552726.8059,
+      "y": 6353613.1644
+    },
+    {
+      "name": "Mörrum",
+      "code": "Mru",
+      "kind": "Driftplats",
+      "x": 484041.5708999997,
+      "y": 6226911.850299999
+    },
+    {
+      "name": "Mörsil",
+      "code": "Mi",
+      "kind": "Driftplats",
+      "x": 432728.8995000003,
+      "y": 7020672.3462000005
+    },
+    {
+      "name": "Mörtsal",
+      "code": "Möl",
+      "kind": "Driftplats",
+      "x": 649275.8781000003,
+      "y": 6964750.6065
+    },
+    {
+      "name": "Nacksta",
+      "code": "Nta",
+      "kind": "Driftplats",
+      "x": 616167.5757999998,
+      "y": 6920597.885899998
+    },
+    {
+      "name": "Nattavaara",
+      "code": "Ntv",
+      "kind": "Driftplats",
+      "x": 761733.1886999998,
+      "y": 7416473.923500001
+    },
+    {
+      "name": "Nedansjö",
+      "code": "Nsö",
+      "kind": "Driftplats",
+      "x": 595827.1862000003,
+      "y": 6917296.826099999
+    },
+    {
+      "name": "Nelhammar",
+      "code": "Nl",
+      "kind": "Driftplats",
+      "x": 578117.0744000003,
+      "y": 6439472.6372
+    },
+    {
+      "name": "Niemisel",
+      "code": "Nml",
+      "kind": "Driftplats",
+      "x": 816898.3782000002,
+      "y": 7340767.4399
+    },
+    {
+      "name": "Njurundabommen",
+      "code": "Njb",
+      "kind": "Driftplats",
+      "x": 623410.1029000003,
+      "y": 6906210.469900001
+    },
+    {
+      "name": "Nolby",
+      "code": "Nly",
+      "kind": "Driftplats",
+      "x": 623257.3019000003,
+      "y": 6908618.836100001
+    },
+    {
+      "name": "Norberg",
+      "code": "Nbg",
+      "kind": "Driftplats",
+      "x": 551771.6676000003,
+      "y": 6658757.635199999
+    },
+    {
+      "name": "Nordmaling",
+      "code": "Nog",
+      "kind": "Driftplats",
+      "x": 722384.5423999997,
+      "y": 7057829.9494
+    },
+    {
+      "name": "Norra Sunderbyn",
+      "code": "Sby",
+      "kind": "Driftplats",
+      "x": 814763.6305,
+      "y": 7303477.870499998
+    },
+    {
+      "name": "Norra Valbo",
+      "code": "Nvl",
+      "kind": "Driftplats",
+      "x": 610043.7970000003,
+      "y": 6726767.403000001
+    },
+    {
+      "name": "Norrfors",
+      "code": "Nrs",
+      "kind": "Driftplats",
+      "x": 697098.7986000003,
+      "y": 7077439
+    },
+    {
+      "name": "Norrhög",
+      "code": "Ng",
+      "kind": "Driftplats",
+      "x": 534209.7010000004,
+      "y": 6901008.2489
+    },
+    {
+      "name": "Norrköpings central",
+      "code": "Nr",
+      "kind": "Driftplats",
+      "x": 568684.5098000001,
+      "y": 6495704.303200001
+    },
+    {
+      "name": "Norrmjöle",
+      "code": "Noe",
+      "kind": "Driftplats",
+      "x": 751293.0255000005,
+      "y": 7073806.565299999
+    },
+    {
+      "name": "Norrsjön",
+      "code": "Non",
+      "kind": "Driftplats",
+      "x": 728177.5986000001,
+      "y": 7058781.2841
+    },
+    {
+      "name": "Norsesund västra",
+      "code": "Ndv",
+      "kind": "Driftplats",
+      "x": 347749.06209999975,
+      "y": 6415881.378900001
+    },
+    {
+      "name": "Notviken",
+      "code": "Nvn",
+      "kind": "Driftplats",
+      "x": 827454.4461000003,
+      "y": 7295076.694499999
+    },
+    {
+      "name": "Nuortikon",
+      "code": "Nrt",
+      "kind": "Driftplats",
+      "x": 754710.6870999997,
+      "y": 7430307.407499999
+    },
+    {
+      "name": "Nybro",
+      "code": "Nyb",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 556860,
+      "y": 6288938
+    },
+    {
+      "name": "Nyckelsjön",
+      "code": "Nsj",
+      "kind": "Driftplats",
+      "x": 606968.6524999999,
+      "y": 6551324.159600001
+    },
+    {
+      "name": "Nyfors",
+      "code": "Nyf",
+      "kind": "Driftplats",
+      "x": 773862.7125000004,
+      "y": 7296333.461800002
+    },
+    {
+      "name": "Nyhem",
+      "code": "Ny",
+      "kind": "Driftplats",
+      "x": 531180.8158,
+      "y": 6973692.526299998
+    },
+    {
+      "name": "Nykroppa",
+      "code": "Nka",
+      "kind": "Driftplats",
+      "x": 460532.77639999986,
+      "y": 6609918.594699999
+    },
+    {
+      "name": "Nykvarn",
+      "code": "Nkv",
+      "kind": "Driftplats",
+      "x": 638995.3793000001,
+      "y": 6562478.336999999
+    },
+    {
+      "name": "Nyköping södra",
+      "code": "Nks",
+      "kind": "Driftplats",
+      "x": 615779.5788000003,
+      "y": 6513671.191500001
+    },
+    {
+      "name": "Nyköpings central",
+      "code": "Nk",
+      "kind": "Driftplats",
+      "x": 615536.1487999996,
+      "y": 6514672.8069
+    },
+    {
+      "name": "Nynäshamn",
+      "code": "Nyh",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 669727.5449999999,
+      "y": 6534653.7169
+    },
+    {
+      "name": "Nälden",
+      "code": "Nä",
+      "kind": "Driftplats",
+      "x": 462672.5604999997,
+      "y": 7024658.048900001
+    },
+    {
+      "name": "Näsberg",
+      "code": "Nb",
+      "kind": "Driftplats",
+      "x": 768517.1131999996,
+      "y": 7373479.182100002
+    },
+    {
+      "name": "Nässjö central",
+      "code": "N",
+      "kind": "Driftplats",
+      "x": 481815.50380000006,
+      "y": 6389919.5211
+    },
+    {
+      "name": "Nättraby",
+      "code": "Nät",
+      "kind": "Driftplats",
+      "x": 532697.5991000002,
+      "y": 6229694.0843
+    },
+    {
+      "name": "Näverkärret",
+      "code": "Nkt",
+      "kind": "Driftplats",
+      "x": 529696.1978000002,
+      "y": 6614223.339199999
+    },
+    {
+      "name": "Ockelbo",
+      "code": "Ob",
+      "kind": "Driftplats",
+      "x": 593387.2039999999,
+      "y": 6751889.2301
+    },
+    {
+      "name": "Olofström",
+      "code": "Of",
+      "kind": "Driftplats",
+      "x": 470262.59609999973,
+      "y": 6237234.2842
+    },
+    {
+      "name": "Ombenning",
+      "code": "Omb",
+      "kind": "Driftplats",
+      "x": 551753.9314000001,
+      "y": 6649648.0107
+    },
+    {
+      "name": "Ope",
+      "code": "Ope",
+      "kind": "Driftplats",
+      "x": 487195.98780000024,
+      "y": 7000535.320799999
+    },
+    {
+      "name": "Ornäs",
+      "code": "Orn",
+      "kind": "Driftplats",
+      "x": 529371.966,
+      "y": 6708010.8794
+    },
+    {
+      "name": "Orrskog",
+      "code": "Os",
+      "kind": "Driftplats",
+      "x": 632235.7613000004,
+      "y": 6698869.536699999
+    },
+    {
+      "name": "Orsa",
+      "code": "Ors",
+      "kind": "Driftplats",
+      "x": 479585.7478,
+      "y": 6776110.8617
+    },
+    {
+      "name": "Osby",
+      "code": "O",
+      "kind": "Driftplats",
+      "x": 437981.4296000004,
+      "y": 6248963.5046
+    },
+    {
+      "name": "Oskarshamn",
+      "code": "Oh",
+      "kind": "Driftplats",
+      "x": 587915.4128999999,
+      "y": 6347581.2568
+    },
+    {
+      "name": "Oskarström",
+      "code": "Om",
+      "kind": "Driftplats",
+      "x": 376172.5016000001,
+      "y": 6297676.1548
+    },
+    {
+      "name": "Oslättfors",
+      "code": "Osl",
+      "kind": "Driftplats",
+      "x": 607779.7203000002,
+      "y": 6739130.4421
+    },
+    {
+      "name": "Ovansjö",
+      "code": "Osö",
+      "kind": "Driftplats",
+      "x": 530571.1681000004,
+      "y": 6931933.5614
+    },
+    {
+      "name": "Oxelösund",
+      "code": "Oxd",
+      "kind": "Driftplats",
+      "x": 621791.8141999999,
+      "y": 6505263.783399999
+    },
+    {
+      "name": "Oxmyran",
+      "code": "Oxm",
+      "kind": "Driftplats",
+      "x": 708797.9787999997,
+      "y": 7078696.997900002
+    },
+    {
+      "name": "Peberholm",
+      "code": "Phm",
+      "kind": "Driftplats",
+      "x": 358114.9819,
+      "y": 6163864.5364
+    },
+    {
+      "name": "Perstorp",
+      "code": "Pt",
+      "kind": "Driftplats",
+      "x": 400483.73890000023,
+      "y": 6222419.125399999
+    },
+    {
+      "name": "Pilgrimstad",
+      "code": "Pl",
+      "kind": "Driftplats",
+      "x": 502045.1294999998,
+      "y": 6980576.9505
+    },
+    {
+      "name": "Piteå",
+      "code": "Ptå",
+      "kind": "Driftplats",
+      "x": 801165.3075000001,
+      "y": 7259420.442400001
+    },
+    {
+      "name": "Pitkäjärvi",
+      "code": "Pii",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 752248.5,
+      "y": 7517588
+    },
+    {
+      "name": "Polcirkeln",
+      "code": "Pc",
+      "kind": "Driftplats",
+      "x": 766858.5908000004,
+      "y": 7396006.642099999
+    },
+    {
+      "name": "Porjus",
+      "code": "Pj",
+      "kind": "Driftplats",
+      "x": 710712.5861,
+      "y": 7435801.270199999
+    },
+    {
+      "name": "Påarp",
+      "code": "Påa",
+      "kind": "Driftplats",
+      "x": 363978.7115000002,
+      "y": 6211486.8146
+    },
+    {
+      "name": "Pålsboda",
+      "code": "På",
+      "kind": "Driftplats",
+      "x": 519507.97530000005,
+      "y": 6547214.506100001
+    },
+    {
+      "name": "Pålsjö",
+      "code": "Pö",
+      "kind": "Driftplats",
+      "x": 355713.9495000001,
+      "y": 6215147.6129
+    },
+    {
+      "name": "Ragunda",
+      "code": "Ru",
+      "kind": "Driftplats",
+      "x": 571380.5154999997,
+      "y": 6992881.784499999
+    },
+    {
+      "name": "Ralingsås",
+      "code": "Ras",
+      "kind": "Driftplats",
+      "x": 488361.0723000001,
+      "y": 6415051.131200001
+    },
+    {
+      "name": "Ramsjö",
+      "code": "Rsö",
+      "kind": "Driftplats",
+      "x": 535237.9035999998,
+      "y": 6892181.358600002
+    },
+    {
+      "name": "Ransta",
+      "code": "Rt",
+      "kind": "Driftplats",
+      "x": 591989.5132999998,
+      "y": 6631415.4537
+    },
+    {
+      "name": "Rautas",
+      "code": "Rut",
+      "kind": "Driftplats",
+      "x": 704654.7018999998,
+      "y": 7550344.7086
+    },
+    {
+      "name": "Reftele",
+      "code": "Rft",
+      "kind": "Driftplats",
+      "x": 414950.9024,
+      "y": 6337851.9167
+    },
+    {
+      "name": "Regumatorp",
+      "code": "Rmtp",
+      "kind": "Driftplats",
+      "x": 429133.2768000001,
+      "y": 6464640.9341
+    },
+    {
+      "name": "Rekarne",
+      "code": "Rke",
+      "kind": "Driftplats",
+      "x": 576080.1897,
+      "y": 6588434.1807
+    },
+    {
+      "name": "Rensjön",
+      "code": "Rsn",
+      "kind": "Driftplats",
+      "x": 701001.6929000001,
+      "y": 7558607.441399999
+    },
+    {
+      "name": "Repbäcken",
+      "code": "Rbä",
+      "kind": "Driftplats",
+      "x": 518780.0815000003,
+      "y": 6708794.4059999995
+    },
+    {
+      "name": "Rian",
+      "code": "Ran",
+      "kind": "Driftplats",
+      "x": 863254.2800000003,
+      "y": 7331196.73
+    },
+    {
+      "name": "Rimforsa",
+      "code": "Rf",
+      "kind": "Driftplats",
+      "x": 540140.8346999995,
+      "y": 6443976.1031
+    },
+    {
+      "name": "Ripats",
+      "code": "Rps",
+      "kind": "Driftplats",
+      "x": 749915.8976999996,
+      "y": 7439764.286200002
+    },
+    {
+      "name": "Roback",
+      "code": "Rob",
+      "kind": "Driftplats",
+      "x": 558803.7937000003,
+      "y": 6988393.3959
+    },
+    {
+      "name": "Ronneby",
+      "code": "Rb",
+      "kind": "Driftplats",
+      "x": 517590.66509999987,
+      "y": 6229097.3703000005
+    },
+    {
+      "name": "Rosersberg",
+      "code": "Rs",
+      "kind": "Driftplats",
+      "x": 662607.9516000003,
+      "y": 6608647.659
+    },
+    {
+      "name": "Rosshyttan",
+      "code": "Ry",
+      "kind": "Driftplats",
+      "x": 575329.9847999997,
+      "y": 6659851.1965
+    },
+    {
+      "name": "Rossön",
+      "code": "Ros",
+      "kind": "Driftplats",
+      "x": 566156.6268999996,
+      "y": 7088935.9672
+    },
+    {
+      "name": "Rotebro",
+      "code": "R",
+      "kind": "Driftplats",
+      "x": 665137.2122,
+      "y": 6596606.8894
+    },
+    {
+      "name": "Rottneros",
+      "code": "Rts",
+      "kind": "Driftplats",
+      "x": 394986.79789999966,
+      "y": 6630059.525800001
+    },
+    {
+      "name": "Rundvik",
+      "code": "Ruk",
+      "kind": "Driftplats",
+      "x": 719270.6468000002,
+      "y": 7053993.511700001
+    },
+    {
+      "name": "Rydaholm",
+      "code": "Rym",
+      "kind": "Driftplats",
+      "x": 458161.96279999986,
+      "y": 6316077.382099999
+    },
+    {
+      "name": "Rydsgård",
+      "code": "Rdg",
+      "kind": "Driftplats",
+      "x": 410666.2076000003,
+      "y": 6148491.411
+    },
+    {
+      "name": "Ryggen",
+      "code": "Ryg",
+      "kind": "Driftplats",
+      "x": 551829.2536000004,
+      "y": 6717609.2918
+    },
+    {
+      "name": "Rynge",
+      "code": "Rye",
+      "kind": "Driftplats",
+      "x": 415958.7259999998,
+      "y": 6147778.8861
+    },
+    {
+      "name": "Ryr",
+      "code": "Ryr",
+      "kind": "Driftplats",
+      "x": 332474.67169999983,
+      "y": 6469214.7629
+    },
+    {
+      "name": "Ryssjöbrink",
+      "code": "Ryb",
+      "kind": "Driftplats",
+      "x": 633358.4610000001,
+      "y": 6565714.023
+    },
+    {
+      "name": "Rågsveden",
+      "code": "Råg",
+      "kind": "Driftplats",
+      "x": 448617.7137000002,
+      "y": 6705180.9233
+    },
+    {
+      "name": "Råskogen",
+      "code": "Rås",
+      "kind": "Driftplats",
+      "x": 347986.72670000046,
+      "y": 6503164.140000001
+    },
+    {
+      "name": "Råtsi",
+      "code": "Rsi",
+      "kind": "Driftplats",
+      "x": 720832.6661,
+      "y": 7528919.759300001
+    },
+    {
+      "name": "Rällså",
+      "code": "Rlå",
+      "kind": "Driftplats",
+      "x": 505479.13129999954,
+      "y": 6628817.2147
+    },
+    {
+      "name": "Rämshyttan",
+      "code": "Rmh",
+      "kind": "Driftplats",
+      "x": 512300.98979999963,
+      "y": 6684652.289100001
+    },
+    {
+      "name": "Rättvik",
+      "code": "Rv",
+      "kind": "Driftplats",
+      "x": 506275.5576999998,
+      "y": 6749959.117000001
+    },
+    {
+      "name": "Rävlanda",
+      "code": "Rd",
+      "kind": "Driftplats",
+      "x": 350848.1551999999,
+      "y": 6392988.029999999
+    },
+    {
+      "name": "Rödberg",
+      "code": "Rö",
+      "kind": "Driftplats",
+      "x": 357881.26269999985,
+      "y": 6395343.0909
+    },
+    {
+      "name": "Röjan",
+      "code": "Rjn",
+      "kind": "Driftplats",
+      "x": 466963.1113,
+      "y": 6927737.421300001
+    },
+    {
+      "name": "Rörvik",
+      "code": "Rk",
+      "kind": "Driftplats",
+      "x": 474814.49569999985,
+      "y": 6343072.4079
+    },
+    {
+      "name": "Röstbo",
+      "code": "Rbo",
+      "kind": "Driftplats",
+      "x": 590266.6896000002,
+      "y": 6782760.9531
+    },
+    {
+      "name": "Sala",
+      "code": "Sl",
+      "kind": "Driftplats",
+      "x": 589693.9239999996,
+      "y": 6644220.861500001
+    },
+    {
+      "name": "Salsta",
+      "code": "Sas",
+      "kind": "Driftplats",
+      "x": 651939.5253999997,
+      "y": 6659740.1225000005
+    },
+    {
+      "name": "Saluböle",
+      "code": "Sbe",
+      "kind": "Driftplats",
+      "x": 713476.8498999998,
+      "y": 7045917.031199999
+    },
+    {
+      "name": "Samnan",
+      "code": "Sam",
+      "kind": "Driftplats",
+      "x": 648470.6531999996,
+      "y": 6644543.4848
+    },
+    {
+      "name": "Sandared",
+      "code": "Sae",
+      "kind": "Driftplats",
+      "x": 368466.3392000003,
+      "y": 6398517.1086
+    },
+    {
+      "name": "Sandbäck",
+      "code": "Sak",
+      "kind": "Driftplats",
+      "x": 477301.82739999983,
+      "y": 6224333.7828
+    },
+    {
+      "name": "Sandhem",
+      "code": "Sm",
+      "kind": "Driftplats",
+      "x": 427436.54030000046,
+      "y": 6428070.767200001
+    },
+    {
+      "name": "Sandmon",
+      "code": "Sdm",
+      "kind": "Driftplats",
+      "x": 422918.5198999997,
+      "y": 6607965.135299999
+    },
+    {
+      "name": "Sandträsk",
+      "code": "Stä",
+      "kind": "Driftplats",
+      "x": 784940.9681000002,
+      "y": 7348414.2738999985
+    },
+    {
+      "name": "Sandviken",
+      "code": "Snv",
+      "kind": "Driftplats",
+      "x": 597312.5610999996,
+      "y": 6721139.8971
+    },
+    {
+      "name": "Segersäng",
+      "code": "Ssä",
+      "kind": "Driftplats",
+      "x": 667988.3563000001,
+      "y": 6547010.7996
+    },
+    {
+      "name": "Segmon",
+      "code": "Sgm",
+      "kind": "Driftplats",
+      "x": 388218.2695000004,
+      "y": 6572296.1723
+    },
+    {
+      "name": "Sellnäs",
+      "code": "Slnä",
+      "kind": "Driftplats",
+      "x": 520968.06819999963,
+      "y": 6697517.4778
+    },
+    {
+      "name": "Selsjön",
+      "code": "Slj",
+      "kind": "Driftplats",
+      "x": 610864.5692999996,
+      "y": 7021706.6622
+    },
+    {
+      "name": "Sikträsk",
+      "code": "Stk",
+      "kind": "Driftplats",
+      "x": 735352.0543,
+      "y": 7461140.240899999
+    },
+    {
+      "name": "Silinge",
+      "code": "Sii",
+      "kind": "Driftplats",
+      "x": 589970.9391999999,
+      "y": 6542485.6285999995
+    },
+    {
+      "name": "Simeå",
+      "code": "Små",
+      "kind": "Driftplats",
+      "x": 570459.4289999995,
+      "y": 6827207.1686
+    },
+    {
+      "name": "Simonstorp",
+      "code": "Smt",
+      "kind": "Driftplats",
+      "x": 566886.4711999996,
+      "y": 6516577.9669
+    },
+    {
+      "name": "Simrishamn",
+      "code": "Si",
+      "kind": "Driftplats",
+      "x": 459059.94990000036,
+      "y": 6156593.9176
+    },
+    {
+      "name": "Singsån",
+      "code": "Sngå",
+      "kind": "Driftplats",
+      "x": 569671.9161,
+      "y": 6989551.630199999
+    },
+    {
+      "name": "Sjösa",
+      "code": "Ssa",
+      "kind": "Driftplats",
+      "x": 621193.7961999997,
+      "y": 6517696.0243
+    },
+    {
+      "name": "Skabersjö",
+      "code": "Saö",
+      "kind": "Driftplats",
+      "x": 383519.5957000004,
+      "y": 6155775.5483
+    },
+    {
+      "name": "Skattkärr",
+      "code": "Srr",
+      "kind": "Driftplats",
+      "x": 424591.57909999974,
+      "y": 6586288.7203
+    },
+    {
+      "name": "Skavstaby",
+      "code": "Skby",
+      "kind": "Driftplats",
+      "x": 663672.8044999996,
+      "y": 6604929.080399999
+    },
+    {
+      "name": "Skebokvarn",
+      "code": "Skv",
+      "kind": "Driftplats",
+      "x": 598495.6030000001,
+      "y": 6548593.7326
+    },
+    {
+      "name": "Skee",
+      "code": "Ske",
+      "kind": "Driftplats",
+      "x": 284852.4910000004,
+      "y": 6537483.9582
+    },
+    {
+      "name": "Skelleftehamns övre",
+      "code": "Söv",
+      "kind": "Driftplats",
+      "x": 796736.8710000003,
+      "y": 7188186.473999999
+    },
+    {
+      "name": "Skellefteå",
+      "code": "Skl",
+      "kind": "Driftplats",
+      "x": 783111.3080000002,
+      "y": 7194308.204999998
+    },
+    {
+      "name": "Skene",
+      "code": "See",
+      "kind": "Driftplats",
+      "x": 359101.48790000007,
+      "y": 6374193.128900001
+    },
+    {
+      "name": "Skillingaryd",
+      "code": "Syd",
+      "kind": "Driftplats",
+      "x": 445397.79669999983,
+      "y": 6365454.607899999
+    },
+    {
+      "name": "Skinnskatteberg",
+      "code": "Skb",
+      "kind": "Driftplats",
+      "x": 538818.4122000001,
+      "y": 6633002.852299999
+    },
+    {
+      "name": "Skogstorp",
+      "code": "Skrp",
+      "kind": "Driftplats",
+      "x": 583830.5138999997,
+      "y": 6577930.6085
+    },
+    {
+      "name": "Skogås",
+      "code": "Skg",
+      "kind": "Driftplats",
+      "x": 679985.9630000005,
+      "y": 6568729.467800001
+    },
+    {
+      "name": "Skorped",
+      "code": "Sop",
+      "kind": "Driftplats",
+      "x": 642898.8958999999,
+      "y": 7031719.744100001
+    },
+    {
+      "name": "Skruv",
+      "code": "Sru",
+      "kind": "Driftplats",
+      "x": 522762.45050000027,
+      "y": 6281473.0469
+    },
+    {
+      "name": "Skurup",
+      "code": "Srp",
+      "kind": "Driftplats",
+      "x": 405080.23319999967,
+      "y": 6149256.1852
+    },
+    {
+      "name": "Skutskär",
+      "code": "Sur",
+      "kind": "Driftplats",
+      "x": 631548.5834999997,
+      "y": 6723593.130899999
+    },
+    {
+      "name": "Skytts Vemmerlöv",
+      "code": "Svö",
+      "kind": "Driftplats",
+      "x": 383137.2533999998,
+      "y": 6141989.7533
+    },
+    {
+      "name": "Skåre",
+      "code": "Skr",
+      "kind": "Driftplats",
+      "x": 412095.84279999975,
+      "y": 6588766.9805
+    },
+    {
+      "name": "Skälebol",
+      "code": "Skbl",
+      "kind": "Driftplats",
+      "x": 348544.58660000004,
+      "y": 6499232.8255
+    },
+    {
+      "name": "Skänninge",
+      "code": "Skn",
+      "kind": "Driftplats",
+      "x": 505409.8147999998,
+      "y": 6472431.4935
+    },
+    {
+      "name": "Skärpan",
+      "code": "Säp",
+      "kind": "Driftplats",
+      "x": 642282.6977000004,
+      "y": 6688566.8584
+    },
+    {
+      "name": "Skästra",
+      "code": "Skä",
+      "kind": "Driftplats",
+      "x": 561471.2681,
+      "y": 6846778.117800001
+    },
+    {
+      "name": "Sköldinge",
+      "code": "Sde",
+      "kind": "Driftplats",
+      "x": 583467.0427000001,
+      "y": 6544327.105799999
+    },
+    {
+      "name": "Skövde central",
+      "code": "Sk",
+      "kind": "Driftplats",
+      "x": 432878.5712000001,
+      "y": 6472605.3024
+    },
+    {
+      "name": "Slagnäs",
+      "code": "Sgä",
+      "kind": "Driftplats",
+      "x": 645597.4906000001,
+      "y": 7277411.292300001
+    },
+    {
+      "name": "Slätte",
+      "code": "Sle",
+      "kind": "Driftplats",
+      "x": 453775.23450000025,
+      "y": 6514094.9231
+    },
+    {
+      "name": "Smedjebacken",
+      "code": "Smj",
+      "kind": "Driftplats",
+      "x": 522539.43939999957,
+      "y": 6666675.0352
+    },
+    {
+      "name": "Smålandsstenar",
+      "code": "Sdr",
+      "kind": "Driftplats",
+      "x": 404120.4735000003,
+      "y": 6336463.9022
+    },
+    {
+      "name": "Snickarbo",
+      "code": "Snb",
+      "kind": "Driftplats",
+      "x": 558582.1936999997,
+      "y": 6673167.021199999
+    },
+    {
+      "name": "Snyten",
+      "code": "Snt",
+      "kind": "Driftplats",
+      "x": 557120.9057999998,
+      "y": 6650918.1841
+    },
+    {
+      "name": "Solbacka",
+      "code": "Slbk",
+      "kind": "Driftplats",
+      "x": 621267.9748,
+      "y": 6932382.723200001
+    },
+    {
+      "name": "Sollefteå",
+      "code": "Stå",
+      "kind": "Driftplats",
+      "x": 614055.6842,
+      "y": 7006206.397300001
+    },
+    {
+      "name": "Sollentuna",
+      "code": "Sol",
+      "kind": "Driftplats",
+      "x": 667295.2594999997,
+      "y": 6591398.248500001
+    },
+    {
+      "name": "Solum",
+      "code": "Slm",
+      "kind": "Driftplats",
+      "x": 640367.3857000005,
+      "y": 7001454.9241
+    },
+    {
+      "name": "Sommen",
+      "code": "Smn",
+      "kind": "Driftplats",
+      "x": 498719.01740000024,
+      "y": 6444936.841399999
+    },
+    {
+      "name": "Sorsele",
+      "code": "Srs",
+      "kind": "Driftplats",
+      "x": 617489.9825999998,
+      "y": 7270488.9331
+    },
+    {
+      "name": "Spannarboda",
+      "code": "Sba",
+      "kind": "Driftplats",
+      "x": 528669.4288999997,
+      "y": 6604321.4728
+    },
+    {
+      "name": "Sparreholm",
+      "code": "Sp",
+      "kind": "Driftplats",
+      "x": 604820.0277000004,
+      "y": 6549927.8967
+    },
+    {
+      "name": "Spjutsbygd",
+      "code": "Spj",
+      "kind": "Driftplats",
+      "x": 536765.0927999998,
+      "y": 6240774.896199999
+    },
+    {
+      "name": "Sprängsviken",
+      "code": "Spk",
+      "kind": "Driftplats",
+      "x": 646069.0809000004,
+      "y": 6973289.7894
+    },
+    {
+      "name": "Spånga",
+      "code": "Spå",
+      "kind": "Driftplats",
+      "x": 664568.3607000001,
+      "y": 6586414.897299999
+    },
+    {
+      "name": "Stavre",
+      "code": "Stv",
+      "kind": "Driftplats",
+      "x": 515887.81680000015,
+      "y": 6966253.339299999
+    },
+    {
+      "name": "Stavreviken",
+      "code": "Sen",
+      "kind": "Driftplats",
+      "x": 623733.6233999999,
+      "y": 6938144.709800001
+    },
+    {
+      "name": "Stegsskogen",
+      "code": "Sten",
+      "kind": "Driftplats",
+      "x": 615744.3528000005,
+      "y": 6858730.1669000015
+    },
+    {
+      "name": "Stehag",
+      "code": "Sg",
+      "kind": "Driftplats",
+      "x": 399543.78830000013,
+      "y": 6196150.9120000005
+    },
+    {
+      "name": "Stenbacken",
+      "code": "Sbk",
+      "kind": "Driftplats",
+      "x": 686051.5800000001,
+      "y": 7577505.841499999
+    },
+    {
+      "name": "Stenkullen",
+      "code": "Sn",
+      "kind": "Driftplats",
+      "x": 340380.5537999999,
+      "y": 6408696.4003
+    },
+    {
+      "name": "Stenkumla",
+      "code": "Skm",
+      "kind": "Driftplats",
+      "x": 502504.3273,
+      "y": 6535755.414000001
+    },
+    {
+      "name": "Stenstorp",
+      "code": "Ss",
+      "kind": "Driftplats",
+      "x": 424490.24899999984,
+      "y": 6459814.1401
+    },
+    {
+      "name": "Stensundberget",
+      "code": "Set",
+      "kind": "Driftplats",
+      "x": 882136.9245999996,
+      "y": 7328924.0973000005
+    },
+    {
+      "name": "Stenungsund",
+      "code": "Snu",
+      "kind": "Driftplats",
+      "x": 312721.1162999999,
+      "y": 6441203.179500001
+    },
+    {
+      "name": "Stenåsen",
+      "code": "Sån",
+      "kind": "Driftplats",
+      "x": 406106.50260000024,
+      "y": 6597064.9969999995
+    },
+    {
+      "name": "Stjärnhov",
+      "code": "Sh",
+      "kind": "Driftplats",
+      "x": 614911.6454999996,
+      "y": 6551018.389699999
+    },
+    {
+      "name": "Stockaryd",
+      "code": "Sy",
+      "kind": "Driftplats",
+      "x": 475412.49370000046,
+      "y": 6351938.5362
+    },
+    {
+      "name": "Stockholm",
+      "code": "Cst",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 673012.2949999999,
+      "y": 6580295.550000001
+    },
+    {
+      "name": "Stolpstugan",
+      "code": "Spn",
+      "kind": "Driftplats",
+      "x": 577155.8300000001,
+      "y": 6542174.6329
+    },
+    {
+      "name": "Stora Höga",
+      "code": "Sth",
+      "kind": "Driftplats",
+      "x": 313136.94710000046,
+      "y": 6435272.3377
+    },
+    {
+      "name": "Stora Tuna",
+      "code": "Sau",
+      "kind": "Driftplats",
+      "x": 527349.79,
+      "y": 6700711.392999999
+    },
+    {
+      "name": "Storblåliden",
+      "code": "Sbi",
+      "kind": "Driftplats",
+      "x": 751454.8635,
+      "y": 7269085.004500002
+    },
+    {
+      "name": "Stordalen",
+      "code": "Soa",
+      "kind": "Driftplats",
+      "x": 667538.6113,
+      "y": 7586705.992899999
+    },
+    {
+      "name": "Storflon",
+      "code": "Sfn",
+      "kind": "Driftplats",
+      "x": 469326.0636999998,
+      "y": 7024846.773200002
+    },
+    {
+      "name": "Storfors",
+      "code": "Sf",
+      "kind": "Driftplats",
+      "x": 458800.4452999998,
+      "y": 6599627.834799999
+    },
+    {
+      "name": "Storlien",
+      "code": "Str",
+      "kind": "Driftplats",
+      "x": 354729.8957000002,
+      "y": 7024096.519499999
+    },
+    {
+      "name": "Stormyran",
+      "code": "Som",
+      "kind": "Driftplats",
+      "x": 622374.6511000004,
+      "y": 7028991.9135
+    },
+    {
+      "name": "Storsund",
+      "code": "Sts",
+      "kind": "Driftplats",
+      "x": 759098.8212000001,
+      "y": 7284504.3189
+    },
+    {
+      "name": "Storträsk",
+      "code": "Sto",
+      "kind": "Driftplats",
+      "x": 737039.1698000003,
+      "y": 7235120.919500001
+    },
+    {
+      "name": "Storuman",
+      "code": "Sum",
+      "kind": "Driftplats",
+      "x": 599240.8706,
+      "y": 7220911.058200002
+    },
+    {
+      "name": "Storvik",
+      "code": "Sv",
+      "kind": "Driftplats",
+      "x": 584066.7050000001,
+      "y": 6717205.9113
+    },
+    {
+      "name": "Storvreta",
+      "code": "Srv",
+      "kind": "Driftplats",
+      "x": 651121.8888999997,
+      "y": 6649644.118000001
+    },
+    {
+      "name": "Storå",
+      "code": "Sr",
+      "kind": "Driftplats",
+      "x": 507967.5349000003,
+      "y": 6619825.8708
+    },
+    {
+      "name": "Strångsjö",
+      "code": "Stö",
+      "kind": "Driftplats",
+      "x": 569013.9069999997,
+      "y": 6530225.461200001
+    },
+    {
+      "name": "Strängnäs",
+      "code": "Sgs",
+      "kind": "Driftplats",
+      "x": 615251.699,
+      "y": 6583046.5295
+    },
+    {
+      "name": "Strömsholm",
+      "code": "Ssh",
+      "kind": "Driftplats",
+      "x": 571769.3093999997,
+      "y": 6596514.1296999995
+    },
+    {
+      "name": "Strömstad",
+      "code": "Smd",
+      "kind": "Driftplats",
+      "x": 279827.90490000043,
+      "y": 6539284.289899999
+    },
+    {
+      "name": "Strömtorp",
+      "code": "Srt",
+      "kind": "Driftplats",
+      "x": 466446.97780000046,
+      "y": 6568101.986099999
+    },
+    {
+      "name": "Ställdalen",
+      "code": "Stl",
+      "kind": "Driftplats",
+      "x": 496752.3598999996,
+      "y": 6644127.6971
+    },
+    {
+      "name": "Stävie",
+      "code": "Sie",
+      "kind": "Driftplats",
+      "x": 379116.5234000003,
+      "y": 6179651.7421
+    },
+    {
+      "name": "Stöcke",
+      "code": "Sök",
+      "kind": "Driftplats",
+      "x": 759346.767,
+      "y": 7079030.912999999
+    },
+    {
+      "name": "Stöde",
+      "code": "Std",
+      "kind": "Driftplats",
+      "x": 582596.2055000002,
+      "y": 6921965.851199999
+    },
+    {
+      "name": "Sunderbyns sjukhus",
+      "code": "Sus",
+      "kind": "Driftplats",
+      "x": 818270.6973000001,
+      "y": 7301103.323100001
+    },
+    {
+      "name": "Sundsvalls central",
+      "code": "Suc",
+      "kind": "Driftplats",
+      "x": 619702.5893999999,
+      "y": 6919390.947000001
+    },
+    {
+      "name": "Sunne",
+      "code": "Sun",
+      "kind": "Driftplats",
+      "x": 396263.1542999996,
+      "y": 6634546.6763
+    },
+    {
+      "name": "Sunnäsbruk",
+      "code": "Säu",
+      "kind": "Driftplats",
+      "x": 614543.9675000003,
+      "y": 6776736.619000001
+    },
+    {
+      "name": "Surahammar",
+      "code": "Shr",
+      "kind": "Driftplats",
+      "x": 568626.8256999999,
+      "y": 6619351.996099999
+    },
+    {
+      "name": "Svalöv",
+      "code": "Sal",
+      "kind": "Driftplats",
+      "x": 381886.5750000002,
+      "y": 6197839.8607
+    },
+    {
+      "name": "Svartvik",
+      "code": "Sik",
+      "kind": "Driftplats",
+      "x": 622662.3509999998,
+      "y": 6912366.591499999
+    },
+    {
+      "name": "Svartå",
+      "code": "Svå",
+      "kind": "Driftplats",
+      "x": 472297.8672000002,
+      "y": 6554877.9735
+    },
+    {
+      "name": "Svedala",
+      "code": "Sea",
+      "kind": "Driftplats",
+      "x": 388342.13430000003,
+      "y": 6152619.947000001
+    },
+    {
+      "name": "Svedje",
+      "code": "Svj",
+      "kind": "Driftplats",
+      "x": 647702.6682000002,
+      "y": 6954354.3222
+    },
+    {
+      "name": "Sveg",
+      "code": "S",
+      "kind": "Driftplats",
+      "x": 466096.02440000046,
+      "y": 6878314.425500002
+    },
+    {
+      "name": "Svenshögen",
+      "code": "Svg",
+      "kind": "Driftplats",
+      "x": 319677.00850000046,
+      "y": 6448901.9376
+    },
+    {
+      "name": "Svenstavik",
+      "code": "Svk",
+      "kind": "Driftplats",
+      "x": 471446.4857999999,
+      "y": 6960303.582600001
+    },
+    {
+      "name": "Sågbäcken",
+      "code": "Sbä",
+      "kind": "Driftplats",
+      "x": 843244.0998,
+      "y": 7347699.112199999
+    },
+    {
+      "name": "Säby",
+      "code": "Säy",
+      "kind": "Driftplats",
+      "x": 651494.3657999998,
+      "y": 6635468.0167
+    },
+    {
+      "name": "Säffle",
+      "code": "Sfl",
+      "kind": "Driftplats",
+      "x": 380753.79949999973,
+      "y": 6556649.5151
+    },
+    {
+      "name": "Sällinge",
+      "code": "Slg",
+      "kind": "Driftplats",
+      "x": 527182.0537,
+      "y": 6598025.6424
+    },
+    {
+      "name": "Säter",
+      "code": "St",
+      "kind": "Driftplats",
+      "x": 541784.1764000002,
+      "y": 6690245.659600001
+    },
+    {
+      "name": "Sävast",
+      "code": "Svt",
+      "kind": "Driftplats",
+      "x": 809485.3942999998,
+      "y": 7310120.170000002
+    },
+    {
+      "name": "Sävastklinten",
+      "code": "Sän",
+      "kind": "Driftplats",
+      "x": 808536.9511000002,
+      "y": 7311574.550700001
+    },
+    {
+      "name": "Säve",
+      "code": "Sve",
+      "kind": "Driftplats",
+      "x": 316533.1166000003,
+      "y": 6411089.088199999
+    },
+    {
+      "name": "Söderby",
+      "code": "Södy",
+      "kind": "Driftplats",
+      "x": 659553.1469999999,
+      "y": 6565261.961300001
+    },
+    {
+      "name": "Söderbärke",
+      "code": "Sre",
+      "kind": "Driftplats",
+      "x": 529895.1314000003,
+      "y": 6659595.5909
+    },
+    {
+      "name": "Söderhamns västra",
+      "code": "Shv",
+      "kind": "Driftplats",
+      "x": 609013.5258999998,
+      "y": 6797835.593199998
+    },
+    {
+      "name": "Södertälje hamn",
+      "code": "Söd",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 651104.2000000002,
+      "y": 6562688.050000001
+    },
+    {
+      "name": "Södertälje syd övre",
+      "code": "Söö",
+      "kind": "Driftplats",
+      "x": 651380.4441,
+      "y": 6561237.3431
+    },
+    {
+      "name": "Sölvesborg",
+      "code": "Sög",
+      "kind": "Driftplats",
+      "x": 474027.0772000002,
+      "y": 6211654.471000001
+    },
+    {
+      "name": "Söråkers södra",
+      "code": "Sårs",
+      "kind": "Driftplats",
+      "x": 625488.3013000004,
+      "y": 6937817.8451000005
+    },
+    {
+      "name": "Tallåsen",
+      "code": "Tl",
+      "kind": "Driftplats",
+      "x": 553244.5270999996,
+      "y": 6859845.846500002
+    },
+    {
+      "name": "Tanum",
+      "code": "Tnu",
+      "kind": "Driftplats",
+      "x": 285476.29200000037,
+      "y": 6514088.4881
+    },
+    {
+      "name": "Teckomatorp",
+      "code": "Tp",
+      "kind": "Driftplats",
+      "x": 380021.35589999985,
+      "y": 6193337.5879999995
+    },
+    {
+      "name": "Tenhult",
+      "code": "Th",
+      "kind": "Driftplats",
+      "x": 459873.5741999997,
+      "y": 6396087.1435
+    },
+    {
+      "name": "Tierp",
+      "code": "Tip",
+      "kind": "Driftplats",
+      "x": 638685.5670999996,
+      "y": 6692567.259199999
+    },
+    {
+      "name": "Tillberga",
+      "code": "Tb",
+      "kind": "Driftplats",
+      "x": 591426.7001999998,
+      "y": 6617718.4339000005
+    },
+    {
+      "name": "Timrå",
+      "code": "Trå",
+      "kind": "Driftplats",
+      "x": 620083.9042999996,
+      "y": 6930533.495499998
+    },
+    {
+      "name": "Tjärnvik",
+      "code": "Tjä",
+      "kind": "Driftplats",
+      "x": 621045.4490999999,
+      "y": 6887384.7711
+    },
+    {
+      "name": "Tjörnarp",
+      "code": "Tö",
+      "kind": "Driftplats",
+      "x": 414631.7438000003,
+      "y": 6207079.539899999
+    },
+    {
+      "name": "Tobo",
+      "code": "Tbo",
+      "kind": "Driftplats",
+      "x": 645729.5246000001,
+      "y": 6683170.4835
+    },
+    {
+      "name": "Tolikberget",
+      "code": "Tet",
+      "kind": "Driftplats",
+      "x": 763446.7138,
+      "y": 7378437.338100001
+    },
+    {
+      "name": "Tomelilla",
+      "code": "Tli",
+      "kind": "Driftplats",
+      "x": 433724.1503999997,
+      "y": 6156044.4715
+    },
+    {
+      "name": "Torbacken",
+      "code": "Tbn",
+      "kind": "Driftplats",
+      "x": 337378.11620000005,
+      "y": 6439686.198100001
+    },
+    {
+      "name": "Torebo",
+      "code": "Teo",
+      "kind": "Driftplats",
+      "x": 345248.7252000002,
+      "y": 6314582.2739
+    },
+    {
+      "name": "Toresta",
+      "code": "Tot",
+      "kind": "Driftplats",
+      "x": 645590.1523000002,
+      "y": 6602295.8018
+    },
+    {
+      "name": "Torneträsk",
+      "code": "Tnk",
+      "kind": "Driftplats",
+      "x": 694806.2260999996,
+      "y": 7574553.1109
+    },
+    {
+      "name": "Tornhill",
+      "code": "Thl",
+      "kind": "Driftplats",
+      "x": 386344.1930999998,
+      "y": 6178409.1568
+    },
+    {
+      "name": "Torpshammar",
+      "code": "To",
+      "kind": "Driftplats",
+      "x": 568854.5619999999,
+      "y": 6927553.8358
+    },
+    {
+      "name": "Torsby",
+      "code": "Toy",
+      "kind": "Driftplats",
+      "x": 389072.8669999996,
+      "y": 6668287.401799999
+    },
+    {
+      "name": "Torsåker",
+      "code": "Tså",
+      "kind": "Driftplats",
+      "x": 581824.4194999998,
+      "y": 6709649.406300001
+    },
+    {
+      "name": "Tortuna",
+      "code": "Ttu",
+      "kind": "Driftplats",
+      "x": 596930.3739,
+      "y": 6615900.043
+    },
+    {
+      "name": "Torup",
+      "code": "Tou",
+      "kind": "Driftplats",
+      "x": 383211.1336000003,
+      "y": 6314317.0078
+    },
+    {
+      "name": "Tranås",
+      "code": "Tns",
+      "kind": "Driftplats",
+      "x": 498530.9204000002,
+      "y": 6432942.248500001
+    },
+    {
+      "name": "Trehörningsjö",
+      "code": "Thö",
+      "kind": "Driftplats",
+      "x": 691073.6282000002,
+      "y": 7068414.971000001
+    },
+    {
+      "name": "Trekanten",
+      "code": "Tre",
+      "kind": "Driftplats",
+      "x": 568558.9961000001,
+      "y": 6284694.469900001
+    },
+    {
+      "name": "Trelleborg",
+      "code": "Trg",
+      "kind": "Driftplats",
+      "x": 383449.95999999996,
+      "y": 6137659.557499999
+    },
+    {
+      "name": "Trollhättan",
+      "code": "Thn",
+      "kind": "Driftplats",
+      "x": 341647.7123999996,
+      "y": 6463904.874
+    },
+    {
+      "name": "Trångsviken",
+      "code": "Tåv",
+      "kind": "Driftplats",
+      "x": 450599.3976999996,
+      "y": 7022941.965999998
+    },
+    {
+      "name": "Träskholm",
+      "code": "Thm",
+      "kind": "Driftplats",
+      "x": 737977.1752000004,
+      "y": 7243946.6633
+    },
+    {
+      "name": "Trödje",
+      "code": "Tdj",
+      "kind": "Driftplats",
+      "x": 619619.2401999999,
+      "y": 6744116.7993
+    },
+    {
+      "name": "Tumba",
+      "code": "Tu",
+      "kind": "Driftplats",
+      "x": 662094.9205999998,
+      "y": 6565711.7104
+    },
+    {
+      "name": "Tungelsta",
+      "code": "Ts",
+      "kind": "Driftplats",
+      "x": 674463.3859999999,
+      "y": 6555483.0693
+    },
+    {
+      "name": "Tunneby",
+      "code": "Tun",
+      "kind": "Driftplats",
+      "x": 443469.0981999999,
+      "y": 6257393.133199999
+    },
+    {
+      "name": "Tväråbäck",
+      "code": "Tvb",
+      "kind": "Driftplats",
+      "x": 730993.8903000001,
+      "y": 7104404.8046
+    },
+    {
+      "name": "Tvärålund",
+      "code": "Tvä",
+      "kind": "Driftplats",
+      "x": 727822.4232999999,
+      "y": 7116494.659899998
+    },
+    {
+      "name": "Tyllered",
+      "code": "Tye",
+      "kind": "Driftplats",
+      "x": 341770.24729999993,
+      "y": 6322276.2776999995
+    },
+    {
+      "name": "Tyringe",
+      "code": "Ty",
+      "kind": "Driftplats",
+      "x": 412916.6150000002,
+      "y": 6224734.179300001
+    },
+    {
+      "name": "Tystberga",
+      "code": "Tba",
+      "kind": "Driftplats",
+      "x": 629018.6720000003,
+      "y": 6525341.166099999
+    },
+    {
+      "name": "Tågarp",
+      "code": "Tgp",
+      "kind": "Driftplats",
+      "x": 371756.55840000045,
+      "y": 6199900.9002
+    },
+    {
+      "name": "Tågsjöberg",
+      "code": "Tsg",
+      "kind": "Driftplats",
+      "x": 586191.9164000005,
+      "y": 7061802.5386000015
+    },
+    {
+      "name": "Tällberg",
+      "code": "Tlg",
+      "kind": "Driftplats",
+      "x": 501136.32859999966,
+      "y": 6742616.1581999995
+    },
+    {
+      "name": "Töreboda",
+      "code": "T",
+      "kind": "Driftplats",
+      "x": 449428.62629999965,
+      "y": 6507489.1755
+    },
+    {
+      "name": "Tösse",
+      "code": "Töe",
+      "kind": "Driftplats",
+      "x": 364513.824,
+      "y": 6539255.161699999
+    },
+    {
+      "name": "Töva",
+      "code": "Töv",
+      "kind": "Driftplats",
+      "x": 609138.9484000001,
+      "y": 6917597.245999999
+    },
+    {
+      "name": "Uddevalla central",
+      "code": "Uv",
+      "kind": "Driftplats",
+      "x": 319979.4632000001,
+      "y": 6472255.2663
+    },
+    {
+      "name": "Ulriksfors",
+      "code": "Uf",
+      "kind": "Driftplats",
+      "x": 530558.2487000003,
+      "y": 7078492.813499998
+    },
+    {
+      "name": "Ulvshyttan",
+      "code": "Uly",
+      "kind": "Driftplats",
+      "x": 519705.5844999999,
+      "y": 6688237.7063
+    },
+    {
+      "name": "Ulvstorp",
+      "code": "Utp",
+      "kind": "Driftplats",
+      "x": 481368.85419999994,
+      "y": 6370522.0646
+    },
+    {
+      "name": "Umeå",
+      "code": "Uå",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 761702.6002000002,
+      "y": 7090211.030000001
+    },
+    {
+      "name": "Undersåker",
+      "code": "Un",
+      "kind": "Driftplats",
+      "x": 411745.85140000004,
+      "y": 7021897.960099999
+    },
+    {
+      "name": "Upplands Väsby",
+      "code": "Upv",
+      "kind": "Driftplats",
+      "x": 663982.2017000001,
+      "y": 6601582.0429
+    },
+    {
+      "name": "Uppsala",
+      "code": "U",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 647996.3099999996,
+      "y": 6638396.6850000005
+    },
+    {
+      "name": "Uppåkra",
+      "code": "Up",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 382508.10500000045,
+      "y": 6171051.705
+    },
+    {
+      "name": "Utsikten",
+      "code": "Uts",
+      "kind": "Driftplats",
+      "x": 665386.9287999999,
+      "y": 6566258.944700001
+    },
+    {
+      "name": "Vaggeryd",
+      "code": "Vgd",
+      "kind": "Driftplats",
+      "x": 448783.6171000004,
+      "y": 6373167.930600001
+    },
+    {
+      "name": "Vagnhärad",
+      "code": "Vhd",
+      "kind": "Driftplats",
+      "x": 643763.3676000005,
+      "y": 6536705.9595
+    },
+    {
+      "name": "Vallsta",
+      "code": "Vl",
+      "kind": "Driftplats",
+      "x": 572749.6045000004,
+      "y": 6821261.9855
+    },
+    {
+      "name": "Vallvik",
+      "code": "Vv",
+      "kind": "Driftplats",
+      "x": 614455.5469000004,
+      "y": 6786187.691
+    },
+    {
+      "name": "Vallåkra",
+      "code": "Våk",
+      "kind": "Driftplats",
+      "x": 366563.76159999985,
+      "y": 6204114.637
+    },
+    {
+      "name": "Valskog",
+      "code": "Vsg",
+      "kind": "Driftplats",
+      "x": 553856.5818999996,
+      "y": 6589662.1017
+    },
+    {
+      "name": "Vansbro",
+      "code": "Vo",
+      "kind": "Driftplats",
+      "x": 457502.5340999998,
+      "y": 6708737.529999999
+    },
+    {
+      "name": "Vara",
+      "code": "Vaa",
+      "kind": "Driftplats",
+      "x": 379809.65660000034,
+      "y": 6459588.9136
+    },
+    {
+      "name": "Varberg",
+      "code": "Vb",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 335536.7901999997,
+      "y": 6332716.164999999
+    },
+    {
+      "name": "Vargön",
+      "code": "Vag",
+      "kind": "Driftplats",
+      "x": 347366.0716000004,
+      "y": 6471723.796399999
+    },
+    {
+      "name": "Varpemossen",
+      "code": "Vpm",
+      "kind": "Driftplats",
+      "x": 341334.9205,
+      "y": 6446577.9823
+    },
+    {
+      "name": "Vartofta",
+      "code": "Vf",
+      "kind": "Driftplats",
+      "x": 419111.1096000001,
+      "y": 6439792.973999999
+    },
+    {
+      "name": "Vassijaure",
+      "code": "Vj",
+      "kind": "Driftplats",
+      "x": 633651.415,
+      "y": 7594280.882300001
+    },
+    {
+      "name": "Vattjom",
+      "code": "Vm",
+      "kind": "Driftplats",
+      "x": 603775.4589,
+      "y": 6916703.764699999
+    },
+    {
+      "name": "Veddige",
+      "code": "Vdi",
+      "kind": "Driftplats",
+      "x": 339401.00299999956,
+      "y": 6350210.1851
+    },
+    {
+      "name": "Vedevåg",
+      "code": "Vdv",
+      "kind": "Driftplats",
+      "x": 515965.2773000002,
+      "y": 6598394.6954
+    },
+    {
+      "name": "Vedum",
+      "code": "Ved",
+      "kind": "Driftplats",
+      "x": 382273.04339999985,
+      "y": 6449280.1766
+    },
+    {
+      "name": "Vegeholm",
+      "code": "Vh",
+      "kind": "Driftplats",
+      "x": 362502.9183,
+      "y": 6230487.167400001
+    },
+    {
+      "name": "Vekerum",
+      "code": "Vru",
+      "kind": "Driftplats",
+      "x": 486385.46300000045,
+      "y": 6225796.5843
+    },
+    {
+      "name": "Velanda södra",
+      "code": "Veas",
+      "kind": "Driftplats",
+      "x": 342911.2292999998,
+      "y": 6456095.023499999
+    },
+    {
+      "name": "Vetlanda",
+      "code": "Vta",
+      "kind": "Driftplats",
+      "x": 504902.56549999956,
+      "y": 6364804.048
+    },
+    {
+      "name": "Via",
+      "code": "Via",
+      "kind": "Driftplats",
+      "x": 615465.6665000003,
+      "y": 6854729.2267
+    },
+    {
+      "name": "Vikingstad",
+      "code": "Vsd",
+      "kind": "Driftplats",
+      "x": 525319.6117000002,
+      "y": 6471487.306299999
+    },
+    {
+      "name": "Vikmanshyttan",
+      "code": "Vhy",
+      "kind": "Driftplats",
+      "x": 547673.1266000001,
+      "y": 6684755.8058
+    },
+    {
+      "name": "Vilhelmina",
+      "code": "Vma",
+      "kind": "Driftplats",
+      "x": 578974.0950999996,
+      "y": 7167435.221900001
+    },
+    {
+      "name": "Vilhelmsborg",
+      "code": "Vlb",
+      "kind": "Driftplats",
+      "x": 419755.39080000017,
+      "y": 6143038.625399999
+    },
+    {
+      "name": "Villersmuren",
+      "code": "Vmu",
+      "kind": "Driftplats",
+      "x": 592890.2028000001,
+      "y": 6720235.967
+    },
+    {
+      "name": "Vimmerby",
+      "code": "Vib",
+      "kind": "Driftplats",
+      "x": 551216.7938999999,
+      "y": 6391521.947699999
+    },
+    {
+      "name": "Vimnarp",
+      "code": "Vim",
+      "kind": "Driftplats",
+      "x": 481693.26609999966,
+      "y": 6396202.4473
+    },
+    {
+      "name": "Vindeln",
+      "code": "Vdn",
+      "kind": "Driftplats",
+      "x": 728728.1330000004,
+      "y": 7128239.555300001
+    },
+    {
+      "name": "Vingåker",
+      "code": "Vr",
+      "kind": "Driftplats",
+      "x": 550297.6419000002,
+      "y": 6545070.601299999
+    },
+    {
+      "name": "Vinslöv",
+      "code": "Vöv",
+      "kind": "Driftplats",
+      "x": 432609.95830000006,
+      "y": 6218284.1346
+    },
+    {
+      "name": "Viresjö",
+      "code": "Vsö",
+      "kind": "Driftplats",
+      "x": 553656.6292000003,
+      "y": 6451777.442
+    },
+    {
+      "name": "Virsbo",
+      "code": "Vso",
+      "kind": "Driftplats",
+      "x": 560711.3956000004,
+      "y": 6637624.0337000005
+    },
+    {
+      "name": "Viskafors",
+      "code": "Vfo",
+      "kind": "Driftplats",
+      "x": 371331.1327999998,
+      "y": 6389487.7486000005
+    },
+    {
+      "name": "Viskan",
+      "code": "Visk",
+      "kind": "Driftplats",
+      "x": 573969.0981000001,
+      "y": 6925074.8445999995
+    },
+    {
+      "name": "Vislanda",
+      "code": "Vs",
+      "kind": "Driftplats",
+      "x": 466793.7081000004,
+      "y": 6293995.0638999995
+    },
+    {
+      "name": "Vissefjärda",
+      "code": "Vfa",
+      "kind": "Driftplats",
+      "x": 535728.4073000001,
+      "y": 6266306.7972
+    },
+    {
+      "name": "Vitvattnet",
+      "code": "Vtv",
+      "kind": "Driftplats",
+      "x": 870396.8057000004,
+      "y": 7350847.044300001
+    },
+    {
+      "name": "Vojmån",
+      "code": "Vjm",
+      "kind": "Driftplats",
+      "x": 586318.9759999998,
+      "y": 7186495.798599999
+    },
+    {
+      "name": "Vrena",
+      "code": "Vre",
+      "kind": "Driftplats",
+      "x": 598300.3817999996,
+      "y": 6525987.754799999
+    },
+    {
+      "name": "Vretstorp",
+      "code": "Vt",
+      "kind": "Driftplats",
+      "x": 492233.6146,
+      "y": 6542459.2128
+    },
+    {
+      "name": "Vuonoskogen",
+      "code": "Vsk",
+      "kind": "Driftplats",
+      "x": 897047.4656999996,
+      "y": 7332023.104200002
+    },
+    {
+      "name": "Vårgårda",
+      "code": "Vgå",
+      "kind": "Driftplats",
+      "x": 370634.0122999996,
+      "y": 6434276.5024
+    },
+    {
+      "name": "Välevattnet",
+      "code": "Väv",
+      "kind": "Driftplats",
+      "x": 470019.1392000001,
+      "y": 6535656.949200001
+    },
+    {
+      "name": "Vänersborg central",
+      "code": "Vg",
+      "kind": "Driftplats",
+      "x": 343201.9802000001,
+      "y": 6473869.4727
+    },
+    {
+      "name": "Vännäs",
+      "code": "Vns",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 733000.5,
+      "y": 7096637
+    },
+    {
+      "name": "Väring",
+      "code": "Vä",
+      "kind": "Driftplats",
+      "x": 439370.4930999996,
+      "y": 6486121.2984
+    },
+    {
+      "name": "Värmlands Bro",
+      "code": "Vdb",
+      "kind": "Driftplats",
+      "x": 386519.7849000003,
+      "y": 6562382.8137
+    },
+    {
+      "name": "Värnamo",
+      "code": "V",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 442649.2599999998,
+      "y": 6338292.975
+    },
+    {
+      "name": "Värö",
+      "code": "Vrö",
+      "kind": "Driftplats",
+      "x": 330786.1646999996,
+      "y": 6347435.1833999995
+    },
+    {
+      "name": "Väse",
+      "code": "Ve",
+      "kind": "Driftplats",
+      "x": 434795.0702999998,
+      "y": 6583120.166099999
+    },
+    {
+      "name": "Västeraspby",
+      "code": "Väy",
+      "kind": "Driftplats",
+      "x": 638879.0774999997,
+      "y": 6994765.0253
+    },
+    {
+      "name": "Västerhaninge",
+      "code": "Vhe",
+      "kind": "Driftplats",
+      "x": 677617.0412999997,
+      "y": 6557881.499299999
+    },
+    {
+      "name": "Västervik",
+      "code": "Vk",
+      "kind": "Driftplats",
+      "x": 597759.6076999996,
+      "y": 6402695.3619
+    },
+    {
+      "name": "Västerås",
+      "code": "Vå",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 585579.3250000002,
+      "y": 6608094.5
+    },
+    {
+      "name": "Västerås norra",
+      "code": "Vån",
+      "kind": "Driftplats",
+      "x": 589236.3578000003,
+      "y": 6613045.2804000005
+    },
+    {
+      "name": "Västra Ingelstad",
+      "code": "Vid",
+      "kind": "Driftplats",
+      "x": 380364.6660000002,
+      "y": 6151120.8278
+    },
+    {
+      "name": "Västra Torup",
+      "code": "Vto",
+      "kind": "Driftplats",
+      "x": 407283.84169999976,
+      "y": 6223134.4015
+    },
+    {
+      "name": "Vätteryd",
+      "code": "Väd",
+      "kind": "Driftplats",
+      "x": 416155.68149999995,
+      "y": 6209036.4539
+    },
+    {
+      "name": "Växjö",
+      "code": "Vö",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 485858.5,
+      "y": 6303984
+    },
+    {
+      "name": "Ystad",
+      "code": "Y",
+      "kind": "Driftplats",
+      "x": 425632.08910000045,
+      "y": 6142979.776000001
+    },
+    {
+      "name": "Ytterby",
+      "code": "Yb",
+      "kind": "Driftplats",
+      "x": 317115.60199999996,
+      "y": 6417487.639599999
+    },
+    {
+      "name": "Ytterhogdal",
+      "code": "Yl",
+      "kind": "Driftplats",
+      "x": 492475.08249999955,
+      "y": 6896167.265500002
+    },
+    {
+      "name": "Yttersjön",
+      "code": "Yö",
+      "kind": "Driftplats",
+      "x": 724395.4222999997,
+      "y": 7150974.018100001
+    },
+    {
+      "name": "Åby",
+      "code": "Åby",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 570807.9800000004,
+      "y": 6501093.365
+    },
+    {
+      "name": "Ådalsliden",
+      "code": "Åd",
+      "kind": "Driftplats",
+      "x": 593735.5587999998,
+      "y": 7035943.442699999
+    },
+    {
+      "name": "Ålberga",
+      "code": "Åba",
+      "kind": "Driftplats",
+      "x": 591350.4764999999,
+      "y": 6510403.732999999
+    },
+    {
+      "name": "Ålsäng",
+      "code": "Ålg",
+      "kind": "Driftplats",
+      "x": 540308.4855000004,
+      "y": 6586562.1592
+    },
+    {
+      "name": "Åmotfors",
+      "code": "Åt",
+      "kind": "Driftplats",
+      "x": 352098.4826999996,
+      "y": 6628539.3083999995
+    },
+    {
+      "name": "Åmsele",
+      "code": "Åm",
+      "kind": "Driftplats",
+      "x": 707719.1793,
+      "y": 7158549.267099999
+    },
+    {
+      "name": "Åmyran",
+      "code": "Åmy",
+      "kind": "Driftplats",
+      "x": 618248.8251999998,
+      "y": 6875155.127799999
+    },
+    {
+      "name": "Åmål",
+      "code": "Ål",
+      "kind": "Driftplats",
+      "x": 367957.8393000001,
+      "y": 6547489.916300001
+    },
+    {
+      "name": "Ånge",
+      "code": "Åg",
+      "kind": "Driftplats som innehåller driftplatsdelar",
+      "x": 532992.5,
+      "y": 6933062.420000002
+    },
+    {
+      "name": "Ångsågsmossen",
+      "code": "Åmn",
+      "kind": "Driftplats",
+      "x": 498613.8081,
+      "y": 6229719.5208
+    },
+    {
+      "name": "Ånimskog",
+      "code": "Ånm",
+      "kind": "Driftplats",
+      "x": 359851.52109999955,
+      "y": 6528931.7248
+    },
+    {
+      "name": "Ånn",
+      "code": "Ånn",
+      "kind": "Driftplats",
+      "x": 376739.29789999966,
+      "y": 7023757.017200001
+    },
+    {
+      "name": "Åre",
+      "code": "Åre",
+      "kind": "Driftplats",
+      "x": 403829.58210000023,
+      "y": 7031539.191100001
+    },
+    {
+      "name": "Årskogen",
+      "code": "Åkg",
+      "kind": "Driftplats",
+      "x": 622403.5813999996,
+      "y": 6892410.099399999
+    },
+    {
+      "name": "Åryd",
+      "code": "Ård",
+      "kind": "Driftplats",
+      "x": 498988.63460000046,
+      "y": 6297433.416999999
+    },
+    {
+      "name": "Åsarna central",
+      "code": "Åsal",
+      "kind": "Driftplats",
+      "x": 467923.90780000016,
+      "y": 6946385.333900001
+    },
+    {
+      "name": "Åsbro",
+      "code": "Å",
+      "kind": "Driftplats",
+      "x": 503515.38609999977,
+      "y": 6539847.966600001
+    },
+    {
+      "name": "Åseda",
+      "code": "Åa",
+      "kind": "Driftplats",
+      "x": 521072.88040000014,
+      "y": 6336089.460999999
+    },
+    {
+      "name": "Åsensbruk",
+      "code": "Åb",
+      "kind": "Driftplats",
+      "x": 351282.1216000002,
+      "y": 6521237.229499999
+    },
+    {
+      "name": "Åshammar",
+      "code": "Åh",
+      "kind": "Driftplats",
+      "x": 584638.5476000002,
+      "y": 6724654.3072
+    },
+    {
+      "name": "Åstorp",
+      "code": "Åp",
+      "kind": "Driftplats",
+      "x": 372502.6327999998,
+      "y": 6222848.6543000005
+    },
+    {
+      "name": "Åsträsk",
+      "code": "Åst",
+      "kind": "Driftplats",
+      "x": 737789.5750000002,
+      "y": 7174962.890500002
+    },
+    {
+      "name": "Åtvidaberg",
+      "code": "Åvg",
+      "kind": "Driftplats",
+      "x": 558890.6737000002,
+      "y": 6451820.7711
+    },
+    {
+      "name": "Älgarås",
+      "code": "Äl",
+      "kind": "Driftplats",
+      "x": 456990.0115,
+      "y": 6519524.376499999
+    },
+    {
+      "name": "Älmhult",
+      "code": "Äh",
+      "kind": "Driftplats",
+      "x": 446925.8602,
+      "y": 6267619.0865
+    },
+    {
+      "name": "Älvho",
+      "code": "Älo",
+      "kind": "Driftplats",
+      "x": 486547.69820000045,
+      "y": 6818279.337400001
+    },
+    {
+      "name": "Älvsbyn",
+      "code": "Äy",
+      "kind": "Driftplats",
+      "x": 775090.1443999996,
+      "y": 7297158.011300001
+    },
+    {
+      "name": "Älvängen",
+      "code": "Än",
+      "kind": "Driftplats",
+      "x": 329310.56269999966,
+      "y": 6427650.941500001
+    },
+    {
+      "name": "Äng",
+      "code": "Äng",
+      "kind": "Driftplats",
+      "x": 474186.2909000004,
+      "y": 6394536.4618999995
+    },
+    {
+      "name": "Ängelholm",
+      "code": "Ä",
+      "kind": "Driftplats",
+      "x": 367011.38320000004,
+      "y": 6235508.3379999995
+    },
+    {
+      "name": "Ängelsberg",
+      "code": "Äbg",
+      "kind": "Driftplats",
+      "x": 556365.2867,
+      "y": 6647038.1752
+    },
+    {
+      "name": "Ängersjö",
+      "code": "Änö",
+      "kind": "Driftplats",
+      "x": 738142.1763000004,
+      "y": 7061810.4289
+    },
+    {
+      "name": "Ättekulla",
+      "code": "Ätk",
+      "kind": "Driftplats",
+      "x": 360859.43090000004,
+      "y": 6210725.1031
+    },
+    {
+      "name": "Ödåkra",
+      "code": "Öda",
+      "kind": "Driftplats",
+      "x": 359718.1627000002,
+      "y": 6219956.9506
+    },
+    {
+      "name": "Ökna",
+      "code": "Öa",
+      "kind": "Driftplats",
+      "x": 541175.7719999999,
+      "y": 6584954.9712000005
+    },
+    {
+      "name": "Ölme",
+      "code": "Öl",
+      "kind": "Driftplats",
+      "x": 443464.44010000024,
+      "y": 6580657.3858
+    },
+    {
+      "name": "Önaskogen",
+      "code": "Öna",
+      "kind": "Driftplats",
+      "x": 507038.6782999998,
+      "y": 6497912.1417
+    },
+    {
+      "name": "Önnestad",
+      "code": "Önd",
+      "kind": "Driftplats",
+      "x": 439551.5652999999,
+      "y": 6213239.137599999
+    },
+    {
+      "name": "Örabäcken",
+      "code": "Öbn",
+      "kind": "Driftplats",
+      "x": 539384.9776999997,
+      "y": 6886813.321699999
+    },
+    {
+      "name": "Örbyhus",
+      "code": "Öh",
+      "kind": "Driftplats",
+      "x": 649720.4972999999,
+      "y": 6680021.9835
+    },
+    {
+      "name": "Örebro central",
+      "code": "Ör",
+      "kind": "Driftplats",
+      "x": 512020.38960000034,
+      "y": 6571047.3869
+    },
+    {
+      "name": "Öreälv",
+      "code": "Öä",
+      "kind": "Driftplats",
+      "x": 713889.5741999997,
+      "y": 7081292.794199999
+    },
+    {
+      "name": "Örnsköldsvik norra",
+      "code": "Ökn",
+      "kind": "Driftplats",
+      "x": 686586.4884000001,
+      "y": 7025094.201699998
+    },
+    {
+      "name": "Örnsköldsviks central",
+      "code": "Ök",
+      "kind": "Driftplats",
+      "x": 685732.9743999997,
+      "y": 7023097.103500001
+    },
+    {
+      "name": "Örsjö",
+      "code": "Örs",
+      "kind": "Driftplats",
+      "x": 545922.5937999999,
+      "y": 6283875.390799999
+    },
+    {
+      "name": "Örtofta",
+      "code": "Ö",
+      "kind": "Driftplats",
+      "x": 389785.2232999997,
+      "y": 6182823.6873
+    },
+    {
+      "name": "Ösmo",
+      "code": "Öso",
+      "kind": "Driftplats",
+      "x": 666803.8981999997,
+      "y": 6541945.0736
+    },
+    {
+      "name": "Östavall",
+      "code": "Öv",
+      "kind": "Driftplats",
+      "x": 524436.9123,
+      "y": 6922095.8521
+    },
+    {
+      "name": "Österalnö",
+      "code": "Öal",
+      "kind": "Driftplats",
+      "x": 675805.2976000002,
+      "y": 7029985.112599999
+    },
+    {
+      "name": "Östersunds central",
+      "code": "Ös",
+      "kind": "Driftplats",
+      "x": 481762.0038999999,
+      "y": 7004610.340999998
+    },
+    {
+      "name": "Östertälje",
+      "code": "Öte",
+      "kind": "Driftplats",
+      "x": 651885.5944999997,
+      "y": 6563678.294600001
+    },
+    {
+      "name": "Österås",
+      "code": "Öså",
+      "kind": "Driftplats",
+      "x": 609832.0001999997,
+      "y": 7011000.305799998
+    },
+    {
+      "name": "Östra Grevie",
+      "code": "Ög",
+      "kind": "Driftplats",
+      "x": 381892.64919999987,
+      "y": 6148626.478
+    },
+    {
+      "name": "Överum",
+      "code": "Övm",
+      "kind": "Driftplats",
+      "x": 578389.7917999998,
+      "y": 6427513.857999999
+    },
+    {
+      "name": "Övsjö",
+      "code": "Övö",
+      "kind": "Driftplats",
+      "x": 550024.1374000004,
+      "y": 6982067.4135
+    },
+    {
+      "name": "Öxnered",
+      "code": "Öx",
+      "kind": "Driftplats",
+      "x": 340505.06099999975,
+      "y": 6471923.055600001
+    }
+  ]
+}

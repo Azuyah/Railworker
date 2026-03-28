@@ -1,4 +1,9 @@
 export const getSectionMarker = (section, index) => {
+  const customLabel = String(section?.customLabel || '').trim();
+  if (customLabel) {
+    return customLabel;
+  }
+
   if (section?.namingMode === 'NUMBERS') {
     if (section?.displayIndex !== undefined && section?.displayIndex !== null && section?.displayIndex !== '') {
       return String(section.displayIndex);

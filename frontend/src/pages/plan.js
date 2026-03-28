@@ -143,6 +143,19 @@ const extractBtknPrefix = (value = '') =>
     .replace(/\d+$/, '')
     .trim();
 
+const getStoredUserData = () => {
+  try {
+    return JSON.parse(localStorage.getItem('user') || 'null');
+  } catch (error) {
+    return null;
+  }
+};
+
+const getBtknPrefixStorageKey = () => {
+  const user = getStoredUserData();
+  return `railworker.btknPrefix.${user?.email || user?.id || 'default'}`;
+};
+
 const Plan = () => {
   const { id } = useParams();
   const [project, setProject] = useState(null);
@@ -176,7 +189,13 @@ const Plan = () => {
   const bodyContextRef = useRef(null);
   const [activeRowId, setActiveRowId] = useState(null);
   const [hotkeysOpen, setHotkeysOpen] = useState(false);
-  const [btknPrefix, setBtknPrefix] = useState('');
+  const [btknPrefix, setBtknPrefix] = useState(() => {
+    try {
+      return localStorage.getItem(getBtknPrefixStorageKey()) || '';
+    } catch (error) {
+      return '';
+    }
+  });
   const [activePlanEntryKey, setActivePlanEntryKey] = useState('');
   const [hoveredSectionInfo, setHoveredSectionInfo] = useState(null);
   const [topPanelCollapsed, setTopPanelCollapsed] = useState(false);
@@ -227,6 +246,7 @@ const Plan = () => {
   const [editSections, setEditSections] = useState(project?.sections || []);
   const projectFormState = project?.formState || {};
   const projectPlanEntries = useMemo(() => buildPlanEntries(project), [project]);
+  const btknPrefixStorageKey = useMemo(() => getBtknPrefixStorageKey(), []);
   const activePlanEntry = useMemo(
     () =>
       projectPlanEntries.find((entry) => entry.key === activePlanEntryKey) ||
@@ -242,6 +262,13 @@ const Plan = () => {
     label: getSectionLabel(sec, idx),
     signal: sec.name || sec.signal || '',
   }));
+
+useEffect(() => {
+  try {
+    localStorage.setItem(btknPrefixStorageKey, btknPrefix || '');
+  } catch (error) {
+  }
+}, [btknPrefix, btknPrefixStorageKey]);
 
 useEffect(() => {
   if (!projectPlanEntries.length) {
@@ -1485,7 +1512,10 @@ const completeSelectedRow = useCallback(async (targetPlanEntry = null) => {
 
 const updateRowField = useCallback((rowId, field, value) => {
   if (field === 'btkn') {
-    setBtknPrefix(extractBtknPrefix(value));
+    const nextPrefix = extractBtknPrefix(value);
+    if (nextPrefix) {
+      setBtknPrefix(nextPrefix);
+    }
   }
   setRows((prev) =>
     prev.map((row) => (row.id === rowId ? { ...row, [field]: value } : row))

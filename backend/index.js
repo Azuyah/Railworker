@@ -10,6 +10,7 @@ const { parseBlankett31Pdf } = require('./lib/blankett31Parser');
 const { parseDispPdf } = require('./lib/dispParser');
 const { createPlanWorkbookBuffer } = require('./lib/planExcelExport');
 const { createDispPdfBuffer } = require('./lib/dispPdfExport');
+const { buildSignalSections, expandDriftplatsSequence } = require('./lib/njdbDriftplatsService');
 require('dotenv').config();
 
 const app = express();
@@ -54,6 +55,63 @@ const decodeUploadedPdf = (fileData, fileName = '') => {
 
   return pdfBuffer;
 };
+
+const hydrateProjectSections = (project = null) => {
+  if (!project || !Array.isArray(project.sections)) {
+    return project;
+  }
+
+  const sectionDetails = Array.isArray(project.formState?.sectionDetails)
+    ? project.formState.sectionDetails
+    : [];
+
+  const sections = project.sections
+    .map((section, index) => {
+      const details = sectionDetails[index] || {};
+      const sortOrder = Number(details.sortOrder);
+      const displayIndex = Number(details.displayIndex);
+
+      return {
+        ...section,
+        signal: details.signal || section.signal || section.name || '',
+        name: details.signal || section.name || '',
+        displayIndex: Number.isFinite(displayIndex) ? displayIndex : null,
+        customLabel: String(details.customLabel || '').trim(),
+        sortOrder: Number.isFinite(sortOrder) ? sortOrder : index,
+      };
+    })
+    .sort((left, right) => (left.sortOrder ?? 0) - (right.sortOrder ?? 0));
+
+  return {
+    ...project,
+    sections,
+  };
+};
+
+app.post('/api/njdb/driftplatser/expand', authMiddleware, async (req, res) => {
+  try {
+    const { value, places } = req.body || {};
+    const result = await expandDriftplatsSequence(Array.isArray(places) ? places : value);
+    res.json(result);
+  } catch (error) {
+    console.error('Fel vid NJDB-driftplatssokning:', error);
+    res.status(400).json({ error: error.message || 'Kunde inte hamta driftplatser fran NJDB' });
+  }
+});
+
+app.post('/api/njdb/sections/signals', authMiddleware, async (req, res) => {
+  try {
+    const { value, places, outerBoundaries } = req.body || {};
+    const result = await buildSignalSections({
+      places: Array.isArray(places) ? places : value,
+      outerBoundaries,
+    });
+    res.json(result);
+  } catch (error) {
+    console.error('Fel vid NJDB-sektionssokning:', error);
+    res.status(400).json({ error: error.message || 'Kunde inte skapa delomraden fran NJDB' });
+  }
+});
 
 // Register user
 app.post('/api/register', async (req, res) => {
@@ -362,7 +420,7 @@ app.post('/api/projects', authMiddleware, async (req, res) => {
       },
     });
 
-    res.status(201).json(project);
+    res.status(201).json(hydrateProjectSections(project));
   } catch (error) {
     console.error('❌ Create project error:', error);
     res.status(500).json({ error: 'Kunde inte skapa projekt' });
@@ -411,7 +469,7 @@ const projects = await prisma.project.findMany({
 
     console.log('✅ Alla projekt:', projects.map(p => ({ id: p.id, userId: p.userId })));
 
-    res.json(projects);
+    res.json(projects.map((project) => hydrateProjectSections(project)));
   } catch (err) {
     console.error('❌ Fel vid hämtning av projekt:', err);
     res.status(500).json({ error: 'Kunde inte hämta projekt' });
@@ -466,7 +524,7 @@ const project = await prisma.project.findUnique({
       return res.status(404).json({ error: 'Projekt hittades inte' });
     }
 
-    res.json(project);
+    res.json(hydrateProjectSections(project));
   } catch (error) {
     console.error('Fel vid hämtning av projekt:', error.message, error.stack);
     res.status(500).json({ error: 'Kunde inte hämta projekt' });
@@ -604,7 +662,7 @@ app.put('/api/projects/:id', async (req, res) => {
     });
     console.log('📌 Anteckningar mottaget från frontend:', anteckningar);
 
-    res.json(result);
+    res.json(hydrateProjectSections(result));
   } catch (error) {
     console.error('❌ Globalt fel:', error.message, error.stack);
     res.status(500).json({ error: 'Kunde inte uppdatera projektet' });

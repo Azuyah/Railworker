@@ -58,14 +58,35 @@ const extractProjectName = (pages) => {
   const firstPageLines = getPageLines(findOverviewPage(pages));
 
   const lineName = firstPageLines.find((line) => normalizeForMatching(line).startsWith('dispositionsarbetsplan '));
-  const weekAndDays = firstPageLines.find((line) => /^V\d+\s+/i.test(line));
-  const objectNumber = firstPageLines.find((line) => /Banobjekt-Vnr/i.test(line));
+  const weekAndDays = firstPageLines.find((line) => (
+    /^V\d+\s+/i.test(line) &&
+    !/\b\d+\/[A-Za-z]+\d*\b/.test(line)
+  ));
+  const objectNumber = getLabelValue(firstPageLines, /^banobjekt-vnr\b/i, /^.*Banobjekt-Vnr\s*/i);
 
   const projectBase = lineName ? lineName.replace(/^Dispositionsarbetsplan\s+/i, '') : '';
   const projectWeek = normalizeProjectTitle(weekAndDays || '');
-  const objectValue = objectNumber?.match(/(\d+(?:-\d+)?)/)?.[1] || '';
+  const objectValue = cleanMatchedValue(objectNumber).match(/(\d+(?:-\d+)?)/)?.[1] || '';
 
   return normalizeProjectTitle([projectBase, projectWeek, objectValue].filter(Boolean).join(' '));
+};
+
+const findLineIndex = (lines = [], predicate) =>
+  lines.findIndex((line) => predicate(normalizeForMatching(line), line));
+
+const getLabelValue = (lines = [], labelPattern, stripPattern) => {
+  const labelIndex = findLineIndex(lines, (normalized) => labelPattern.test(normalized));
+  if (labelIndex === -1) {
+    return '';
+  }
+
+  const currentLine = lines[labelIndex] || '';
+  const inlineValue = cleanMatchedValue(stripPattern ? currentLine.replace(stripPattern, '') : currentLine);
+  if (inlineValue) {
+    return inlineValue;
+  }
+
+  return cleanMatchedValue(lines.slice(labelIndex + 1).find(Boolean) || '');
 };
 
 function cleanMatchedValue(value = '') {
@@ -97,8 +118,12 @@ const extractOverviewMeta = (pages) => {
         !line.normalized.includes('versionsnummer') &&
         !line.normalized.includes('antal sidor')
     )?.raw || '';
-  const banobjektLine = normalizedLines.find((line) => line.normalized.includes('banobjekt-vnr'))?.raw || '';
-  const forplaneraLine = normalizedLines.find((line) => line.normalized.includes('forplanera ca'))?.raw || '';
+  const routeLineCandidate =
+    standaloneTitleIndex >= 0
+      ? normalizeProjectTitle(firstPageLines[standaloneTitleIndex + 1] || '')
+      : '';
+  const banobjektValue = getLabelValue(firstPageLines, /^banobjekt-vnr\b/i, /^.*Banobjekt-Vnr\s*/i);
+  const forplaneraValue = getLabelValue(firstPageLines, /^forplanera ca\b/i, /^.*Förplanera ca\s*:?\s*/i);
   const outerBoundaryIndex = normalizedLines.findIndex((line) =>
     line.normalized.includes('granspunkter som ej far passeras utan tkl')
   );
@@ -111,12 +136,14 @@ const extractOverviewMeta = (pages) => {
   return {
     banName: normalizeProjectTitle(topTitleLine.replace(/^Dispositionsarbetsplan\s+/i, '')),
     stracka:
-      standaloneTitleIndex >= 0
-        ? normalizeProjectTitle(firstPageLines[standaloneTitleIndex + 1] || '')
+      routeLineCandidate &&
+      !/^dispositionsarbetsplan\b/i.test(routeLineCandidate) &&
+      !/^v\d+\b/i.test(routeLineCandidate)
+        ? routeLineCandidate
         : '',
     weekLine: normalizeProjectTitle(weekLine),
-    banobjektVnr: cleanMatchedValue(banobjektLine.replace(/^.*Banobjekt-Vnr\s*/i, '')),
-    forplaneraCa: cleanMatchedValue(forplaneraLine.replace(/^.*Förplanera ca\s*:?\s*/i, '')),
+    banobjektVnr: banobjektValue,
+    forplaneraCa: forplaneraValue,
     outerGranspunkter: normalizeProjectTitle(outerGranspunkter),
   };
 };
@@ -205,7 +232,7 @@ const extractPhoneSection = (pages) => {
     .sort((left, right) => Number(left?.page || 0) - Number(right?.page || 0));
 };
 
-const isDispBeteckning = (value = '') => /^26(?:[_\s-]?\d{4})$/i.test(normalizeText(value));
+const isDispBeteckning = (value = '') => /^26(?:[_\s-]?\d{4,})$/i.test(normalizeText(value));
 const normalizeDispBeteckning = (value = '') =>
   normalizeText(value)
     .replace(/\s*([_-])\s*/g, '_')
@@ -221,7 +248,7 @@ const hasUsefulTextPages = (pages = []) =>
         normalized.includes('dispositionsarbetsplan') ||
         normalized.includes('banobjekt-vnr') ||
         normalized.includes('telefonnummer') ||
-        /26(?:[_\s-]?\d{4})/.test(text) ||
+        /26(?:[_\s-]?\d{4,})/.test(text) ||
         /delomrade\s+\d+/.test(normalized)
       )
     );
@@ -234,7 +261,7 @@ const getPageLines = (page) =>
 const isDispTablePage = (page = {}) => {
   const text = String(page?.text || '');
   const normalized = normalizeForMatching(text);
-  const beteckningMatches = text.match(/26(?:[_\s-]?\d{4})/gi)?.length || 0;
+  const beteckningMatches = text.match(/26(?:[_\s-]?\d{4,})/gi)?.length || 0;
   const dateTimeMatches = text.match(/\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}/g)?.length || 0;
 
   return (
@@ -246,7 +273,7 @@ const isDispTablePage = (page = {}) => {
 const getDispTablePageScore = (page = {}) => {
   const text = String(page?.text || '');
   const normalized = normalizeForMatching(text);
-  const beteckningMatches = text.match(/26(?:[_\s-]?\d{4})/gi)?.length || 0;
+  const beteckningMatches = text.match(/26(?:[_\s-]?\d{4,})/gi)?.length || 0;
   const dateTimeMatches = text.match(/\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}/g)?.length || 0;
 
   let score = 0;
@@ -525,7 +552,7 @@ const extractDispEntriesFromText = (pages = []) => {
 
     for (let index = 0; index < lines.length; index += 1) {
       const line = lines[index];
-      const labels = Array.from(line.matchAll(/(26(?:[_\s-]?\d{4}))/gi), (match) => match[1]);
+      const labels = Array.from(line.matchAll(/(26(?:[_\s-]?\d{4,}))/gi), (match) => match[1]);
 
       if (!labels.length) {
         continue;
@@ -536,7 +563,7 @@ const extractDispEntriesFromText = (pages = []) => {
         const nextLine = lines[lookahead];
         const normalizedNextLine = normalizeForMatching(nextLine);
         if (
-          /(26(?:[_\s-]?\d{4}))/i.test(nextLine) ||
+          /(26(?:[_\s-]?\d{4,}))/i.test(nextLine) ||
           /^delomrade\s+\d+/.test(normalizedNextLine) ||
           normalizedNextLine.includes('telefonnummer')
         ) {
@@ -660,6 +687,7 @@ const cleanBoundaryToken = (value = '') =>
     .replace(/\.+/g, '')
     .replace(/B[Il1]b/gi, 'Blb')
     .replace(/Тр/gi, 'Tp')
+    .replace(/\b([A-Za-zÅÄÖåäö]{1,4})\s+(\d)/g, '$1$2')
     .replace(/\s*,\s*/g, ', ')
     .replace(/\s*-\s*/g, ' - ')
     .replace(/[\s\-–—]+$/, '')
@@ -668,9 +696,10 @@ const cleanBoundaryToken = (value = '') =>
 const isSignalPointToken = (value = '') => /\d/.test(cleanBoundaryToken(value));
 const extractSignalTokens = (value = '') =>
   cleanBoundaryToken(value)
-    .match(/[A-Za-zÅÄÖåäö]{1,4}\d+(?:,\s*[A-Za-zÅÄÖåäö]{1,4}\d+)*/g) || [];
+    .match(/[A-Za-zÅÄÖåäö]{1,4}\d+(?:,\s*(?:[A-Za-zÅÄÖåäö]{1,4}\d+|\d+))*/g) || [];
 
-const DISP_SECTION_POINT_TOKEN_PATTERN = '[A-Za-z\\u00C5\\u00C4\\u00D6\\u00E5\\u00E4\\u00F6]{1,4}\\d+(?:,\\s*[A-Za-z\\u00C5\\u00C4\\u00D6\\u00E5\\u00E4\\u00F6]{1,4}\\d+)*';
+const DISP_SECTION_POINT_TOKEN_PATTERN =
+  '[A-Za-z\\u00C5\\u00C4\\u00D6\\u00E5\\u00E4\\u00F6]{1,4}\\s*\\d+(?:,\\s*(?:[A-Za-z\\u00C5\\u00C4\\u00D6\\u00E5\\u00E4\\u00F6]{1,4}\\s*\\d+|\\d+))*';
 const DISP_SECTION_BOUNDARY_RANGE_REGEX = new RegExp(
   `(${DISP_SECTION_POINT_TOKEN_PATTERN})\\s+-\\s+(${DISP_SECTION_POINT_TOKEN_PATTERN})$`,
   'i'
@@ -724,6 +753,7 @@ const mergeDispSections = (sections = []) =>
         displayIndex: current.displayIndex || section.displayIndex || key,
         type: pickParsedValue(current.type, section.type) || 'Delområde',
         namingMode: pickParsedValue(current.namingMode, section.namingMode) || 'NUMBERS',
+        name: pickParsedValue(current.name, section.name),
         signal: pickParsedValue(current.signal, section.signal),
         granspunkter: pickParsedValue(current.granspunkter, section.granspunkter),
         granspunktStart: pickParsedValue(current.granspunktStart, section.granspunktStart),
@@ -743,6 +773,40 @@ const normalizeSectionField = (value = '') =>
     .replace(/^(signaler?|granspunkter?|spar)\s*[:\-]?\s*/i, '')
     .trim();
 
+const sanitizeSectionValue = (value = '', { allowTrackNumbers = false } = {}) => {
+  const normalized = normalizeSectionField(value)
+    .replace(/yttre\s+gr[aä]nspunkter.*$/i, '')
+    .replace(/gr[aä]nspunkter\s+som\s+ej\s+f[aå]r\s+passeras.*$/i, '')
+    .replace(/som\s+ej\s+f[aå]r\s+passeras.*$/i, '')
+    .replace(/medgivande\s+fr[aå]n\s+tkl.*$/i, '')
+    .replace(/r[oö]dmarkerade.*$/i, '')
+    .trim();
+
+  if (!normalized) {
+    return '';
+  }
+
+  if (allowTrackNumbers && /^[\d,\s]+$/.test(normalized)) {
+    return normalized.replace(/\s*,\s*/g, ', ');
+  }
+
+  return normalized;
+};
+
+const normalizeSectionName = (value = '') => {
+  const cleaned = sanitizeSectionValue(value);
+  if (!cleaned || /\d{2,}/.test(cleaned) || /\bsp[aå]r\b/i.test(cleaned)) {
+    return '';
+  }
+
+  const duplicatePrefix = cleaned.match(/^(.+?)\s+\1\s*-\s*(.+)$/i);
+  if (duplicatePrefix) {
+    return `${duplicatePrefix[1]} - ${duplicatePrefix[2]}`.trim();
+  }
+
+  return cleaned;
+};
+
 const buildDispSection = ({
   displayIndex,
   signal = '',
@@ -751,9 +815,9 @@ const buildDispSection = ({
   type = 'Delområde',
   namingMode = 'NUMBERS',
 } = {}) => {
-  const normalizedSignal = normalizeSectionField(signal);
-  const normalizedBoundaries = normalizeSectionField(granspunkter);
-  const normalizedTrack = normalizeSectionField(spar);
+  const normalizedSignal = sanitizeSectionValue(signal);
+  const normalizedBoundaries = sanitizeSectionValue(granspunkter);
+  const normalizedTrack = sanitizeSectionValue(spar, { allowTrackNumbers: true });
   const boundaryTokens = normalizedBoundaries.split(/\s+-\s+/).map((part) => cleanBoundaryToken(part)).filter(Boolean);
   const mergedSignalTokens = extractSignalTokens(normalizedBoundaries);
   const granspunktStart = boundaryTokens[0] || mergedSignalTokens[mergedSignalTokens.length - 2] || '';
@@ -796,7 +860,7 @@ const parseInlineDispSectionText = (value = '') => {
     return null;
   }
 
-  const sectionName = normalizeSectionRowText(body.slice(0, boundaryMatch.index));
+  const sectionName = normalizeSectionName(normalizeSectionRowText(body.slice(0, boundaryMatch.index)));
   const granspunkter = `${cleanBoundaryToken(boundaryMatch[1] || '')} - ${cleanBoundaryToken(boundaryMatch[2] || '')}`;
 
   return {

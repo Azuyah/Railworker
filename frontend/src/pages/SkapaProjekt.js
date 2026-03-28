@@ -36,6 +36,12 @@ const emergencyPhoneOptions = [
   '010-127 44 99 Boden',
 ];
 
+const htsmPhoneOptions = [
+  '010-149 01 64',
+  '010-149 01 65',
+  '010-149 01 66',
+];
+
 const readFileAsDataUrl = (file) =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -96,6 +102,8 @@ const defaultSection = () => ({
   signal: '',
   namingMode: 'NUMBERS',
   displayIndex: null,
+  customLabel: '',
+  sortOrder: null,
   granspunktStart: '',
   granspunktSlut: '',
   granspunkter: '',
@@ -106,6 +114,14 @@ const createDefaultSections = (count = 10) =>
   Array.from({ length: count }, (_, index) => ({
     ...defaultSection(),
     displayIndex: index + 1,
+    sortOrder: index,
+  }));
+
+const normalizeSectionSortOrder = (items = []) =>
+  items.map((section, index) => ({
+    ...defaultSection(),
+    ...section,
+    sortOrder: index,
   }));
 
 const defaultDispSettings = () => ({
@@ -146,13 +162,69 @@ const buildSuggestedWeekLine = (entries = [], explicitWeek = '') => {
   return [weekValue, dayValue].filter(Boolean).join(' ');
 };
 
-const mergeSectionDetails = (sections = [], sectionDetails = []) =>
-  sections.map((section, index) => ({
-    ...defaultSection(),
-    ...section,
-    ...(sectionDetails[index] || {}),
-    signal: sectionDetails[index]?.signal || section?.signal || section?.name || '',
-  }));
+const sanitizeSectionText = (value = '') =>
+  String(value || '')
+    .replace(/\s+/g, ' ')
+    .replace(/yttre\s+gr[aä]nspunkter.*$/i, '')
+    .replace(/gr[aä]nspunkter\s+som\s+ej\s+f[aå]r\s+passeras.*$/i, '')
+    .replace(/som\s+ej\s+f[aå]r\s+passeras.*$/i, '')
+    .replace(/medgivande\s+fr[aå]n\s+tkl.*$/i, '')
+    .replace(/r[oö]dmarkerade.*$/i, '')
+    .trim();
+
+const normalizeTrackValue = (value = '') => {
+  const normalized = sanitizeSectionText(value).replace(/^sp[aå]r\s*/i, '');
+  if (!normalized) {
+    return '';
+  }
+
+  const compactNumeric = normalized.match(/^\d+(?:[\s,]+\d+)*/)?.[0];
+  if (compactNumeric) {
+    return compactNumeric
+      .split(/[\s,]+/)
+      .filter(Boolean)
+      .join(', ');
+  }
+
+  const letterTrack = normalized.match(/^[A-Za-z](?:,\s*[A-Za-z])*/)?.[0];
+  return (letterTrack || normalized).trim();
+};
+
+const normalizeSectionAreaName = (value = '') =>
+  sanitizeSectionText(value)
+    .replace(/\s+Driftplats(?:er)?$/i, '')
+    .replace(/s$/i, '');
+
+const mergeSectionDetails = (sections = [], sectionDetails = [], fallbackAreaName = '') =>
+  normalizeSectionSortOrder(sections.map((section, index) => {
+    const details = sectionDetails[index] || {};
+    const granspunktStart = sanitizeSectionText(details.granspunktStart || '');
+    const granspunktSlut = sanitizeSectionText(details.granspunktSlut || '');
+    const granspunkter = sanitizeSectionText(
+      details.granspunkter || [granspunktStart, granspunktSlut].filter(Boolean).join(' - ')
+    );
+    const areaName = normalizeSectionAreaName(
+      section?.name || details.signal || section?.signal || fallbackAreaName
+    );
+
+    return {
+      ...defaultSection(),
+      ...section,
+      ...details,
+      name: areaName,
+      signal: areaName,
+      customLabel: String(details.customLabel || section?.customLabel || '').trim(),
+      sortOrder: Number.isFinite(Number(details.sortOrder))
+        ? Number(details.sortOrder)
+        : Number.isFinite(Number(section?.sortOrder))
+          ? Number(section.sortOrder)
+          : index,
+      granspunktStart,
+      granspunktSlut,
+      granspunkter,
+      spar: normalizeTrackValue(details.spar || ''),
+    };
+  }).sort((left, right) => (left.sortOrder ?? 0) - (right.sortOrder ?? 0)));
 
 const SkapaProjekt = () => {
   const navigate = useNavigate();
@@ -171,6 +243,7 @@ const SkapaProjekt = () => {
   const [telefonnummer, setTelefonnummer] = useState('');
   const [nodnummer, setNodnummer] = useState('');
   const [htsmTelefon, setHtsmTelefon] = useState('');
+  const [reservnr, setReservnr] = useState('');
   const [avstamt, setAvstamt] = useState(false);
   const [objekt, setObjekt] = useState('');
   const [uttagningstid, setUttagningstid] = useState('');
@@ -192,8 +265,14 @@ const SkapaProjekt = () => {
   const [blankett31Status, setBlankett31Status] = useState('');
   const [isParsingDisp, setIsParsingDisp] = useState(false);
   const [dispStatus, setDispStatus] = useState('');
+  const [isResolvingDriftplatser, setIsResolvingDriftplatser] = useState(false);
+  const [driftplatsStatus, setDriftplatsStatus] = useState('');
+  const [isResolvingSections, setIsResolvingSections] = useState(false);
+  const [sectionStatus, setSectionStatus] = useState('');
   const blankett31InputRef = useRef(null);
   const dispInputRef = useRef(null);
+  const availableHtsmPhoneOptions = htsmPhoneOptions.filter((option) => option === htsmTelefon || option !== reservnr);
+  const availableReservnrOptions = htsmPhoneOptions.filter((option) => option === reservnr || option !== htsmTelefon);
 
   const syncSummaryDatesFromEntries = (entries) => {
     if (!entries.length) {
@@ -284,19 +363,48 @@ const SkapaProjekt = () => {
       return Number.isFinite(parsed) ? Math.max(maxValue, parsed) : maxValue;
     }, 0);
 
-    setSections((current) => [
+    setSections((current) => normalizeSectionSortOrder([
       ...current,
       {
         ...defaultSection(),
         displayIndex: highestDisplayIndex + 1,
       },
-    ]);
+    ]));
+  };
+
+  const insertSectionAfter = (index) => {
+    const highestDisplayIndex = sections.reduce((maxValue, section) => {
+      const parsed = Number(section?.displayIndex);
+      return Number.isFinite(parsed) ? Math.max(maxValue, parsed) : maxValue;
+    }, 0);
+
+    setSections((current) => normalizeSectionSortOrder([
+      ...current.slice(0, index + 1),
+      {
+        ...defaultSection(),
+        displayIndex: highestDisplayIndex + 1,
+      },
+      ...current.slice(index + 1),
+    ]));
+  };
+
+  const moveSection = (index, direction) => {
+    setSections((current) => {
+      const targetIndex = index + direction;
+      if (targetIndex < 0 || targetIndex >= current.length) {
+        return current;
+      }
+
+      const updated = [...current];
+      [updated[index], updated[targetIndex]] = [updated[targetIndex], updated[index]];
+      return normalizeSectionSortOrder(updated);
+    });
   };
 
   const updateSectionType = (index, type) => {
     const updated = [...sections];
     updated[index].type = type;
-    setSections(updated);
+    setSections(normalizeSectionSortOrder(updated));
   };
 
   const updateSectionNamingMode = (index, namingMode) => {
@@ -305,11 +413,11 @@ const SkapaProjekt = () => {
     if (namingMode === 'NUMBERS' && !updated[index].displayIndex) {
       updated[index].displayIndex = index + 1;
     }
-    setSections(updated);
+    setSections(normalizeSectionSortOrder(updated));
   };
 
   const updateSectionField = (index, field, value) => {
-    setSections((current) => current.map((section, sectionIndex) => {
+    setSections((current) => normalizeSectionSortOrder(current.map((section, sectionIndex) => {
       if (sectionIndex !== index) {
         return section;
       }
@@ -335,12 +443,98 @@ const SkapaProjekt = () => {
       }
 
       return updatedSection;
-    }));
+    })));
   };
 
   const removeSection = (index) => {
     const updated = sections.filter((_, i) => i !== index);
-    setSections(updated);
+    setSections(normalizeSectionSortOrder(updated));
+  };
+
+  const handleExpandDriftplatser = async () => {
+    const token = JSON.parse(localStorage.getItem('user'))?.token;
+    if (!token) {
+      setDriftplatsStatus('Du maste vara inloggad for att hamta driftplatser.');
+      return;
+    }
+
+    setIsResolvingDriftplatser(true);
+    setDriftplatsStatus('Soker mellanliggande driftplatser i NJDB...');
+
+    try {
+      const response = await fetch(apiUrl('/api/njdb/driftplatser/expand'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ value: plats }),
+      });
+
+      if (!response.ok) {
+        const message = await getApiErrorMessage(response, 'Kunde inte hamta driftplatser fran NJDB.');
+        throw new Error(message);
+      }
+
+      const data = await response.json();
+      const nextValue = String(data?.value || '').trim();
+      setPlats(nextValue);
+      setDriftplatsStatus(nextValue ? `Uppdaterade raden med ${data?.places?.length || 0} driftplatser.` : 'Inga driftplatser hittades.');
+    } catch (error) {
+      console.error('Fel vid hamtning av driftplatser:', error);
+      setDriftplatsStatus(error.message || 'Kunde inte hamta driftplatser fran NJDB.');
+    } finally {
+      setIsResolvingDriftplatser(false);
+    }
+  };
+
+  const handlePopulateSectionsFromSignals = async () => {
+    const token = JSON.parse(localStorage.getItem('user'))?.token;
+    if (!token) {
+      setSectionStatus('Du maste vara inloggad for att hamta signaler.');
+      return;
+    }
+
+    setIsResolvingSections(true);
+    setSectionStatus('Hamta signaler och bygger delomraden fran NJDB...');
+
+    try {
+      const response = await fetch(apiUrl('/api/njdb/sections/signals'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          value: plats,
+          outerBoundaries: granspunktFritext,
+        }),
+      });
+
+      if (!response.ok) {
+        const message = await getApiErrorMessage(response, 'Kunde inte skapa delomraden fran NJDB.');
+        throw new Error(message);
+      }
+
+      const data = await response.json();
+      const nextSections = Array.isArray(data?.sections) && data.sections.length
+        ? normalizeSectionSortOrder(data.sections.map((section, index) => ({
+            ...defaultSection(),
+            ...section,
+            displayIndex: section.displayIndex ?? index + 1,
+          })))
+        : createDefaultSections();
+
+      setSections(nextSections);
+      setSectionStatus(nextSections.length
+        ? `Fyllde ${nextSections.length} delomraden med signaler och strackor.`
+        : 'Inga delomraden kunde skapas.');
+    } catch (error) {
+      console.error('Fel vid hamtning av sektionssignaler:', error);
+      setSectionStatus(error.message || 'Kunde inte skapa delomraden fran NJDB.');
+    } finally {
+      setIsResolvingSections(false);
+    }
   };
 
   const applyBlankett31Data = (parsed) => {
@@ -533,13 +727,16 @@ const SkapaProjekt = () => {
     applyDispEntries(parsed);
 
     if (Array.isArray(parsed?.sections) && parsed.sections.length) {
+      const fallbackAreaName = parsed.sections.length === 1 ? normalizeSectionAreaName(plats || parsed.plats || dispSettings.banNamn) : '';
       setSections(
-        parsed.sections.map((section) => ({
-          ...defaultSection(),
-          ...section,
-          name: section.name || '',
-          signal: section.name || '',
-        }))
+        mergeSectionDetails(
+          parsed.sections.map((section) => ({
+            ...defaultSection(),
+            ...section,
+          })),
+          parsed.sections,
+          fallbackAreaName
+        )
       );
     }
   };
@@ -681,6 +878,7 @@ const SkapaProjekt = () => {
         formState: {
           nodnummer,
           htsmTelefon,
+          reservnr,
           avstamt,
           objekt,
           uttagningstid,
@@ -695,6 +893,8 @@ const SkapaProjekt = () => {
           sectionDetails: sections.map((sec) => ({
             signal: sec.signal || sec.name || '',
             displayIndex: sec.displayIndex ?? null,
+            customLabel: sec.customLabel || '',
+            sortOrder: sec.sortOrder ?? null,
             granspunktStart: sec.granspunktStart || '',
             granspunktSlut: sec.granspunktSlut || '',
             granspunkter: sec.granspunkter || '',
@@ -813,6 +1013,7 @@ const SkapaProjekt = () => {
         setTelefonnummer(project.telefonnummer || '');
         setNodnummer(project.formState?.nodnummer || '');
         setHtsmTelefon(project.formState?.htsmTelefon || '');
+        setReservnr(project.formState?.reservnr || '');
         setAvstamt(Boolean(project.formState?.avstamt));
         setObjekt(project.formState?.objekt || '');
         setUttagningstid(project.formState?.uttagningstid || '');
@@ -845,8 +1046,10 @@ const SkapaProjekt = () => {
         setDispFiles(project.formState?.dispFiles || []);
         setAnteckningar(project.anteckningar || []);
         setBeteckningar(
-          project.beteckningar?.length
-            ? project.beteckningar.map((b) => ({ value: b.label || '' }))
+          (project.formState?.blankett31Entries || []).length
+            ? project.formState.blankett31Entries.map((entry) => ({ value: entry.beteckning || '' }))
+            : project.beteckningar?.length
+              ? project.beteckningar.map((b) => ({ value: b.label || '' }))
             : [{ value: '' }]
         );
         setSections(
@@ -857,7 +1060,8 @@ const SkapaProjekt = () => {
                   ...sec,
                   signal: sec.name || '',
                 })),
-                project.formState?.sectionDetails || []
+                project.formState?.sectionDetails || [],
+                (project.sections?.length || 0) === 1 ? normalizeSectionAreaName(project.plats || '') : ''
               )
             : createDefaultSections()
         );
@@ -1003,13 +1207,37 @@ const SkapaProjekt = () => {
                 </div>
                 <div>
                   <label className="mb-1 block text-sm font-semibold text-slate-700">Driftplats/er</label>
-                  <input
-                    type="text"
-                    value={plats}
-                    onChange={(e) => setPlats(e.target.value)}
-                    placeholder="Ex. Råå, Marieholm, Teckomatorp"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
-                  />
+                  <div className="flex flex-col gap-3 xl:flex-row">
+                    <input
+                      type="text"
+                      value={plats}
+                      onChange={(e) => {
+                        setPlats(e.target.value);
+                        if (driftplatsStatus) {
+                          setDriftplatsStatus('');
+                        }
+                        if (sectionStatus) {
+                          setSectionStatus('');
+                        }
+                      }}
+                      placeholder="Ex. Kattarp, Ängelholm"
+                      className="w-full flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleExpandDriftplatser}
+                      disabled={isResolvingDriftplatser || !plats.trim()}
+                      className="rounded-xl border border-slate-900 px-4 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
+                    >
+                      {isResolvingDriftplatser ? 'Soker...' : 'Hamta mellanliggande'}
+                    </button>
+                  </div>
+                  <p className="mt-2 text-xs text-slate-500">
+                    Skriv start och slut med kommatecken, till exempel `Kattarp, Ängelholm`, och lat sedan appen fylla pa raden.
+                  </p>
+                  {driftplatsStatus ? (
+                    <p className="mt-2 text-xs font-medium text-slate-600">{driftplatsStatus}</p>
+                  ) : null}
                 </div>
               </div>
               <div className="mt-5 border-t border-slate-200 pt-6">
@@ -1129,13 +1357,45 @@ const SkapaProjekt = () => {
                   </div>
                   <div>
                     <label className="mb-1 block text-sm font-semibold text-slate-700">HTSM telefon</label>
-                    <input
-                      type="text"
+                    <select
                       value={htsmTelefon}
-                      onChange={(e) => setHtsmTelefon(e.target.value)}
-                      placeholder="HTSM telefon"
+                      onChange={(e) => {
+                        const nextValue = e.target.value;
+                        setHtsmTelefon(nextValue);
+                        if (nextValue && reservnr === nextValue) {
+                          setReservnr('');
+                        }
+                      }}
                       className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
-                    />
+                    >
+                      <option value="">Välj HTSM telefon</option>
+                      {availableHtsmPhoneOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-semibold text-slate-700">Reservnr</label>
+                    <select
+                      value={reservnr}
+                      onChange={(e) => {
+                        const nextValue = e.target.value;
+                        setReservnr(nextValue);
+                        if (nextValue && htsmTelefon === nextValue) {
+                          setHtsmTelefon('');
+                        }
+                      }}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
+                    >
+                      <option value="">Välj reservnr</option>
+                      {availableReservnrOptions.map((option) => (
+                        <option key={`reserv-${option}`} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>
@@ -1440,13 +1700,26 @@ const SkapaProjekt = () => {
                   <h2 className="text-lg font-semibold text-slate-900">Delområden</h2>
                   <p className="text-xs text-slate-500">Skapa DP/Linje och ange signaltext</p>
                 </div>
-                <button
-                  onClick={addSection}
-                  className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white"
-                >
-                  Lägg till delområde
-                </button>
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={handlePopulateSectionsFromSignals}
+                    disabled={isResolvingSections || !plats.trim()}
+                    className="rounded-full border border-slate-900 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-slate-900 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
+                  >
+                    {isResolvingSections ? 'Soker signaler...' : 'Fyll från signaler'}
+                  </button>
+                  <button
+                    onClick={addSection}
+                    className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white"
+                  >
+                    Lägg till delområde
+                  </button>
+                </div>
               </div>
+              {sectionStatus ? (
+                <p className="mb-4 text-xs font-medium text-slate-600">{sectionStatus}</p>
+              ) : null}
 
               <div className="space-y-3">
                 {sections.map((sec, i) => (
@@ -1455,16 +1728,42 @@ const SkapaProjekt = () => {
                       <div className="text-sm font-semibold text-slate-700">
                         {getSectionLabel(sec, i)}
                       </div>
-                      {i > 0 && (
+                      <div className="flex flex-wrap items-center justify-end gap-2">
                         <button
-                          onClick={() => removeSection(i)}
-                          className="text-xs font-semibold text-rose-600 hover:text-rose-700"
+                          type="button"
+                          onClick={() => moveSection(i, -1)}
+                          disabled={i === 0}
+                          className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
                         >
-                          Ta bort
+                          Upp
                         </button>
-                      )}
+                        <button
+                          type="button"
+                          onClick={() => moveSection(i, 1)}
+                          disabled={i === sections.length - 1}
+                          className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          Ner
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => insertSectionAfter(i)}
+                          className="rounded-full border border-slate-900 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-slate-900 hover:bg-slate-100"
+                        >
+                          Infoga efter
+                        </button>
+                        {i > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => removeSection(i)}
+                            className="text-xs font-semibold text-rose-600 hover:text-rose-700"
+                          >
+                            Ta bort
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <div className="grid gap-3 md:grid-cols-[140px_180px_120px_1fr]">
+                    <div className="grid gap-3 md:grid-cols-[140px_180px_120px_160px_1fr]">
                       <select
                         value={sec.type}
                         onChange={(e) => updateSectionType(i, e.target.value)}
@@ -1489,6 +1788,13 @@ const SkapaProjekt = () => {
                         onChange={(e) => updateSectionField(i, 'displayIndex', e.target.value)}
                         className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-900 focus:outline-none"
                         placeholder="Nr"
+                      />
+                      <input
+                        type="text"
+                        value={sec.customLabel || ''}
+                        onChange={(e) => updateSectionField(i, 'customLabel', e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-900 focus:outline-none"
+                        placeholder="Egen etikett, ex 2B"
                       />
                       <input
                         type="text"
@@ -1522,6 +1828,9 @@ const SkapaProjekt = () => {
                       />
                     </div>
                     <div className="mt-2 text-xs text-slate-500">
+                      Etikett: {getSectionLabel(sec, i)}. Lämna "Egen etikett" tom för automatisk numrering eller bokstav.
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">
                       Gränspunkter: {sec.granspunkter || [sec.granspunktStart, sec.granspunktSlut].filter(Boolean).join(' - ') || 'Ej angivet'}
                     </div>
                   </div>
