@@ -1,7 +1,7 @@
 const path = require('path');
 const ExcelJS = require('exceljs');
 
-const TEMPLATE_PATH = '/Users/matsmalleandersson/Desktop/Disper/Pågående Disp Jobb/Rååbanan /V12/Planka/Planka Mall Rååbanan V12.xlsx';
+const TEMPLATE_PATH = '/Users/matsmalleandersson/Desktop/MALL Excel Railworker.xlsx';
 
 const formatAnordningLabel = (item = '') => {
   const upper = String(item).toUpperCase();
@@ -55,14 +55,14 @@ const formatProjectPeriod = (item) => {
 const sheetNameFromDate = (dateValue = '') => {
   const match = String(dateValue).match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!match) {
-    return 'Plan';
+    return 'Planka';
   }
 
   return `${match[2]}-${match[3]}`;
 };
 
 const ensureUniqueWorksheetName = (baseName, usedNames) => {
-  const trimmedBase = String(baseName || 'Plan').slice(0, 31) || 'Plan';
+  const trimmedBase = String(baseName || 'Planka').slice(0, 31) || 'Planka';
   if (!usedNames.has(trimmedBase)) {
     usedNames.add(trimmedBase);
     return trimmedBase;
@@ -85,6 +85,16 @@ const ensureUniqueWorksheetName = (baseName, usedNames) => {
 const setCell = (worksheet, cellAddress, value) => {
   worksheet.getCell(cellAddress).value = value;
 };
+
+const setBeteckningarColumn = (worksheet, entries = []) => {
+  const maxRows = Math.max(4, entries.length);
+  for (let index = 0; index < maxRows; index += 1) {
+    setCell(worksheet, `E${index + 1}`, entries[index]?.beteckning || '');
+  }
+};
+
+const buildPlanJobEntryKey = (entry = {}, index = 0) =>
+  `${entry.beteckning || 'entry'}|${entry.startDate || ''}|${index}`;
 
 const cloneStyle = (style = {}) => ({
   ...style,
@@ -282,6 +292,65 @@ const getProjectEntries = (project) => {
   ];
 };
 
+const sortEntries = (entries = []) =>
+  [...entries].sort((left, right) => {
+    const leftKey = `${left.startDate || '9999-99-99'} ${left.startTime || '99:99'} ${left.beteckning || ''}`;
+    const rightKey = `${right.startDate || '9999-99-99'} ${right.startTime || '99:99'} ${right.beteckning || ''}`;
+    return leftKey.localeCompare(rightKey, 'sv');
+  });
+
+const formatProjectPeriodFromEntries = (entries = [], project = {}) => {
+  const sortedEntries = sortEntries(entries.filter((entry) => entry?.startDate || entry?.beteckning));
+  if (!sortedEntries.length) {
+    return formatProjectPeriod({
+      startDate: project.startDate,
+      startTime: project.startTime,
+      endDate: project.endDate,
+      endTime: project.endTime,
+    });
+  }
+
+  const first = sortedEntries[0];
+  const last = sortedEntries[sortedEntries.length - 1];
+  return formatProjectPeriod({
+    startDate: first.startDate,
+    startTime: first.startTime,
+    endDate: last.endDate,
+    endTime: last.endTime,
+  });
+};
+
+const buildWorksheetPlans = (project) => {
+  const entries = getProjectEntries(project);
+  const entryMap = new Map(entries.map((entry, index) => [buildPlanJobEntryKey(entry, index), entry]));
+  const storedJobs = Array.isArray(project.formState?.planJobs)
+    ? project.formState.planJobs.filter((job) => job && (job.name || Array.isArray(job.selectedEntryKeys)))
+    : [];
+
+  if (!storedJobs.length) {
+    return entries.map((entry) => ({
+      sheetName: sheetNameFromDate(entry.startDate),
+      entries: [entry],
+    }));
+  }
+
+  return storedJobs.map((job, index) => {
+    const selectedEntries = Array.isArray(job.selectedEntryKeys)
+      ? job.selectedEntryKeys.map((key) => entryMap.get(key)).filter(Boolean)
+      : [];
+    const resolvedEntries = selectedEntries.length
+      ? selectedEntries
+      : storedJobs.length === 1
+        ? entries
+        : [];
+
+    return {
+      sheetName: String(job.name || '').trim() || sheetNameFromDate(resolvedEntries[0]?.startDate) || `Plan ${index + 1}`,
+      entries: sortEntries(resolvedEntries),
+    };
+  });
+};
+
 const rowMatchesEntry = (row, entry) => {
   const rowDate = row.startdatum || row.begardDatum || row.avslutatDatum || '';
   if (!entry?.startDate) {
@@ -304,9 +373,27 @@ const rowMatchesEntry = (row, entry) => {
   return true;
 };
 
-const cloneWorksheetFromTemplate = (workbook, templateSheet, sheetName) => {
+const rowMatchesEntries = (row, entries = []) => {
+  if (!entries.length) {
+    return true;
+  }
+
+  return entries.some((entry) => rowMatchesEntry(row, entry));
+};
+
+const cloneWorksheetFromTemplate = (workbook, templateSource, sheetName) => {
   const clonedSheet = workbook.addWorksheet(sheetName);
-  const templateModel = JSON.parse(JSON.stringify(templateSheet.model));
+  const templateModel = JSON.parse(JSON.stringify(templateSource));
+  if (Array.isArray(templateModel?.rows)) {
+    templateModel.rows.forEach((row) => {
+      if (!Array.isArray(row?.cells)) return;
+      row.cells.forEach((cell) => {
+        if (cell && Object.prototype.hasOwnProperty.call(cell, 'note')) {
+          delete cell.note;
+        }
+      });
+    });
+  }
   clonedSheet.model = {
     ...templateModel,
     name: sheetName,
@@ -314,21 +401,23 @@ const cloneWorksheetFromTemplate = (workbook, templateSheet, sheetName) => {
   return clonedSheet;
 };
 
-const fillWorksheet = (worksheet, project, entry, rows) => {
+const fillWorksheet = (worksheet, project, entriesForSheet, rows) => {
   const projectFormState = project.formState || {};
   const sections = mergeSectionDetails(project);
+  const sheetEntries = Array.isArray(entriesForSheet) ? entriesForSheet : [];
+  const primaryEntry = sheetEntries[0] || {};
 
-  setCell(worksheet, 'C3', extractWeek(project.name));
-  setCell(worksheet, 'E2', formatProjectPeriod(entry));
-  setCell(worksheet, 'F3', entry.beteckning || '');
+  setBeteckningarColumn(worksheet, sheetEntries);
+  setCell(worksheet, 'C6', extractWeek(project.name));
+  setCell(worksheet, 'E6', formatProjectPeriodFromEntries(sheetEntries, project));
   const { sectionColumns, trailingColumns } = ensureWorksheetHasSectionCapacity(worksheet, sections);
   setCell(
     worksheet,
-    'G2',
+    'G6',
     `${project.namn || ''} ${project.telefonnummer || ''} ${project.plats || ''}`.trim()
   );
   setCell(worksheet, `${trailingColumns.nodnummer}3`, `Nöd nr ${projectFormState.nodnummer || ''}`.trim());
-  setCell(worksheet, `${trailingColumns.sluttid}4`, `Senast Kl: ${entry.endTime || project.endTime || projectFormState.avslutningstid || ''}`.trim());
+  setCell(worksheet, `${trailingColumns.sluttid}4`, `Senast Kl: ${primaryEntry.endTime || project.endTime || projectFormState.avslutningstid || ''}`.trim());
 
   const sectionColumnMap = setSectionHeaders(worksheet, sections, sectionColumns);
 
@@ -365,8 +454,9 @@ const createPlanWorkbookBuffer = async (project) => {
   await workbook.xlsx.readFile(TEMPLATE_PATH);
 
   const rows = Array.isArray(project.rows) ? project.rows : [];
-  const entries = getProjectEntries(project);
+  const worksheetPlans = buildWorksheetPlans(project);
   const templateSheet = workbook.getWorksheet('Dag natt') || workbook.worksheets[0];
+  const templateSheetModel = JSON.parse(JSON.stringify(templateSheet.model));
   const usedSheetNames = new Set(
     workbook.worksheets
       .filter((sheet) => sheet && sheet !== templateSheet)
@@ -374,14 +464,15 @@ const createPlanWorkbookBuffer = async (project) => {
       .filter(Boolean)
   );
 
-  entries.forEach((entry, index) => {
-    const sheetName = ensureUniqueWorksheetName(sheetNameFromDate(entry.startDate), usedSheetNames);
+  worksheetPlans.forEach((plan, index) => {
+    const fallbackName = plan.sheetName || sheetNameFromDate(plan.entries[0]?.startDate);
+    const sheetName = ensureUniqueWorksheetName(fallbackName, usedSheetNames);
     const worksheet = index === 0
       ? templateSheet
-      : cloneWorksheetFromTemplate(workbook, templateSheet, sheetName);
+      : cloneWorksheetFromTemplate(workbook, templateSheetModel, sheetName);
     worksheet.name = sheetName;
-    const matchingRows = rows.filter((row) => rowMatchesEntry(row, entry));
-    fillWorksheet(worksheet, project, entry, matchingRows);
+    const matchingRows = rows.filter((row) => rowMatchesEntries(row, plan.entries));
+    fillWorksheet(worksheet, project, plan.entries, matchingRows);
   });
 
   return workbook.xlsx.writeBuffer();

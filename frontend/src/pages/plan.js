@@ -62,11 +62,20 @@ import { getSectionLabel, getSectionMarker } from '../utils/sectionLabels';
 import { apiUrl } from '../lib/api';
 
 const mergeSectionDetails = (sections = [], sectionDetails = []) =>
-  sections.map((section, index) => ({
-    ...section,
-    ...(sectionDetails[index] || {}),
-    signal: section?.signal || section?.name || sectionDetails[index]?.signal || '',
-  }));
+  sections
+    .map((section, index) => {
+      const details = sectionDetails[index] || {};
+      const parsedSortOrder = Number(details.sortOrder ?? section?.sortOrder);
+
+      return {
+        ...section,
+        ...details,
+        signal: details.signal || section?.signal || section?.name || '',
+        name: details.signal || section?.name || section?.signal || '',
+        sortOrder: Number.isFinite(parsedSortOrder) ? parsedSortOrder : index,
+      };
+    })
+    .sort((left, right) => (left.sortOrder ?? 0) - (right.sortOrder ?? 0));
 
 const splitSectionSignalAndTrack = (section) => {
   const raw = String(section?.signal || section?.name || '').trim();
@@ -109,6 +118,21 @@ const buildPlanEntries = (project) => {
   const entries = Array.isArray(project?.formState?.blankett31Entries)
     ? project.formState.blankett31Entries.filter((entry) => entry?.startDate || entry?.beteckning)
     : [];
+  const entryMap = new Map(entries.map((entry, index) => [buildPlanEntryKey(entry, index), entry]));
+  const planJobs = Array.isArray(project?.formState?.planJobs)
+    ? project.formState.planJobs
+    : [];
+
+  const selectedPlanEntries = planJobs
+    .map((job) => entryMap.get(job?.primaryPlanEntryKey || ''))
+    .filter(Boolean);
+
+  if (selectedPlanEntries.length) {
+    return selectedPlanEntries.map((entry, index) => ({
+      ...entry,
+      key: buildPlanEntryKey(entry, index),
+    }));
+  }
 
   if (entries.length) {
     return entries.map((entry, index) => ({
@@ -611,7 +635,7 @@ const buildAnteckningarEmailContent = useCallback(() => {
     (a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime()
   );
 
-  const subject = `Anteckningar - ${project?.name || 'Plan'}`;
+  const subject = `Anteckningar - ${project?.name || 'Planka'}`;
   const headerLines = [
     `Projekt: ${project?.name || 'Ej angivet'}`,
     `Plats: ${project?.plats || 'Ej angivet'}`,
@@ -836,6 +860,17 @@ const openEditProjectModal = () => {
 };
 
 const updateProject = async () => {
+  const nextSectionDetails = editSections.map((section, index) => ({
+    signal: section.signal || section.name || '',
+    displayIndex: section.displayIndex ?? null,
+    customLabel: section.customLabel || '',
+    sortOrder: section.sortOrder ?? index,
+    granspunktStart: section.granspunktStart || '',
+    granspunktSlut: section.granspunktSlut || '',
+    granspunkter: section.granspunkter || '',
+    spar: section.spar || '',
+  }));
+
   const nextFormState = {
     ...(project?.formState || {}),
     avstamt,
@@ -843,6 +878,7 @@ const updateProject = async () => {
     avslutaSkyddTid,
     uttagningstid,
     signatur,
+    sectionDetails: nextSectionDetails,
   };
   const updated = {
     name: projektNamn,
@@ -854,7 +890,12 @@ const updateProject = async () => {
     namn,
     telefonnummer,
     formState: nextFormState,
-    sections: editSections,
+    sections: editSections.map((section) => ({
+      type: section.type || 'Delområde',
+      name: section.signal || section.name || '',
+      signal: section.signal || section.name || '',
+      namingMode: section.namingMode || 'NUMBERS',
+    })),
     rows,
     beteckningar: editBeteckningar.map(b => ({ label: b })),
   };
@@ -900,7 +941,7 @@ const exportPlanToExcel = async () => {
     const blob = await response.blob();
     const contentDisposition = response.headers.get('Content-Disposition') || '';
     const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/i);
-    const filename = filenameMatch?.[1] || `${project?.name || 'plan'}.xlsx`;
+    const filename = filenameMatch?.[1] || `${project?.name || 'planka'}.xlsx`;
     downloadBlob(blob, filename);
   } catch (error) {
     console.error('Fel vid Excel-export:', error);
@@ -2218,7 +2259,7 @@ if (loading || !project) {
             Anteckningar
           </Button>
           <Button variant="outline" borderRadius="full" borderColor="blue.200" bg="white" onClick={exportPlanToExcel} size="sm">
-            Exportera Excel
+            Exportera planka
           </Button>
           <Button variant="outline" borderRadius="full" borderColor="blue.200" bg="white" onClick={() => setArchivedModalOpen(true)} size="sm">
             Avslutade
@@ -3462,7 +3503,7 @@ onClick={() => {
       ? [...new Set([...selectedAreas, Number(idx)])].sort((a, b) => a - b)
       : selectedAreas.filter((i) => i !== Number(idx));
 
-    const updatedSelections = Array(10)
+    const updatedSelections = Array(project.sections.length)
       .fill(false)
       .map((_, i) => updatedAreas.includes(i));
 

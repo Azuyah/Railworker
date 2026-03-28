@@ -775,13 +775,13 @@ app.get('/api/projects/:id/export-excel', authMiddleware, async (req, res) => {
     }
 
     const buffer = await createPlanWorkbookBuffer(project);
-    const safeName = String(project.name || 'plan')
+    const safeName = String(project.name || 'planka')
       .replace(/[^\p{L}\p{N}\-_ ]/gu, '')
       .trim()
       .replace(/\s+/g, '_');
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename=\"${safeName || 'plan'}.xlsx\"`);
+    res.setHeader('Content-Disposition', `attachment; filename=\"${safeName || 'planka'}.xlsx\"`);
     res.send(Buffer.from(buffer));
   } catch (error) {
     console.error('Fel vid export av Excel:', error);

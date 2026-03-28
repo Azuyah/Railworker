@@ -81,6 +81,112 @@ const normalizeBlankett31Entry = (entry = {}) => ({
   ...entry,
 });
 
+const buildPlanJobEntryKey = (entry = {}, index = 0) =>
+  `${entry.beteckning || 'entry'}|${entry.startDate || ''}|${index}`;
+
+const getEntryDisplayLabel = (entry = {}) => {
+  const shortDate = /^\d{4}-\d{2}-\d{2}$/.test(entry.startDate || '')
+    ? entry.startDate.slice(5)
+    : entry.startDate || '';
+  return [entry.beteckning || '', shortDate, entry.startTime || '']
+    .filter(Boolean)
+    .join(' ');
+};
+
+const generatePlanJobId = () =>
+  `job-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+const buildSuggestedPlanJobName = (entries = [], index = 0) => {
+  const datedEntries = entries.filter((entry) => entry?.startDate);
+  if (datedEntries.length !== 1) {
+    return `Jobb ${index + 1}`;
+  }
+
+  const entry = datedEntries[0];
+  const startDate = new Date(`${entry.startDate}T00:00:00`);
+  const dayLabel = Number.isNaN(startDate.getTime()) ? '' : swedishShortDays[startDate.getDay()];
+  const rawStartHour = Number(String(entry.startTime || '').split(':')[0]);
+  const spansNight = Boolean(
+    entry.startDate
+    && entry.endDate
+    && entry.endDate !== entry.startDate
+  );
+  const prefix = spansNight || rawStartHour >= 18 ? 'Nm' : 'Dag';
+  return [prefix, dayLabel].filter(Boolean).join(' ') || `Jobb ${index + 1}`;
+};
+
+const compareBlankett31Entries = (left = {}, right = {}) => {
+  const leftKey = `${left.startDate || '9999-99-99'} ${left.startTime || '99:99'} ${left.endDate || '9999-99-99'} ${left.endTime || '99:99'} ${left.beteckning || ''}`;
+  const rightKey = `${right.startDate || '9999-99-99'} ${right.startTime || '99:99'} ${right.endDate || '9999-99-99'} ${right.endTime || '99:99'} ${right.beteckning || ''}`;
+  return leftKey.localeCompare(rightKey, 'sv');
+};
+
+const sortPlanJobEntryKeys = (selectedEntryKeys = [], entries = []) => {
+  const entryMap = new Map(entries.map((entry, index) => [buildPlanJobEntryKey(entry, index), entry]));
+  return [...selectedEntryKeys].sort((leftKey, rightKey) => {
+    const leftEntry = entryMap.get(leftKey) || {};
+    const rightEntry = entryMap.get(rightKey) || {};
+    return compareBlankett31Entries(leftEntry, rightEntry);
+  });
+};
+
+const defaultPlanJob = (entries = [], index = 0) => {
+  const selectedEntryKeys = sortPlanJobEntryKeys(
+    entries.map((entry, entryIndex) => buildPlanJobEntryKey(entry, entryIndex)),
+    entries
+  );
+  const primaryKey = selectedEntryKeys[0] || '';
+
+  return {
+    id: generatePlanJobId(),
+    name: buildSuggestedPlanJobName(entries, index),
+    selectedEntryKeys,
+    primaryPlanEntryKey: primaryKey,
+    primaryDispEntryKey: primaryKey,
+    sortOrder: index,
+  };
+};
+
+const normalizePlanJobs = (jobs = [], entries = []) => {
+  const availableKeys = new Set(entries.map((entry, index) => buildPlanJobEntryKey(entry, index)));
+  const meaningfulJobs = Array.isArray(jobs)
+    ? jobs.filter((job) => job && (job.name || (job.selectedEntryKeys || []).length))
+    : [];
+
+  if (!meaningfulJobs.length) {
+    return [defaultPlanJob(entries, 0)];
+  }
+
+  return meaningfulJobs.map((job, index) => ({
+    selectedEntryKeys: sortPlanJobEntryKeys(
+      Array.isArray(job.selectedEntryKeys)
+        ? job.selectedEntryKeys.filter((key) => availableKeys.has(key))
+        : [],
+      entries
+    ),
+    id: String(job.id || generatePlanJobId()),
+    name: String(job.name || buildSuggestedPlanJobName(entries, index)).trim(),
+    primaryPlanEntryKey: String(job.primaryPlanEntryKey || ''),
+    primaryDispEntryKey: String(job.primaryDispEntryKey || ''),
+    sortOrder: index,
+  })).map((job) => {
+    const fallbackKey = job.selectedEntryKeys[0] || '';
+    return {
+      ...job,
+      primaryPlanEntryKey: job.selectedEntryKeys.includes(job.primaryPlanEntryKey)
+        ? job.primaryPlanEntryKey
+        : availableKeys.has(job.primaryPlanEntryKey)
+          ? job.primaryPlanEntryKey
+          : fallbackKey,
+      primaryDispEntryKey: job.selectedEntryKeys.includes(job.primaryDispEntryKey)
+        ? job.primaryDispEntryKey
+        : availableKeys.has(job.primaryDispEntryKey)
+          ? job.primaryDispEntryKey
+          : fallbackKey,
+    };
+  });
+};
+
 const sortBlankett31Entries = (entries = []) =>
   [...entries].sort((left, right) => {
     const leftKey = `${left.startDate || '9999-99-99'} ${left.startTime || '99:99'} ${left.beteckning || ''}`;
@@ -195,6 +301,18 @@ const normalizeSectionAreaName = (value = '') =>
     .replace(/\s+Driftplats(?:er)?$/i, '')
     .replace(/s$/i, '');
 
+const parseDriftplatsEndpoints = (value = '') => {
+  const parts = String(value || '')
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  return {
+    from: parts[0] || '',
+    to: parts.length > 1 ? parts[parts.length - 1] : '',
+  };
+};
+
 const mergeSectionDetails = (sections = [], sectionDetails = [], fallbackAreaName = '') =>
   normalizeSectionSortOrder(sections.map((section, index) => {
     const details = sectionDetails[index] || {};
@@ -237,6 +355,8 @@ const SkapaProjekt = () => {
   const [endDate, setEndDate] = useState('');
   const [endTime, setEndTime] = useState('');
   const [plats, setPlats] = useState('');
+  const [fromDriftplats, setFromDriftplats] = useState('');
+  const [toDriftplats, setToDriftplats] = useState('');
   const [projektNamn, setProjektNamn] = useState('');
   const [granspunktFritext, setGranspunktFritext] = useState('');
   const [namn, setNamn] = useState('');
@@ -258,6 +378,7 @@ const SkapaProjekt = () => {
   const [fjtklBlocks, setFjtklBlocks] = useState([]);
   const [blankett31Files, setBlankett31Files] = useState([]);
   const [blankett31Entries, setBlankett31Entries] = useState([defaultBlankett31Entry()]);
+  const [planJobs, setPlanJobs] = useState(() => normalizePlanJobs([], []));
   const [dispFiles, setDispFiles] = useState([]);
   const [anteckningar, setAnteckningar] = useState([]);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -273,6 +394,12 @@ const SkapaProjekt = () => {
   const dispInputRef = useRef(null);
   const availableHtsmPhoneOptions = htsmPhoneOptions.filter((option) => option === htsmTelefon || option !== reservnr);
   const availableReservnrOptions = htsmPhoneOptions.filter((option) => option === reservnr || option !== htsmTelefon);
+  const planJobEntryOptions = blankett31Entries
+    .map((entry, index) => ({
+      key: buildPlanJobEntryKey(entry, index),
+      label: getEntryDisplayLabel(entry),
+    }))
+    .filter((option) => option.label);
 
   const syncSummaryDatesFromEntries = (entries) => {
     if (!entries.length) {
@@ -322,6 +449,64 @@ const SkapaProjekt = () => {
       syncProtectionFieldsFromEntries(nextEntries);
       return nextEntries;
     });
+  };
+
+  const addPlanJob = () => {
+    setPlanJobs((current) => normalizePlanJobs([
+      ...current,
+      defaultPlanJob([], current.length),
+    ], blankett31Entries));
+  };
+
+  const updatePlanJobField = (index, field, value) => {
+    setPlanJobs((current) => normalizePlanJobs(current.map((job, jobIndex) => (
+      jobIndex === index
+        ? { ...job, [field]: value }
+        : job
+    )), blankett31Entries));
+  };
+
+  const togglePlanJobEntry = (jobIndex, entryKey) => {
+    setPlanJobs((current) => normalizePlanJobs(current.map((job, index) => {
+      if (index !== jobIndex) {
+        return job;
+      }
+
+      const selectedEntryKeys = new Set(job.selectedEntryKeys || []);
+      if (selectedEntryKeys.has(entryKey)) {
+        selectedEntryKeys.delete(entryKey);
+      } else {
+        selectedEntryKeys.add(entryKey);
+      }
+
+      return {
+        ...job,
+        selectedEntryKeys: Array.from(selectedEntryKeys),
+      };
+    }), blankett31Entries));
+  };
+
+  const getPlanJobSelectedOptions = (job) =>
+    planJobEntryOptions.filter((option) => (job.selectedEntryKeys || []).includes(option.key));
+
+  const movePlanJob = (index, direction) => {
+    setPlanJobs((current) => {
+      const targetIndex = index + direction;
+      if (targetIndex < 0 || targetIndex >= current.length) {
+        return current;
+      }
+
+      const updated = [...current];
+      [updated[index], updated[targetIndex]] = [updated[targetIndex], updated[index]];
+      return normalizePlanJobs(updated, blankett31Entries);
+    });
+  };
+
+  const removePlanJob = (index) => {
+    setPlanJobs((current) => normalizePlanJobs(
+      current.filter((_, jobIndex) => jobIndex !== index),
+      blankett31Entries
+    ));
   };
 
   const addFjtklBlock = () => {
@@ -485,6 +670,102 @@ const SkapaProjekt = () => {
       setDriftplatsStatus(error.message || 'Kunde inte hamta driftplatser fran NJDB.');
     } finally {
       setIsResolvingDriftplatser(false);
+    }
+  };
+
+  const resolveExpandedDriftplatser = async (value) => {
+    const token = JSON.parse(localStorage.getItem('user'))?.token;
+    if (!token) {
+      throw new Error('Du maste vara inloggad for att hamta driftplatser.');
+    }
+
+    const response = await fetch(apiUrl('/api/njdb/driftplatser/expand'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ value }),
+    });
+
+    if (!response.ok) {
+      const message = await getApiErrorMessage(response, 'Kunde inte hamta driftplatser fran NJDB.');
+      throw new Error(message);
+    }
+
+    return response.json();
+  };
+
+  const resolveSectionsFromSignals = async (value, outerBoundaries) => {
+    const token = JSON.parse(localStorage.getItem('user'))?.token;
+    if (!token) {
+      throw new Error('Du maste vara inloggad for att hamta signaler.');
+    }
+
+    const response = await fetch(apiUrl('/api/njdb/sections/signals'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        value,
+        outerBoundaries,
+      }),
+    });
+
+    if (!response.ok) {
+      const message = await getApiErrorMessage(response, 'Kunde inte skapa delomraden fran NJDB.');
+      throw new Error(message);
+    }
+
+    return response.json();
+  };
+
+  const handleBuildFromEndpoints = async () => {
+    const fromValue = fromDriftplats.trim();
+    const toValue = toDriftplats.trim();
+
+    if (!fromValue || !toValue) {
+      setDriftplatsStatus('Ange både startdriftplats och slutdriftplats.');
+      return;
+    }
+
+    const searchValue = `${fromValue}, ${toValue}`;
+    setIsResolvingDriftplatser(true);
+    setIsResolvingSections(true);
+    setDriftplatsStatus('Soker mellanliggande driftplatser i NJDB...');
+    setSectionStatus('Bygger delomraden och signaler fran NJDB...');
+
+    try {
+      const driftplatsData = await resolveExpandedDriftplatser(searchValue);
+      const nextValue = String(driftplatsData?.value || searchValue).trim();
+      setPlats(nextValue);
+
+      const sectionData = await resolveSectionsFromSignals(nextValue, granspunktFritext);
+      const nextSections = Array.isArray(sectionData?.sections) && sectionData.sections.length
+        ? normalizeSectionSortOrder(sectionData.sections.map((section, index) => ({
+            ...defaultSection(),
+            ...section,
+            displayIndex: section.displayIndex ?? index + 1,
+          })))
+        : createDefaultSections();
+
+      setSections(nextSections);
+      setDriftplatsStatus(nextValue
+        ? `Fyllde raden med ${driftplatsData?.places?.length || 0} driftplatser.`
+        : 'Inga driftplatser hittades.');
+      setSectionStatus(nextSections.length
+        ? `Byggde ${nextSections.length} delomraden med signaler och spår.`
+        : 'Inga delomraden kunde skapas.');
+    } catch (error) {
+      console.error('Fel vid automatisk byggning fran driftplatser:', error);
+      const message = error.message || 'Kunde inte bygga projektet fran start och slut.';
+      setDriftplatsStatus(message);
+      setSectionStatus(message);
+    } finally {
+      setIsResolvingDriftplatser(false);
+      setIsResolvingSections(false);
     }
   };
 
@@ -890,6 +1171,14 @@ const SkapaProjekt = () => {
           blankett31Meta,
           dispSettings,
           blankett31Entries,
+          planJobs: normalizePlanJobs(planJobs, blankett31Entries).map((job, index) => ({
+            id: job.id,
+            name: job.name,
+            selectedEntryKeys: job.selectedEntryKeys || [],
+            primaryPlanEntryKey: job.primaryPlanEntryKey || '',
+            primaryDispEntryKey: job.primaryDispEntryKey || '',
+            sortOrder: job.sortOrder ?? index,
+          })),
           sectionDetails: sections.map((sec) => ({
             signal: sec.signal || sec.name || '',
             displayIndex: sec.displayIndex ?? null,
@@ -977,6 +1266,10 @@ const SkapaProjekt = () => {
   };
 
   useEffect(() => {
+    setPlanJobs((current) => normalizePlanJobs(current, blankett31Entries));
+  }, [blankett31Entries]);
+
+  useEffect(() => {
     if (!currentProjectId) {
       return;
     }
@@ -1008,6 +1301,11 @@ const SkapaProjekt = () => {
         setEndDate(project.endDate || '');
         setEndTime(project.endTime || '');
         setPlats(project.plats || '');
+        {
+          const endpoints = parseDriftplatsEndpoints(project.plats || '');
+          setFromDriftplats(endpoints.from);
+          setToDriftplats(endpoints.to);
+        }
         setGranspunktFritext(project.granspunkter || '');
         setNamn(project.namn || '');
         setTelefonnummer(project.telefonnummer || '');
@@ -1042,6 +1340,12 @@ const SkapaProjekt = () => {
               entry.avslutningssignatur || (index === entries.length - 1 ? project.formState?.avslutningssignatur || '' : ''),
           }))
         );
+        setPlanJobs(normalizePlanJobs(
+          project.formState?.planJobs || [],
+          (project.formState?.blankett31Entries || []).length
+            ? project.formState.blankett31Entries
+            : [defaultBlankett31Entry()]
+        ));
         setBlankett31Files(project.formState?.blankett31Files || []);
         setDispFiles(project.formState?.dispFiles || []);
         setAnteckningar(project.anteckningar || []);
@@ -1207,6 +1511,46 @@ const SkapaProjekt = () => {
                 </div>
                 <div>
                   <label className="mb-1 block text-sm font-semibold text-slate-700">Driftplats/er</label>
+                  <div className="mb-3 grid gap-3 xl:grid-cols-[1fr_1fr_auto]">
+                    <input
+                      type="text"
+                      value={fromDriftplats}
+                      onChange={(e) => {
+                        setFromDriftplats(e.target.value);
+                        if (driftplatsStatus) {
+                          setDriftplatsStatus('');
+                        }
+                        if (sectionStatus) {
+                          setSectionStatus('');
+                        }
+                      }}
+                      placeholder="Från driftplats"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
+                    />
+                    <input
+                      type="text"
+                      value={toDriftplats}
+                      onChange={(e) => {
+                        setToDriftplats(e.target.value);
+                        if (driftplatsStatus) {
+                          setDriftplatsStatus('');
+                        }
+                        if (sectionStatus) {
+                          setSectionStatus('');
+                        }
+                      }}
+                      placeholder="Till driftplats"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleBuildFromEndpoints}
+                      disabled={isResolvingDriftplatser || isResolvingSections || !fromDriftplats.trim() || !toDriftplats.trim()}
+                      className="rounded-xl border border-slate-900 px-4 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
+                    >
+                      {isResolvingDriftplatser || isResolvingSections ? 'Bygger...' : 'Bygg från start/slut'}
+                    </button>
+                  </div>
                   <div className="flex flex-col gap-3 xl:flex-row">
                     <input
                       type="text"
@@ -1232,6 +1576,9 @@ const SkapaProjekt = () => {
                       {isResolvingDriftplatser ? 'Soker...' : 'Hamta mellanliggande'}
                     </button>
                   </div>
+                  <p className="mt-2 text-xs text-slate-500">
+                    Skriv helst start och slut ovanför så kan Railworker bygga hela raden, signalerna och delområdena automatiskt.
+                  </p>
                   <p className="mt-2 text-xs text-slate-500">
                     Skriv start och slut med kommatecken, till exempel `Kattarp, Ängelholm`, och lat sedan appen fylla pa raden.
                   </p>
@@ -1531,6 +1878,144 @@ const SkapaProjekt = () => {
                   </div>
                 </div>
               )}
+
+              <div className="mt-6 border-t border-slate-200 pt-6">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-semibold text-slate-900">Jobb / planka</h3>
+                    <p className="text-xs text-slate-500">
+                      Varje jobb blir senare en egen planka och Excel-flik. Ett jobb kan ha en eller flera Blankett 31.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addPlanJob}
+                    className="rounded-full border border-slate-900 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-widest text-slate-900 hover:bg-slate-50"
+                  >
+                    Nytt jobb
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {planJobs.map((job, index) => (
+                    <div key={job.id || index} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      {(() => {
+                        const selectedOptions = getPlanJobSelectedOptions(job);
+                        return (
+                          <>
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <div className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+                          Jobb {index + 1}
+                        </div>
+                        <div className="flex flex-wrap items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => movePlanJob(index, -1)}
+                            disabled={index === 0}
+                            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            Upp
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => movePlanJob(index, 1)}
+                            disabled={index === planJobs.length - 1}
+                            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            Ner
+                          </button>
+                          {planJobs.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removePlanJob(index)}
+                              className="rounded-full border border-rose-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-rose-600 hover:bg-rose-50"
+                            >
+                              Ta bort
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="grid gap-3 lg:grid-cols-[280px_1fr]">
+                        <div>
+                          <label className="mb-1 block text-sm font-semibold text-slate-700">Fliknamn</label>
+                          <input
+                            type="text"
+                            value={job.name || ''}
+                            onChange={(e) => updatePlanJobField(index, 'name', e.target.value)}
+                            placeholder="Ex. Nm Sön eller HBG"
+                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
+                          />
+                          <p className="mt-2 text-xs text-slate-500">
+                            Namnet används senare som plansida och Excel-flik.
+                          </p>
+                          <div className="mt-4 space-y-3">
+                            <div>
+                              <label className="mb-1 block text-sm font-semibold text-slate-700">Visas i planka</label>
+                              <select
+                                value={job.primaryPlanEntryKey || ''}
+                                onChange={(e) => updatePlanJobField(index, 'primaryPlanEntryKey', e.target.value)}
+                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
+                              >
+                                <option value="">Välj beteckning</option>
+                                {selectedOptions.map((option) => (
+                                  <option key={`plan-${job.id}-${option.key}`} value={option.key}>
+                                    {option.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="mb-1 block text-sm font-semibold text-slate-700">Visas i DISP</label>
+                              <select
+                                value={job.primaryDispEntryKey || ''}
+                                onChange={(e) => updatePlanJobField(index, 'primaryDispEntryKey', e.target.value)}
+                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
+                              >
+                                <option value="">Välj beteckning</option>
+                                {selectedOptions.map((option) => (
+                                  <option key={`disp-${job.id}-${option.key}`} value={option.key}>
+                                    {option.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="mb-2 block text-sm font-semibold text-slate-700">Beteckningar i jobbet</label>
+                          {planJobEntryOptions.length ? (
+                            <div className="grid gap-2 md:grid-cols-2">
+                              {planJobEntryOptions.map((option) => (
+                                <label
+                                  key={`${job.id}-${option.key}`}
+                                  className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={(job.selectedEntryKeys || []).includes(option.key)}
+                                    onChange={() => togglePlanJobEntry(index, option.key)}
+                                    className="mt-0.5 h-4 w-4 accent-slate-900"
+                                  />
+                                  <span>{option.label}</span>
+                                </label>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
+                              Ladda in eller skriv in Blankett 31-poster först, så kan du koppla dem till jobbet här.
+                            </div>
+                          )}
+                          <p className="mt-2 text-xs text-slate-500">
+                            Samma beteckning kan ligga i flera jobb om en Blankett 31 gäller flera nätter.
+                          </p>
+                        </div>
+                      </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  ))}
+                </div>
+              </div>
 
               <div className="mt-6 border-t border-slate-200 pt-6">
                 <div className="mb-4">

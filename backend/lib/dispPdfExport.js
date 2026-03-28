@@ -80,12 +80,23 @@ const formatDate = (value = '') => {
 
 const formatTime = (value = '') => String(value || '').trim();
 
+const buildPlanJobEntryKey = (entry = {}, index = 0) =>
+  `${entry.beteckning || 'entry'}|${entry.startDate || ''}|${index}`;
+
 const buildEntries = (project = {}) => {
   const entries = Array.isArray(project.formState?.blankett31Entries)
     ? project.formState.blankett31Entries
     : [];
+  const entryMap = new Map(entries.map((entry, index) => [buildPlanJobEntryKey(entry, index), entry]));
+  const planJobs = Array.isArray(project.formState?.planJobs)
+    ? project.formState.planJobs
+    : [];
+  const selectedDispEntries = planJobs
+    .map((job) => entryMap.get(job?.primaryDispEntryKey || ''))
+    .filter(Boolean);
+  const sourceEntries = selectedDispEntries.length ? selectedDispEntries : entries;
 
-  return entries
+  return sourceEntries
     .filter((entry) => entry?.beteckning || entry?.startDate || entry?.endDate)
     .map((entry) => ({
       beteckning: cleanText(entry.beteckning),
@@ -396,10 +407,15 @@ const getTableCellLayout = (doc, column, value) => {
 
 const getPhoneRowLayout = (doc, row, index, width) => {
   const label = `${index + 1}. ${row.label}`;
-  const labelWidth = Math.min(68, width * 0.29);
+  const isHtsmRow = String(row.label || '').trim().toUpperCase() === 'HTSM';
+  const labelWidth = isHtsmRow
+    ? Math.min(54, width * 0.22)
+    : Math.min(68, width * 0.29);
   const valueWidth = width - labelWidth - 10;
   const value = row.value || 'Ej angivet';
-  const valueFontSize = getFittedFontSize(doc, value, valueWidth, COMPACT_CHAPTER_FONT.body, 8.2);
+  const valueFontSize = isHtsmRow
+    ? COMPACT_CHAPTER_FONT.body
+    : getFittedFontSize(doc, value, valueWidth, COMPACT_CHAPTER_FONT.body, 8.2);
   const rowHeight = Math.max(
     getTextHeight(doc, label, labelWidth, {
       font: 'Helvetica-Bold',
