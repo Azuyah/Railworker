@@ -408,34 +408,59 @@ const getTableCellLayout = (doc, column, value) => {
 const getPhoneRowLayout = (doc, row, index, width) => {
   const label = `${index + 1}. ${row.label}`;
   const isHtsmRow = String(row.label || '').trim().toUpperCase() === 'HTSM';
-  const labelWidth = isHtsmRow
-    ? Math.min(54, width * 0.22)
-    : Math.min(68, width * 0.29);
-  const valueWidth = width - labelWidth - 10;
+  const labelGap = 10;
+  const measuredLabelWidth = doc.widthOfString(label, {
+    font: 'Helvetica-Bold',
+    size: COMPACT_CHAPTER_FONT.label,
+  });
+  const labelWidth = Math.max(54, Math.min(Math.max(68, measuredLabelWidth + 6), width * 0.29));
+  const valueWidth = width - labelWidth - labelGap;
   const value = row.value || 'Ej angivet';
+  const htsmMatch = isHtsmRow
+    ? value.match(/^(.*?)(?:\s+Reservnr:\s*(.*))?$/i)
+    : null;
+  const primaryValue = isHtsmRow ? cleanText(htsmMatch?.[1] || value) : value;
+  const secondaryValue = isHtsmRow ? cleanText(htsmMatch?.[2] || '') : '';
   const valueFontSize = isHtsmRow
     ? COMPACT_CHAPTER_FONT.body
     : getFittedFontSize(doc, value, valueWidth, COMPACT_CHAPTER_FONT.body, 8.2);
-  const rowHeight = Math.max(
-    getTextHeight(doc, label, labelWidth, {
-      font: 'Helvetica-Bold',
-      fontSize: COMPACT_CHAPTER_FONT.label,
-      lineGap: 1,
-    }),
-    getTextHeight(doc, value, valueWidth, {
-      font: 'Helvetica',
-      fontSize: valueFontSize,
-      lineGap: 1,
-    })
-  );
+  const labelHeight = getTextHeight(doc, label, labelWidth, {
+    font: 'Helvetica-Bold',
+    fontSize: COMPACT_CHAPTER_FONT.label,
+    lineGap: 1,
+  });
+  const primaryValueHeight = getTextHeight(doc, primaryValue, valueWidth, {
+    font: 'Helvetica',
+    fontSize: valueFontSize,
+    lineGap: 1,
+  });
+  const secondaryValueHeight = secondaryValue
+    ? getTextHeight(doc, `Reservnr: ${secondaryValue}`, valueWidth, {
+        font: 'Helvetica',
+        fontSize: valueFontSize,
+        lineGap: 1,
+      })
+    : 0;
+  const rowHeight = isHtsmRow
+    ? Math.max(labelHeight, primaryValueHeight + (secondaryValueHeight ? secondaryValueHeight + 2 : 0))
+    : Math.max(labelHeight, getTextHeight(doc, value, valueWidth, {
+        font: 'Helvetica',
+        fontSize: valueFontSize,
+        lineGap: 1,
+      }));
 
   return {
     label,
+    labelGap,
     labelWidth,
     value,
+    primaryValue,
+    primaryValueHeight,
+    secondaryValue,
     valueFontSize,
     valueWidth,
     rowHeight,
+    isHtsmRow,
   };
 };
 
@@ -825,10 +850,24 @@ const drawCompactChapterBlock = (doc, chapter, x, y, width) => {
         width: phoneRow.labelWidth,
         lineGap: 1,
       });
-      doc.fillColor(COLORS.text).font('Helvetica').fontSize(phoneRow.valueFontSize).text(phoneRow.value, x + phoneRow.labelWidth + 10, cursorY, {
-        width: phoneRow.valueWidth,
-        lineGap: 1,
-      });
+      if (phoneRow.isHtsmRow) {
+        const valueX = x + phoneRow.labelWidth + phoneRow.labelGap;
+        doc.fillColor(COLORS.text).font('Helvetica').fontSize(phoneRow.valueFontSize).text(phoneRow.primaryValue, valueX, cursorY, {
+          width: phoneRow.valueWidth,
+          lineGap: 1,
+        });
+        if (phoneRow.secondaryValue) {
+          doc.text(`Reservnr: ${phoneRow.secondaryValue}`, valueX, cursorY + phoneRow.primaryValueHeight + 2, {
+            width: phoneRow.valueWidth,
+            lineGap: 1,
+          });
+        }
+      } else {
+        doc.fillColor(COLORS.text).font('Helvetica').fontSize(phoneRow.valueFontSize).text(phoneRow.value, x + phoneRow.labelWidth + phoneRow.labelGap, cursorY, {
+          width: phoneRow.valueWidth,
+          lineGap: 1,
+        });
+      }
       cursorY += phoneRow.rowHeight + 4;
     });
     return cursorY + 4;
@@ -933,7 +972,7 @@ const addCoverPage = (doc, project, entries, sections, dispSettings) => {
 
   doc.moveDown(1);
   doc.fillColor(COLORS.text).font('Helvetica').fontSize(10).text(
-    `Skapad ${new Date().toLocaleString('sv-SE')} via Vallåkra Railworker. ${entries.length} post(er) och ${sections.length} delområde(n) ingår i underlaget.`,
+    `Skapad via Vallåkra Railworker. ${entries.length} post(er) och ${sections.length} delområde(n) ingår i underlaget.`,
     { lineGap: 2 }
   );
 };
