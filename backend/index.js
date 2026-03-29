@@ -191,11 +191,15 @@ const buildPlanEntries = (project) => {
     : [];
 
   if (entries.length) {
-    return entries;
+    return entries.map((entry, index) => ({
+      ...entry,
+      key: `${entry.beteckning || 'entry'}|${entry.startDate || ''}|${index}`,
+    }));
   }
 
   return [
     {
+      key: 'default-entry',
       beteckning: project?.beteckningar?.[0]?.label || '',
       startDate: project?.startDate || '',
       startTime: project?.startTime || '',
@@ -1129,6 +1133,7 @@ app.post('/api/row/self-enroll', authMiddleware, async (req, res) => {
         isPending: true,
         begard: begard || null,
         begardDatum: targetPlanDate,
+        planEntryKey: targetPlanEntry?.key || null,
         tsa: Boolean(tsa),
         anteckning: anteckning || null,
       },
@@ -1192,6 +1197,7 @@ const newRow = {
   anteckning: row.anteckning || '',
   begard: row.begard || '',
   begardDatum: row.begardDatum || null,
+  planEntryKey: row.planEntryKey || null,
 };
 
     // Uppdatera projektets JSON-fält med ny rad

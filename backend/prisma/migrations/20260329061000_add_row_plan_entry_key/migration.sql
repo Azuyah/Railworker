@@ -1,0 +1,2 @@
+ALTER TABLE "Row"
+ADD COLUMN "planEntryKey" TEXT;

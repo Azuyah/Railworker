@@ -100,10 +100,11 @@ model Row {
   approvedBy   User?   @relation("RowApprovedBy", fields: [approvedById], references: [id])
   approvedById Int?
 
-  begard      String?
-  begardDatum String?
-  tsa         Boolean @default(false)
-  anteckning  String?
+  begard       String?
+  begardDatum  String?
+  planEntryKey String?
+  tsa          Boolean @default(false)
+  anteckning   String?
 
   createdAt DateTime @default(now())
 }

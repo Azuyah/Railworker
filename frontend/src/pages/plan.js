@@ -200,6 +200,9 @@ const buildPlanEntries = (project) => {
   ];
 };
 
+const getPlanEntryFjtklPhone = (entry = {}, project = {}) =>
+  String(entry?.telefonnummer || project?.telefonnummer || '').trim();
+
 const formatPlanEntryLabel = (entry = {}) => {
   const date = normalizePlanDate(entry.startDate || '');
   const shortDate = /^\d{4}-\d{2}-\d{2}$/.test(date) ? date.slice(5) : date;
@@ -2177,7 +2180,7 @@ if (loading || !project) {
     <Text><strong>Startdatum:</strong> {activePlanEntry?.startDate || project.startDate} {activePlanEntry?.startTime || project.startTime}</Text>
     <Text><strong>Slutdatum:</strong> {activePlanEntry?.endDate || project.endDate} {activePlanEntry?.endTime || project.endTime}</Text>
     <Text><strong>Sluttid:</strong> {projectSluttid || '—'}</Text>
-    <Text><strong>FJTKL:</strong> {project.namn} ({project.telefonnummer})</Text>
+    <Text><strong>FJTKL:</strong> {project.namn} ({getPlanEntryFjtklPhone(activePlanEntry, project)})</Text>
     <Text><strong>Nödnummer:</strong> {projectNodnummer || '—'}</Text>
 <Text>
   <strong>Beteckningar:</strong>{' '}

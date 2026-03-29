@@ -333,13 +333,30 @@ const drawPageWatermark = (doc) => {
 };
 
 const drawInfoCard = (doc, title, value, x, y, width, accent = false) => {
+  const cardPaddingX = 12;
+  const titleY = y + 10;
+  const contentY = y + 27;
+  const textWidth = width - cardPaddingX * 2;
+  const normalizedValue = value || 'Ej angivet';
+  const valueHeight = getTextHeight(doc, normalizedValue, textWidth, {
+    font: 'Helvetica-Bold',
+    fontSize: 14.2,
+    lineGap: 1,
+  });
+  const cardHeight = Math.max(56, Math.ceil(contentY - y + valueHeight + 12));
+
   doc.save();
-  doc.roundedRect(x, y, width, 56, 12).fillAndStroke(accent ? '#fff5f5' : '#f8fafc', accent ? '#fecaca' : '#e2e8f0');
-  doc.fillColor(COLORS.strong).font('Helvetica-Bold').fontSize(10.5).text(title, x + 12, y + 10, { width: width - 24 });
-  doc.fillColor(COLORS.strong).font('Helvetica-Bold').fontSize(14.2).text(value || 'Ej angivet', x + 12, y + 27, {
-    width: width - 24,
+  doc.roundedRect(x, y, width, cardHeight, 12).fillAndStroke(accent ? '#fff5f5' : '#f8fafc', accent ? '#fecaca' : '#e2e8f0');
+  doc.fillColor(COLORS.strong).font('Helvetica-Bold').fontSize(10.5).text(title, x + cardPaddingX, titleY, {
+    width: textWidth,
+  });
+  doc.fillColor(COLORS.strong).font('Helvetica-Bold').fontSize(14.2).text(normalizedValue, x + cardPaddingX, contentY, {
+    width: textWidth,
+    lineGap: 1,
   });
   doc.restore();
+
+  return cardHeight;
 };
 
 const getContentBottomY = (doc) => doc.page.height - doc.page.margins.bottom;
@@ -951,14 +968,45 @@ const addCoverPage = (doc, project, entries, sections, dispSettings) => {
   const availableWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
   const cardGap = 12;
   const cardWidth = (availableWidth - cardGap) / 2;
-  drawInfoCard(doc, 'Banobjekt-Vnr', dispSettings.banobjektVnr || 'Ej angivet', doc.page.margins.left, topY, cardWidth, true);
-  drawInfoCard(doc, 'Förplanera ca', dispSettings.forplaneraCa || 'Ej angivet', doc.page.margins.left + cardWidth + cardGap, topY, cardWidth);
-  doc.y = topY + 70;
+  const topLeftCardHeight = drawInfoCard(
+    doc,
+    'Banobjekt-Vnr',
+    dispSettings.banobjektVnr || 'Ej angivet',
+    doc.page.margins.left,
+    topY,
+    cardWidth,
+    true
+  );
+  const topRightCardHeight = drawInfoCard(
+    doc,
+    'Förplanera ca',
+    dispSettings.forplaneraCa || 'Ej angivet',
+    doc.page.margins.left + cardWidth + cardGap,
+    topY,
+    cardWidth
+  );
+  doc.y = topY + Math.max(topLeftCardHeight, topRightCardHeight) + 14;
 
-  drawInfoCard(doc, 'Berörda driftplatser', routeLine || 'Ej angivet', doc.page.margins.left, doc.y, availableWidth, false);
-  doc.y += 72;
-  drawInfoCard(doc, 'HTSM telefonnr', htsmTelefon || 'Ej angivet', doc.page.margins.left, doc.y, availableWidth, false);
-  doc.y += 72;
+  const routeCardHeight = drawInfoCard(
+    doc,
+    'Berörda driftplatser',
+    routeLine || 'Ej angivet',
+    doc.page.margins.left,
+    doc.y,
+    availableWidth,
+    false
+  );
+  doc.y += routeCardHeight + 14;
+  const htsmCardHeight = drawInfoCard(
+    doc,
+    'HTSM telefonnr',
+    htsmTelefon || 'Ej angivet',
+    doc.page.margins.left,
+    doc.y,
+    availableWidth,
+    false
+  );
+  doc.y += htsmCardHeight + 14;
 
   doc.fillColor(COLORS.strong).font('Helvetica-Bold').fontSize(13).text(
     'Gränspunkter som ej får passeras utan TKL:s medgivande är:',

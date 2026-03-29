@@ -7386,6 +7386,7 @@ export namespace Prisma {
     approvedById: number | null
     begard: string | null
     begardDatum: string | null
+    planEntryKey: string | null
     tsa: boolean | null
     anteckning: string | null
     createdAt: Date | null
@@ -7401,6 +7402,7 @@ export namespace Prisma {
     approvedById: number | null
     begard: string | null
     begardDatum: string | null
+    planEntryKey: string | null
     tsa: boolean | null
     anteckning: string | null
     createdAt: Date | null
@@ -7418,6 +7420,7 @@ export namespace Prisma {
     approvedById: number
     begard: number
     begardDatum: number
+    planEntryKey: number
     tsa: number
     anteckning: number
     createdAt: number
@@ -7451,6 +7454,7 @@ export namespace Prisma {
     approvedById?: true
     begard?: true
     begardDatum?: true
+    planEntryKey?: true
     tsa?: true
     anteckning?: true
     createdAt?: true
@@ -7466,6 +7470,7 @@ export namespace Prisma {
     approvedById?: true
     begard?: true
     begardDatum?: true
+    planEntryKey?: true
     tsa?: true
     anteckning?: true
     createdAt?: true
@@ -7483,6 +7488,7 @@ export namespace Prisma {
     approvedById?: true
     begard?: true
     begardDatum?: true
+    planEntryKey?: true
     tsa?: true
     anteckning?: true
     createdAt?: true
@@ -7587,6 +7593,7 @@ export namespace Prisma {
     approvedById: number | null
     begard: string | null
     begardDatum: string | null
+    planEntryKey: string | null
     tsa: boolean
     anteckning: string | null
     createdAt: Date
@@ -7623,6 +7630,7 @@ export namespace Prisma {
     approvedById?: boolean
     begard?: boolean
     begardDatum?: boolean
+    planEntryKey?: boolean
     tsa?: boolean
     anteckning?: boolean
     createdAt?: boolean
@@ -7644,6 +7652,7 @@ export namespace Prisma {
     approvedById?: boolean
     begard?: boolean
     begardDatum?: boolean
+    planEntryKey?: boolean
     tsa?: boolean
     anteckning?: boolean
     createdAt?: boolean
@@ -7665,6 +7674,7 @@ export namespace Prisma {
     approvedById?: boolean
     begard?: boolean
     begardDatum?: boolean
+    planEntryKey?: boolean
     tsa?: boolean
     anteckning?: boolean
     createdAt?: boolean
@@ -7686,12 +7696,13 @@ export namespace Prisma {
     approvedById?: boolean
     begard?: boolean
     begardDatum?: boolean
+    planEntryKey?: boolean
     tsa?: boolean
     anteckning?: boolean
     createdAt?: boolean
   }
 
-  export type RowOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "projectId" | "userId" | "sectionId" | "selections" | "anordning" | "datum" | "isPending" | "approvedById" | "begard" | "begardDatum" | "tsa" | "anteckning" | "createdAt", ExtArgs["result"]["row"]>
+  export type RowOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "projectId" | "userId" | "sectionId" | "selections" | "anordning" | "datum" | "isPending" | "approvedById" | "begard" | "begardDatum" | "planEntryKey" | "tsa" | "anteckning" | "createdAt", ExtArgs["result"]["row"]>
   export type RowInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     project?: boolean | ProjectDefaultArgs<ExtArgs>
     user?: boolean | Row$userArgs<ExtArgs>
@@ -7731,6 +7742,7 @@ export namespace Prisma {
       approvedById: number | null
       begard: string | null
       begardDatum: string | null
+      planEntryKey: string | null
       tsa: boolean
       anteckning: string | null
       createdAt: Date
@@ -8172,6 +8184,7 @@ export namespace Prisma {
     readonly approvedById: FieldRef<"Row", 'Int'>
     readonly begard: FieldRef<"Row", 'String'>
     readonly begardDatum: FieldRef<"Row", 'String'>
+    readonly planEntryKey: FieldRef<"Row", 'String'>
     readonly tsa: FieldRef<"Row", 'Boolean'>
     readonly anteckning: FieldRef<"Row", 'String'>
     readonly createdAt: FieldRef<"Row", 'DateTime'>
@@ -8738,6 +8751,7 @@ export namespace Prisma {
     approvedById: 'approvedById',
     begard: 'begard',
     begardDatum: 'begardDatum',
+    planEntryKey: 'planEntryKey',
     tsa: 'tsa',
     anteckning: 'anteckning',
     createdAt: 'createdAt'
@@ -9255,6 +9269,7 @@ export namespace Prisma {
     approvedById?: IntNullableFilter<"Row"> | number | null
     begard?: StringNullableFilter<"Row"> | string | null
     begardDatum?: StringNullableFilter<"Row"> | string | null
+    planEntryKey?: StringNullableFilter<"Row"> | string | null
     tsa?: BoolFilter<"Row"> | boolean
     anteckning?: StringNullableFilter<"Row"> | string | null
     createdAt?: DateTimeFilter<"Row"> | Date | string
@@ -9276,6 +9291,7 @@ export namespace Prisma {
     approvedById?: SortOrderInput | SortOrder
     begard?: SortOrderInput | SortOrder
     begardDatum?: SortOrderInput | SortOrder
+    planEntryKey?: SortOrderInput | SortOrder
     tsa?: SortOrder
     anteckning?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -9300,6 +9316,7 @@ export namespace Prisma {
     approvedById?: IntNullableFilter<"Row"> | number | null
     begard?: StringNullableFilter<"Row"> | string | null
     begardDatum?: StringNullableFilter<"Row"> | string | null
+    planEntryKey?: StringNullableFilter<"Row"> | string | null
     tsa?: BoolFilter<"Row"> | boolean
     anteckning?: StringNullableFilter<"Row"> | string | null
     createdAt?: DateTimeFilter<"Row"> | Date | string
@@ -9321,6 +9338,7 @@ export namespace Prisma {
     approvedById?: SortOrderInput | SortOrder
     begard?: SortOrderInput | SortOrder
     begardDatum?: SortOrderInput | SortOrder
+    planEntryKey?: SortOrderInput | SortOrder
     tsa?: SortOrder
     anteckning?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -9346,6 +9364,7 @@ export namespace Prisma {
     approvedById?: IntNullableWithAggregatesFilter<"Row"> | number | null
     begard?: StringNullableWithAggregatesFilter<"Row"> | string | null
     begardDatum?: StringNullableWithAggregatesFilter<"Row"> | string | null
+    planEntryKey?: StringNullableWithAggregatesFilter<"Row"> | string | null
     tsa?: BoolWithAggregatesFilter<"Row"> | boolean
     anteckning?: StringNullableWithAggregatesFilter<"Row"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Row"> | Date | string
@@ -9732,6 +9751,7 @@ export namespace Prisma {
     isPending?: boolean
     begard?: string | null
     begardDatum?: string | null
+    planEntryKey?: string | null
     tsa?: boolean
     anteckning?: string | null
     createdAt?: Date | string
@@ -9753,6 +9773,7 @@ export namespace Prisma {
     approvedById?: number | null
     begard?: string | null
     begardDatum?: string | null
+    planEntryKey?: string | null
     tsa?: boolean
     anteckning?: string | null
     createdAt?: Date | string
@@ -9765,6 +9786,7 @@ export namespace Prisma {
     isPending?: BoolFieldUpdateOperationsInput | boolean
     begard?: NullableStringFieldUpdateOperationsInput | string | null
     begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
+    planEntryKey?: NullableStringFieldUpdateOperationsInput | string | null
     tsa?: BoolFieldUpdateOperationsInput | boolean
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -9786,6 +9808,7 @@ export namespace Prisma {
     approvedById?: NullableIntFieldUpdateOperationsInput | number | null
     begard?: NullableStringFieldUpdateOperationsInput | string | null
     begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
+    planEntryKey?: NullableStringFieldUpdateOperationsInput | string | null
     tsa?: BoolFieldUpdateOperationsInput | boolean
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -9803,6 +9826,7 @@ export namespace Prisma {
     approvedById?: number | null
     begard?: string | null
     begardDatum?: string | null
+    planEntryKey?: string | null
     tsa?: boolean
     anteckning?: string | null
     createdAt?: Date | string
@@ -9815,6 +9839,7 @@ export namespace Prisma {
     isPending?: BoolFieldUpdateOperationsInput | boolean
     begard?: NullableStringFieldUpdateOperationsInput | string | null
     begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
+    planEntryKey?: NullableStringFieldUpdateOperationsInput | string | null
     tsa?: BoolFieldUpdateOperationsInput | boolean
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -9832,6 +9857,7 @@ export namespace Prisma {
     approvedById?: NullableIntFieldUpdateOperationsInput | number | null
     begard?: NullableStringFieldUpdateOperationsInput | string | null
     begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
+    planEntryKey?: NullableStringFieldUpdateOperationsInput | string | null
     tsa?: BoolFieldUpdateOperationsInput | boolean
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -10341,6 +10367,7 @@ export namespace Prisma {
     approvedById?: SortOrder
     begard?: SortOrder
     begardDatum?: SortOrder
+    planEntryKey?: SortOrder
     tsa?: SortOrder
     anteckning?: SortOrder
     createdAt?: SortOrder
@@ -10364,6 +10391,7 @@ export namespace Prisma {
     approvedById?: SortOrder
     begard?: SortOrder
     begardDatum?: SortOrder
+    planEntryKey?: SortOrder
     tsa?: SortOrder
     anteckning?: SortOrder
     createdAt?: SortOrder
@@ -10379,6 +10407,7 @@ export namespace Prisma {
     approvedById?: SortOrder
     begard?: SortOrder
     begardDatum?: SortOrder
+    planEntryKey?: SortOrder
     tsa?: SortOrder
     anteckning?: SortOrder
     createdAt?: SortOrder
@@ -11240,6 +11269,7 @@ export namespace Prisma {
     isPending?: boolean
     begard?: string | null
     begardDatum?: string | null
+    planEntryKey?: string | null
     tsa?: boolean
     anteckning?: string | null
     createdAt?: Date | string
@@ -11259,6 +11289,7 @@ export namespace Prisma {
     approvedById?: number | null
     begard?: string | null
     begardDatum?: string | null
+    planEntryKey?: string | null
     tsa?: boolean
     anteckning?: string | null
     createdAt?: Date | string
@@ -11281,6 +11312,7 @@ export namespace Prisma {
     isPending?: boolean
     begard?: string | null
     begardDatum?: string | null
+    planEntryKey?: string | null
     tsa?: boolean
     anteckning?: string | null
     createdAt?: Date | string
@@ -11300,6 +11332,7 @@ export namespace Prisma {
     isPending?: boolean
     begard?: string | null
     begardDatum?: string | null
+    planEntryKey?: string | null
     tsa?: boolean
     anteckning?: string | null
     createdAt?: Date | string
@@ -11425,6 +11458,7 @@ export namespace Prisma {
     approvedById?: IntNullableFilter<"Row"> | number | null
     begard?: StringNullableFilter<"Row"> | string | null
     begardDatum?: StringNullableFilter<"Row"> | string | null
+    planEntryKey?: StringNullableFilter<"Row"> | string | null
     tsa?: BoolFilter<"Row"> | boolean
     anteckning?: StringNullableFilter<"Row"> | string | null
     createdAt?: DateTimeFilter<"Row"> | Date | string
@@ -11533,6 +11567,7 @@ export namespace Prisma {
     isPending?: boolean
     begard?: string | null
     begardDatum?: string | null
+    planEntryKey?: string | null
     tsa?: boolean
     anteckning?: string | null
     createdAt?: Date | string
@@ -11552,6 +11587,7 @@ export namespace Prisma {
     approvedById?: number | null
     begard?: string | null
     begardDatum?: string | null
+    planEntryKey?: string | null
     tsa?: boolean
     anteckning?: string | null
     createdAt?: Date | string
@@ -11730,6 +11766,7 @@ export namespace Prisma {
     isPending?: boolean
     begard?: string | null
     begardDatum?: string | null
+    planEntryKey?: string | null
     tsa?: boolean
     anteckning?: string | null
     createdAt?: Date | string
@@ -11749,6 +11786,7 @@ export namespace Prisma {
     approvedById?: number | null
     begard?: string | null
     begardDatum?: string | null
+    planEntryKey?: string | null
     tsa?: boolean
     anteckning?: string | null
     createdAt?: Date | string
@@ -12425,6 +12463,7 @@ export namespace Prisma {
     approvedById?: number | null
     begard?: string | null
     begardDatum?: string | null
+    planEntryKey?: string | null
     tsa?: boolean
     anteckning?: string | null
     createdAt?: Date | string
@@ -12441,6 +12480,7 @@ export namespace Prisma {
     isPending?: boolean
     begard?: string | null
     begardDatum?: string | null
+    planEntryKey?: string | null
     tsa?: boolean
     anteckning?: string | null
     createdAt?: Date | string
@@ -12540,6 +12580,7 @@ export namespace Prisma {
     isPending?: BoolFieldUpdateOperationsInput | boolean
     begard?: NullableStringFieldUpdateOperationsInput | string | null
     begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
+    planEntryKey?: NullableStringFieldUpdateOperationsInput | string | null
     tsa?: BoolFieldUpdateOperationsInput | boolean
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12559,6 +12600,7 @@ export namespace Prisma {
     approvedById?: NullableIntFieldUpdateOperationsInput | number | null
     begard?: NullableStringFieldUpdateOperationsInput | string | null
     begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
+    planEntryKey?: NullableStringFieldUpdateOperationsInput | string | null
     tsa?: BoolFieldUpdateOperationsInput | boolean
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12575,6 +12617,7 @@ export namespace Prisma {
     approvedById?: NullableIntFieldUpdateOperationsInput | number | null
     begard?: NullableStringFieldUpdateOperationsInput | string | null
     begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
+    planEntryKey?: NullableStringFieldUpdateOperationsInput | string | null
     tsa?: BoolFieldUpdateOperationsInput | boolean
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12587,6 +12630,7 @@ export namespace Prisma {
     isPending?: BoolFieldUpdateOperationsInput | boolean
     begard?: NullableStringFieldUpdateOperationsInput | string | null
     begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
+    planEntryKey?: NullableStringFieldUpdateOperationsInput | string | null
     tsa?: BoolFieldUpdateOperationsInput | boolean
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12606,6 +12650,7 @@ export namespace Prisma {
     isPending?: BoolFieldUpdateOperationsInput | boolean
     begard?: NullableStringFieldUpdateOperationsInput | string | null
     begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
+    planEntryKey?: NullableStringFieldUpdateOperationsInput | string | null
     tsa?: BoolFieldUpdateOperationsInput | boolean
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12622,6 +12667,7 @@ export namespace Prisma {
     isPending?: BoolFieldUpdateOperationsInput | boolean
     begard?: NullableStringFieldUpdateOperationsInput | string | null
     begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
+    planEntryKey?: NullableStringFieldUpdateOperationsInput | string | null
     tsa?: BoolFieldUpdateOperationsInput | boolean
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12650,6 +12696,7 @@ export namespace Prisma {
     approvedById?: number | null
     begard?: string | null
     begardDatum?: string | null
+    planEntryKey?: string | null
     tsa?: boolean
     anteckning?: string | null
     createdAt?: Date | string
@@ -12698,6 +12745,7 @@ export namespace Prisma {
     isPending?: BoolFieldUpdateOperationsInput | boolean
     begard?: NullableStringFieldUpdateOperationsInput | string | null
     begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
+    planEntryKey?: NullableStringFieldUpdateOperationsInput | string | null
     tsa?: BoolFieldUpdateOperationsInput | boolean
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12717,6 +12765,7 @@ export namespace Prisma {
     approvedById?: NullableIntFieldUpdateOperationsInput | number | null
     begard?: NullableStringFieldUpdateOperationsInput | string | null
     begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
+    planEntryKey?: NullableStringFieldUpdateOperationsInput | string | null
     tsa?: BoolFieldUpdateOperationsInput | boolean
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12733,6 +12782,7 @@ export namespace Prisma {
     approvedById?: NullableIntFieldUpdateOperationsInput | number | null
     begard?: NullableStringFieldUpdateOperationsInput | string | null
     begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
+    planEntryKey?: NullableStringFieldUpdateOperationsInput | string | null
     tsa?: BoolFieldUpdateOperationsInput | boolean
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12749,6 +12799,7 @@ export namespace Prisma {
     approvedById?: number | null
     begard?: string | null
     begardDatum?: string | null
+    planEntryKey?: string | null
     tsa?: boolean
     anteckning?: string | null
     createdAt?: Date | string
@@ -12761,6 +12812,7 @@ export namespace Prisma {
     isPending?: BoolFieldUpdateOperationsInput | boolean
     begard?: NullableStringFieldUpdateOperationsInput | string | null
     begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
+    planEntryKey?: NullableStringFieldUpdateOperationsInput | string | null
     tsa?: BoolFieldUpdateOperationsInput | boolean
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12780,6 +12832,7 @@ export namespace Prisma {
     approvedById?: NullableIntFieldUpdateOperationsInput | number | null
     begard?: NullableStringFieldUpdateOperationsInput | string | null
     begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
+    planEntryKey?: NullableStringFieldUpdateOperationsInput | string | null
     tsa?: BoolFieldUpdateOperationsInput | boolean
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12796,6 +12849,7 @@ export namespace Prisma {
     approvedById?: NullableIntFieldUpdateOperationsInput | number | null
     begard?: NullableStringFieldUpdateOperationsInput | string | null
     begardDatum?: NullableStringFieldUpdateOperationsInput | string | null
+    planEntryKey?: NullableStringFieldUpdateOperationsInput | string | null
     tsa?: BoolFieldUpdateOperationsInput | boolean
     anteckning?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string

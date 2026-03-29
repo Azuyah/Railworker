@@ -101,6 +101,7 @@ model Row {
 
   begard String?
   begardDatum String?
+  planEntryKey String?
   tsa      Boolean   @default(false)
   anteckning String?
 

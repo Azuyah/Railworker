@@ -95,6 +95,11 @@ const setCell = (worksheet, cellAddress, value) => {
 
 const MAX_TOP_ENTRY_ROWS = 4;
 
+const getEntryFjtklValue = (project = {}, entry = {}) =>
+  [project.namn || '', entry?.telefonnummer || project.telefonnummer || '']
+    .filter(Boolean)
+    .join(' ');
+
 const setBeteckningarColumn = (worksheet, entries = []) => {
   for (let index = 0; index < MAX_TOP_ENTRY_ROWS; index += 1) {
     setCell(worksheet, `E${index + 1}`, entries[index]?.beteckning || '');
@@ -102,12 +107,8 @@ const setBeteckningarColumn = (worksheet, entries = []) => {
 };
 
 const setFjtklRows = (worksheet, project = {}, entries = []) => {
-  const fjtklValue = [project.namn || '', project.telefonnummer || '']
-    .filter(Boolean)
-    .join(' ');
-
   for (let index = 0; index < MAX_TOP_ENTRY_ROWS; index += 1) {
-    const value = index < entries.length ? fjtklValue : '';
+    const value = index < entries.length ? getEntryFjtklValue(project, entries[index]) : '';
     setCell(worksheet, `L${index + 1}`, value);
   }
 };
@@ -401,11 +402,15 @@ const getProjectEntries = (project) => {
     : [];
 
   if (entries.length) {
-    return entries;
+    return entries.map((entry, index) => ({
+      ...entry,
+      key: buildPlanJobEntryKey(entry, index),
+    }));
   }
 
   return [
     {
+      key: 'default-entry',
       beteckning: Array.isArray(project.beteckningar) ? project.beteckningar[0]?.label || '' : '',
       startDate: project.startDate,
       startTime: project.startTime,
@@ -451,9 +456,9 @@ const buildWorksheetPlans = (project) => {
     : [];
 
   if (!storedJobs.length) {
-    return entries.map((entry) => ({
+    return entries.map((entry, index) => ({
       sheetName: sheetNameFromDate(entry.startDate),
-      entries: [entry],
+      entries: [{ ...entry, key: buildPlanJobEntryKey(entry, index) }],
     }));
   }
 
@@ -475,6 +480,10 @@ const buildWorksheetPlans = (project) => {
 };
 
 const rowMatchesEntry = (row, entry) => {
+  if (row?.planEntryKey && entry?.key) {
+    return String(row.planEntryKey) === String(entry.key);
+  }
+
   const rowDate = row.startdatum || row.begardDatum || row.avslutatDatum || '';
   if (!entry?.startDate) {
     return true;

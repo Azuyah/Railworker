@@ -3,6 +3,11 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import { getSectionLabel } from '../utils/sectionLabels';
 import { apiUrl } from '../lib/api';
+import {
+  fjtklPhoneOptions,
+  getCatalogPhoneOptions,
+  matchFjtklPhoneFromCatalog,
+} from '../data/fjtklCatalog';
 
 const fjtklNameOptions = [
   'Malmö',
@@ -12,17 +17,6 @@ const fjtklNameOptions = [
   'Norrköping',
   'Boden',
   'Ånge',
-];
-
-const fjtklPhoneOptions = [
-  '010-127 12 60 Helsingborg - Halmstad',
-  '010-127 12 61 Helsingborg - Arlöv, Teckomatorp, Lund',
-  '010-127 12 62 Helsingborg',
-  '010-127 12 80 Pebberholmen',
-  '010-127 12 42 Helsingborg - Åstorp, Teckomatorp, Hässleholm',
-  '010-127 42 35 Borlänge',
-  '010-127 42 24 Borlänge - Avesta Krylbo',
-  '010-127 42 25 Storvik - Frövi',
 ];
 
 const emergencyPhoneOptions = [
@@ -66,6 +60,7 @@ const getApiErrorMessage = async (response, fallbackMessage) => {
 const defaultBlankett31Entry = () => ({
   beteckning: '',
   granspunkt: '',
+  telefonnummer: '',
   startDate: '',
   startTime: '',
   endDate: '',
@@ -91,6 +86,20 @@ const getEntryDisplayLabel = (entry = {}) => {
   return [entry.beteckning || '', shortDate, entry.startTime || '']
     .filter(Boolean)
     .join(' ');
+};
+
+const buildEntryIdentityKey = (entry = {}) =>
+  `${entry.beteckning || ''}|${entry.startDate || ''}|${entry.startTime || ''}|${entry.endDate || ''}|${entry.endTime || ''}`;
+
+const mergeBlankett31EntryPhones = (entries = [], existingEntries = [], fallbackPhone = '') => {
+  const phoneByKey = new Map(
+    existingEntries.map((entry) => [buildEntryIdentityKey(entry), entry?.telefonnummer || ''])
+  );
+
+  return entries.map((entry) => ({
+    ...entry,
+    telefonnummer: phoneByKey.get(buildEntryIdentityKey(entry)) || entry?.telefonnummer || fallbackPhone || '',
+  }));
 };
 
 const generatePlanJobId = () =>
@@ -394,6 +403,12 @@ const SkapaProjekt = () => {
   const dispInputRef = useRef(null);
   const availableHtsmPhoneOptions = htsmPhoneOptions.filter((option) => option === htsmTelefon || option !== reservnr);
   const availableReservnrOptions = htsmPhoneOptions.filter((option) => option === reservnr || option !== htsmTelefon);
+  const availableBlankett31PhoneOptions = Array.from(
+    new Set(getCatalogPhoneOptions([
+      telefonnummer,
+      ...fjtklBlocks.map((block) => block?.telefonnummer || ''),
+    ]).map((value) => String(value || '').trim()).filter(Boolean))
+  );
   const planJobEntryOptions = blankett31Entries
     .map((entry, index) => ({
       key: buildPlanJobEntryKey(entry, index),
@@ -439,6 +454,40 @@ const SkapaProjekt = () => {
       syncProtectionFieldsFromEntries(updated);
       return updated;
     });
+  };
+
+  const applyCatalogMatchToProject = () => {
+    const match = matchFjtklPhoneFromCatalog({
+      projectName: projektNamn,
+      plats,
+      granspunkter: granspunktFritext,
+    });
+
+    if (!match) {
+      alert('Kunde inte hitta något tydligt FJTKL-nummer i telefonkatalogen för den här sträckan ännu.');
+      return;
+    }
+
+    setTelefonnummer(match.phone);
+    alert(`Matchade telefonkatalogen till ${match.phone}`);
+  };
+
+  const applyCatalogMatchToEntry = (index) => {
+    const entry = blankett31Entries[index];
+    const match = matchFjtklPhoneFromCatalog({
+      projectName: projektNamn,
+      plats,
+      granspunkter: granspunktFritext,
+      entry,
+    });
+
+    if (!match) {
+      alert(`Kunde inte hitta något tydligt FJTKL-nummer i telefonkatalogen för post ${index + 1}.`);
+      return;
+    }
+
+    updateBlankett31Entry(index, 'telefonnummer', match.phone);
+    alert(`Post ${index + 1} matchades till ${match.phone}`);
   };
 
   const removeBlankett31Entry = (index) => {
@@ -836,7 +885,11 @@ const SkapaProjekt = () => {
           },
         ].filter((entry) => Object.values(entry).some(Boolean));
 
-    return parsedEntries.map(normalizeBlankett31Entry);
+    return mergeBlankett31EntryPhones(
+      parsedEntries.map(normalizeBlankett31Entry),
+      blankett31Entries,
+      telefonnummer
+    );
   };
 
   const applyBlankett31Meta = (parsed = {}, nextEntries = []) => {
@@ -853,7 +906,7 @@ const SkapaProjekt = () => {
   };
 
   const applyDispEntries = (parsed) => {
-    const parsedEntries = sortBlankett31Entries(dedupeBlankett31Entries(
+    const parsedEntries = mergeBlankett31EntryPhones(sortBlankett31Entries(dedupeBlankett31Entries(
       (Array.isArray(parsed?.entries) ? parsed.entries : [])
         .map((entry) => normalizeBlankett31Entry({
           ...entry,
@@ -864,7 +917,7 @@ const SkapaProjekt = () => {
           avslutningssignatur: '',
         }))
         .filter((entry) => entry.beteckning || entry.startDate || entry.endDate)
-    ));
+    )), blankett31Entries, telefonnummer);
 
     if (!parsedEntries.length) {
       return;
@@ -932,7 +985,9 @@ const SkapaProjekt = () => {
         ...parsedFileEntries,
       ]));
 
-      const nextEntries = combinedEntries.length ? combinedEntries : [defaultBlankett31Entry()];
+      const nextEntries = combinedEntries.length
+        ? mergeBlankett31EntryPhones(combinedEntries, blankett31Entries, telefonnummer)
+        : [defaultBlankett31Entry()];
       setBlankett31Entries(nextEntries);
       setBeteckningar(nextEntries.map((entry) => ({ value: entry.beteckning || '' })));
       setBlankett31Files((current) => {
@@ -1332,6 +1387,7 @@ const SkapaProjekt = () => {
           ).map((entry, index, entries) => ({
             ...defaultBlankett31Entry(),
             ...entry,
+            telefonnummer: entry.telefonnummer || project.telefonnummer || '',
             uttagningstid: entry.uttagningstid || (index === 0 ? project.formState?.uttagningstid || '' : ''),
             signatur: entry.signatur || (index === 0 ? project.formState?.signatur || '' : ''),
             avslutningstid:
@@ -1594,7 +1650,7 @@ const SkapaProjekt = () => {
                     Rubrik och sidhuvud för den färdiga dispositionsarbetsplanen.
                   </p>
                 </div>
-                <div className="grid gap-4 lg:grid-cols-2">
+                <div className="grid gap-4 lg:grid-cols-2 items-start auto-rows-auto">
                   <div>
                     <label className="mb-1 block text-sm font-semibold text-slate-700">
                       Rubrik efter "Dispositionsarbetsplan"
@@ -1634,7 +1690,7 @@ const SkapaProjekt = () => {
                       value={dispSettings.banobjektVnr}
                       onChange={(e) => setDispSettings((current) => ({ ...current, banobjektVnr: e.target.value }))}
                       placeholder="Ex. 17096-1"
-                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
+                      className="min-h-[56px] w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 focus:border-slate-900 focus:outline-none"
                     />
                   </div>
                   <div>
@@ -1644,7 +1700,7 @@ const SkapaProjekt = () => {
                       value={dispSettings.forplaneraCa}
                       onChange={(e) => setDispSettings((current) => ({ ...current, forplaneraCa: e.target.value }))}
                       placeholder="Ex. 1 tim innan start"
-                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
+                      className="min-h-[56px] w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 focus:border-slate-900 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -1690,6 +1746,13 @@ const SkapaProjekt = () => {
                       placeholder="Telefonnummer"
                       className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
                     />
+                    <button
+                      type="button"
+                      onClick={applyCatalogMatchToProject}
+                      className="mt-2 rounded-full border border-slate-300 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                    >
+                      Matcha från telefonkatalog
+                    </button>
                   </div>
                   <div>
                     <label className="mb-1 block text-sm font-semibold text-slate-700">Nödnummer</label>
@@ -1808,6 +1871,30 @@ const SkapaProjekt = () => {
                           />
                         </div>
                         <div className="mt-3 grid gap-3 md:grid-cols-4">
+                          <div>
+                            <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-500">
+                              FJTKL telefon
+                            </label>
+                            <select
+                              value={entry.telefonnummer || ''}
+                              onChange={(e) => updateBlankett31Entry(index, 'telefonnummer', e.target.value)}
+                              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-900 focus:outline-none"
+                            >
+                              <option value="">Välj telefonnummer</option>
+                              {availableBlankett31PhoneOptions.map((option) => (
+                                <option key={`${index}-${option}`} value={option}>
+                                  {option}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              onClick={() => applyCatalogMatchToEntry(index)}
+                              className="mt-2 rounded-full border border-slate-300 bg-white px-3 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100"
+                            >
+                              Matcha från katalog
+                            </button>
+                          </div>
                           <div>
                             <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-500">
                               Uttagningstid
