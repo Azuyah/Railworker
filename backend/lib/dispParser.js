@@ -104,12 +104,18 @@ const extractOverviewMeta = (pages) => {
   }));
 
   const topTitleLine = normalizedLines.find((line) => line.normalized.startsWith('dispositionsarbetsplan '))?.raw || '';
+  const topTitleIndex = normalizedLines.findIndex((line) => line.normalized.startsWith('dispositionsarbetsplan '));
   const standaloneTitleIndex = normalizedLines.findIndex((line) => line.normalized === 'dispositionsarbetsplan');
   const mainWeekLine =
-    standaloneTitleIndex >= 0 &&
-    /^v\d+/i.test(firstPageLines[standaloneTitleIndex + 2] || '')
-      ? firstPageLines[standaloneTitleIndex + 2]
-      : '';
+    topTitleIndex >= 0 &&
+    /^v\d+/i.test(firstPageLines[topTitleIndex + 2] || '')
+      ? firstPageLines[topTitleIndex + 2]
+      : (
+        standaloneTitleIndex >= 0 &&
+        /^v\d+/i.test(firstPageLines[standaloneTitleIndex + 2] || '')
+          ? firstPageLines[standaloneTitleIndex + 2]
+          : ''
+      );
   const weekLine =
     mainWeekLine ||
     normalizedLines.find(
@@ -118,12 +124,29 @@ const extractOverviewMeta = (pages) => {
         !line.normalized.includes('versionsnummer') &&
         !line.normalized.includes('antal sidor')
     )?.raw || '';
-  const routeLineCandidate =
-    standaloneTitleIndex >= 0
-      ? normalizeProjectTitle(firstPageLines[standaloneTitleIndex + 1] || '')
-      : '';
+  const routeLineCandidate = normalizeProjectTitle(
+    firstPageLines
+      .slice((topTitleIndex >= 0 ? topTitleIndex + 1 : standaloneTitleIndex + 1))
+      .find((line) => {
+        const normalized = normalizeForMatching(line);
+        return (
+          line &&
+          !/^v\d+\b/i.test(line) &&
+          !normalized.startsWith('banobjekt-vnr') &&
+          !normalized.startsWith('forplanera ca') &&
+          !normalized.startsWith('berorda driftplatser') &&
+          !normalized.startsWith('htsm telefonnr') &&
+          !normalized.startsWith('granspunkter som ej far passeras')
+        );
+      }) || ''
+  );
   const banobjektValue = getLabelValue(firstPageLines, /^banobjekt-vnr\b/i, /^.*Banobjekt-Vnr\s*/i);
   const forplaneraValue = getLabelValue(firstPageLines, /^forplanera ca\b/i, /^.*Förplanera ca\s*:?\s*/i);
+  const berordaDriftplatser = getLabelValue(
+    firstPageLines,
+    /^berorda driftplatser\b/i,
+    /^.*Berörda driftplatser\s*/i
+  );
   const outerBoundaryIndex = normalizedLines.findIndex((line) =>
     line.normalized.includes('granspunkter som ej far passeras utan tkl')
   );
@@ -144,25 +167,33 @@ const extractOverviewMeta = (pages) => {
     weekLine: normalizeProjectTitle(weekLine),
     banobjektVnr: banobjektValue,
     forplaneraCa: forplaneraValue,
+    berordaDriftplatser: normalizeProjectTitle(berordaDriftplatser),
     outerGranspunkter: normalizeProjectTitle(outerGranspunkter),
   };
 };
 
 const extractPlats = (pages) => {
   const firstPageLines = getPageLines(findOverviewPage(pages));
-  const objectIndex = firstPageLines.findIndex((line) => /Banobjekt-Vnr/i.test(line));
-  if (objectIndex === -1) {
+  const titleIndex = firstPageLines.findIndex((line) => /^Dispositionsarbetsplan\s+/i.test(line));
+  if (titleIndex === -1) {
     return '';
   }
 
   const routeLines = [];
-  for (let index = objectIndex + 1; index < firstPageLines.length; index += 1) {
+  for (let index = titleIndex + 1; index < firstPageLines.length; index += 1) {
     const line = firstPageLines[index];
     const normalizedLine = normalizeForMatching(line);
     if (!line || /^\(.*\)$/.test(line)) {
       continue;
     }
-    if (normalizedLine.includes('forplanera') || normalizedLine.includes('granspunkter')) {
+    if (
+      /^v\d+\b/i.test(line) ||
+      normalizedLine.startsWith('banobjekt-vnr') ||
+      normalizedLine.startsWith('forplanera ca') ||
+      normalizedLine.startsWith('berorda driftplatser') ||
+      normalizedLine.startsWith('htsm telefonnr') ||
+      normalizedLine.startsWith('granspunkter')
+    ) {
       break;
     }
 
@@ -402,7 +433,10 @@ const extractPhoneNumbers = (phoneSection) => {
       .filter((line) => line.text);
 
     const phoneHeader = normalizedLines.find((line) => line.normalized === 'telefonnummer.');
-    const scopedLines = normalizedLines.filter((line) => line.y <= (phoneHeader?.y ?? 1) + 0.01);
+    const scopedLines = normalizedLines.filter((line) => (
+      line.y >= (phoneHeader?.y ?? 0) - 0.002 &&
+      line.y <= (phoneHeader?.y ?? 0) + 0.25
+    ));
     const phoneCandidates = scopedLines.filter((line) => extractPhoneFromLine(line.text));
 
     const pickNearestPhone = (pattern) => {
@@ -424,13 +458,14 @@ const extractPhoneNumbers = (phoneSection) => {
       return nearbyPhone ? extractPhoneFromLine(nearbyPhone.text) : '';
     };
 
-    const fjtklLine = scopedLines.find((line) => /^fjtkl\b/.test(line.normalized));
+    const fjtklLine = scopedLines.find((line) => /^(4\.\s*)?tkl\b/.test(line.normalized) || /^fjtkl\b/.test(line.normalized));
 
     return {
-      namn: fjtklLine ? normalizeText(fjtklLine.text.replace(/^Fjtkl\s+/i, '')) : '',
+      namn: fjtklLine ? normalizeText(fjtklLine.text.replace(/^(4\.\s*)?(Fjtkl|Tkl)\s+/i, '')) : '',
       nodnummer: pickNearestPhone(/^2\.\s*larm\s+tlc\b/),
-      htsmTelefon: pickNearestPhone(/^2\.\s*htsm\b/),
-      telefonnummer: pickNearestPhone(/^fjtkl\b/),
+      htsmTelefon: pickNearestPhone(/^3\.\s*htsm\b/),
+      reservnr: pickNearestPhone(/^reservnr\b/),
+      telefonnummer: pickNearestPhone(/^(4\.\s*)?tkl\b|^fjtkl\b/),
     };
   };
 
@@ -450,9 +485,10 @@ const extractPhoneNumbers = (phoneSection) => {
     const labelPatterns = [
       { key: 'sos', pattern: /^1\.\s*sos\s+alarm\b/ },
       { key: 'larmTlc', pattern: /^2\.\s*larm\s+tlc\b/ },
-      { key: 'htsm', pattern: /^2\.\s*htsm\b/ },
+      { key: 'htsm', pattern: /^3\.\s*htsm\b/ },
+      { key: 'reserv', pattern: /^reservnr\b/ },
       { key: 'arbetsledare', pattern: /^3\.\s*ansvarig\s+arbetsledare\b/ },
-      { key: 'fjtkl', pattern: /^fjtkl\b/ },
+      { key: 'fjtkl', pattern: /^(4\.\s*)?tkl\b|^fjtkl\b/ },
     ];
 
     const labels = scope
@@ -484,20 +520,23 @@ const extractPhoneNumbers = (phoneSection) => {
         .filter((line) => (
           /^010[- ]\s*\d{3}\s*\d{2}\s*\d{2}/.test(line) ||
           /^fjtkl\b/i.test(line) ||
+          /^(4\.\s*)?tkl\b/i.test(line) ||
           /^2\.\s*larm\s+tlc\b/i.test(line) ||
-          /^2\.\s*htsm\b/i.test(line) ||
+          /^3\.\s*htsm\b/i.test(line) ||
+          /^reservnr\b/i.test(line) ||
           /^1\.\s*sos\s+alarm\b/i.test(line)
         ))
         .slice(0, 30)
     : lines.slice(telIndex, telIndex + 30);
 
   if (!scope.length) {
-    return {
-      namn: '',
-      telefonnummer: '',
-      nodnummer: '',
-      htsmTelefon: '',
-    };
+      return {
+        namn: '',
+        telefonnummer: '',
+        nodnummer: '',
+        htsmTelefon: '',
+        reservnr: '',
+      };
   }
 
   const coordinatePhones = extractPhonesByCoordinates(pages);
@@ -505,27 +544,36 @@ const extractPhoneNumbers = (phoneSection) => {
   const numbers = scope
     .filter((line) => /^010[- ]\s*\d{3}\s*\d{2}\s*\d{2}/.test(line))
     .map(formatPhone);
-  const fjtklLine = scope.find((line) => /^Fjtkl\s+/i.test(line));
+  const fjtklLine = scope.find((line) => /^(4\.\s*)?(Fjtkl|Tkl)\s+/i.test(line));
+  const directLarmPhone = extractPhoneNearLabel(scope, /^2\.\s*larm\s+tlc\b/);
+  const directHtsmPhone = extractPhoneNearLabel(scope, /^3\.\s*htsm\b/);
+  const directReservPhone = extractPhoneNearLabel(scope, /^reservnr\b/);
+  const directTklPhone = extractPhoneNearLabel(scope, /^(4\.\s*)?tkl\b|^fjtkl\b/);
 
   return {
     namn:
       coordinatePhones.namn ||
-      (fjtklLine ? normalizeText(fjtklLine.replace(/^Fjtkl\s+/i, '')) : ''),
+      (fjtklLine ? normalizeText(fjtklLine.replace(/^(4\.\s*)?(Fjtkl|Tkl)\s+/i, '')) : ''),
     nodnummer:
+      directLarmPhone ||
       coordinatePhones.nodnummer ||
       orderedPhones.larmTlc ||
-      extractPhoneNearLabel(scope, /^2\.\s*larm\s+tlc\b/) ||
       numbers[0] ||
       '',
     htsmTelefon:
+      directHtsmPhone ||
       coordinatePhones.htsmTelefon ||
       orderedPhones.htsm ||
-      extractPhoneNearLabel(scope, /^2\.\s*htsm\b/) ||
+      '',
+    reservnr:
+      directReservPhone ||
+      coordinatePhones.reservnr ||
+      orderedPhones.reserv ||
       '',
     telefonnummer:
+      directTklPhone ||
       coordinatePhones.telefonnummer ||
       orderedPhones.fjtkl ||
-      extractPhoneNearLabel(scope, /^fjtkl\b/) ||
       numbers[numbers.length - 1] ||
       '',
   };
@@ -541,6 +589,7 @@ const mergeParsedPhones = (...sources) => ({
   telefonnummer: pickParsedValue(...sources.map((source) => source?.telefonnummer)),
   nodnummer: pickParsedValue(...sources.map((source) => source?.nodnummer)),
   htsmTelefon: pickParsedValue(...sources.map((source) => source?.htsmTelefon)),
+  reservnr: pickParsedValue(...sources.map((source) => source?.reservnr)),
 });
 
 const extractDispEntriesFromText = (pages = []) => {
@@ -1014,6 +1063,12 @@ const extractDispSectionsFromText = (pages = []) =>
         }
 
         const blockText = blockLines.join(' ');
+        const wrappedInlineSection = parseInlineDispSectionText(blockText);
+        if (wrappedInlineSection) {
+          sections.push(wrappedInlineSection);
+          continue;
+        }
+
         if (!/(signal|gr[aä]nspunkter?|sp[aå]r)/i.test(blockText)) {
           continue;
         }
@@ -1293,6 +1348,11 @@ const parseDispPdf = async (buffer, blankett31Entries = []) => {
       ocrOverview.forplaneraCa,
       preferredOverview.forplaneraCa
     ),
+    berordaDriftplatser: pickParsedValue(
+      textOverview.berordaDriftplatser,
+      ocrOverview.berordaDriftplatser,
+      preferredOverview.berordaDriftplatser
+    ),
     outerGranspunkter: pickParsedValue(
       textOverview.outerGranspunkter,
       ocrOverview.outerGranspunkter,
@@ -1315,6 +1375,7 @@ const parseDispPdf = async (buffer, blankett31Entries = []) => {
     telefonnummer: phones.telefonnummer,
     nodnummer: phones.nodnummer,
     htsmTelefon: phones.htsmTelefon,
+    reservnr: phones.reservnr,
     overview,
     entries,
     sections,

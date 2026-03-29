@@ -1026,25 +1026,15 @@ const SkapaProjekt = () => {
       setProjektNamn(parsed.projectName);
     }
 
-    if (parsed?.plats) {
-      setPlats(parsed.plats);
+    if (parsed?.overview?.berordaDriftplatser || parsed?.plats) {
+      setPlats(parsed?.overview?.berordaDriftplatser || parsed.plats);
     }
 
-    if (parsed?.namn) {
-      setNamn(parsed.namn);
-    }
-
-    if (parsed?.telefonnummer) {
-      setTelefonnummer(parsed.telefonnummer);
-    }
-
-    if (parsed?.nodnummer) {
-      setNodnummer(parsed.nodnummer);
-    }
-
-    if (parsed?.htsmTelefon) {
-      setHtsmTelefon(parsed.htsmTelefon);
-    }
+    setNamn(parsed?.namn || '');
+    setTelefonnummer(parsed?.telefonnummer || '');
+    setNodnummer(parsed?.nodnummer || '');
+    setHtsmTelefon(parsed?.htsmTelefon || '');
+    setReservnr(parsed?.reservnr || '');
 
     if (parsed?.overview) {
       setDispSettings((current) => ({
