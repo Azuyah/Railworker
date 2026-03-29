@@ -76,12 +76,12 @@ localStorage.setItem('user', JSON.stringify({
         </button>
         <div className="mt-4 text-center">
           <p className="text-sm">
-            Har du inget konto?
+            Är du TSM?
             <button
               onClick={() => navigate('/register')}
               className="ml-1 text-blue-600 hover:underline"
             >
-              Registrera dig
+              Registrera dig här
             </button>
           </p>
         </div>

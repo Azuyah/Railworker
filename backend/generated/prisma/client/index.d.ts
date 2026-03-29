@@ -8912,11 +8912,11 @@ export namespace Prisma {
   export type UserWhereUniqueInput = Prisma.AtLeast<{
     id?: number
     email?: string
+    phone?: string
     AND?: UserWhereInput | UserWhereInput[]
     OR?: UserWhereInput[]
     NOT?: UserWhereInput | UserWhereInput[]
     password?: StringFilter<"User"> | string
-    phone?: StringNullableFilter<"User"> | string | null
     company?: StringNullableFilter<"User"> | string | null
     role?: StringFilter<"User"> | string
     firstName?: StringNullableFilter<"User"> | string | null
@@ -8927,7 +8927,7 @@ export namespace Prisma {
     employerOf?: EmployeeListRelationFilter
     createdRows?: RowListRelationFilter
     approvedRows?: RowListRelationFilter
-  }, "id" | "email">
+  }, "id" | "email" | "phone">
 
   export type UserOrderByWithAggregationInput = {
     id?: SortOrder

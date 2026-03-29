@@ -11,8 +11,6 @@ const Register = () => {
     firstName: '',
     lastName: '',
     phone: '',
-    email: '',
-    password: ''
   });
 
   const [error, setError] = useState('');
@@ -27,9 +25,24 @@ const Register = () => {
     setError('');
     try {
       const response = await axios.post(apiUrl('/api/register'), formData);
-      if (response.status === 201) {
-        alert('Registrering lyckades!');
-        navigate('/');
+      const token = response.data?.token;
+      if (token) {
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify({
+          token,
+          role: response.data.role,
+          firstName: response.data.firstName,
+          lastName: response.data.lastName,
+          signature: response.data.signature,
+          email: response.data.email,
+          phone: response.data.phone,
+          company: response.data.company,
+        }));
+        navigate('/dashboard');
+      } else {
+        setError('Registreringen lyckades inte');
       }
     } catch (err) {
       setError(err.response?.data?.error || 'Registreringen misslyckades');
@@ -44,6 +57,9 @@ const Register = () => {
       <div className="pt-28 p-6 max-w-xl mx-auto">
         <div className="bg-white rounded shadow-md p-8">
           <h2 className="text-2xl font-bold mb-6">Registrera dig</h2>
+          <p className="text-sm text-gray-600 mb-6">
+            Fyll i dina uppgifter så kommer du direkt in i TSM-sidan. Om telefonnumret redan finns registrerat loggas du in direkt.
+          </p>
 
           {error && <p className="text-red-500 mb-4">{error}</p>}
 
@@ -87,33 +103,13 @@ const Register = () => {
             />
           </div>
 
-          <div className="mb-4">
-            <label className="block font-semibold mb-1">Email</label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleChange('email', e.target.value)}
-              className="w-full px-4 py-2 rounded border bg-white"
-            />
-          </div>
-
-          <div className="mb-6">
-            <label className="block font-semibold mb-1">Lösenord</label>
-            <input
-              type="password"
-              value={formData.password}
-              onChange={(e) => handleChange('password', e.target.value)}
-              className="w-full px-4 py-2 rounded border bg-white"
-            />
-          </div>
-
           <div className="flex justify-center">
             <button
               onClick={handleRegister}
               className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
               disabled={loading}
             >
-              {loading ? 'Registrerar...' : 'Registrera'}
+              {loading ? 'Registrerar...' : 'Registrera mig'}
             </button>
           </div>
         </div>

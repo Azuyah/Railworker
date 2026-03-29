@@ -33,6 +33,9 @@ if (!JWT_SECRET) {
   throw new Error('JWT_SECRET is not defined in your .env file');
 }
 
+const normalizePhoneNumber = (value = '') =>
+  String(value || '').replace(/[^\d+]/g, '').trim();
+
 const decodeUploadedPdf = (fileData, fileName = '') => {
   const raw = String(fileData || '').trim();
   if (!raw) {
@@ -125,42 +128,75 @@ app.post('/api/njdb/sections/signals', authMiddleware, async (req, res) => {
 
 // Register user
 app.post('/api/register', async (req, res) => {
-  const { email, password, firstName, lastName, phone, company } = req.body;
+  const { firstName, lastName, phone, company } = req.body;
 
 
   try {
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const normalizedPhone = normalizePhoneNumber(phone);
+
+    if (!firstName || !lastName || !normalizedPhone || !company) {
+      return res.status(400).json({ error: 'Förnamn, efternamn, telefon och företag krävs' });
+    }
+
+    const existingUser = await prisma.user.findFirst({ where: { phone: normalizedPhone } });
     if (existingUser) {
-      return res.status(400).json({ error: 'User already exists' });
+      if (existingUser.role !== 'TSM') {
+        return res.status(400).json({ error: 'Telefonnumret används redan av ett annat konto' });
+      }
+
+      const token = jwt.sign(
+        { userId: existingUser.id, role: existingUser.role },
+        JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+
+      return res.status(200).json({
+        message: 'Login successful',
+        token,
+        role: existingUser.role,
+        firstName: existingUser.firstName,
+        lastName: existingUser.lastName,
+        signature: existingUser.signature,
+        email: existingUser.email,
+        phone: existingUser.phone,
+        company: existingUser.company,
+      });
     }
 
-    if (!password) {
-      return res.status(400).json({ error: 'Lösenord saknas' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const generatedEmail = `${normalizedPhone.replace(/[^\d]/g, '')}@railworker.local`;
+    const generatedPassword = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    const hashedPassword = await bcrypt.hash(generatedPassword, 10);
     const signature = `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
 
     const user = await prisma.user.create({
       data: {
-        email,
+        email: generatedEmail,
         password: hashedPassword,
         firstName,
         lastName,
-        phone,
+        phone: normalizedPhone,
         company,
         signature,
         role: 'TSM'
       },
     });
 
+    const token = jwt.sign(
+      { userId: user.id, role: user.role },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
     res.status(201).json({
       message: 'User created',
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role
-      }
+      token,
+      role: user.role,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      signature: user.signature,
+      email: user.email,
+      phone: user.phone,
+      company: user.company,
     });
   } catch (err) {
     console.error('❌ Fel vid registrering:', err);
