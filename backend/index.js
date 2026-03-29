@@ -5,6 +5,7 @@ const authMiddleware = require('./middleware/auth');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const { PrismaClient } = require('./generated/prisma/client');
 const { parseBlankett31Pdf } = require('./lib/blankett31Parser');
 const { parseDispPdf } = require('./lib/dispParser');
@@ -779,9 +780,23 @@ app.get('/api/projects/:id/export-excel', authMiddleware, async (req, res) => {
       .replace(/[^\p{L}\p{N}\-_ ]/gu, '')
       .trim()
       .replace(/\s+/g, '_');
+    const now = new Date();
+    const pad = (value) => String(value).padStart(2, '0');
+    const timestamp = [
+      now.getFullYear(),
+      pad(now.getMonth() + 1),
+      pad(now.getDate()),
+    ].join('-') + '_' + [
+      pad(now.getHours()),
+      pad(now.getMinutes()),
+      pad(now.getSeconds()),
+    ].join('-');
+    const debugExportPath = path.join(__dirname, 'tmp', 'latest-plan-export.xlsx');
+    fs.mkdirSync(path.dirname(debugExportPath), { recursive: true });
+    fs.writeFileSync(debugExportPath, Buffer.from(buffer));
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename=\"${safeName || 'planka'}.xlsx\"`);
+    res.setHeader('Content-Disposition', `attachment; filename=\"${safeName || 'planka'}_${timestamp}.xlsx\"`);
     res.send(Buffer.from(buffer));
   } catch (error) {
     console.error('Fel vid export av Excel:', error);

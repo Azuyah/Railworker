@@ -99,6 +99,53 @@ const compactSectionText = (value = '') =>
     .replace(/\s*,\s*/g, ',')
     .trim();
 
+const getSectionDisplayIndex = (section, index) => {
+  const parsedDisplayIndex = Number(section?.displayIndex);
+  if (section?.namingMode === 'NUMBERS' && Number.isFinite(parsedDisplayIndex) && parsedDisplayIndex > 0) {
+    return parsedDisplayIndex;
+  }
+
+  return index + 1;
+};
+
+const getPlankaSectionKind = (section, index) => {
+  const explicitType = String(section?.type || '').trim().toUpperCase();
+  if (explicitType === 'LINJE') {
+    return 'Linje';
+  }
+  if (explicitType === 'DP') {
+    return 'DP';
+  }
+
+  const displayIndex = getSectionDisplayIndex(section, index);
+  return displayIndex % 2 === 1 ? 'Linje' : 'DP';
+};
+
+const buildPlankaSectionSlots = (sections = []) => {
+  const maxDisplayIndex = sections.reduce(
+    (maxValue, section, index) => Math.max(maxValue, getSectionDisplayIndex(section, index)),
+    0
+  );
+
+  const sectionByDisplayIndex = new Map();
+  sections.forEach((section, index) => {
+    sectionByDisplayIndex.set(getSectionDisplayIndex(section, index), {
+      section,
+      sectionIndex: index,
+      displayIndex: getSectionDisplayIndex(section, index),
+    });
+  });
+
+  return Array.from({ length: maxDisplayIndex }, (_, slotIndex) => {
+    const displayIndex = slotIndex + 1;
+    return sectionByDisplayIndex.get(displayIndex) || {
+      section: null,
+      sectionIndex: null,
+      displayIndex,
+    };
+  });
+};
+
 const normalizePlanDate = (value = '') => {
   const raw = String(value || '').trim();
   if (!raw) return '';
@@ -2020,10 +2067,9 @@ const filteredRows = rows
     (row.namn || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
     (row.telefon || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
-const visibleSectionIndexes = useMemo(() => {
+const visibleSectionSlots = useMemo(() => {
   if (!project?.sections?.length) return [];
-  // Always show every saved section so a newly created plan mirrors Skapa Projekt directly.
-  return project.sections.map((_, index) => index);
+  return buildPlankaSectionSlots(project.sections);
 }, [project?.sections]);
 
 useEffect(() => {
@@ -2466,41 +2512,36 @@ if (loading || !project) {
             {visibleColumns.namn && <Th />}
             {visibleColumns.telefon && <Th />}
             {visibleColumns.anordning && <Th />}
-            {visibleSectionIndexes.map((idx) => {
-              const sec = project.sections[idx];
-              const sectionWidth = columnWidths[`section-${idx}`] || columnWidths.sectionDefault || 108;
+            {visibleSectionSlots.map((slot) => {
+              const sec = slot.section;
+              const sectionWidth = columnWidths[`section-${slot.displayIndex}`] || columnWidths.sectionDefault || 108;
+              const signalText = sec ? compactSectionText(splitSectionSignalAndTrack(sec).signal) : '';
+              const boundaryText = sec ? compactSectionText(sec.granspunkter || '') : '';
               return (
                 <Th
-                  key={`section-label-${idx}`}
+                  key={`section-boundary-${slot.displayIndex}`}
                   w={`${sectionWidth}px`}
                   minW={`${sectionWidth}px`}
-                  h="24px"
+                  h="42px"
                   p={0}
                   m={0}
-                  bg={idx % 2 === 0 ? 'blue.100' : 'rgba(255,255,255,0.92)'}
+                  bg="#f9e4d3"
                   textAlign="center"
                   verticalAlign="middle"
+                  borderRight="2px solid #6B7C8F"
                 >
-                  <Stack spacing={0} align="center" justify="center" h="100%">
+                  <Flex align="center" justify="center" h="100%" px={1}>
                     <Text
-                      fontSize="7px"
-                      fontWeight="bold"
-                      color="gray.700"
-                      textTransform="uppercase"
-                      letterSpacing="-0.01em"
-                      lineHeight="1"
-                    >
-                      Delomr
-                    </Text>
-                    <Text
-                      fontSize="sm"
+                      fontSize="10px"
                       fontWeight="extrabold"
-                      color="gray.900"
+                      color="red.600"
                       lineHeight="1"
+                      textAlign="center"
+                      noOfLines={2}
                     >
-                      {getSectionMarker(sec, idx)}
+                      {boundaryText || signalText || ' '}
                     </Text>
-                  </Stack>
+                  </Flex>
                 </Th>
               );
             })}
@@ -2563,23 +2604,26 @@ if (loading || !project) {
       </Th>
     )}
 
-{visibleSectionIndexes.map((idx) => {
-  const sec = project.sections[idx];
-  const sectionWidth = columnWidths[`section-${idx}`] || columnWidths.sectionDefault || 108;
-  const { signal, spar } = splitSectionSignalAndTrack(sec);
+{visibleSectionSlots.map((slot) => {
+  const sec = slot.section;
+  const sectionWidth = columnWidths[`section-${slot.displayIndex}`] || columnWidths.sectionDefault || 108;
+  const { signal, spar } = splitSectionSignalAndTrack(sec || {});
   const signalText = compactSectionText(signal);
-  const boundaryText = compactSectionText(sec.granspunkter || signalText);
+  const boundaryText = compactSectionText(sec?.granspunkter || signalText);
+  const sectionKind = getPlankaSectionKind(sec || {}, slot.displayIndex - 1);
+  const cellBg = sectionKind === 'DP' ? '#fff46a' : 'white';
   return (
 <Th
-  key={idx}
+  key={slot.displayIndex}
   w={`${sectionWidth}px`}
   minW={`${sectionWidth}px`}
-  h="34px"
+  h="46px"
   p={0}
   m="0"
-  bg={idx % 2 === 0 ? 'gray.100' : 'white'}
+  bg={cellBg}
   textAlign="center"
   verticalAlign="middle"
+  borderRight="2px solid #6B7C8F"
 >
     <Box
       position="relative"
@@ -2588,16 +2632,16 @@ if (loading || !project) {
       cursor="help"
       overflow="visible"
       aria-label="Signalinfo"
-      onMouseEnter={() =>
+      onMouseEnter={() => sec && (
         setHoveredSectionInfo({
-          index: idx,
-          label: `Del ${getSectionMarker(sec, idx)}`,
+          index: slot.displayIndex,
+          label: `Del ${getSectionMarker(sec, slot.sectionIndex ?? slot.displayIndex - 1)}`,
           signal: signalText,
           boundary: boundaryText,
           track: spar || sec.spar || '',
         })
-      }
-      onMouseLeave={() => setHoveredSectionInfo((current) => (current?.index === idx ? null : current))}
+      )}
+      onMouseLeave={() => setHoveredSectionInfo((current) => (current?.index === slot.displayIndex ? null : current))}
     >
       <Flex
         direction="column"
@@ -2612,30 +2656,29 @@ if (loading || !project) {
         py={0.5}
       >
         <Text
-          fontSize="8px"
+          fontSize="9px"
+          fontWeight="bold"
+          color="black"
+          lineHeight="1"
+          textAlign="center"
+          noOfLines={1}
+          px={0.5}
+        >
+          {sec ? sectionKind : ''}
+        </Text>
+        <Text
+          fontSize="22px"
           fontWeight="extrabold"
           color="black"
           lineHeight="1"
           textAlign="center"
           noOfLines={1}
-          letterSpacing="-0.01em"
           px={0.5}
         >
-          {signalText || 'Ej angivet'}
-        </Text>
-        <Text
-          fontSize="7px"
-          fontWeight="bold"
-          color="gray.900"
-          lineHeight="1"
-          textAlign="center"
-          noOfLines={1}
-          px={0.5}
-        >
-          {spar || sec.spar || '—'}
+          {slot.displayIndex}
         </Text>
       </Flex>
-      {hoveredSectionInfo?.index === idx && (
+      {sec && hoveredSectionInfo?.index === slot.displayIndex && (
         <Box
           position="absolute"
           top="calc(100% + 4px)"
@@ -2664,7 +2707,7 @@ if (loading || !project) {
         </Box>
       )}
     </Box>
-</Th>
+  </Th>
   );
 })}
     {visibleColumns.starttid && (
@@ -2939,16 +2982,18 @@ if (loading || !project) {
   </Td>
 )}
 
-                {visibleSectionIndexes.map((secIdx) => {
-                  const cellKey = `section-${secIdx}`;
+                {visibleSectionSlots.map((slot) => {
+                  const secIdx = slot.sectionIndex;
+                  const cellKey = `section-${slot.displayIndex}`;
                   const sectionMeta = cell(cellKey);
                   const sectionIcon = cellIcon(cellKey);
-                  const sectionWidth = columnWidths[`section-${secIdx}`] || columnWidths.sectionDefault || 14;
-  const baseBg = secIdx % 2 === 0 ? 'gray.100' : 'white';
+                  const sectionWidth = columnWidths[`section-${slot.displayIndex}`] || columnWidths.sectionDefault || 14;
+  const sectionKind = getPlankaSectionKind(slot.section || {}, slot.displayIndex - 1);
+  const baseBg = sectionKind === 'DP' ? '#fffbe6' : 'white';
 
   return (
     <Td
-      key={secIdx}
+      key={slot.displayIndex}
       width={`${sectionWidth}px`}
       minW={`${sectionWidth}px`}
       px={0.5}
@@ -2961,6 +3006,9 @@ if (loading || !project) {
       borderRight="2px solid #6B7C8F"
       onMouseDown={(e) => {
         e.stopPropagation();
+        if (!Number.isInteger(secIdx)) {
+          return;
+        }
         if (hotkeyMode) {
           handleCellInteraction(row, cellKey, `Delområde ${getSectionMarker(project.sections[secIdx], secIdx)}`);
           return;
@@ -2969,6 +3017,9 @@ if (loading || !project) {
       }}
       onContextMenu={(e) => openBodyContextMenu(e, row.id, cellKey)}
       onDoubleClick={() => {
+        if (!Number.isInteger(secIdx)) {
+          return;
+        }
         if (hotkeyMode) {
           handleCellInteraction(row, cellKey, `Delområde ${getSectionMarker(project.sections[secIdx], secIdx)}`);
           return;
@@ -2977,7 +3028,7 @@ if (loading || !project) {
       }}
     >
       <Flex align="center" justify="center" gap={1}>
-        {row.selections[secIdx] === true && <HiX size={16} color="black" style={{ strokeWidth: 1.5 }} />}
+        {Number.isInteger(secIdx) && row.selections[secIdx] === true && <HiX size={16} color="black" style={{ strokeWidth: 1.5 }} />}
         {sectionIcon?.icon && (
           <Icon as={sectionIcon.icon} color={sectionIcon.color} boxSize="13px" />
         )}
@@ -3157,16 +3208,16 @@ onClick={() => {
     )}
 
     {/* DELOMRÅDEN (checkboxar) */}
-    {visibleSectionIndexes.map((secIdx) => (
+    {visibleSectionSlots.map((slot) => (
       <Td
-        key={secIdx}
-        width={`${columnWidths[`section-${secIdx}`] || columnWidths.sectionDefault || 140}px`}
-        minW={`${columnWidths[`section-${secIdx}`] || columnWidths.sectionDefault || 140}px`}
-        bg={secIdx % 2 === 0 ? 'blue.50' : 'transparent'}
+        key={slot.displayIndex}
+        width={`${columnWidths[`section-${slot.displayIndex}`] || columnWidths.sectionDefault || 140}px`}
+        minW={`${columnWidths[`section-${slot.displayIndex}`] || columnWidths.sectionDefault || 140}px`}
+        bg={getPlankaSectionKind(slot.section || {}, slot.displayIndex - 1) === 'DP' ? '#fffbe6' : 'transparent'}
         borderRight="1px solid rgba(0, 0, 0, 0.05)"
       >
         <Flex justify="center">
-          {row.selections?.[secIdx] === true && <HiX size={16} color="black" />}
+          {Number.isInteger(slot.sectionIndex) && row.selections?.[slot.sectionIndex] === true && <HiX size={16} color="black" />}
         </Flex>
       </Td>
     ))}
