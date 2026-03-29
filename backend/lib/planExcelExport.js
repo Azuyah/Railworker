@@ -610,7 +610,13 @@ const fillWorksheet = (worksheet, project, entriesForSheet, rows) => {
     setCell(worksheet, `${trailingColumns.start}${excelRow}`, row.startTime || row.starttid || '');
     setCell(worksheet, `${trailingColumns.begard}${excelRow}`, row.begard || '');
     setCell(worksheet, `${trailingColumns.avslutat}${excelRow}`, row.avslutat || '');
-    setCell(worksheet, `${trailingColumns.tsa}${excelRow}`, Array.isArray(row.anordning) && row.anordning.some((item) => String(item).toUpperCase() === 'TSA') ? 1 : 0);
+    setCell(
+      worksheet,
+      `${trailingColumns.tsa}${excelRow}`,
+      row.tsa || (Array.isArray(row.anordning) && row.anordning.some((item) => String(item).toUpperCase() === 'TSA'))
+        ? 'X'
+        : ''
+    );
     setCell(worksheet, `${trailingColumns.anteckning}${excelRow}`, row.anteckning || '');
   });
 };

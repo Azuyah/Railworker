@@ -4121,10 +4121,18 @@ onChange={() =>
             </SimpleGrid>
 
             <FormControl>
-              <FormLabel>Anteckning</FormLabel>
+              <Checkbox
+                isChecked={Boolean(editableTsmRow.tsa)}
+                onChange={(e) => handleApprovalChange('tsa', e.target.checked)}
+                mb={3}
+              >
+                TSA
+              </Checkbox>
+              <FormLabel>Arbetsbeskrivning</FormLabel>
               <Textarea
                 value={editableTsmRow.anteckning || ''}
                 onChange={(e) => handleApprovalChange('anteckning', e.target.value)}
+                placeholder="Skriv gärna vad ni ska göra och plats"
               />
             </FormControl>
           </Stack>
