@@ -155,8 +155,12 @@ const Dashboard = () => {
           ? { ...item, visibleToTsm: !nextVisibleToTsm }
           : item
       )));
+      const errorMessage =
+        error?.response?.data?.error ||
+        error?.message ||
+        'Kunde inte uppdatera synlighet';
       toast({
-        title: 'Kunde inte uppdatera synlighet',
+        title: errorMessage,
         status: 'error',
         duration: 3000,
         isClosable: true,
