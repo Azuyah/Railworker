@@ -138,6 +138,7 @@ export default function Panel() {
   const [anordning, setAnordning] = useState([]);
   const [enrolledProjects, setEnrolledProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
+  const [exportingProjectId, setExportingProjectId] = useState(null);
   const namn = `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
   const telefon = user?.phone || '';
   const toast = useToast();
@@ -297,6 +298,54 @@ export default function Panel() {
     }
   };
 
+  const handleExportDisp = useCallback(async (project) => {
+    try {
+      if (!token || !project?.id) {
+        toast({
+          title: 'Logga in igen för att ladda ner disp.',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+        return;
+      }
+
+      setExportingProjectId(project.id);
+      const response = await fetch(apiUrl(`/api/projects/${project.id}/export-disp`), {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Kunde inte ladda ner disp');
+      }
+
+      const blob = await response.blob();
+      const contentDisposition = response.headers.get('Content-Disposition') || '';
+      const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/i);
+      const filename = filenameMatch?.[1] || `${project.name || 'dispositionsarbetsplan'}.pdf`;
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('❌ Kunde inte ladda ner disp:', error);
+      toast({
+        title: 'Kunde inte ladda ner disp.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setExportingProjectId(null);
+    }
+  }, [toast, token]);
+
   const fetchAllProjects = useCallback(async () => {
     try {
       const response = await axios.get(
@@ -420,6 +469,17 @@ export default function Panel() {
                       )}
                     </div>
                     <div className="flex space-x-2">
+                      {user?.role === 'TSM' && (
+                        <Button
+                          onClick={() => handleExportDisp(project)}
+                          className="fancy-button"
+                          colorScheme="blue"
+                          isLoading={exportingProjectId === project.id}
+                          loadingText="Laddar"
+                        >
+                          Ladda ner disp
+                        </Button>
+                      )}
                       {user?.role === 'TSM' && (
                         <Button
                           onClick={() => {
