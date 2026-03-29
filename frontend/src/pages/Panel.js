@@ -124,9 +124,6 @@ const getPlanEntryCutoffTimestamp = (entry) => {
 
 const isPlanningWindowOpen = (entry) => Date.now() < getPlanEntryCutoffTimestamp(entry);
 
-const formatAnordningLabel = (value) =>
-  ANORDNING_OPTIONS.find((option) => option.value === value)?.label || value;
-
 const formatPlanTime = (value = '') => String(value || '').replace(':', '.');
 
 const formatPlanDateForDisplay = (value = '') => {
@@ -149,8 +146,6 @@ const isLineSection = (section = {}) => {
   const label = String(section?.signal || section?.name || '').trim();
   return label.includes(' - ');
 };
-
-const isDpSection = (section = {}) => !isLineSection(section);
 
 const getAllowedAskyddPairIds = (sections = [], selectedIds = []) => {
   const selectedSet = new Set(selectedIds);
@@ -220,13 +215,11 @@ export default function Panel() {
   const [tsa, setTsa] = useState(false);
   const [anteckning, setAnteckning] = useState('');
   const [anordning, setAnordning] = useState([]);
-  const [enrolledProjects, setEnrolledProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [exportingProjectId, setExportingProjectId] = useState(null);
   const namn = `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
   const telefon = user?.phone || '';
   const toast = useToast();
-  const signatureBase = (user?.signature || `${user?.firstName?.[0] || ''}${user?.lastName?.[0] || ''}`).toUpperCase();
   const nextPlanEntry = useMemo(
     () => getNextPlanEntry(selectedProject),
     [selectedProject]
@@ -255,18 +248,6 @@ export default function Panel() {
     },
     [user?.firstName, user?.id, user?.lastName, user?.phone]
   );
-
-  const getPlanSectionSummary = useCallback((project, row) => {
-    if (!Array.isArray(project?.sections) || !Array.isArray(row?.selections)) {
-      return '';
-    }
-
-    return project.sections
-      .flatMap((section, index) => (
-        row.selections[index] ? [getSectionLabel(section, index)] : []
-      ))
-      .join(', ');
-  }, []);
 
   const isAnordningOptionDisabled = useCallback((optionValue) => {
     if (anordning.includes(optionValue)) return false;
@@ -341,11 +322,6 @@ export default function Panel() {
     );
   }, [anordning, isASkyddSelected, isLSkyddSelected, selectedProject?.sections]);
 
-  const userIsInProject = useCallback(
-    (project) => getUserPlansForProject(project).length > 0,
-    [getUserPlansForProject]
-  );
-
   const getRowPlanDate = useCallback(
     (row) => normalizeDateForInput(row?.begardDatum || row?.datum || row?.startdatum || ''),
     []
@@ -380,9 +356,13 @@ export default function Panel() {
 
   const handleSelfEnroll = async () => {
     try {
-      const token = localStorage.getItem('user')
-        ? JSON.parse(localStorage.getItem('user')).token
-        : null;
+      let storedUser = null;
+      try {
+        storedUser = JSON.parse(localStorage.getItem('user') || 'null');
+      } catch (error) {
+        storedUser = null;
+      }
+      const token = storedUser?.token || null;
       const targetPlanEntry = getNextPlanEntry(selectedProject);
       const targetPlanDate = normalizeDateForInput(targetPlanEntry?.startDate || targetPlanEntry?.endDate);
 
@@ -469,10 +449,6 @@ export default function Panel() {
       setProjects((prev) =>
         prev.map((project) => (project.id === updatedProject.id ? updatedProject : project))
       );
-      setEnrolledProjects((prev) => {
-        const existing = prev.filter((project) => project.id !== updatedProject.id);
-        return [...existing, updatedProject];
-      });
     } catch (err) {
       console.error('❌ Fel vid TSM-anmälan:', err);
       toast({
@@ -544,12 +520,11 @@ export default function Panel() {
       );
 
       setProjects(response.data);
-      setEnrolledProjects(response.data.filter(userIsInProject));
     } catch (error) {
       console.error('❌ Kunde inte hämta projekt:', error);
       setProjects([]);
     }
-  }, [token, userIsInProject]);
+  }, [token]);
 
   useEffect(() => {
     if (!token) {
@@ -651,7 +626,7 @@ export default function Panel() {
                       <h3 className="font-semibold text-lg text-gray-800">
                         {project.name}
                       </h3>
-                      {project.description && (
+                      {project.plats && (
                         <p className="text-sm text-gray-500">{project.plats}</p>
                       )}
                     </div>

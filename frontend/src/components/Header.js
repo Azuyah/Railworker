@@ -22,7 +22,12 @@ const Header = () => {
     navigate('/');
   };
 
-  const user = JSON.parse(localStorage.getItem('user')) || {};
+  let user = {};
+  try {
+    user = JSON.parse(localStorage.getItem('user') || 'null') || {};
+  } catch (error) {
+    user = {};
+  }
 
   return (
     <Box

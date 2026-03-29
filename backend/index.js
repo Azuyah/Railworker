@@ -76,10 +76,9 @@ const decodeUploadedPdf = (fileData, fileName = '') => {
 
   const pdfBuffer = Buffer.from(base64Payload, 'base64');
   const headerSample = pdfBuffer.subarray(0, 1024).toString('latin1');
-  const fileExt = path.extname(String(fileName || '')).toLowerCase();
   const looksLikePdf = headerSample.includes('%PDF-');
 
-  if (!pdfBuffer.length || (!looksLikePdf && fileExt !== '.pdf')) {
+  if (!pdfBuffer.length || !looksLikePdf) {
     throw new Error('Ogiltigt PDF-format');
   }
 
@@ -234,6 +233,17 @@ const isPlanningWindowOpen = (entry) => Date.now() < getPlanEntryCutoffTimestamp
 
 const getRowPlanDate = (row = {}) =>
   normalizeDateForInput(row?.begardDatum || row?.datum || row?.startdatum || '');
+
+const sanitizeDownloadFileBase = (value = '', fallback = 'fil') => {
+  const normalized = String(value || '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Za-z0-9\-_ ]/g, '')
+    .trim()
+    .replace(/\s+/g, '_');
+
+  return normalized || fallback;
+};
 
 const canAccessProject = (role = '', project = null) => {
   const normalizedRole = String(role || '').toUpperCase();
@@ -978,10 +988,7 @@ app.get('/api/projects/:id/export-excel', authMiddleware, async (req, res) => {
     }
 
     const buffer = await createPlanWorkbookBuffer(project);
-    const safeName = String(project.name || 'planka')
-      .replace(/[^\p{L}\p{N}\-_ ]/gu, '')
-      .trim()
-      .replace(/\s+/g, '_');
+    const safeName = sanitizeDownloadFileBase(project.name, 'planka');
     const now = new Date();
     const pad = (value) => String(value).padStart(2, '0');
     const timestamp = [
@@ -1030,10 +1037,7 @@ app.get('/api/projects/:id/export-disp', authMiddleware, async (req, res) => {
     }
 
     const buffer = await createDispPdfBuffer(project);
-    const safeName = String(project.name || 'dispositionsarbetsplan')
-      .replace(/[^\p{L}\p{N}\-_ ]/gu, '')
-      .trim()
-      .replace(/\s+/g, '_');
+    const safeName = sanitizeDownloadFileBase(project.name, 'dispositionsarbetsplan');
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=\"${safeName || 'dispositionsarbetsplan'}.pdf\"`);

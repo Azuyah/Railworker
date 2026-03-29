@@ -1,6 +1,4 @@
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -9,10 +7,8 @@ import HtsmPanel from './pages/HtsmPanel';
 import SkapaProjekt from './pages/SkapaProjekt';
 import ProjektVisa from './pages/ProjektVisa';
 import Plan from './pages/plan';
-import PlanTSM from './pages/PlanTSM';
 import Profil from './pages/profil';
 import Preview from "./pages/preview";
-import { apiUrl } from './lib/api';
 
 function AppRoutes() {
   const location = useLocation();
@@ -87,28 +83,17 @@ function AppRoutes() {
 }
 
 function RoleBasedPlan() {
-  const [role, setRole] = useState(null);
+  let storedUser = null;
+  try {
+    storedUser = JSON.parse(localStorage.getItem('user') || 'null');
+  } catch (error) {
+    storedUser = null;
+  }
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setRole('');
-      return;
-    }
-
-    axios
-      .get(apiUrl('/api/user'), {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .then((res) => setRole(res.data.role))
-      .catch(() => setRole(''));
-  }, []);
-
+  const role = storedUser?.role || null;
   if (!role) return null;
 
-  return role === 'TSM' ? <PlanTSM /> : <Plan />;
+  return role === 'TSM' ? <Navigate to="/panel" replace /> : <Plan />;
 }
 
 export default function App() {
