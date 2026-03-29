@@ -9,6 +9,8 @@ import ProjektVisa from './pages/ProjektVisa';
 import Plan from './pages/plan';
 import Profil from './pages/profil';
 import Preview from "./pages/preview";
+import LogoPreview from './pages/LogoPreview';
+import DispLogoPreview from './pages/DispLogoPreview';
 
 function AppRoutes() {
   const location = useLocation();
@@ -78,6 +80,8 @@ function AppRoutes() {
   }
 />
 <Route path="/preview" element={<Preview />} />
+<Route path="/logo-preview" element={<LogoPreview />} />
+<Route path="/disp-logo-preview" element={<DispLogoPreview />} />
     </Routes>
   );
 }
