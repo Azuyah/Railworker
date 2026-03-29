@@ -394,9 +394,14 @@ export default function Panel() {
 
       <Header />
       <div className="pt-24 p-6 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           <div className="fancy-card p-6">
-            <h2 className="text-lg font-semibold mb-4">Tillgängliga projekt</h2>
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold">Tillgängliga projekt</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Förplanera direkt här. Dina aktiva projekt hålls kvar i bakgrunden tills vi bygger nästa mobilvy.
+              </p>
+            </div>
             {projects.length === 0 ? (
               <p className="text-gray-500">Inga projekt hittades.</p>
             ) : (
@@ -427,73 +432,6 @@ export default function Panel() {
                           Förplanera
                         </Button>
                       )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          <div className="fancy-card p-6">
-            <h2 className="text-lg font-semibold mb-4">Mina projekt</h2>
-            {enrolledProjects.length === 0 ? (
-              <p className="text-gray-500">Du har inte anmält dig till något projekt ännu.</p>
-            ) : (
-              <ul className="space-y-4">
-                {enrolledProjects.map((project) => (
-                  <li
-                    key={project.id}
-                    className="border rounded p-4 transition duration-200 hover:shadow-md"
-                  >
-                    <div>
-                      <h3 className="font-semibold text-lg text-gray-800">
-                        {project.name}
-                      </h3>
-                      <p className="text-sm text-gray-500">{project.plats}</p>
-                      <div className="mt-3 space-y-2">
-		                        {getUserPlansForProject(project)
-		                          .sort(
-		                            (left, right) => {
-		                              const leftClosed = Boolean(left.avslutadRad);
-		                              const rightClosed = Boolean(right.avslutadRad);
-		                              if (leftClosed !== rightClosed) {
-		                                return leftClosed ? 1 : -1;
-		                              }
-		                              return (
-		                                new Date(right.skapadDatum || right.createdAt || 0) -
-		                                new Date(left.skapadDatum || left.createdAt || 0)
-		                              );
-		                            }
-		                          )
-		                          .map((plan, index) => {
-	                            const anordningar = Array.isArray(plan.anordning)
-	                              ? plan.anordning.map(formatAnordningLabel).join(' + ')
-	                              : formatAnordningLabel(plan.anordning || '');
-	                            const delomraden = getPlanSectionSummary(project, plan);
-	                            const btkn = plan.btkn || `${signatureBase}${String(index + 1).padStart(2, '0')}`;
-	                            const isClosed = Boolean(plan.avslutadRad);
-	                            const statusLabel = isClosed ? 'Avslutad' : 'Aktiv / förplanerad';
-
-	                            return (
-	                              <div
-	                                key={plan.id || `${project.id}-${index}`}
-	                                className={`rounded-lg border px-3 py-2 text-sm ${
-	                                  isClosed
-	                                    ? 'border-red-200 bg-red-50 text-red-900'
-	                                    : 'border-green-200 bg-green-50 text-green-900'
-	                                }`}
-	                              >
-	                                <p className="text-xs font-semibold uppercase tracking-wide opacity-80">
-	                                  {statusLabel}
-	                                </p>
-	                                <p><strong>{anordningar || 'Skydd saknas'}</strong></p>
-	                                <p>Delområde {delomraden || 'saknas'}</p>
-	                                <p>Sluttid kl {formatPlanTime(plan.begard) || 'saknas'}</p>
-	                                <p>Beteckning {btkn}</p>
-	                              </div>
-                            );
-                          })}
-                      </div>
                     </div>
                   </li>
                 ))}
