@@ -36,6 +36,32 @@ if (!JWT_SECRET) {
 const normalizePhoneNumber = (value = '') =>
   String(value || '').replace(/[^\d+]/g, '').trim();
 
+const normalizeFullName = (value = '') =>
+  String(value || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+
+const buildAuthPayload = (user) => {
+  const token = jwt.sign(
+    { userId: user.id, role: user.role },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+
+  return {
+    message: 'Login successful',
+    token,
+    role: user.role,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    signature: user.signature,
+    email: user.email,
+    phone: user.phone,
+    company: user.company,
+  };
+};
+
 const decodeUploadedPdf = (fileData, fileName = '') => {
   const raw = String(fileData || '').trim();
   if (!raw) {
@@ -144,23 +170,7 @@ app.post('/api/register', async (req, res) => {
         return res.status(400).json({ error: 'Telefonnumret används redan av ett annat konto' });
       }
 
-      const token = jwt.sign(
-        { userId: existingUser.id, role: existingUser.role },
-        JWT_SECRET,
-        { expiresIn: '7d' }
-      );
-
-      return res.status(200).json({
-        message: 'Login successful',
-        token,
-        role: existingUser.role,
-        firstName: existingUser.firstName,
-        lastName: existingUser.lastName,
-        signature: existingUser.signature,
-        email: existingUser.email,
-        phone: existingUser.phone,
-        company: existingUser.company,
-      });
+      return res.status(200).json(buildAuthPayload(existingUser));
     }
 
     const generatedEmail = `${normalizedPhone.replace(/[^\d]/g, '')}@railworker.local`;
@@ -181,23 +191,7 @@ app.post('/api/register', async (req, res) => {
       },
     });
 
-    const token = jwt.sign(
-      { userId: user.id, role: user.role },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    res.status(201).json({
-      message: 'User created',
-      token,
-      role: user.role,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      signature: user.signature,
-      email: user.email,
-      phone: user.phone,
-      company: user.company,
-    });
+    res.status(201).json(buildAuthPayload(user));
   } catch (err) {
     console.error('❌ Fel vid registrering:', err);
     res.status(500).json({ error: 'Registreringen misslyckades internt' });
@@ -255,25 +249,41 @@ app.post('/api/login', async (req, res) => {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
 
-    const token = jwt.sign(
-      { userId: user.id, role: user.role },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-res.json({
-  message: 'Login successful',
-  token,
-  role: user.role,
-  firstName: user.firstName,
-  lastName: user.lastName,
-  signature: user.signature,
-  email: user.email,
-  phone: user.phone,
-  company: user.company,
-});
+    res.json(buildAuthPayload(user));
   } catch (error) {
     console.error('Fel vid inloggning:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/login-tsm', async (req, res) => {
+  const normalizedPhone = normalizePhoneNumber(req.body?.phone);
+  const normalizedName = normalizeFullName(req.body?.name);
+
+  try {
+    if (!normalizedPhone || !normalizedName) {
+      return res.status(400).json({ error: 'Namn och telefon krävs' });
+    }
+
+    const user = await prisma.user.findFirst({
+      where: {
+        phone: normalizedPhone,
+        role: 'TSM',
+      },
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: 'Ingen TSM-användare hittades med det telefonnumret' });
+    }
+
+    const storedName = normalizeFullName(`${user.firstName || ''} ${user.lastName || ''}`);
+    if (storedName !== normalizedName) {
+      return res.status(400).json({ error: 'Namnet stämmer inte med telefonnumret' });
+    }
+
+    res.json(buildAuthPayload(user));
+  } catch (error) {
+    console.error('Fel vid TSM-inloggning:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

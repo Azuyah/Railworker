@@ -62,9 +62,24 @@ const Profil = () => {
 
   const handleSave = async () => {
     try {
-      await axios.put(apiUrl('/api/user'), localUser, {
+      const res = await axios.put(apiUrl('/api/user'), localUser, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
+      const updatedUser = res.data;
+      setLocalUser(updatedUser);
+      const existingStoredUser = JSON.parse(localStorage.getItem('user') || 'null');
+      if (existingStoredUser?.token) {
+        localStorage.setItem('user', JSON.stringify({
+          ...existingStoredUser,
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName,
+          email: updatedUser.email,
+          phone: updatedUser.phone,
+          company: updatedUser.company,
+          signature: updatedUser.signature,
+          role: updatedUser.role,
+        }));
+      }
       setEditing(false);
       onClose();
       toast({ title: 'Ändringar sparade', status: 'success', duration: 3000, isClosable: true });
@@ -90,14 +105,22 @@ const Profil = () => {
     }
   };
 
-  const labels = {
-    firstName: 'Förnamn',
-    lastName: 'Efternamn',
-    company: 'Företag',
-    phone: 'Telefon',
-    email: 'E-post',
-    password: 'Lösenord'
-  };
+  const isTsm = localUser?.role === 'TSM';
+  const profileFields = isTsm
+    ? [
+        { key: 'firstName', label: 'Förnamn', type: 'text' },
+        { key: 'lastName', label: 'Efternamn', type: 'text' },
+        { key: 'company', label: 'Företag', type: 'text' },
+        { key: 'phone', label: 'Telefon', type: 'text' },
+      ]
+    : [
+        { key: 'firstName', label: 'Förnamn', type: 'text' },
+        { key: 'lastName', label: 'Efternamn', type: 'text' },
+        { key: 'company', label: 'Företag', type: 'text' },
+        { key: 'phone', label: 'Telefon', type: 'text' },
+        { key: 'email', label: 'E-post', type: 'text' },
+        { key: 'password', label: 'Lösenord', type: 'password' },
+      ];
 
   return (
     <Box minH="100vh" bg="gray.100">
@@ -109,14 +132,14 @@ const Profil = () => {
           <Text fontSize="2xl" fontWeight="bold" mb={6}>Min profil</Text>
 
           <VStack spacing={4} align="stretch">
-            {Object.keys(labels).map((field) => (
-              <FormControl key={field}>
-                <FormLabel>{labels[field]}</FormLabel>
+            {profileFields.map(({ key, label, type }) => (
+              <FormControl key={key}>
+                <FormLabel>{label}</FormLabel>
                 <Input
-                  type={field === 'password' ? 'password' : 'text'}
-                  value={localUser?.[field] || ''}
-                  onChange={(e) => handleChange(field, e.target.value)}
-                  isDisabled={!editing && field !== 'password'}
+                  type={type}
+                  value={localUser?.[key] || ''}
+                  onChange={(e) => handleChange(key, e.target.value)}
+                  isDisabled={!editing && key !== 'password'}
                 />
               </FormControl>
             ))}
@@ -136,6 +159,7 @@ const Profil = () => {
         </Box>
 
         {/* Anställda */}
+        {!isTsm && (
         <Box flex={1} bg="white" p={8} rounded="md" shadow="md">
           <Text fontSize="2xl" fontWeight="bold" mb={6}>Mina anställda</Text>
 
@@ -188,6 +212,7 @@ const Profil = () => {
             )}
           </VStack>
         </Box>
+        )}
       </Flex>
 
       {/* Bekräftelsemodal */}
