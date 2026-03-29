@@ -6,7 +6,9 @@ import {
   Button,
   Input,
   Spinner,
+  Switch,
   Text,
+  useToast,
   VStack,
   HStack,
   Stack,
@@ -21,6 +23,8 @@ const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [loadError, setLoadError] = useState('');
   const [exportingProjectId, setExportingProjectId] = useState(null);
+  const [updatingVisibilityId, setUpdatingVisibilityId] = useState(null);
+  const toast = useToast();
   const fetchUserAndProjects = useCallback(async () => {
     let storedUser = null;
     try {
@@ -103,6 +107,62 @@ const Dashboard = () => {
       setLoadError('Kunde inte skapa disp just nu.');
     } finally {
       setExportingProjectId(null);
+    }
+  };
+
+  const handleVisibilityChange = async (project, nextVisibleToTsm) => {
+    let storedUser = null;
+    try {
+      storedUser = JSON.parse(localStorage.getItem('user') || 'null');
+    } catch (error) {
+      storedUser = null;
+    }
+
+    const token = storedUser?.token || localStorage.getItem('token');
+    if (!token || !project?.id) {
+      setLoadError('Logga in igen för att uppdatera projektsynlighet.');
+      return;
+    }
+
+    try {
+      setUpdatingVisibilityId(project.id);
+      setProjects((prev) => prev.map((item) => (
+        item.id === project.id
+          ? { ...item, visibleToTsm: nextVisibleToTsm }
+          : item
+      )));
+
+      await axios.patch(
+        apiUrl(`/api/projects/${project.id}/visibility`),
+        { visibleToTsm: nextVisibleToTsm },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      toast({
+        title: nextVisibleToTsm ? 'Projekt visas för TSM' : 'Projekt dolt för TSM',
+        status: 'success',
+        duration: 2500,
+        isClosable: true,
+      });
+    } catch (error) {
+      console.error('Kunde inte uppdatera projektsynlighet:', error);
+      setProjects((prev) => prev.map((item) => (
+        item.id === project.id
+          ? { ...item, visibleToTsm: !nextVisibleToTsm }
+          : item
+      )));
+      toast({
+        title: 'Kunde inte uppdatera synlighet',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setUpdatingVisibilityId(null);
     }
   };
 
@@ -242,6 +302,22 @@ const Dashboard = () => {
                             {project.plats}
                           </Text>
                         )}
+                        <HStack spacing={3} mt={3}>
+                          <HStack spacing={2}>
+                            <Switch
+                              colorScheme="green"
+                              isChecked={Boolean(project.visibleToTsm)}
+                              isDisabled={updatingVisibilityId === project.id}
+                              onChange={(event) => handleVisibilityChange(project, event.target.checked)}
+                            />
+                            <Text fontSize="sm" color="gray.700" fontWeight="600">
+                              Visa för TSM
+                            </Text>
+                          </HStack>
+                          <Text fontSize="xs" color={project.visibleToTsm ? 'green.600' : 'gray.500'}>
+                            {project.visibleToTsm ? 'Synligt i TSM-panelen' : 'Dolt från TSM-panelen'}
+                          </Text>
+                        </HStack>
                       </Box>
                       <HStack spacing={2}>
                         <Button

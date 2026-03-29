@@ -2765,6 +2765,7 @@ export namespace Prisma {
     name: string | null
     userId: number | null
     createdAt: Date | null
+    visibleToTsm: boolean | null
     startDate: string | null
     startTime: string | null
     endDate: string | null
@@ -2780,6 +2781,7 @@ export namespace Prisma {
     name: string | null
     userId: number | null
     createdAt: Date | null
+    visibleToTsm: boolean | null
     startDate: string | null
     startTime: string | null
     endDate: string | null
@@ -2795,6 +2797,7 @@ export namespace Prisma {
     name: number
     userId: number
     createdAt: number
+    visibleToTsm: number
     startDate: number
     startTime: number
     endDate: number
@@ -2825,6 +2828,7 @@ export namespace Prisma {
     name?: true
     userId?: true
     createdAt?: true
+    visibleToTsm?: true
     startDate?: true
     startTime?: true
     endDate?: true
@@ -2840,6 +2844,7 @@ export namespace Prisma {
     name?: true
     userId?: true
     createdAt?: true
+    visibleToTsm?: true
     startDate?: true
     startTime?: true
     endDate?: true
@@ -2855,6 +2860,7 @@ export namespace Prisma {
     name?: true
     userId?: true
     createdAt?: true
+    visibleToTsm?: true
     startDate?: true
     startTime?: true
     endDate?: true
@@ -2960,6 +2966,7 @@ export namespace Prisma {
     name: string
     userId: number | null
     createdAt: Date
+    visibleToTsm: boolean
     startDate: string
     startTime: string
     endDate: string
@@ -2997,6 +3004,7 @@ export namespace Prisma {
     name?: boolean
     userId?: boolean
     createdAt?: boolean
+    visibleToTsm?: boolean
     startDate?: boolean
     startTime?: boolean
     endDate?: boolean
@@ -3020,6 +3028,7 @@ export namespace Prisma {
     name?: boolean
     userId?: boolean
     createdAt?: boolean
+    visibleToTsm?: boolean
     startDate?: boolean
     startTime?: boolean
     endDate?: boolean
@@ -3039,6 +3048,7 @@ export namespace Prisma {
     name?: boolean
     userId?: boolean
     createdAt?: boolean
+    visibleToTsm?: boolean
     startDate?: boolean
     startTime?: boolean
     endDate?: boolean
@@ -3058,6 +3068,7 @@ export namespace Prisma {
     name?: boolean
     userId?: boolean
     createdAt?: boolean
+    visibleToTsm?: boolean
     startDate?: boolean
     startTime?: boolean
     endDate?: boolean
@@ -3071,7 +3082,7 @@ export namespace Prisma {
     anteckningar?: boolean
   }
 
-  export type ProjectOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "userId" | "createdAt" | "startDate" | "startTime" | "endDate" | "endTime" | "plats" | "namn" | "telefonnummer" | "granspunkter" | "formState" | "rows" | "anteckningar", ExtArgs["result"]["project"]>
+  export type ProjectOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "userId" | "createdAt" | "visibleToTsm" | "startDate" | "startTime" | "endDate" | "endTime" | "plats" | "namn" | "telefonnummer" | "granspunkter" | "formState" | "rows" | "anteckningar", ExtArgs["result"]["project"]>
   export type ProjectInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | Project$userArgs<ExtArgs>
     sections?: boolean | Project$sectionsArgs<ExtArgs>
@@ -3099,6 +3110,7 @@ export namespace Prisma {
       name: string
       userId: number | null
       createdAt: Date
+      visibleToTsm: boolean
       startDate: string
       startTime: string
       endDate: string
@@ -3541,6 +3553,7 @@ export namespace Prisma {
     readonly name: FieldRef<"Project", 'String'>
     readonly userId: FieldRef<"Project", 'Int'>
     readonly createdAt: FieldRef<"Project", 'DateTime'>
+    readonly visibleToTsm: FieldRef<"Project", 'Boolean'>
     readonly startDate: FieldRef<"Project", 'String'>
     readonly startTime: FieldRef<"Project", 'String'>
     readonly endDate: FieldRef<"Project", 'String'>
@@ -8654,6 +8667,7 @@ export namespace Prisma {
     name: 'name',
     userId: 'userId',
     createdAt: 'createdAt',
+    visibleToTsm: 'visibleToTsm',
     startDate: 'startDate',
     startTime: 'startTime',
     endDate: 'endDate',
@@ -8807,6 +8821,13 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+  /**
    * Reference to a field of type 'Json'
    */
   export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
@@ -8817,13 +8838,6 @@ export namespace Prisma {
    * Reference to a field of type 'QueryMode'
    */
   export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
-    
-
-
-  /**
-   * Reference to a field of type 'Boolean'
-   */
-  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -8941,6 +8955,7 @@ export namespace Prisma {
     name?: StringFilter<"Project"> | string
     userId?: IntNullableFilter<"Project"> | number | null
     createdAt?: DateTimeFilter<"Project"> | Date | string
+    visibleToTsm?: BoolFilter<"Project"> | boolean
     startDate?: StringFilter<"Project"> | string
     startTime?: StringFilter<"Project"> | string
     endDate?: StringFilter<"Project"> | string
@@ -8963,6 +8978,7 @@ export namespace Prisma {
     name?: SortOrder
     userId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
+    visibleToTsm?: SortOrder
     startDate?: SortOrder
     startTime?: SortOrder
     endDate?: SortOrder
@@ -8988,6 +9004,7 @@ export namespace Prisma {
     name?: StringFilter<"Project"> | string
     userId?: IntNullableFilter<"Project"> | number | null
     createdAt?: DateTimeFilter<"Project"> | Date | string
+    visibleToTsm?: BoolFilter<"Project"> | boolean
     startDate?: StringFilter<"Project"> | string
     startTime?: StringFilter<"Project"> | string
     endDate?: StringFilter<"Project"> | string
@@ -9010,6 +9027,7 @@ export namespace Prisma {
     name?: SortOrder
     userId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
+    visibleToTsm?: SortOrder
     startDate?: SortOrder
     startTime?: SortOrder
     endDate?: SortOrder
@@ -9036,6 +9054,7 @@ export namespace Prisma {
     name?: StringWithAggregatesFilter<"Project"> | string
     userId?: IntNullableWithAggregatesFilter<"Project"> | number | null
     createdAt?: DateTimeWithAggregatesFilter<"Project"> | Date | string
+    visibleToTsm?: BoolWithAggregatesFilter<"Project"> | boolean
     startDate?: StringWithAggregatesFilter<"Project"> | string
     startTime?: StringWithAggregatesFilter<"Project"> | string
     endDate?: StringWithAggregatesFilter<"Project"> | string
@@ -9417,6 +9436,7 @@ export namespace Prisma {
   export type ProjectCreateInput = {
     name: string
     createdAt?: Date | string
+    visibleToTsm?: boolean
     startDate: string
     startTime: string
     endDate: string
@@ -9439,6 +9459,7 @@ export namespace Prisma {
     name: string
     userId?: number | null
     createdAt?: Date | string
+    visibleToTsm?: boolean
     startDate: string
     startTime: string
     endDate: string
@@ -9458,6 +9479,7 @@ export namespace Prisma {
   export type ProjectUpdateInput = {
     name?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    visibleToTsm?: BoolFieldUpdateOperationsInput | boolean
     startDate?: StringFieldUpdateOperationsInput | string
     startTime?: StringFieldUpdateOperationsInput | string
     endDate?: StringFieldUpdateOperationsInput | string
@@ -9480,6 +9502,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     userId?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    visibleToTsm?: BoolFieldUpdateOperationsInput | boolean
     startDate?: StringFieldUpdateOperationsInput | string
     startTime?: StringFieldUpdateOperationsInput | string
     endDate?: StringFieldUpdateOperationsInput | string
@@ -9501,6 +9524,7 @@ export namespace Prisma {
     name: string
     userId?: number | null
     createdAt?: Date | string
+    visibleToTsm?: boolean
     startDate: string
     startTime: string
     endDate: string
@@ -9517,6 +9541,7 @@ export namespace Prisma {
   export type ProjectUpdateManyMutationInput = {
     name?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    visibleToTsm?: BoolFieldUpdateOperationsInput | boolean
     startDate?: StringFieldUpdateOperationsInput | string
     startTime?: StringFieldUpdateOperationsInput | string
     endDate?: StringFieldUpdateOperationsInput | string
@@ -9535,6 +9560,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     userId?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    visibleToTsm?: BoolFieldUpdateOperationsInput | boolean
     startDate?: StringFieldUpdateOperationsInput | string
     startTime?: StringFieldUpdateOperationsInput | string
     endDate?: StringFieldUpdateOperationsInput | string
@@ -9978,6 +10004,11 @@ export namespace Prisma {
     gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     not?: NestedDateTimeFilter<$PrismaModel> | Date | string
   }
+
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
   export type JsonNullableFilter<$PrismaModel = never> =
     | PatchUndefined<
         Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
@@ -10032,6 +10063,7 @@ export namespace Prisma {
     name?: SortOrder
     userId?: SortOrder
     createdAt?: SortOrder
+    visibleToTsm?: SortOrder
     startDate?: SortOrder
     startTime?: SortOrder
     endDate?: SortOrder
@@ -10055,6 +10087,7 @@ export namespace Prisma {
     name?: SortOrder
     userId?: SortOrder
     createdAt?: SortOrder
+    visibleToTsm?: SortOrder
     startDate?: SortOrder
     startTime?: SortOrder
     endDate?: SortOrder
@@ -10070,6 +10103,7 @@ export namespace Prisma {
     name?: SortOrder
     userId?: SortOrder
     createdAt?: SortOrder
+    visibleToTsm?: SortOrder
     startDate?: SortOrder
     startTime?: SortOrder
     endDate?: SortOrder
@@ -10113,6 +10147,14 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedDateTimeFilter<$PrismaModel>
     _max?: NestedDateTimeFilter<$PrismaModel>
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
   export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
     | PatchUndefined<
@@ -10256,11 +10298,6 @@ export namespace Prisma {
     isEmpty?: boolean
   }
 
-  export type BoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
-  }
-
   export type SectionNullableScalarRelationFilter = {
     is?: SectionWhereInput | null
     isNot?: SectionWhereInput | null
@@ -10324,14 +10361,6 @@ export namespace Prisma {
     userId?: SortOrder
     sectionId?: SortOrder
     approvedById?: SortOrder
-  }
-
-  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type ProjectCreateNestedManyWithoutUserInput = {
@@ -10612,6 +10641,10 @@ export namespace Prisma {
     set?: Date | string
   }
 
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
   export type UserUpdateOneWithoutProjectsNestedInput = {
     create?: XOR<UserCreateWithoutProjectsInput, UserUncheckedCreateWithoutProjectsInput>
     connectOrCreate?: UserCreateOrConnectWithoutProjectsInput
@@ -10845,10 +10878,6 @@ export namespace Prisma {
     push?: string | string[]
   }
 
-  export type BoolFieldUpdateOperationsInput = {
-    set?: boolean
-  }
-
   export type ProjectUpdateOneRequiredWithoutTsmRowsNestedInput = {
     create?: XOR<ProjectCreateWithoutTsmRowsInput, ProjectUncheckedCreateWithoutTsmRowsInput>
     connectOrCreate?: ProjectCreateOrConnectWithoutTsmRowsInput
@@ -11009,6 +11038,11 @@ export namespace Prisma {
     not?: NestedDateTimeFilter<$PrismaModel> | Date | string
   }
 
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel> | null
     in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
@@ -11049,6 +11083,14 @@ export namespace Prisma {
     _min?: NestedDateTimeFilter<$PrismaModel>
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
   export type NestedJsonNullableFilter<$PrismaModel = never> =
     | PatchUndefined<
         Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
@@ -11073,22 +11115,10 @@ export namespace Prisma {
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
-  export type NestedBoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
-  }
-
-  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
-  }
-
   export type ProjectCreateWithoutUserInput = {
     name: string
     createdAt?: Date | string
+    visibleToTsm?: boolean
     startDate: string
     startTime: string
     endDate: string
@@ -11109,6 +11139,7 @@ export namespace Prisma {
     id?: number
     name: string
     createdAt?: Date | string
+    visibleToTsm?: boolean
     startDate: string
     startTime: string
     endDate: string
@@ -11275,6 +11306,7 @@ export namespace Prisma {
     name?: StringFilter<"Project"> | string
     userId?: IntNullableFilter<"Project"> | number | null
     createdAt?: DateTimeFilter<"Project"> | Date | string
+    visibleToTsm?: BoolFilter<"Project"> | boolean
     startDate?: StringFilter<"Project"> | string
     startTime?: StringFilter<"Project"> | string
     endDate?: StringFilter<"Project"> | string
@@ -11612,6 +11644,7 @@ export namespace Prisma {
   export type ProjectCreateWithoutSectionsInput = {
     name: string
     createdAt?: Date | string
+    visibleToTsm?: boolean
     startDate: string
     startTime: string
     endDate: string
@@ -11633,6 +11666,7 @@ export namespace Prisma {
     name: string
     userId?: number | null
     createdAt?: Date | string
+    visibleToTsm?: boolean
     startDate: string
     startTime: string
     endDate: string
@@ -11706,6 +11740,7 @@ export namespace Prisma {
   export type ProjectUpdateWithoutSectionsInput = {
     name?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    visibleToTsm?: BoolFieldUpdateOperationsInput | boolean
     startDate?: StringFieldUpdateOperationsInput | string
     startTime?: StringFieldUpdateOperationsInput | string
     endDate?: StringFieldUpdateOperationsInput | string
@@ -11727,6 +11762,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     userId?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    visibleToTsm?: BoolFieldUpdateOperationsInput | boolean
     startDate?: StringFieldUpdateOperationsInput | string
     startTime?: StringFieldUpdateOperationsInput | string
     endDate?: StringFieldUpdateOperationsInput | string
@@ -11761,6 +11797,7 @@ export namespace Prisma {
   export type ProjectCreateWithoutBeteckningarInput = {
     name: string
     createdAt?: Date | string
+    visibleToTsm?: boolean
     startDate: string
     startTime: string
     endDate: string
@@ -11782,6 +11819,7 @@ export namespace Prisma {
     name: string
     userId?: number | null
     createdAt?: Date | string
+    visibleToTsm?: boolean
     startDate: string
     startTime: string
     endDate: string
@@ -11816,6 +11854,7 @@ export namespace Prisma {
   export type ProjectUpdateWithoutBeteckningarInput = {
     name?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    visibleToTsm?: BoolFieldUpdateOperationsInput | boolean
     startDate?: StringFieldUpdateOperationsInput | string
     startTime?: StringFieldUpdateOperationsInput | string
     endDate?: StringFieldUpdateOperationsInput | string
@@ -11837,6 +11876,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     userId?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    visibleToTsm?: BoolFieldUpdateOperationsInput | boolean
     startDate?: StringFieldUpdateOperationsInput | string
     startTime?: StringFieldUpdateOperationsInput | string
     endDate?: StringFieldUpdateOperationsInput | string
@@ -12011,6 +12051,7 @@ export namespace Prisma {
   export type ProjectCreateWithoutTsmRowsInput = {
     name: string
     createdAt?: Date | string
+    visibleToTsm?: boolean
     startDate: string
     startTime: string
     endDate: string
@@ -12032,6 +12073,7 @@ export namespace Prisma {
     name: string
     userId?: number | null
     createdAt?: Date | string
+    visibleToTsm?: boolean
     startDate: string
     startTime: string
     endDate: string
@@ -12158,6 +12200,7 @@ export namespace Prisma {
   export type ProjectUpdateWithoutTsmRowsInput = {
     name?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    visibleToTsm?: BoolFieldUpdateOperationsInput | boolean
     startDate?: StringFieldUpdateOperationsInput | string
     startTime?: StringFieldUpdateOperationsInput | string
     endDate?: StringFieldUpdateOperationsInput | string
@@ -12179,6 +12222,7 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     userId?: NullableIntFieldUpdateOperationsInput | number | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    visibleToTsm?: BoolFieldUpdateOperationsInput | boolean
     startDate?: StringFieldUpdateOperationsInput | string
     startTime?: StringFieldUpdateOperationsInput | string
     endDate?: StringFieldUpdateOperationsInput | string
@@ -12308,6 +12352,7 @@ export namespace Prisma {
     id?: number
     name: string
     createdAt?: Date | string
+    visibleToTsm?: boolean
     startDate: string
     startTime: string
     endDate: string
@@ -12364,6 +12409,7 @@ export namespace Prisma {
   export type ProjectUpdateWithoutUserInput = {
     name?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    visibleToTsm?: BoolFieldUpdateOperationsInput | boolean
     startDate?: StringFieldUpdateOperationsInput | string
     startTime?: StringFieldUpdateOperationsInput | string
     endDate?: StringFieldUpdateOperationsInput | string
@@ -12384,6 +12430,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    visibleToTsm?: BoolFieldUpdateOperationsInput | boolean
     startDate?: StringFieldUpdateOperationsInput | string
     startTime?: StringFieldUpdateOperationsInput | string
     endDate?: StringFieldUpdateOperationsInput | string
@@ -12404,6 +12451,7 @@ export namespace Prisma {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    visibleToTsm?: BoolFieldUpdateOperationsInput | boolean
     startDate?: StringFieldUpdateOperationsInput | string
     startTime?: StringFieldUpdateOperationsInput | string
     endDate?: StringFieldUpdateOperationsInput | string

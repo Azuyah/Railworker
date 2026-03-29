@@ -37,6 +37,7 @@ model Project {
   userId        Int?
   user          User? @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt     DateTime      @default(now())
+  visibleToTsm  Boolean       @default(false)
   startDate     String
   startTime     String
   endDate       String

@@ -89,6 +89,15 @@ const hydrateProjectSections = (project = null) => {
   };
 };
 
+const canAccessProject = (role = '', project = null) => {
+  const normalizedRole = String(role || '').toUpperCase();
+  if (!project) return false;
+  if (normalizedRole === 'TSM') {
+    return Boolean(project.visibleToTsm);
+  }
+  return true;
+};
+
 app.post('/api/njdb/driftplatser/expand', authMiddleware, async (req, res) => {
   try {
     const { value, places } = req.body || {};
@@ -376,6 +385,7 @@ app.post('/api/projects', authMiddleware, async (req, res) => {
       telefonnummer,
       granspunkter,
       formState,
+      visibleToTsm = false,
       sections = [],
       beteckningar = [],
     } = req.body;
@@ -400,6 +410,7 @@ app.post('/api/projects', authMiddleware, async (req, res) => {
         telefonnummer,
         granspunkter,
         formState,
+        visibleToTsm: Boolean(visibleToTsm),
         user: { connect: { id: userId } },
 
         // 🔥 Koppla in direkt
@@ -428,47 +439,39 @@ app.post('/api/projects', authMiddleware, async (req, res) => {
   }
 });
 
-app.get('/api/projects', async (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Ingen token angiven' });
-  }
-
-  const token = authHeader.split(' ')[1];
-
+app.get('/api/projects', authMiddleware, async (req, res) => {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    console.log('🔓 Token verifierad:', decoded);
+    const requesterRole = String(req.user?.role || '').toUpperCase();
 
-const projects = await prisma.project.findMany({
-  select: {
-    id: true,
-    name: true,
-    startDate: true,
-    startTime: true,
-    endDate: true,
-    endTime: true,
-    plats: true,
-    namn: true,
-    telefonnummer: true,
-    granspunkter: true,
-    formState: true,
-    rows: true,
-    sections: true,
-    beteckningar: true,
-    tsmRows: true,
-    user: {
+    const projects = await prisma.project.findMany({
+      where: requesterRole === 'TSM' ? { visibleToTsm: true } : {},
       select: {
         id: true,
-        firstName: true,
-        lastName: true,
-        role: true,
+        name: true,
+        visibleToTsm: true,
+        startDate: true,
+        startTime: true,
+        endDate: true,
+        endTime: true,
+        plats: true,
+        namn: true,
+        telefonnummer: true,
+        granspunkter: true,
+        formState: true,
+        rows: true,
+        sections: true,
+        beteckningar: true,
+        tsmRows: true,
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            role: true,
+          },
+        },
       },
-    },
-  },
-});
-
-    console.log('✅ Alla projekt:', projects.map(p => ({ id: p.id, userId: p.userId })));
+    });
 
     res.json(projects.map((project) => hydrateProjectSections(project)));
   } catch (err) {
@@ -477,16 +480,8 @@ const projects = await prisma.project.findMany({
   }
 });
 
-app.get('/api/project/:id', async (req, res) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Ingen token angiven' });
-  }
-
+app.get('/api/project/:id', authMiddleware, async (req, res) => {
   try {
-    const token = authHeader.split(' ')[1];
-    jwt.verify(token, JWT_SECRET);
-
     const projectId = parseInt(req.params.id, 10);
     if (isNaN(projectId)) {
       return res.status(400).json({ error: 'Ogiltigt projekt-ID' });
@@ -496,6 +491,7 @@ const project = await prisma.project.findUnique({
   select: {
     id: true,
     name: true,
+    visibleToTsm: true,
     startDate: true,
     startTime: true,
     endDate: true,
@@ -523,6 +519,10 @@ const project = await prisma.project.findUnique({
 
     if (!project) {
       return res.status(404).json({ error: 'Projekt hittades inte' });
+    }
+
+    if (!canAccessProject(req.user?.role, project)) {
+      return res.status(403).json({ error: 'Du har inte behörighet att se detta projekt' });
     }
 
     res.json(hydrateProjectSections(project));
@@ -577,6 +577,7 @@ app.put('/api/projects/:id', async (req, res) => {
       telefonnummer,
       granspunkter,
       formState,
+      visibleToTsm,
       rows,
       sections = [],
       beteckningar = [],
@@ -610,6 +611,7 @@ app.put('/api/projects/:id', async (req, res) => {
         telefonnummer,
         granspunkter,
         formState,
+        ...(typeof visibleToTsm === 'boolean' ? { visibleToTsm } : {}),
         rows,
         anteckningar,
       },
@@ -707,6 +709,39 @@ app.put('/api/projects/:projectId/rows/:rowId/complete', authMiddleware, async (
   }
 });
 
+app.patch('/api/projects/:id/visibility', authMiddleware, async (req, res) => {
+  try {
+    const requesterRole = String(req.user?.role || '').toUpperCase();
+    if (requesterRole !== 'HTSM') {
+      return res.status(403).json({ error: 'Endast HTSM kan ändra projektsynlighet' });
+    }
+
+    const projectId = parseInt(req.params.id, 10);
+    if (Number.isNaN(projectId)) {
+      return res.status(400).json({ error: 'Ogiltigt projekt-ID' });
+    }
+
+    const { visibleToTsm } = req.body || {};
+    if (typeof visibleToTsm !== 'boolean') {
+      return res.status(400).json({ error: 'visibleToTsm måste vara true eller false' });
+    }
+
+    const project = await prisma.project.update({
+      where: { id: projectId },
+      data: { visibleToTsm },
+      select: {
+        id: true,
+        visibleToTsm: true,
+      },
+    });
+
+    res.json(project);
+  } catch (error) {
+    console.error('Fel vid uppdatering av projektsynlighet:', error);
+    res.status(500).json({ error: 'Kunde inte uppdatera projektsynlighet' });
+  }
+});
+
 app.post('/api/pdf/blankett31/parse', authMiddleware, async (req, res) => {
   const { fileName, fileData } = req.body;
 
@@ -775,6 +810,10 @@ app.get('/api/projects/:id/export-excel', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Projekt hittades inte' });
     }
 
+    if (!canAccessProject(req.user?.role, project)) {
+      return res.status(403).json({ error: 'Du har inte behörighet att exportera detta projekt' });
+    }
+
     const buffer = await createPlanWorkbookBuffer(project);
     const safeName = String(project.name || 'planka')
       .replace(/[^\p{L}\p{N}\-_ ]/gu, '')
@@ -821,6 +860,10 @@ app.get('/api/projects/:id/export-disp', authMiddleware, async (req, res) => {
 
     if (!project) {
       return res.status(404).json({ error: 'Projekt hittades inte' });
+    }
+
+    if (!canAccessProject(req.user?.role, project)) {
+      return res.status(403).json({ error: 'Du har inte behörighet att exportera detta projekt' });
     }
 
     const buffer = await createDispPdfBuffer(project);
