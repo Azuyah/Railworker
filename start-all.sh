@@ -5,13 +5,13 @@ echo "🔧 Starting Railworker..."
 # Start backend
 echo "🚀 Starting backend on port 4000..."
 cd backend
-node index.js &
+npm start &
 BACKEND_PID=$!
 cd ..
 
 # Start frontend
 echo "🌐 Starting frontend (React)..."
-cd railworker-frontend
+cd frontend
 npm start &
 FRONTEND_PID=$!
 cd ..
