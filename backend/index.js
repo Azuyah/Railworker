@@ -890,6 +890,7 @@ app.post('/api/row/self-enroll', authMiddleware, async (req, res) => {
     selections,
     begard,
     begardDatum,
+    tsa,
     anteckning
   } = req.body;
 
@@ -908,6 +909,7 @@ app.post('/api/row/self-enroll', authMiddleware, async (req, res) => {
         isPending: true,
         begard: begard || null,
         begardDatum: begardDatum || null,
+        tsa: Boolean(tsa),
         anteckning: anteckning || null,
       },
     });
@@ -966,6 +968,7 @@ const newRow = {
   avslutat: '',
   avslutatDatum: '',
   selections: row.selections,
+  tsa: Boolean(row.tsa),
   anteckning: row.anteckning || '',
   begard: row.begard || '',
   begardDatum: row.begardDatum || null,

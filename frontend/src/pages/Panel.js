@@ -134,6 +134,7 @@ export default function Panel() {
   const [selectedSectionIds, setSelectedSectionIds] = useState([]);
   const [begardDatum, setBegardDatum] = useState('');
   const [begard, setBegard] = useState('');
+  const [tsa, setTsa] = useState(false);
   const [anteckning, setAnteckning] = useState('');
   const [anordning, setAnordning] = useState([]);
   const [enrolledProjects, setEnrolledProjects] = useState([]);
@@ -247,6 +248,7 @@ export default function Panel() {
           begard,
           datum: normalizeDateForInput(targetPlanEntry?.startDate || begardDatum),
           begardDatum: normalizeDateForInput(targetPlanEntry?.startDate || begardDatum),
+          tsa,
           anteckning,
           projectId: selectedProject.id,
           namn,
@@ -276,6 +278,7 @@ export default function Panel() {
       onClose();
       setBegard('');
       setBegardDatum('');
+      setTsa(false);
       setAnteckning('');
       setAnordning([]);
       setSelectedSectionIds([]);
@@ -379,6 +382,7 @@ export default function Panel() {
     setBegardDatum(
       normalizeDateForInput(nearestPlanEntry?.startDate || selectedProject.endDate)
     );
+    setTsa(false);
   }, [isOpen, nearestPlanEntry, selectedProject]);
 
   return (
@@ -589,8 +593,21 @@ export default function Panel() {
               </SimpleGrid>
 
               <FormControl>
-                <FormLabel>Anteckningar</FormLabel>
-                <Textarea value={anteckning} onChange={e => setAnteckning(e.target.value)} />
+                <Checkbox
+                  isChecked={tsa}
+                  onChange={(e) => setTsa(e.target.checked)}
+                >
+                  TSA
+                </Checkbox>
+              </FormControl>
+
+              <FormControl>
+                <FormLabel>Arbetsbeskrivning</FormLabel>
+                <Textarea
+                  value={anteckning}
+                  onChange={e => setAnteckning(e.target.value)}
+                  placeholder="Skriv gärna vad ni ska göra och plats"
+                />
               </FormControl>
             </Stack>
           </ModalBody>
