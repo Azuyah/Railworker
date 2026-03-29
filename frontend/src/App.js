@@ -11,6 +11,7 @@ import Profil from './pages/profil';
 import Preview from "./pages/preview";
 import LogoPreview from './pages/LogoPreview';
 import DispLogoPreview from './pages/DispLogoPreview';
+import DispFrontPreview from './pages/DispFrontPreview';
 
 function AppRoutes() {
   const location = useLocation();
@@ -82,6 +83,7 @@ function AppRoutes() {
 <Route path="/preview" element={<Preview />} />
 <Route path="/logo-preview" element={<LogoPreview />} />
 <Route path="/disp-logo-preview" element={<DispLogoPreview />} />
+<Route path="/disp-front-preview" element={<DispFrontPreview />} />
     </Routes>
   );
 }

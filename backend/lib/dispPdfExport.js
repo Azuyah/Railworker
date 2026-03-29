@@ -286,11 +286,16 @@ const createDocument = (title = 'Dispositionsarbetsplan') => {
   });
 
   const buffers = [];
+  let pageNumber = 1;
   doc.on('pageAdded', () => {
     drawPageWatermark(doc);
+    drawPageFooter(doc, pageNumber);
+    pageNumber += 1;
   });
   doc.on('data', (chunk) => buffers.push(chunk));
   drawPageWatermark(doc);
+  drawPageFooter(doc, pageNumber);
+  pageNumber += 1;
 
   return {
     doc,
@@ -323,7 +328,7 @@ const drawPageWatermark = (doc) => {
   const y = (doc.page.height - watermarkHeight) / 2 + 10;
 
   doc.save();
-  doc.opacity(0.03);
+  doc.opacity(0.06);
   doc.image(COVER_LOGO_PATH, x, y, {
     fit: [watermarkWidth, watermarkHeight],
     align: 'center',
@@ -332,12 +337,73 @@ const drawPageWatermark = (doc) => {
   doc.restore();
 };
 
-const drawInfoCard = (doc, title, value, x, y, width, accent = false) => {
+const drawPageFooter = (doc, pageNumber) => {
+  const label = `Sida ${pageNumber}`;
+  const lineY = doc.page.height - 34;
+  const textY = lineY - 11;
+  const labelWidth = doc.widthOfString(label, {
+    font: 'Helvetica-Bold',
+    size: 9.8,
+  });
+  const textX = doc.page.width - doc.page.margins.right - labelWidth;
+
+  doc.save();
+  doc.moveTo(doc.page.margins.left, lineY)
+    .lineTo(doc.page.width - doc.page.margins.right, lineY)
+    .lineWidth(0.7)
+    .strokeColor('#d7e2ee')
+    .stroke();
+  doc.fillColor(COLORS.muted).font('Helvetica-Bold').fontSize(9.8).text(label, textX, textY, {
+    lineBreak: false,
+  });
+  doc.restore();
+};
+
+const drawTopRule = (doc, y) => {
+  doc.save();
+  doc.moveTo(doc.page.margins.left, y)
+    .lineTo(doc.page.width - doc.page.margins.right, y)
+    .lineWidth(0.7)
+    .strokeColor('#d7e2ee')
+    .stroke();
+  doc.restore();
+};
+
+const drawTopMetaLabel = (doc, label, value, y) => {
+  const normalizedLabel = cleanText(label || '');
+  const normalizedValue = cleanText(value || '');
+  const text = [normalizedLabel, normalizedValue].filter(Boolean).join('  ');
+  if (!text) {
+    return;
+  }
+
+  const textWidth = doc.widthOfString(text, {
+    font: 'Helvetica-Bold',
+    size: 11.4,
+  });
+  const x = doc.page.width - doc.page.margins.right - textWidth - 6;
+  const previousX = doc.x;
+  const previousY = doc.y;
+
+  doc.save();
+  doc.fillColor('#334155').font('Helvetica-Bold').fontSize(11.4).text(text, x, y, {
+    lineBreak: false,
+  });
+  doc.restore();
+  doc.x = previousX;
+  doc.y = previousY;
+};
+
+const drawInfoCard = (doc, title, value, x, y, width, accent = false, options = {}) => {
   const cardPaddingX = 12;
+  const normalizedTitle = cleanText(title || '');
   const titleY = y + 10;
-  const contentY = y + 27;
+  const contentY = normalizedTitle ? y + 27 : y + 18;
   const textWidth = width - cardPaddingX * 2;
   const normalizedValue = value || 'Ej angivet';
+  const titleFont = options.titleFont || 'Helvetica-Bold';
+  const titleFontSize = options.titleFontSize || 10.5;
+  const titleColor = options.titleColor || COLORS.strong;
   const valueHeight = getTextHeight(doc, normalizedValue, textWidth, {
     font: 'Helvetica-Bold',
     fontSize: 14.2,
@@ -347,9 +413,11 @@ const drawInfoCard = (doc, title, value, x, y, width, accent = false) => {
 
   doc.save();
   doc.roundedRect(x, y, width, cardHeight, 12).fillAndStroke(accent ? '#fff5f5' : '#f8fafc', accent ? '#fecaca' : '#e2e8f0');
-  doc.fillColor(COLORS.strong).font('Helvetica-Bold').fontSize(10.5).text(title, x + cardPaddingX, titleY, {
-    width: textWidth,
-  });
+  if (normalizedTitle) {
+    doc.fillColor(titleColor).font(titleFont).fontSize(titleFontSize).text(normalizedTitle, x + cardPaddingX, titleY, {
+      width: textWidth,
+    });
+  }
   doc.fillColor(COLORS.strong).font('Helvetica-Bold').fontSize(14.2).text(normalizedValue, x + cardPaddingX, contentY, {
     width: textWidth,
     lineGap: 1,
@@ -485,7 +553,7 @@ const drawTableHeader = (doc, { x, y, columns, headerHeight = 26 }) => {
   const tableWidth = columns.reduce((sum, column) => sum + column.width, 0);
 
   doc.save();
-  doc.roundedRect(x, y, tableWidth, headerHeight, 12).fillAndStroke('#e2e8f0', '#cbd5e1');
+  doc.rect(x, y, tableWidth, headerHeight).fillAndStroke('#e2e8f0', '#cbd5e1');
 
   let currentX = x;
   columns.forEach((column, index) => {
@@ -949,17 +1017,23 @@ const addCoverPage = (doc, project, entries, sections, dispSettings) => {
   const title = ['Dispositionsarbetsplan', dispSettings.rubrik].filter(Boolean).join(' ');
 
   drawPageBadge(doc, 'Dispositionsarbetsplan', doc.page.margins.left, 28, 150);
-
+  drawTopRule(doc, 78);
+  drawTopMetaLabel(doc, 'Banobjekt-Vnr', dispSettings.banobjektVnr || 'Ej angivet', 62);
   doc.y = 90;
-  doc.fillColor(COLORS.strong).font('Helvetica-Bold').fontSize(28).text(title, {
+  doc.x = doc.page.margins.left;
+  const textWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+  doc.fillColor(COLORS.strong).font('Helvetica-Bold').fontSize(28).text(title, doc.page.margins.left, doc.y, {
+    width: textWidth,
     align: 'left',
   });
   doc.moveDown(0.55);
-  doc.fontSize(23).text(dispSettings.banNamn || 'Ange banans namn', {
+  doc.fontSize(23).text(dispSettings.banNamn || 'Ange banans namn', doc.page.margins.left, doc.y, {
+    width: textWidth,
     align: 'left',
   });
   doc.moveDown(0.25);
-  doc.fontSize(16.5).text(dispSettings.veckaOchDagar || 'Ange vecka och dagar/nätter', {
+  doc.fontSize(16.5).text(dispSettings.veckaOchDagar || 'Ange vecka och dagar/nätter', doc.page.margins.left, doc.y, {
+    width: textWidth,
     align: 'left',
   });
   doc.moveDown(0.75);
@@ -975,7 +1049,12 @@ const addCoverPage = (doc, project, entries, sections, dispSettings) => {
     doc.page.margins.left,
     topY,
     cardWidth,
-    true
+    true,
+    {
+      titleFont: 'Helvetica-Bold',
+      titleFontSize: 10.2,
+      titleColor: '#475569',
+    }
   );
   const topRightCardHeight = drawInfoCard(
     doc,
@@ -1098,8 +1177,8 @@ const addEntriesAndSectionsPage = (doc, project, entries, sections) => {
     sectionTitle: 'Delområden',
     columns: [
       { key: 'label', label: 'Delområde', width: 108, noWrap: true, minFontSize: 9 },
-      { key: 'name', label: 'Sträcka / område', width: 156 },
-      { key: 'granspunkter', label: 'Gränspunkter', width: 151, noWrap: true, minFontSize: 8.8 },
+      { key: 'name', label: 'Sträcka / område', width: 156, font: 'Helvetica-Bold', fontSize: 11.8 },
+      { key: 'granspunkter', label: 'Gränspunkter', width: 151, noWrap: true, minFontSize: 9.2, font: 'Helvetica-Bold', fontSize: 11.6 },
       { key: 'spar', label: 'Spår', width: availableWidth - 415, noWrap: true, minFontSize: 8.8 },
     ],
     rows: sections.map((section) => ({
