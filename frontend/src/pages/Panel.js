@@ -670,6 +670,17 @@ export default function Panel() {
                       {user?.role === 'TSM' && (
                         <Button
                           onClick={() => {
+                            if (hasExistingNextPlanning(project)) {
+                              toast({
+                                title: 'Förplanering finns redan',
+                                description: 'Du har redan skickat en förplanering för projektets nästa planering.',
+                                status: 'info',
+                                duration: 5000,
+                                isClosable: true,
+                              });
+                              return;
+                            }
+
                             if (isPlanningClosedForProject(project)) {
                               toast({
                                 title: 'Webbförplanering är stängd',
@@ -686,7 +697,7 @@ export default function Panel() {
                           }}
                           className="fancy-button"
                           colorScheme="blue"
-                          isDisabled={!getProjectNextPlanDate(project) || hasExistingNextPlanning(project)}
+                          isDisabled={!getProjectNextPlanDate(project)}
                         >
                           {!getProjectNextPlanDate(project)
                             ? 'Ingen planering'
