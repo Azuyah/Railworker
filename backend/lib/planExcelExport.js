@@ -1,7 +1,8 @@
 const path = require('path');
+const fs = require('fs');
 const ExcelJS = require('exceljs');
 
-const TEMPLATE_PATH = '/Users/matsmalleandersson/Desktop/MALL Excel Railworker.xlsx';
+const TEMPLATE_PATH = path.join(__dirname, '..', 'assets', 'plan-template.xlsx');
 
 const formatAnordningLabel = (item = '') => {
   const upper = String(item).toUpperCase();
@@ -615,6 +616,10 @@ const fillWorksheet = (worksheet, project, entriesForSheet, rows) => {
 };
 
 const createPlanWorkbookBuffer = async (project) => {
+  if (!fs.existsSync(TEMPLATE_PATH)) {
+    throw new Error(`Excel-mallen saknas: ${TEMPLATE_PATH}`);
+  }
+
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.readFile(TEMPLATE_PATH);
 
