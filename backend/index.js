@@ -118,6 +118,123 @@ const hydrateProjectSections = (project = null) => {
   };
 };
 
+const isLineSection = (section = {}) => {
+  const explicitType = String(section?.type || section?.sectionType || '').trim().toLowerCase();
+  if (explicitType.includes('linje') || explicitType.includes('sträcka')) {
+    return true;
+  }
+  if (explicitType.includes('dp') || explicitType.includes('driftplats')) {
+    return false;
+  }
+
+  const label = String(section?.signal || section?.name || '').trim();
+  return label.includes(' - ');
+};
+
+const validatePlanningSelectionRules = (sections = [], selections = [], anordning = []) => {
+  const selectedIndexes = Array.isArray(selections)
+    ? selections
+        .map((selected, index) => (selected ? index : -1))
+        .filter((index) => index >= 0)
+    : [];
+
+  if (anordning.includes('L-S')) {
+    if (selectedIndexes.length !== 1) {
+      return 'L-Skydd kräver exakt ett delområde.';
+    }
+    const selectedSection = sections[selectedIndexes[0]];
+    if (!isLineSection(selectedSection)) {
+      return 'L-Skydd kan bara läggas på linjedelområde.';
+    }
+  }
+
+  if (anordning.includes('A-S')) {
+    if (selectedIndexes.length !== 2) {
+      return 'A-Skydd kräver två delområden.';
+    }
+
+    const [firstIndex, secondIndex] = selectedIndexes;
+    const firstSection = sections[firstIndex];
+    const secondSection = sections[secondIndex];
+    const hasOneLineAndOneDp = isLineSection(firstSection) !== isLineSection(secondSection);
+    const isAdjacent = Math.abs(firstIndex - secondIndex) === 1;
+
+    if (!hasOneLineAndOneDp || !isAdjacent) {
+      return 'A-Skydd kräver en driftplats och en intilliggande linje.';
+    }
+  }
+
+  return null;
+};
+
+const normalizeDateForInput = (value = '') => {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+
+  const slashMatch = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (slashMatch) {
+    const [, day, month, year] = slashMatch;
+    return `${year}-${month}-${day}`;
+  }
+
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return '';
+  const year = parsed.getFullYear();
+  const month = String(parsed.getMonth() + 1).padStart(2, '0');
+  const day = String(parsed.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const buildPlanEntries = (project) => {
+  const entries = Array.isArray(project?.formState?.blankett31Entries)
+    ? project.formState.blankett31Entries.filter((entry) => entry?.startDate || entry?.beteckning)
+    : [];
+
+  if (entries.length) {
+    return entries;
+  }
+
+  return [
+    {
+      beteckning: project?.beteckningar?.[0]?.label || '',
+      startDate: project?.startDate || '',
+      startTime: project?.startTime || '',
+      endDate: project?.endDate || '',
+      endTime: project?.endTime || '',
+    },
+  ];
+};
+
+const getPlanEntryAnchor = (entry = {}) => {
+  const date = normalizeDateForInput(entry.startDate || entry.endDate || '');
+  const time = String(entry.startTime || entry.endTime || '00:00').trim() || '00:00';
+  if (!date) return Number.POSITIVE_INFINITY;
+  const parsed = new Date(`${date}T${time.length === 5 ? time : '00:00'}:00`);
+  return Number.isNaN(parsed.getTime()) ? Number.POSITIVE_INFINITY : parsed.getTime();
+};
+
+const getNextPlanEntry = (project) => {
+  const now = Date.now();
+  const entries = buildPlanEntries(project)
+    .map((entry) => ({ entry, anchor: getPlanEntryAnchor(entry) }))
+    .filter(({ anchor }) => Number.isFinite(anchor))
+    .sort((left, right) => left.anchor - right.anchor);
+
+  return entries.find(({ anchor }) => anchor >= now)?.entry || null;
+};
+
+const getPlanEntryCutoffTimestamp = (entry) => {
+  const anchor = getPlanEntryAnchor(entry);
+  if (!Number.isFinite(anchor)) return Number.NEGATIVE_INFINITY;
+  return anchor - 60 * 60 * 1000;
+};
+
+const isPlanningWindowOpen = (entry) => Date.now() < getPlanEntryCutoffTimestamp(entry);
+
+const getRowPlanDate = (row = {}) =>
+  normalizeDateForInput(row?.begardDatum || row?.datum || row?.startdatum || '');
+
 const canAccessProject = (role = '', project = null) => {
   const normalizedRole = String(role || '').toUpperCase();
   if (!project) return false;
@@ -931,11 +1048,9 @@ app.post('/api/row/self-enroll', authMiddleware, async (req, res) => {
   const userId = req.user.userId;
   const {
     projectId,
-    datum,
     anordning,
     selections,
     begard,
-    begardDatum,
     tsa,
     anteckning
   } = req.body;
@@ -945,16 +1060,71 @@ app.post('/api/row/self-enroll', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'projectId eller selections saknas eller ogiltiga' });
     }
 
+    const project = await prisma.project.findUnique({
+      where: { id: Number(projectId) },
+      select: {
+        id: true,
+        startDate: true,
+        startTime: true,
+        endDate: true,
+        endTime: true,
+        formState: true,
+        beteckningar: true,
+        rows: true,
+        sections: true,
+      },
+    });
+
+    if (!project) {
+      return res.status(404).json({ error: 'Projekt hittades inte' });
+    }
+
+    const targetPlanEntry = getNextPlanEntry(project);
+    const targetPlanDate = normalizeDateForInput(targetPlanEntry?.startDate || targetPlanEntry?.endDate);
+    if (!targetPlanDate) {
+      return res.status(400).json({ error: 'Projektet har ingen kommande planering att förplanera mot' });
+    }
+
+    if (!isPlanningWindowOpen(targetPlanEntry)) {
+      return res.status(400).json({ error: 'Förplanering är stängd mindre än en timme före dispstart. Ring in i stället.' });
+    }
+
+    const validationError = validatePlanningSelectionRules(project.sections || [], selections, anordning || []);
+    if (validationError) {
+      return res.status(400).json({ error: validationError });
+    }
+
+    const existingPendingRow = await prisma.row.findFirst({
+      where: {
+        projectId: Number(projectId),
+        userId,
+        OR: [
+          { begardDatum: targetPlanDate },
+          { datum: targetPlanDate },
+        ],
+      },
+    });
+
+    const existingApprovedRows = Array.isArray(project.rows) ? project.rows : [];
+    const alreadyApprovedForPlan = existingApprovedRows.some((row) => {
+      const sameUser = Number(row?.userId) === Number(userId);
+      return sameUser && getRowPlanDate(row) === targetPlanDate;
+    });
+
+    if (existingPendingRow || alreadyApprovedForPlan) {
+      return res.status(409).json({ error: 'Du har redan en förplanering för projektets nästa planering' });
+    }
+
     const row = await prisma.row.create({
       data: {
         projectId: Number(projectId),
         userId,
-        datum: datum || null,
+        datum: targetPlanDate,
         anordning: anordning || [],
         selections,
         isPending: true,
         begard: begard || null,
-        begardDatum: begardDatum || null,
+        begardDatum: targetPlanDate,
         tsa: Boolean(tsa),
         anteckning: anteckning || null,
       },

@@ -106,23 +106,106 @@ const getPlanEntryAnchor = (entry = {}) => {
   return Number.isNaN(parsed.getTime()) ? Number.POSITIVE_INFINITY : parsed.getTime();
 };
 
-const getClosestPlanEntry = (project) => {
-  const entries = buildPlanEntries(project);
-  if (!entries.length) return null;
-
+const getNextPlanEntry = (project) => {
   const now = Date.now();
-  return entries.reduce((closest, entry) => {
-    if (!closest) return entry;
-    const currentDistance = Math.abs(getPlanEntryAnchor(entry) - now);
-    const closestDistance = Math.abs(getPlanEntryAnchor(closest) - now);
-    return currentDistance < closestDistance ? entry : closest;
-  }, null);
+  const entries = buildPlanEntries(project)
+    .map((entry) => ({ entry, anchor: getPlanEntryAnchor(entry) }))
+    .filter(({ anchor }) => Number.isFinite(anchor))
+    .sort((left, right) => left.anchor - right.anchor);
+
+  return entries.find(({ anchor }) => anchor >= now)?.entry || null;
 };
+
+const getPlanEntryCutoffTimestamp = (entry) => {
+  const anchor = getPlanEntryAnchor(entry);
+  if (!Number.isFinite(anchor)) return Number.NEGATIVE_INFINITY;
+  return anchor - 60 * 60 * 1000;
+};
+
+const isPlanningWindowOpen = (entry) => Date.now() < getPlanEntryCutoffTimestamp(entry);
 
 const formatAnordningLabel = (value) =>
   ANORDNING_OPTIONS.find((option) => option.value === value)?.label || value;
 
 const formatPlanTime = (value = '') => String(value || '').replace(':', '.');
+
+const formatPlanDateForDisplay = (value = '') => {
+  const normalized = normalizeDateForInput(value);
+  if (!normalized) return '';
+
+  const [year, month, day] = normalized.split('-');
+  return `${day}/${month}/${year}`;
+};
+
+const isLineSection = (section = {}) => {
+  const explicitType = String(section?.type || section?.sectionType || '').trim().toLowerCase();
+  if (explicitType.includes('linje') || explicitType.includes('sträcka')) {
+    return true;
+  }
+  if (explicitType.includes('dp') || explicitType.includes('driftplats')) {
+    return false;
+  }
+
+  const label = String(section?.signal || section?.name || '').trim();
+  return label.includes(' - ');
+};
+
+const isDpSection = (section = {}) => !isLineSection(section);
+
+const getAllowedAskyddPairIds = (sections = [], selectedIds = []) => {
+  const selectedSet = new Set(selectedIds);
+  if (selectedIds.length === 0) {
+    return new Set(sections.map((section) => section.id));
+  }
+
+  if (selectedIds.length >= 2) {
+    return selectedSet;
+  }
+
+  const firstSelected = sections.find((section) => section.id === selectedIds[0]);
+  if (!firstSelected) {
+    return new Set(sections.map((section) => section.id));
+  }
+
+  const firstIndex = sections.findIndex((section) => section.id === firstSelected.id);
+  const validIds = new Set([firstSelected.id]);
+
+  [firstIndex - 1, firstIndex + 1].forEach((candidateIndex) => {
+    const candidate = sections[candidateIndex];
+    if (!candidate) return;
+    if (isLineSection(candidate) === isLineSection(firstSelected)) return;
+    validIds.add(candidate.id);
+  });
+
+  return validIds;
+};
+
+const normalizeSelectedSectionIds = (sections = [], selectedIds = [], anordning = []) => {
+  const uniqueSelectedIds = [...new Set(selectedIds)];
+
+  if (anordning.includes('L-S')) {
+    const firstLineId = uniqueSelectedIds.find((id) =>
+      sections.some((section) => section.id === id && isLineSection(section))
+    );
+    return firstLineId ? [firstLineId] : [];
+  }
+
+  if (anordning.includes('A-S')) {
+    if (uniqueSelectedIds.length === 0) return [];
+
+    const firstSelected = sections.find((section) => section.id === uniqueSelectedIds[0]);
+    if (!firstSelected) return [];
+
+    const validIds = getAllowedAskyddPairIds(sections, [firstSelected.id]);
+    const secondSelectedId = uniqueSelectedIds
+      .slice(1)
+      .find((id) => validIds.has(id) && id !== firstSelected.id);
+
+    return secondSelectedId ? [firstSelected.id, secondSelectedId] : [firstSelected.id];
+  }
+
+  return uniqueSelectedIds;
+};
 
 export default function Panel() {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -143,11 +226,9 @@ export default function Panel() {
   const namn = `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
   const telefon = user?.phone || '';
   const toast = useToast();
-  const htsmNamn = `${selectedProject?.user?.firstName || ''} ${selectedProject?.user?.lastName || ''}`.trim();
-  const htsmTelefon = selectedProject?.formState?.htsmTelefon || '';
   const signatureBase = (user?.signature || `${user?.firstName?.[0] || ''}${user?.lastName?.[0] || ''}`).toUpperCase();
-  const nearestPlanEntry = useMemo(
-    () => getClosestPlanEntry(selectedProject),
+  const nextPlanEntry = useMemo(
+    () => getNextPlanEntry(selectedProject),
     [selectedProject]
   );
 
@@ -194,6 +275,21 @@ export default function Panel() {
     return !isAllowedAnordningCombo(anordning[0], optionValue);
   }, [anordning]);
 
+  const isLSkyddSelected = anordning.includes('L-S');
+  const isASkyddSelected = anordning.includes('A-S');
+
+  const isSectionSelectionDisabled = useCallback((section) => {
+    if (!selectedProject?.sections) return false;
+    if (isLSkyddSelected) {
+      return !isLineSection(section);
+    }
+    if (isASkyddSelected) {
+      const allowedIds = getAllowedAskyddPairIds(selectedProject.sections, selectedSectionIds);
+      return !allowedIds.has(section.id);
+    }
+    return false;
+  }, [isASkyddSelected, isLSkyddSelected, selectedProject?.sections, selectedSectionIds]);
+
   const handleAnordningChange = useCallback((optionValue, checked) => {
     setAnordning((prev) => {
       if (!checked) {
@@ -205,11 +301,22 @@ export default function Panel() {
       }
 
       if (prev.length === 0) {
+        if (checked && (optionValue === 'L-S' || optionValue === 'A-S') && selectedProject?.sections) {
+          setSelectedSectionIds((current) =>
+            normalizeSelectedSectionIds(selectedProject.sections, current, [...prev, optionValue])
+          );
+        }
         return [optionValue];
       }
 
       if (prev.length === 1 && isAllowedAnordningCombo(prev[0], optionValue)) {
-        return [...prev, optionValue];
+        const nextValues = [...prev, optionValue];
+        if (selectedProject?.sections && (optionValue === 'A-S' || prev[0] === 'A-S')) {
+          setSelectedSectionIds((current) =>
+            normalizeSelectedSectionIds(selectedProject.sections, current, nextValues)
+          );
+        }
+        return nextValues;
       }
 
       toast({
@@ -222,11 +329,53 @@ export default function Panel() {
 
       return [optionValue];
     });
-  }, [toast]);
+  }, [selectedProject?.sections, toast]);
+
+  useEffect(() => {
+    if ((!isLSkyddSelected && !isASkyddSelected) || !selectedProject?.sections) {
+      return;
+    }
+
+    setSelectedSectionIds((current) =>
+      normalizeSelectedSectionIds(selectedProject.sections, current, anordning)
+    );
+  }, [anordning, isASkyddSelected, isLSkyddSelected, selectedProject?.sections]);
 
   const userIsInProject = useCallback(
     (project) => getUserPlansForProject(project).length > 0,
     [getUserPlansForProject]
+  );
+
+  const getRowPlanDate = useCallback(
+    (row) => normalizeDateForInput(row?.begardDatum || row?.datum || row?.startdatum || ''),
+    []
+  );
+
+  const getProjectNextPlanDate = useCallback(
+    (project) => {
+      const nextEntry = getNextPlanEntry(project);
+      return normalizeDateForInput(nextEntry?.startDate || nextEntry?.endDate || '');
+    },
+    []
+  );
+
+  const hasExistingNextPlanning = useCallback(
+    (project) => {
+      const nextPlanDate = getProjectNextPlanDate(project);
+      if (!nextPlanDate) return false;
+
+      return getUserPlansForProject(project).some((row) => getRowPlanDate(row) === nextPlanDate);
+    },
+    [getProjectNextPlanDate, getRowPlanDate, getUserPlansForProject]
+  );
+
+  const isPlanningClosedForProject = useCallback(
+    (project) => {
+      const nextEntry = getNextPlanEntry(project);
+      if (!nextEntry) return false;
+      return !isPlanningWindowOpen(nextEntry);
+    },
+    []
   );
 
   const handleSelfEnroll = async () => {
@@ -234,7 +383,41 @@ export default function Panel() {
       const token = localStorage.getItem('user')
         ? JSON.parse(localStorage.getItem('user')).token
         : null;
-      const targetPlanEntry = getClosestPlanEntry(selectedProject);
+      const targetPlanEntry = getNextPlanEntry(selectedProject);
+      const targetPlanDate = normalizeDateForInput(targetPlanEntry?.startDate || targetPlanEntry?.endDate);
+
+      if (!targetPlanEntry || !targetPlanDate) {
+        toast({
+          title: 'Ingen kommande planering hittades.',
+          description: 'Det finns ingen nästa planering att förplanera mot på projektet.',
+          status: 'error',
+          duration: 4000,
+          isClosable: true,
+        });
+        return;
+      }
+
+      if (!isPlanningWindowOpen(targetPlanEntry)) {
+        toast({
+          title: 'Förplaneringen är stängd för den här planeringen.',
+          description: 'Det är mindre än en timme kvar till dispstart. Nu behöver du ringa in.',
+          status: 'info',
+          duration: 5000,
+          isClosable: true,
+        });
+        return;
+      }
+
+      if (hasExistingNextPlanning(selectedProject)) {
+        toast({
+          title: 'Förplanering finns redan.',
+          description: 'Du kan bara ha en förplanering för projektets nästa planering.',
+          status: 'info',
+          duration: 4000,
+          isClosable: true,
+        });
+        return;
+      }
 
       const selections = selectedProject.sections.map((sec) =>
         selectedSectionIds.includes(sec.id)
@@ -246,8 +429,8 @@ export default function Panel() {
           anordning,
           selections,
           begard,
-          datum: normalizeDateForInput(targetPlanEntry?.startDate || begardDatum),
-          begardDatum: normalizeDateForInput(targetPlanEntry?.startDate || begardDatum),
+          datum: targetPlanDate,
+          begardDatum: targetPlanDate,
           tsa,
           anteckning,
           projectId: selectedProject.id,
@@ -378,12 +561,12 @@ export default function Panel() {
 
   useEffect(() => {
     if (!isOpen || !selectedProject) return;
-    setBegard(getDesiredEndTime(nearestPlanEntry || selectedProject));
+    setBegard(getDesiredEndTime(nextPlanEntry || selectedProject));
     setBegardDatum(
-      normalizeDateForInput(nearestPlanEntry?.startDate || selectedProject.endDate)
+      normalizeDateForInput(nextPlanEntry?.startDate || nextPlanEntry?.endDate)
     );
     setTsa(false);
-  }, [isOpen, nearestPlanEntry, selectedProject]);
+  }, [isOpen, nextPlanEntry, selectedProject]);
 
   return (
     <div
@@ -487,13 +670,31 @@ export default function Panel() {
                       {user?.role === 'TSM' && (
                         <Button
                           onClick={() => {
+                            if (isPlanningClosedForProject(project)) {
+                              toast({
+                                title: 'Webbförplanering är stängd',
+                                description: 'Förplanering på webben är stängd på grund av kort tid innan dispstart. Ring in och förplanera.',
+                                status: 'info',
+                                duration: 5000,
+                                isClosable: true,
+                              });
+                              return;
+                            }
+
                             setSelectedProject(project);
                             onOpen();
                           }}
                           className="fancy-button"
                           colorScheme="blue"
+                          isDisabled={!getProjectNextPlanDate(project) || hasExistingNextPlanning(project)}
                         >
-                          Förplanera
+                          {!getProjectNextPlanDate(project)
+                            ? 'Ingen planering'
+                            : hasExistingNextPlanning(project)
+                              ? 'Redan förplanerad'
+                              : isPlanningClosedForProject(project)
+                                ? 'Ring in'
+                                : 'Förplanera'}
                         </Button>
                       )}
                     </div>
@@ -512,14 +713,36 @@ export default function Panel() {
           <ModalCloseButton />
           <ModalBody>
             <Stack spacing={6}>
+              <FormControl>
+                <FormLabel>Du förplanerar för nästa planering</FormLabel>
+                <Input
+                  value={
+                    nextPlanEntry
+                      ? `${formatPlanDateForDisplay(nextPlanEntry.startDate || nextPlanEntry.endDate)}${nextPlanEntry.startTime ? ` kl. ${formatPlanTime(nextPlanEntry.startTime)}` : ''}`
+                      : 'Ingen kommande planering hittades'
+                  }
+                  isDisabled
+                />
+              </FormControl>
+
+              {nextPlanEntry && !isPlanningWindowOpen(nextPlanEntry) && (
+                <FormControl>
+                  <FormLabel color="orange.600">Förplanering stängd</FormLabel>
+                  <Input
+                    value="Det är mindre än en timme kvar till dispstart. Nu behöver du ringa in."
+                    isDisabled
+                  />
+                </FormControl>
+              )}
+
               <SimpleGrid columns={2} spacing={4}>
                 <FormControl>
-                  <FormLabel>Namn</FormLabel>
-                  <Input value={htsmNamn} isDisabled />
+                  <FormLabel>Ditt namn</FormLabel>
+                  <Input value={namn} isDisabled />
                 </FormControl>
                 <FormControl>
-                  <FormLabel>Telefon</FormLabel>
-                  <Input value={htsmTelefon} isDisabled />
+                  <FormLabel>Ditt telefonnummer</FormLabel>
+                  <Input value={telefon} isDisabled />
                 </FormControl>
               </SimpleGrid>
 
@@ -534,13 +757,18 @@ export default function Panel() {
                     </MenuButton>
                     <MenuList maxH="300px" overflowY="auto">
                       {selectedProject?.sections?.map((sec, i) => (
-                        <MenuItem key={sec.id}>
+                        <MenuItem key={sec.id} isDisabled={isSectionSelectionDisabled(sec)}>
                           <Checkbox
                             isChecked={selectedSectionIds.includes(sec.id)}
+                            isDisabled={isSectionSelectionDisabled(sec)}
                             onChange={e =>
                               setSelectedSectionIds(prev =>
                                 e.target.checked
-                                  ? [...prev, sec.id]
+                                  ? isLSkyddSelected
+                                    ? [sec.id]
+                                    : isASkyddSelected
+                                      ? normalizeSelectedSectionIds(selectedProject?.sections || [], [...prev, sec.id], anordning)
+                                    : [...prev, sec.id]
                                   : prev.filter(id => id !== sec.id),
                               )
                             }
@@ -551,6 +779,16 @@ export default function Panel() {
                       ))}
                     </MenuList>
                   </Menu>
+                  {isLSkyddSelected && (
+                    <FormLabel mt={2} fontSize="xs" color="orange.600">
+                      L-Skydd kan bara läggas på ett linjedelområde åt gången.
+                    </FormLabel>
+                  )}
+                  {isASkyddSelected && (
+                    <FormLabel mt={2} fontSize="xs" color="orange.600">
+                      A-Skydd kräver exakt två delområden: en driftplats och en intilliggande linje.
+                    </FormLabel>
+                  )}
                 </FormControl>
 
                 <FormControl>
@@ -582,12 +820,11 @@ export default function Panel() {
                   <Input type="time" value={begard} onChange={e => setBegard(e.target.value)} />
                 </FormControl>
 	                <FormControl>
-	                  <FormLabel>Slutdatum</FormLabel>
+	                  <FormLabel>Planeringsdatum</FormLabel>
 	                  <Input
 	                    type="date"
 	                    value={begardDatum}
 	                    isDisabled
-	                    max={normalizeDateForInput(selectedProject?.endDate)}
 	                  />
 	                </FormControl>
               </SimpleGrid>
@@ -616,7 +853,7 @@ export default function Panel() {
   colorScheme="blue"
   onClick={handleSelfEnroll}
   isDisabled={
-    !begardDatum || !begard || anordning.length === 0 || selectedSectionIds.length === 0
+    !begardDatum || !begard || anordning.length === 0 || selectedSectionIds.length === 0 || !nextPlanEntry || hasExistingNextPlanning(selectedProject) || !isPlanningWindowOpen(nextPlanEntry)
   }
 >
   Skicka

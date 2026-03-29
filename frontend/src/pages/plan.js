@@ -405,6 +405,12 @@ const {
 } = useDisclosure();
 
 const {
+  isOpen: isPendingPlansOpen,
+  onOpen: onOpenPendingPlans,
+  onClose: onClosePendingPlans,
+} = useDisclosure();
+
+const {
   isOpen: isSamradModalOpen,
   onOpen: onOpenSamradModal,
   onClose: onCloseSamradModal,
@@ -2025,6 +2031,11 @@ const archivedRowsForActivePlan = useMemo(
   [rowMatchesActivePlan, rows]
 );
 
+const pendingTsmRowsForActivePlan = useMemo(
+  () => (project?.tsmRows || []).filter((row) => rowMatchesActivePlan(row)),
+  [project?.tsmRows, rowMatchesActivePlan]
+);
+
 const chooseFollowUpPlanEntry = useCallback(() => {
   if (!projectPlanEntries.length) return activePlanEntry;
   if (projectPlanEntries.length === 1) return projectPlanEntries[0];
@@ -2222,6 +2233,15 @@ if (loading || !project) {
 </Modal>
 
 <Box mb={3}>
+  <style>
+    {`
+      @keyframes pendingPulse {
+        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.32); }
+        50% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(220, 38, 38, 0.08); }
+        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+      }
+    `}
+  </style>
   {topPanelCollapsed ? (
     <Box
       bg="rgba(255,255,255,0.94)"
@@ -2295,6 +2315,18 @@ if (loading || !project) {
         </Box>
 
         <HStack spacing={2} wrap="wrap">
+          <Button
+            colorScheme={pendingTsmRowsForActivePlan.length > 0 ? 'red' : 'gray'}
+            variant={pendingTsmRowsForActivePlan.length > 0 ? 'solid' : 'outline'}
+            borderRadius="full"
+            size="sm"
+            onClick={onOpenPendingPlans}
+            animation={pendingTsmRowsForActivePlan.length > 0 ? 'pendingPulse 1.6s infinite' : undefined}
+          >
+            {pendingTsmRowsForActivePlan.length > 0
+              ? `${pendingTsmRowsForActivePlan.length} nya förplaneringar`
+              : 'Förplaneringar'}
+          </Button>
           <Button onClick={() => sparaProjekt()} bg="blue.700" color="white" borderRadius="full" _hover={{ bg: 'blue.800' }} boxShadow="sm" size="sm">
             Spara
           </Button>
@@ -3157,7 +3189,7 @@ onClick={() => {
     namn: row.namn || `${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim(),
     telefon: row.telefon || row.user?.phone || '',
   });
-
+  onClosePendingPlans();
   onOpenApprovalModal();
 }}
   >
@@ -4152,6 +4184,77 @@ onChange={() =>
         }}
       >
         Godkänn
+      </Button>
+    </ModalFooter>
+  </ModalContent>
+</Modal>
+
+<Modal isOpen={isPendingPlansOpen} onClose={onClosePendingPlans} size="xl">
+  <ModalOverlay />
+  <ModalContent>
+    <ModalHeader>Nya förplaneringar</ModalHeader>
+    <ModalCloseButton />
+    <ModalBody>
+      <VStack align="stretch" spacing={3}>
+        {pendingTsmRowsForActivePlan.length === 0 ? (
+          <Text color="gray.500" fontSize="sm">Inga väntande förplaneringar för vald planering.</Text>
+        ) : (
+          pendingTsmRowsForActivePlan.map((row) => (
+            <Box
+              key={row.id}
+              border="1px solid"
+              borderColor="gray.200"
+              borderRadius="xl"
+              p={4}
+              bg="gray.50"
+            >
+              <Flex justify="space-between" align="start" gap={4} wrap="wrap">
+                <Box>
+                  <Text fontWeight="700" color="gray.900">
+                    {row.namn || `${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim() || 'Okänd användare'}
+                  </Text>
+                  <Text fontSize="sm" color="gray.600">
+                    {row.telefon || row.user?.phone || '-'}
+                  </Text>
+                  <Text fontSize="sm" color="gray.700" mt={2}>
+                    {Array.isArray(row.anordning) && row.anordning.length > 0
+                      ? row.anordning.map((item) => formatAnordningLabel(item)).join(', ')
+                      : 'Ingen skyddsanordning vald'}
+                  </Text>
+                  {row.anteckning && (
+                    <Text fontSize="sm" color="gray.700" mt={1}>
+                      Arbetsbeskrivning: {row.anteckning}
+                    </Text>
+                  )}
+                  {row.tsa && (
+                    <Text fontSize="sm" color="orange.600" mt={1} fontWeight="semibold">
+                      TSA markerad
+                    </Text>
+                  )}
+                </Box>
+                <Button
+                  colorScheme="blue"
+                  onClick={() => {
+                    setEditableTsmRow({
+                      ...row,
+                      namn: row.namn || `${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim(),
+                      telefon: row.telefon || row.user?.phone || '',
+                    });
+                    onClosePendingPlans();
+                    onOpenApprovalModal();
+                  }}
+                >
+                  Öppna i plankan
+                </Button>
+              </Flex>
+            </Box>
+          ))
+        )}
+      </VStack>
+    </ModalBody>
+    <ModalFooter>
+      <Button variant="ghost" onClick={onClosePendingPlans}>
+        Stäng
       </Button>
     </ModalFooter>
   </ModalContent>
