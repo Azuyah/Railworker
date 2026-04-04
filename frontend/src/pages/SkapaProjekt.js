@@ -240,11 +240,14 @@ const normalizeSectionSortOrder = (items = []) =>
   }));
 
 const defaultDispSettings = () => ({
+  publiktDispnamn: '',
   rubrik: '',
   banNamn: '',
   veckaOchDagar: '',
+  versionsnummer: '1/MA09',
   banobjektVnr: '',
   forplaneraCa: '1 tim innan start',
+  rodmarkeradeGranspunkter: '',
 });
 
 const getIsoWeek = (dateValue = '') => {
@@ -309,6 +312,16 @@ const normalizeSectionAreaName = (value = '') =>
   sanitizeSectionText(value)
     .replace(/\s+Driftplats(?:er)?$/i, '')
     .replace(/s$/i, '');
+
+const shouldReplaceDispSetting = (currentValue = '', nextValue = '') => {
+  const current = String(currentValue || '').trim();
+  const next = String(nextValue || '').trim();
+  if (!next) return false;
+  if (!current) return true;
+  if (current.length <= 2) return true;
+  if (/^(rr|r|test)$/i.test(current)) return true;
+  return false;
+};
 
 const parseDriftplatsEndpoints = (value = '') => {
   const parts = String(value || '')
@@ -1039,10 +1052,18 @@ const SkapaProjekt = () => {
     if (parsed?.overview) {
       setDispSettings((current) => ({
         ...current,
-        banNamn: current.banNamn || parsed.overview.banName || '',
-        veckaOchDagar: current.veckaOchDagar || parsed.overview.weekLine || '',
-        banobjektVnr: current.banobjektVnr || parsed.overview.banobjektVnr || '',
+        banNamn: shouldReplaceDispSetting(current.banNamn, parsed.overview.banName)
+          ? parsed.overview.banName || ''
+          : current.banNamn,
+        veckaOchDagar: shouldReplaceDispSetting(current.veckaOchDagar, parsed.overview.weekLine)
+          ? parsed.overview.weekLine || ''
+          : current.veckaOchDagar,
+        banobjektVnr: shouldReplaceDispSetting(current.banobjektVnr, parsed.overview.banobjektVnr)
+          ? parsed.overview.banobjektVnr || ''
+          : current.banobjektVnr,
         forplaneraCa: current.forplaneraCa || parsed.overview.forplaneraCa || '1 tim innan start',
+        rodmarkeradeGranspunkter:
+          current.rodmarkeradeGranspunkter || parsed.overview.outerGranspunkter || '',
       }));
 
       if (!granspunktFritext && parsed.overview.outerGranspunkter) {
@@ -1654,6 +1675,19 @@ const SkapaProjekt = () => {
                     />
                   </div>
                   <div>
+                    <label className="mb-1 block text-sm font-semibold text-slate-700">PDF-filnamn</label>
+                    <input
+                      type="text"
+                      value={dispSettings.publiktDispnamn}
+                      onChange={(e) => setDispSettings((current) => ({ ...current, publiktDispnamn: e.target.value }))}
+                      placeholder="Ex. Rååbanan export"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
+                    />
+                    <p className="mt-2 text-xs text-slate-500">
+                      Används bara för själva PDF-filnamnet. Namnet utåt i appen hämtas från Projektnamn.
+                    </p>
+                  </div>
+                  <div>
                     <label className="mb-1 block text-sm font-semibold text-slate-700">Banans namn</label>
                     <input
                       type="text"
@@ -1670,6 +1704,16 @@ const SkapaProjekt = () => {
                       value={dispSettings.veckaOchDagar}
                       onChange={(e) => setDispSettings((current) => ({ ...current, veckaOchDagar: e.target.value }))}
                       placeholder="Ex. V13 Tis, Lör-Sön"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-semibold text-slate-700">Versionsnummer</label>
+                    <input
+                      type="text"
+                      value={dispSettings.versionsnummer}
+                      onChange={(e) => setDispSettings((current) => ({ ...current, versionsnummer: e.target.value }))}
+                      placeholder="Ex. 1/MA09"
                       className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
                     />
                   </div>
@@ -1691,6 +1735,16 @@ const SkapaProjekt = () => {
                       onChange={(e) => setDispSettings((current) => ({ ...current, forplaneraCa: e.target.value }))}
                       placeholder="Ex. 1 tim innan start"
                       className="min-h-[56px] w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 focus:border-slate-900 focus:outline-none"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="mb-1 block text-sm font-semibold text-slate-700">Rödmarkera gränspunkter</label>
+                    <input
+                      type="text"
+                      value={dispSettings.rodmarkeradeGranspunkter}
+                      onChange={(e) => setDispSettings((current) => ({ ...current, rodmarkeradeGranspunkter: e.target.value }))}
+                      placeholder="Ex. Hb103, Tp33, Tp82"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
                     />
                   </div>
                 </div>

@@ -83,7 +83,8 @@ const Dashboard = () => {
 
     try {
       setExportingProjectId(project.id);
-      const response = await fetch(apiUrl(`/api/projects/${project.id}/export-disp`), {
+      const response = await fetch(apiUrl(`/api/projects/${project.id}/export-disp?ts=${Date.now()}`), {
+        cache: 'no-store',
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -94,10 +95,15 @@ const Dashboard = () => {
       }
 
       const blob = await response.blob();
+      const explicitFilename = response.headers.get('X-Export-Filename') || '';
+      const contentDisposition = response.headers.get('Content-Disposition') || '';
+      const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/i);
+      const fallbackFilename = `${project.name || 'dispositionsarbetsplan'}-${Date.now()}.pdf`;
+      const filename = explicitFilename || filenameMatch?.[1] || fallbackFilename;
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${project.name || 'dispositionsarbetsplan'}.pdf`;
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       link.remove();

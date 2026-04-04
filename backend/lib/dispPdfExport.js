@@ -2,34 +2,30 @@ const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
 
-const COVER_LOGO_PATH = path.join(__dirname, '..', 'assets', 'vallakra-logo-watermark.png');
-
-const COLORS = {
-  text: '#0f172a',
-  muted: '#64748b',
-  accent: '#b91c1c',
-  border: '#cbd5e1',
-  surface: '#f8fafc',
-  strong: '#111827',
+const LEGACY_LOGO_PATH = path.join(__dirname, '..', 'assets', 'vallakra-logo-cropped.png');
+const LEGACY_VERSION_NUMBER = '1/MA09';
+const FONT_PATHS = {
+  verdana: '/System/Library/Fonts/Supplemental/Verdana.ttf',
+  verdanaBold: '/System/Library/Fonts/Supplemental/Verdana Bold.ttf',
+  verdanaItalic: '/System/Library/Fonts/Supplemental/Verdana Italic.ttf',
+  verdanaBoldItalic: '/System/Library/Fonts/Supplemental/Verdana Bold Italic.ttf',
+  times: '/System/Library/Fonts/Supplemental/Times New Roman.ttf',
+  timesBold: '/System/Library/Fonts/Supplemental/Times New Roman Bold.ttf',
+  timesItalic: '/System/Library/Fonts/Supplemental/Times New Roman Italic.ttf',
+  timesBoldItalic: '/System/Library/Fonts/Supplemental/Times New Roman Bold Italic.ttf',
+};
+const PDF_FONTS = {
+  header: 'LegacyVerdana',
+  headerBold: 'LegacyVerdanaBold',
+  headerItalic: 'LegacyVerdanaItalic',
+  headerBoldItalic: 'LegacyVerdanaBoldItalic',
+  body: 'LegacyTimes',
+  bodyBold: 'LegacyTimesBold',
+  bodyItalic: 'LegacyTimesItalic',
+  bodyBoldItalic: 'LegacyTimesBoldItalic',
 };
 
 const SWEDISH_SHORT_DAYS = ['Sön', 'Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör'];
-const FONT_SIZES = {
-  tableHeader: 11,
-  tableBody: 11,
-  sectionHeading: 16,
-  body: 12.5,
-  phoneHighlight: 16.5,
-  note: 11,
-};
-
-const getCurrentPageNumber = (doc) => doc.bufferedPageRange().count;
-const ensurePageSpace = (doc, requiredHeight = 120) => {
-  const availableBottom = doc.page.height - doc.page.margins.bottom;
-  if (doc.y + requiredHeight > availableBottom) {
-    doc.addPage();
-  }
-};
 
 const cleanText = (value = '') =>
   String(value || '')
@@ -53,9 +49,7 @@ const normalizeSectionAreaName = (value = '') =>
 
 const normalizeTrackValue = (value = '') => {
   const normalized = sanitizeSectionText(value).replace(/^sp[aå]r\s*/i, '');
-  if (!normalized) {
-    return '';
-  }
+  if (!normalized) return '';
 
   const compactNumeric = normalized.match(/^\d+(?:[\s,]+\d+)*/)?.[0];
   if (compactNumeric) {
@@ -71,45 +65,42 @@ const normalizeTrackValue = (value = '') => {
 
 const formatDate = (value = '') => {
   const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) {
-    return value || '';
-  }
-
+  if (!match) return cleanText(value);
   return `${match[1]}-${match[2]}-${match[3]}`;
 };
 
-const formatTime = (value = '') => String(value || '').trim();
+const formatTime = (value = '') => cleanText(value);
 
 const buildPlanJobEntryKey = (entry = {}, index = 0) =>
   `${entry.beteckning || 'entry'}|${entry.startDate || ''}|${index}`;
 
 const buildEntries = (project = {}) => {
-  const entries = Array.isArray(project.formState?.blankett31Entries)
+  const rawEntries = Array.isArray(project.formState?.blankett31Entries)
     ? project.formState.blankett31Entries
     : [];
-  const entryMap = new Map(entries.map((entry, index) => [buildPlanJobEntryKey(entry, index), entry]));
-  const planJobs = Array.isArray(project.formState?.planJobs)
-    ? project.formState.planJobs
-    : [];
-  const selectedDispEntries = planJobs
-    .map((job) => entryMap.get(job?.primaryDispEntryKey || ''))
-    .filter(Boolean);
-  const sourceEntries = selectedDispEntries.length ? selectedDispEntries : entries;
 
-  return sourceEntries
-    .filter((entry) => entry?.beteckning || entry?.startDate || entry?.endDate)
+  const normalizedEntries = rawEntries
     .map((entry) => ({
-      beteckning: cleanText(entry.beteckning),
-      startDate: cleanText(entry.startDate),
-      startTime: cleanText(entry.startTime),
-      endDate: cleanText(entry.endDate),
-      endTime: cleanText(entry.endTime),
+      beteckning: cleanText(entry?.beteckning),
+      startDate: cleanText(entry?.startDate),
+      startTime: cleanText(entry?.startTime),
+      endDate: cleanText(entry?.endDate),
+      endTime: cleanText(entry?.endTime),
     }))
-    .sort((left, right) => {
-      const leftKey = `${left.startDate || '9999-99-99'} ${left.startTime || '99:99'} ${left.beteckning || ''}`;
-      const rightKey = `${right.startDate || '9999-99-99'} ${right.startTime || '99:99'} ${right.beteckning || ''}`;
-      return leftKey.localeCompare(rightKey, 'sv');
-    });
+    .filter((entry) => entry.beteckning || entry.startDate || entry.endDate);
+
+  normalizedEntries.sort((left, right) => {
+    const leftKey = `${left.startDate || '9999-99-99'} ${left.startTime || '99:99'} ${left.beteckning || ''}`;
+    const rightKey = `${right.startDate || '9999-99-99'} ${right.startTime || '99:99'} ${right.beteckning || ''}`;
+    return leftKey.localeCompare(rightKey, 'sv');
+  });
+
+  return normalizedEntries.filter((entry, index, collection) => {
+    const key = `${entry.beteckning}|${entry.startDate}|${entry.startTime}|${entry.endDate}|${entry.endTime}`;
+    return collection.findIndex((candidate) =>
+      `${candidate.beteckning}|${candidate.startDate}|${candidate.startTime}|${candidate.endDate}|${candidate.endTime}` === key
+    ) === index;
+  });
 };
 
 const buildSections = (project = {}) => {
@@ -117,13 +108,21 @@ const buildSections = (project = {}) => {
   const sectionDetails = Array.isArray(project.formState?.sectionDetails)
     ? project.formState.sectionDetails
     : [];
+  const baseSections = sections.length
+    ? sections
+    : sectionDetails.map((details = {}, index) => ({
+        name: details.signal || details.customLabel || `Delområde ${index + 1}`,
+        displayIndex: details.displayIndex ?? index + 1,
+        customLabel: details.customLabel || '',
+        sortOrder: details.sortOrder ?? index,
+      }));
   const fallbackBoundary = sanitizeSectionText(project.granspunkter || '');
   const singleSectionFallbackName =
-    sections.length === 1
+    baseSections.length === 1
       ? normalizeSectionAreaName(project.plats || project.formState?.dispSettings?.banNamn || '')
       : '';
 
-  return sections
+  return baseSections
     .map((section, index) => {
       const details = sectionDetails[index] || {};
       const parsedDisplayIndex = Number(details.displayIndex ?? section?.displayIndex ?? index + 1);
@@ -147,8 +146,6 @@ const buildSections = (project = {}) => {
         label: `Delområde ${customLabel || displayIndex}`,
         name: areaName,
         signal: areaName,
-        granspunktStart,
-        granspunktSlut,
         granspunkter,
         spar: normalizeTrackValue(details.spar),
       };
@@ -158,9 +155,7 @@ const buildSections = (project = {}) => {
 
 const getIsoWeek = (dateValue = '') => {
   const match = String(dateValue || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) {
-    return '';
-  }
+  if (!match) return '';
 
   const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
   const day = date.getUTCDay() || 7;
@@ -172,27 +167,52 @@ const getIsoWeek = (dateValue = '') => {
 
 const buildDayRangeLabel = (entries = []) => {
   const uniqueDates = [...new Set(entries.map((entry) => entry.startDate).filter(Boolean))].sort();
-  if (!uniqueDates.length) {
-    return '';
-  }
+  if (!uniqueDates.length) return '';
 
   const labels = uniqueDates.map((dateValue) => {
     const date = new Date(`${dateValue}T00:00:00Z`);
     return Number.isNaN(date.getTime()) ? dateValue : SWEDISH_SHORT_DAYS[date.getUTCDay()];
   });
 
-  if (labels.length === 1) {
-    return labels[0];
-  }
-
-  if (labels.length === 2) {
-    return `${labels[0]} – ${labels[1]}`;
-  }
-
+  if (labels.length === 1) return labels[0];
+  if (labels.length === 2) return `${labels[0]}, ${labels[1]}`;
   return `${labels.slice(0, -1).join(', ')} och ${labels[labels.length - 1]}`;
 };
 
+const formatLegacyWeekLine = (value = '') =>
+  cleanText(value)
+    .replace(/Nm/gi, 'NM')
+    .replace(/Em/gi, 'EM')
+    .replace(/Kv/gi, 'KV')
+    .replace(/Lör,\s*Sön/gi, 'Lör-Sön')
+    .replace(/Fre,\s*Lör/gi, 'Fre-Lör');
+
+const buildLegacyCoverRoute = (project = {}, dispSettings = {}) => {
+  const explicit = cleanText(dispSettings.rubrik || project.name || '');
+  const parts = cleanText(project.plats || '')
+    .split(',')
+    .map((part) => cleanText(part))
+    .filter(Boolean);
+
+  const looksAbbreviated =
+    /^[A-Za-zÅÄÖåäö]{1,6}\s*-\s*[A-Za-zÅÄÖåäö]{1,6}$/.test(explicit) ||
+    explicit.length <= 12;
+  if (parts.length >= 2 && (looksAbbreviated || !explicit)) {
+    return `${parts[0]} - ${parts[parts.length - 1]}`;
+  }
+
+  return explicit || [parts[0], parts[parts.length - 1]].filter(Boolean).join(' - ');
+};
+
 const extractBlankettMeta = (project = {}) => project.formState?.blankett31Meta || {};
+
+const getPublicDispName = (project = {}, dispSettings = {}) =>
+  cleanText(
+    dispSettings.publiktDispnamn ||
+    project.name ||
+    dispSettings.banNamn ||
+    dispSettings.rubrik
+  );
 
 const buildDispSettings = (project = {}, entries = []) => {
   const meta = extractBlankettMeta(project);
@@ -202,80 +222,77 @@ const buildDispSettings = (project = {}, entries = []) => {
   const derivedDayRange = buildDayRangeLabel(entries);
 
   return {
+    publiktDispnamn: cleanText(settings.publiktDispnamn || settings.publicName || ''),
     rubrik: cleanText(settings.rubrik || settings.projectLabel || meta.projectLabel || project.name),
     banNamn: cleanText(settings.banNamn || settings.banName),
     veckaOchDagar: weekLabel || [derivedWeek, derivedDayRange].filter(Boolean).join(' '),
+    versionsnummer: cleanText(settings.versionsnummer || LEGACY_VERSION_NUMBER),
     banobjektVnr: cleanText(
       settings.banobjektVnr ||
         (meta.banarbetsobjektsId ? `${meta.banarbetsobjektsId}-1` : '')
     ),
     forplaneraCa: cleanText(settings.forplaneraCa || '1 tim innan start'),
+    rodmarkeradeGranspunkter: cleanText(settings.rodmarkeradeGranspunkter || settings.highlightedBoundaries || ''),
   };
 };
 
-const parseList = (value = '') =>
-  String(value || '')
-    .split(/\s*,\s*|\s*-\s*/)
-    .map(cleanText)
-    .filter(Boolean)
-    .join(', ');
+const formatLegacyBoundaryText = (value = '') =>
+  cleanText(value)
+    .replace(/\s*-\s*/g, ' – ')
+    .replace(/\bHb\b/g, 'HB')
+    .replace(/\bTp\b/g, 'TP')
+    .replace(/\bBlb\b/g, 'Blb')
+    .replace(/\bGan\b/g, 'Gan')
+    .replace(/\bVåk\b/g, 'Våk')
+    .replace(/\bTgp\b/g, 'Tgp');
 
-const PHONE_PATTERN = /(010[- ]\s*\d{3}\s*\d{2}\s*\d{2}(?:\s*\(\s*010[- ]\s*\d{3}\s*\d{2}\s*\d{2}\s*\))?)/;
-const PHONE_PATTERN_GLOBAL = new RegExp(PHONE_PATTERN.source, 'g');
-
-const extractNamedPhone = (label = '', value = '') => {
-  const combined = cleanText([label, value].filter(Boolean).join(' '));
-  const phoneMatches = [...combined.matchAll(PHONE_PATTERN_GLOBAL)].map((match) => cleanText(match[1]));
-  const uniquePhones = [...new Set(phoneMatches.filter(Boolean))];
-  const fallbackPhone = cleanText(value);
-  const phone = uniquePhones[0] || fallbackPhone;
-  const name = cleanText(combined.replace(PHONE_PATTERN_GLOBAL, '')).replace(/\s+/g, ' ').trim();
-
-  return {
-    name,
-    phone: cleanText(phone),
-  };
+const extractPrimaryPhone = (value = '') => {
+  const match = cleanText(value).match(/010[- ]?\s*\d{3}\s*\d{2}\s*\d{2}/);
+  return match ? cleanText(match[0]) : cleanText(value);
 };
 
-const buildPhoneRows = (project = {}) => {
-  const htsmTelefon = cleanText(project.formState?.htsmTelefon || '');
-  const reservnr = cleanText(project.formState?.reservnr || '');
-  const fjtklBlocks = Array.isArray(project.formState?.fjtklBlocks) ? project.formState.fjtklBlocks : [];
-  const primaryFjtklName = cleanText(project.namn || '');
-  const primaryFjtklPhone = extractNamedPhone('', project.telefonnummer).phone || cleanText(project.telefonnummer || '');
-  const primaryFjtklLabel = primaryFjtklName
-    ? (/^TKL\b/i.test(primaryFjtklName) ? primaryFjtklName : `TKL ${primaryFjtklName}`)
-    : 'TKL';
-  const primaryFjtklValue = primaryFjtklPhone || 'Ej angivet';
-
-  return [
-    { label: 'SOS Alarm', value: '112 eller se övriga nummer nedan' },
-    { label: 'Larm TLC', value: cleanText(project.formState?.nodnummer || '') || 'Ej angivet' },
-    {
-      label: 'HTSM',
-      value: [htsmTelefon || 'Ej angivet', reservnr ? `Reservnr: ${reservnr}` : ''].filter(Boolean).join(' '),
-    },
-    {
-      label: primaryFjtklLabel,
-      value: primaryFjtklValue,
-    },
-    ...fjtklBlocks
-      .filter((block) => cleanText(block?.namn) || cleanText(block?.telefonnummer))
-      .map((block, index) => ({
-        label: `FJTKL ${index + 1}`,
-        value: cleanText([block.namn, block.telefonnummer].filter(Boolean).join(' ')) || 'Ej angivet',
-      })),
-  ];
+const extractValidityLabel = (weekLine = '') => {
+  const match = cleanText(weekLine).match(/\bV\d{1,2}\b/i);
+  return match ? match[0].toUpperCase() : 'V00';
 };
+
+const extractPeriodPrefix = (weekLine = '') => {
+  const match = cleanText(weekLine).match(/\bV\d{1,2}\s+([A-Za-zÅÄÖåäö]+)/);
+  const token = match ? cleanText(match[1]) : '';
+  return ['Nm', 'Em', 'Kv'].includes(token) ? token : '';
+};
+
+const getShortDayName = (dateValue = '') => {
+  const match = String(dateValue || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return '';
+  const date = new Date(`${match[1]}-${match[2]}-${match[3]}T00:00:00Z`);
+  return Number.isNaN(date.getTime()) ? '' : SWEDISH_SHORT_DAYS[date.getUTCDay()];
+};
+
+const buildEntryDayLabel = (entry = {}, weekLine = '') => {
+  const day = getShortDayName(entry.startDate);
+  const prefix = extractPeriodPrefix(weekLine);
+  if (!prefix) return day;
+  if (cleanText(prefix).toLowerCase() === cleanText(day).toLowerCase()) return day;
+  return [prefix, day].filter(Boolean).join(' ');
+};
+
+const getBoundaryHighlightTokens = (boundaryText = '') =>
+  cleanText(boundaryText)
+    .split(/\s*[-–]\s*|,\s*/)
+    .map((token) => cleanText(token))
+    .filter(Boolean);
+
+const normalizeBoundaryToken = (value = '') => cleanText(value).replace(/\s+/g, '').toLowerCase();
 
 const createDocument = (title = 'Dispositionsarbetsplan') => {
   const doc = new PDFDocument({
     size: 'A4',
     margins: {
-      top: 42,
+      top: 118,
       right: 48,
-      bottom: 42,
-      left: 48,
+      bottom: 48,
+      left: 46,
     },
     bufferPages: true,
     info: {
@@ -286,16 +303,24 @@ const createDocument = (title = 'Dispositionsarbetsplan') => {
   });
 
   const buffers = [];
-  let pageNumber = 1;
-  doc.on('pageAdded', () => {
-    drawPageWatermark(doc);
-    drawPageFooter(doc, pageNumber);
-    pageNumber += 1;
-  });
   doc.on('data', (chunk) => buffers.push(chunk));
-  drawPageWatermark(doc);
-  drawPageFooter(doc, pageNumber);
-  pageNumber += 1;
+
+  const registerFontIfPresent = (fontName, fontPath) => {
+    if (fs.existsSync(fontPath)) {
+      doc.registerFont(fontName, fontPath);
+      return true;
+    }
+    return false;
+  };
+
+  registerFontIfPresent(PDF_FONTS.header, FONT_PATHS.verdana);
+  registerFontIfPresent(PDF_FONTS.headerBold, FONT_PATHS.verdanaBold);
+  registerFontIfPresent(PDF_FONTS.headerItalic, FONT_PATHS.verdanaItalic);
+  registerFontIfPresent(PDF_FONTS.headerBoldItalic, FONT_PATHS.verdanaBoldItalic);
+  registerFontIfPresent(PDF_FONTS.body, FONT_PATHS.times);
+  registerFontIfPresent(PDF_FONTS.bodyBold, FONT_PATHS.timesBold);
+  registerFontIfPresent(PDF_FONTS.bodyItalic, FONT_PATHS.timesItalic);
+  registerFontIfPresent(PDF_FONTS.bodyBoldItalic, FONT_PATHS.timesBoldItalic);
 
   return {
     doc,
@@ -307,129 +332,9 @@ const createDocument = (title = 'Dispositionsarbetsplan') => {
   };
 };
 
-const drawPageBadge = (doc, value, x, y, width = 90) => {
-  doc.save();
-  doc.roundedRect(x, y, width, 22, 11).fillAndStroke('#f8fafc', '#cbd5e1');
-  doc.fillColor(COLORS.strong).font('Helvetica-Bold').fontSize(10).text(value, x, y + 6, {
-    width,
-    align: 'center',
-  });
-  doc.restore();
-};
-
-const drawPageWatermark = (doc) => {
-  if (!fs.existsSync(COVER_LOGO_PATH)) {
-    return;
-  }
-
-  const watermarkWidth = Math.min(500, doc.page.width - 92);
-  const watermarkHeight = watermarkWidth * (520 / 1500);
-  const x = (doc.page.width - watermarkWidth) / 2;
-  const y = (doc.page.height - watermarkHeight) / 2 + 10;
-
-  doc.save();
-  doc.opacity(0.06);
-  doc.image(COVER_LOGO_PATH, x, y, {
-    fit: [watermarkWidth, watermarkHeight],
-    align: 'center',
-    valign: 'center',
-  });
-  doc.restore();
-};
-
-const drawPageFooter = (doc, pageNumber) => {
-  const label = `Sida ${pageNumber}`;
-  const lineY = doc.page.height - 34;
-  const textY = lineY - 11;
-  const labelWidth = doc.widthOfString(label, {
-    font: 'Helvetica-Bold',
-    size: 9.8,
-  });
-  const textX = doc.page.width - doc.page.margins.right - labelWidth;
-
-  doc.save();
-  doc.moveTo(doc.page.margins.left, lineY)
-    .lineTo(doc.page.width - doc.page.margins.right, lineY)
-    .lineWidth(0.7)
-    .strokeColor('#d7e2ee')
-    .stroke();
-  doc.fillColor(COLORS.muted).font('Helvetica-Bold').fontSize(9.8).text(label, textX, textY, {
-    lineBreak: false,
-  });
-  doc.restore();
-};
-
-const drawTopRule = (doc, y) => {
-  doc.save();
-  doc.moveTo(doc.page.margins.left, y)
-    .lineTo(doc.page.width - doc.page.margins.right, y)
-    .lineWidth(0.7)
-    .strokeColor('#d7e2ee')
-    .stroke();
-  doc.restore();
-};
-
-const drawTopMetaLabel = (doc, label, value, y) => {
-  const normalizedLabel = cleanText(label || '');
-  const normalizedValue = cleanText(value || '');
-  const text = [normalizedLabel, normalizedValue].filter(Boolean).join('  ');
-  if (!text) {
-    return;
-  }
-
-  const textWidth = doc.widthOfString(text, {
-    font: 'Helvetica-Bold',
-    size: 11.4,
-  });
-  const x = doc.page.width - doc.page.margins.right - textWidth - 6;
-  const previousX = doc.x;
-  const previousY = doc.y;
-
-  doc.save();
-  doc.fillColor('#334155').font('Helvetica-Bold').fontSize(11.4).text(text, x, y, {
-    lineBreak: false,
-  });
-  doc.restore();
-  doc.x = previousX;
-  doc.y = previousY;
-};
-
-const drawInfoCard = (doc, title, value, x, y, width, accent = false, options = {}) => {
-  const cardPaddingX = 12;
-  const normalizedTitle = cleanText(title || '');
-  const titleY = y + 10;
-  const contentY = normalizedTitle ? y + 27 : y + 18;
-  const textWidth = width - cardPaddingX * 2;
-  const normalizedValue = value || 'Ej angivet';
-  const titleFont = options.titleFont || 'Helvetica-Bold';
-  const titleFontSize = options.titleFontSize || 10.5;
-  const titleColor = options.titleColor || COLORS.strong;
-  const valueHeight = getTextHeight(doc, normalizedValue, textWidth, {
-    font: 'Helvetica-Bold',
-    fontSize: 14.2,
-    lineGap: 1,
-  });
-  const cardHeight = Math.max(56, Math.ceil(contentY - y + valueHeight + 12));
-
-  doc.save();
-  doc.roundedRect(x, y, width, cardHeight, 12).fillAndStroke(accent ? '#fff5f5' : '#f8fafc', accent ? '#fecaca' : '#e2e8f0');
-  if (normalizedTitle) {
-    doc.fillColor(titleColor).font(titleFont).fontSize(titleFontSize).text(normalizedTitle, x + cardPaddingX, titleY, {
-      width: textWidth,
-    });
-  }
-  doc.fillColor(COLORS.strong).font('Helvetica-Bold').fontSize(14.2).text(normalizedValue, x + cardPaddingX, contentY, {
-    width: textWidth,
-    lineGap: 1,
-  });
-  doc.restore();
-
-  return cardHeight;
-};
-
 const getContentBottomY = (doc) => doc.page.height - doc.page.margins.bottom;
 
-const getTextHeight = (doc, text, width, { font = 'Helvetica', fontSize = FONT_SIZES.body, lineGap = 2 } = {}) => {
+const getTextHeight = (doc, text, width, { font = PDF_FONTS.body, fontSize = 11, lineGap = 2 } = {}) => {
   doc.font(font).fontSize(fontSize);
   return doc.heightOfString(text || '—', {
     width,
@@ -437,799 +342,589 @@ const getTextHeight = (doc, text, width, { font = 'Helvetica', fontSize = FONT_S
   });
 };
 
-const getFittedFontSize = (doc, text, maxWidth, preferredSize, minSize, font = 'Helvetica') => {
-  let currentSize = preferredSize;
-
-  while (currentSize > minSize) {
-    doc.font(font).fontSize(currentSize);
-    if (doc.widthOfString(text || '—') <= maxWidth) {
-      break;
-    }
-    currentSize -= 0.2;
-  }
-
-  return Math.max(minSize, Number(currentSize.toFixed(1)));
-};
-
-const getTableCellLayout = (doc, column, value) => {
-  const text = cleanText(value) || '—';
-  const preferredFont = column.font || 'Helvetica';
-  const preferredSize = column.fontSize || FONT_SIZES.tableBody;
-
-  if (column.noWrap) {
-    const fontSize = getFittedFontSize(
-      doc,
-      text,
-      column.width - 16,
-      preferredSize,
-      column.minFontSize || 8.4,
-      preferredFont
-    );
-
-    return {
-      text,
-      font: preferredFont,
-      fontSize,
-      height: getTextHeight(doc, text, column.width - 16, {
-        font: preferredFont,
-        fontSize,
-        lineGap: 1,
-      }),
-    };
-  }
-
-  return {
-    text,
-    font: preferredFont,
-    fontSize: preferredSize,
-    height: getTextHeight(doc, text, column.width - 16, {
-      font: preferredFont,
-      fontSize: preferredSize,
-      lineGap: 1,
-    }),
-  };
-};
-
-const getPhoneRowLayout = (doc, row, index, width) => {
-  const label = `${index + 1}. ${row.label}`;
-  const isHtsmRow = String(row.label || '').trim().toUpperCase() === 'HTSM';
-  const labelGap = 10;
-  const measuredLabelWidth = doc.widthOfString(label, {
-    font: 'Helvetica-Bold',
-    size: COMPACT_CHAPTER_FONT.label,
-  });
-  const labelWidth = Math.max(54, Math.min(Math.max(68, measuredLabelWidth + 6), width * 0.29));
-  const valueWidth = width - labelWidth - labelGap;
-  const value = row.value || 'Ej angivet';
-  const htsmMatch = isHtsmRow
-    ? value.match(/^(.*?)(?:\s+Reservnr:\s*(.*))?$/i)
-    : null;
-  const primaryValue = isHtsmRow ? cleanText(htsmMatch?.[1] || value) : value;
-  const secondaryValue = isHtsmRow ? cleanText(htsmMatch?.[2] || '') : '';
-  const valueFontSize = isHtsmRow
-    ? COMPACT_CHAPTER_FONT.body
-    : getFittedFontSize(doc, value, valueWidth, COMPACT_CHAPTER_FONT.body, 8.2);
-  const labelHeight = getTextHeight(doc, label, labelWidth, {
-    font: 'Helvetica-Bold',
-    fontSize: COMPACT_CHAPTER_FONT.label,
-    lineGap: 1,
-  });
-  const primaryValueHeight = getTextHeight(doc, primaryValue, valueWidth, {
-    font: 'Helvetica',
-    fontSize: valueFontSize,
-    lineGap: 1,
-  });
-  const secondaryValueHeight = secondaryValue
-    ? getTextHeight(doc, `Reservnr: ${secondaryValue}`, valueWidth, {
-        font: 'Helvetica',
-        fontSize: valueFontSize,
-        lineGap: 1,
-      })
-    : 0;
-  const rowHeight = isHtsmRow
-    ? Math.max(labelHeight, primaryValueHeight + (secondaryValueHeight ? secondaryValueHeight + 2 : 0))
-    : Math.max(labelHeight, getTextHeight(doc, value, valueWidth, {
-        font: 'Helvetica',
-        fontSize: valueFontSize,
-        lineGap: 1,
-      }));
-
-  return {
-    label,
-    labelGap,
-    labelWidth,
-    value,
-    primaryValue,
-    primaryValueHeight,
-    secondaryValue,
-    valueFontSize,
-    valueWidth,
-    rowHeight,
-    isHtsmRow,
-  };
-};
-
-const drawTableHeader = (doc, { x, y, columns, headerHeight = 26 }) => {
-  const tableWidth = columns.reduce((sum, column) => sum + column.width, 0);
-
-  doc.save();
-  doc.rect(x, y, tableWidth, headerHeight).fillAndStroke('#e2e8f0', '#cbd5e1');
-
-  let currentX = x;
-  columns.forEach((column, index) => {
-    if (index > 0) {
-      doc.moveTo(currentX, y).lineTo(currentX, y + headerHeight).strokeColor('#cbd5e1').stroke();
-    }
-    doc.fillColor(COLORS.strong).font('Helvetica-Bold').fontSize(FONT_SIZES.tableHeader).text(column.label, currentX + 8, y + 7, {
-      width: column.width - 16,
-      align: column.align || 'left',
-    });
-    currentX += column.width;
-  });
-
-  doc.restore();
-  return y + headerHeight;
-};
-
-const getTableRowHeight = (doc, columns, row, minHeight = 26) => {
-  const contentHeight = columns.reduce((maxHeight, column) => {
-    const cell = getTableCellLayout(doc, column, row[column.key]);
-    return Math.max(maxHeight, cell.height);
-  }, 0);
-
-  return Math.max(minHeight, Math.ceil(contentHeight) + 10);
-};
-
-const drawTableRow = (doc, { x, y, columns, row, rowIndex, rowHeight, accentColumns = [] }) => {
-  const tableWidth = columns.reduce((sum, column) => sum + column.width, 0);
-  const rowColor = rowIndex % 2 === 0 ? '#ffffff' : '#f8fafc';
-
-  doc.save();
-  doc.rect(x, y, tableWidth, rowHeight).fillAndStroke(rowColor, '#e2e8f0');
-
-  let cellX = x;
-  columns.forEach((column, columnIndex) => {
-    if (columnIndex > 0) {
-      doc.moveTo(cellX, y).lineTo(cellX, y + rowHeight).strokeColor('#e2e8f0').stroke();
-    }
-
-    const cell = getTableCellLayout(doc, column, row[column.key]);
-    doc.fillColor(COLORS.text)
-      .font(accentColumns.includes(columnIndex) ? 'Helvetica-Bold' : 'Helvetica')
-      .fontSize(cell.fontSize)
-      .text(cell.text, cellX + 8, y + 7, {
-        width: column.width - 16,
-        align: column.align || 'left',
-        lineGap: 1,
-      });
-    cellX += column.width;
-  });
-
-  doc.restore();
-  return y + rowHeight;
-};
-
-const renderChapterOneHeading = (doc, continuation = false) => {
-  drawPageBadge(doc, 'Kapitel 1', doc.page.margins.left, 26, 84);
-  doc.y = 62;
-  doc.fillColor(COLORS.strong).font('Helvetica-Bold').fontSize(20).text(
-    continuation ? '1 Gränspunkter och delområde, fortsättning' : '1 Gränspunkter och delområde'
-  );
-  doc.moveDown(0.45);
-};
-
-const drawChapterOneTable = (doc, { sectionTitle, columns, rows, accentColumns = [] }) => {
-  const tableRows = rows.length ? rows : [Object.fromEntries(columns.map((column) => [column.key, '—']))];
-  const renderSectionHeader = (continuation = false) => {
-    doc.x = doc.page.margins.left;
-    doc.fillColor(COLORS.strong).font('Helvetica-Bold').fontSize(11.5).text(
-      continuation ? `${sectionTitle} (forts.)` : sectionTitle
-    );
-    doc.moveDown(0.3);
-  };
-
-  renderSectionHeader(false);
-  let currentY = drawTableHeader(doc, {
-    x: doc.page.margins.left,
-    y: doc.y,
-    columns,
-  });
-
-  tableRows.forEach((row, rowIndex) => {
-    const rowHeight = getTableRowHeight(doc, columns, row);
-
-    if (currentY + rowHeight > getContentBottomY(doc)) {
-      doc.addPage();
-      renderChapterOneHeading(doc, true);
-      renderSectionHeader(true);
-      currentY = drawTableHeader(doc, {
-        x: doc.page.margins.left,
-        y: doc.y,
-        columns,
-      });
-    }
-
-    currentY = drawTableRow(doc, {
-      x: doc.page.margins.left,
-      y: currentY,
-      columns,
-      row,
-      rowIndex,
-      rowHeight,
-      accentColumns,
-    });
-  });
-
-  doc.y = currentY + 16;
-};
-
-const COMPACT_CHAPTER_FONT = {
-  heading: 13.8,
-  body: 10.8,
-  label: 10,
-  highlight: 14.8,
-};
-
-const getCompactChapters = (project = {}) => {
-  const htsmTelefon = cleanText(project.formState?.htsmTelefon || '');
-  const reservnr = cleanText(project.formState?.reservnr || '');
-  const phoneRows = buildPhoneRows(project);
-
-  return [
-    {
-      number: 2,
-      title: 'Allmänt',
-      type: 'paragraphs',
-      paragraphs: [
-        'Dispositionsarbetsplanen gäller varje dag enligt beviljad dispositionsarbetsplan och ska alltid medföras av säkerhetspersonal digitalt eller i pappersform.',
-        'Dispositionen gäller enligt TTJ Modul 16 tillsammans med de tillägg som anges i denna dispositionsarbetsplan. Alla aktiviteter i spårområdet ska föregås av riskbedömning.',
-        'All personal och besökare inom spårområde ska bära avtalad personlig skyddsutrustning och varselkläder enligt gällande regler.',
-      ],
-    },
-    {
-      number: 3,
-      title: 'Ansvarsfrågor',
-      type: 'paragraphs',
-      paragraphs: [
-        'Det dagliga trafiksäkerhetsarbetet inom D-skyddsområdet leds av tjänstgörande huvudtillsyningsman (HTSM).',
-        'Innan arbeten får påbörjas ska dispositionsarbetsplanen gås igenom med berörd arbetsledning och säkerhetspersonal.',
-      ],
-    },
-    {
-      number: 4,
-      title: 'Skyddsåtgärder',
-      type: 'paragraphs',
-      paragraphs: [
-        'Respektive tillsyningsman ansvarar för att skyddsåtgärder enligt TTJ-moduler utförs och dokumenteras.',
-      ],
-    },
-    {
-      number: 5,
-      title: 'Skydds och Säkerhetssamtal',
-      type: 'safetyCall',
-      intro: 'Skydds och säkerhetssamtal till HTSM ska ske via telefon.',
-      highlight: [htsmTelefon || 'Ej angivet', reservnr ? `Reservnr: ${reservnr}` : ''].filter(Boolean).join('   '),
-      paragraphs: [
-        'Tänk på samtalsdisciplinen. Alla samtal ska föras tydligt och med korrekt referens till aktuell dispositionsarbetsplan.',
-      ],
-    },
-    {
-      number: 6,
-      title: 'Huvudtillsyningsman (HTSM)',
-      type: 'paragraphs',
-      paragraphs: [
-        'HTSM för anteckningar över och beviljar A-, E- och L-skydd, spärrfärder och växling inom dispositionsområdet.',
-      ],
-    },
-    {
-      number: 7,
-      title: 'Arbeten och trafikverksamheter',
-      type: 'paragraphs',
-      paragraphs: [
-        'Alla skydd och fordonsrörelser inom D-skyddsområdet ska ske enligt TTJ Modul 16. För spärrfärd och växling gäller halv siktfart om inget annat anges.',
-        'För TSA med spårföljare gäller att utrustningen är besiktigad och godkänd före användning.',
-      ],
-    },
-    {
-      number: 8,
-      title: 'Uppställning eller kvarlämnande av arbetsredskap/fordon',
-      pageBreakBefore: true,
-      type: 'paragraphs',
-      paragraphs: [
-        'Uppställning av fordon och arbetsredskap inom D-skyddsområdet kräver medgivande från HTSM. Uppställning får inte ske under spänningssatt kontaktledning.',
-        'Fordon eller arbetsredskap som lämnas utan tillsyn ska säkras så att rullning eller obehörig användning förhindras.',
-      ],
-    },
-    {
-      number: 9,
-      title: 'Förändringar i spåranläggningen',
-      type: 'paragraphs',
-      paragraphs: [
-        'Förändringar i spåranläggningen ska alltid meddelas HTSM. Om förändringar sker ska ibruktagandebesiktning utföras enligt gällande regler.',
-      ],
-    },
-    {
-      number: 10,
-      title: 'Åtgärder vid plankorsningar',
-      type: 'paragraphs',
-      paragraphs: [
-        'Vid behov används vägvakt enligt TTJ modul 7. Spärrfärd och växling ska ske i enlighet med TTJ modul 9H och modul 10.',
-      ],
-    },
-    {
-      number: 11,
-      title: 'Växlar',
-      type: 'paragraphs',
-      paragraphs: [
-        'Skyddsåtgärder för att förhindra felaktig omläggning av växlar eller oavsiktligt signalbesked ska alltid vidtas. Rörelser ska framföras så att de kan stanna före växel eller spårspärr i fel läge.',
-      ],
-    },
-    {
-      number: 12,
-      title: 'Sidospår',
-      type: 'paragraphs',
-      paragraphs: [
-        'Om D-skyddet gränsar mot sidospår får passage endast ske efter godkännande av HTSM och berörd infrastrukturförvaltare.',
-      ],
-    },
-    {
-      number: 13,
-      title: 'Telefonnummer',
-      type: 'phoneList',
-      intro: 'Vid händelse eller olycka ska personal rapportera enligt nedanstående ordning:',
-      phoneRows,
-    },
-  ];
-};
-
-const getCompactChapterHeight = (doc, chapter, width) => {
-  const bodyWidth = width;
-  let height = getTextHeight(doc, `${chapter.number} ${chapter.title}`, bodyWidth, {
-    font: 'Helvetica-Bold',
-    fontSize: COMPACT_CHAPTER_FONT.heading,
-    lineGap: 1,
-  }) + 12;
-
-  if (chapter.type === 'paragraphs') {
-    chapter.paragraphs.forEach((paragraph) => {
-      height += getTextHeight(doc, paragraph, bodyWidth, {
-        font: 'Helvetica',
-        fontSize: COMPACT_CHAPTER_FONT.body,
-        lineGap: 1.5,
-      }) + 5;
-    });
-    return height + 9;
-  }
-
-  if (chapter.type === 'safetyCall') {
-    height += getTextHeight(doc, chapter.intro, bodyWidth, {
-      font: 'Helvetica',
-      fontSize: COMPACT_CHAPTER_FONT.body,
-      lineGap: 1.5,
-    }) + 6;
-    const highlightFontSize = getFittedFontSize(
-      doc,
-      chapter.highlight || 'Ej angivet',
-      bodyWidth - 24,
-      COMPACT_CHAPTER_FONT.highlight,
-      10.2,
-      'Helvetica-Bold'
-    );
-    const highlightHeight = getTextHeight(doc, chapter.highlight || 'Ej angivet', bodyWidth - 22, {
-      font: 'Helvetica-Bold',
-      fontSize: highlightFontSize,
-      lineGap: 1,
-    });
-    height += Math.max(36, highlightHeight + 18) + 10;
-    chapter.paragraphs.forEach((paragraph) => {
-      height += getTextHeight(doc, paragraph, bodyWidth, {
-        font: 'Helvetica',
-        fontSize: COMPACT_CHAPTER_FONT.body,
-        lineGap: 1.5,
-      }) + 5;
-    });
-    return height + 9;
-  }
-
-  if (chapter.type === 'phoneList') {
-    height += getTextHeight(doc, chapter.intro, bodyWidth, {
-      font: 'Helvetica',
-      fontSize: COMPACT_CHAPTER_FONT.body,
-      lineGap: 1.5,
-    }) + 8;
-
-    chapter.phoneRows.forEach((row, index) => {
-      height += getPhoneRowLayout(doc, row, index, bodyWidth).rowHeight + 4;
-    });
-    return height + 7;
-  }
-
-  return height + 9;
-};
-
-const drawCompactChapterBlock = (doc, chapter, x, y, width) => {
-  let cursorY = y;
-
-  doc.fillColor(COLORS.strong).font('Helvetica-Bold').fontSize(COMPACT_CHAPTER_FONT.heading).text(
-    `${chapter.number} ${chapter.title}`,
-    x,
-    cursorY,
-    { width, lineGap: 1 }
-  );
-  cursorY = doc.y + 3;
-
-  doc.save();
-  doc.moveTo(x, cursorY).lineTo(x + width, cursorY).lineWidth(1).strokeColor('#e2e8f0').stroke();
-  doc.restore();
-  cursorY += 8;
-
-  if (chapter.type === 'paragraphs') {
-    chapter.paragraphs.forEach((paragraph) => {
-      doc.fillColor(COLORS.text).font('Helvetica').fontSize(COMPACT_CHAPTER_FONT.body).text(paragraph, x, cursorY, {
-        width,
-        lineGap: 1.5,
-      });
-      cursorY = doc.y + 5;
-    });
-    return cursorY + 6;
-  }
-
-  if (chapter.type === 'safetyCall') {
-    doc.fillColor(COLORS.text).font('Helvetica').fontSize(COMPACT_CHAPTER_FONT.body).text(chapter.intro, x, cursorY, {
-      width,
-      lineGap: 1.5,
-    });
-    cursorY = doc.y + 6;
-
-    const highlightFontSize = getFittedFontSize(
-      doc,
-      chapter.highlight || 'Ej angivet',
-      width - 24,
-      COMPACT_CHAPTER_FONT.highlight,
-      10.2,
-      'Helvetica-Bold'
-    );
-    const highlightHeight = Math.max(
-      36,
-      getTextHeight(doc, chapter.highlight || 'Ej angivet', width - 22, {
-        font: 'Helvetica-Bold',
-        fontSize: highlightFontSize,
-        lineGap: 1,
-      }) + 18
-    );
-    doc.save();
-    doc.roundedRect(x, cursorY, width, highlightHeight, 10).fillAndStroke('#fff5f5', '#fca5a5');
-    doc.restore();
-    doc.fillColor(COLORS.strong).font('Helvetica-Bold').fontSize(highlightFontSize).text(
-      chapter.highlight || 'Ej angivet',
-      x + 12,
-      cursorY + 9,
-      {
-        width: width - 24,
-        lineGap: 1,
-        lineBreak: false,
-      }
-    );
-    cursorY += highlightHeight + 10;
-
-    chapter.paragraphs.forEach((paragraph) => {
-      doc.fillColor(COLORS.text).font('Helvetica').fontSize(COMPACT_CHAPTER_FONT.body).text(paragraph, x, cursorY, {
-        width,
-        lineGap: 1.5,
-      });
-      cursorY = doc.y + 5;
-    });
-    return cursorY + 6;
-  }
-
-  if (chapter.type === 'phoneList') {
-    doc.fillColor(COLORS.text).font('Helvetica').fontSize(COMPACT_CHAPTER_FONT.body).text(chapter.intro, x, cursorY, {
-      width,
-      lineGap: 1.5,
-    });
-    cursorY = doc.y + 7;
-
-    chapter.phoneRows.forEach((row, index) => {
-      const phoneRow = getPhoneRowLayout(doc, row, index, width);
-      doc.fillColor(COLORS.strong).font('Helvetica-Bold').fontSize(COMPACT_CHAPTER_FONT.label).text(phoneRow.label, x, cursorY, {
-        width: phoneRow.labelWidth,
-        lineGap: 1,
-      });
-      if (phoneRow.isHtsmRow) {
-        const valueX = x + phoneRow.labelWidth + phoneRow.labelGap;
-        doc.fillColor(COLORS.text).font('Helvetica').fontSize(phoneRow.valueFontSize).text(phoneRow.primaryValue, valueX, cursorY, {
-          width: phoneRow.valueWidth,
-          lineGap: 1,
-        });
-        if (phoneRow.secondaryValue) {
-          doc.text(`Reservnr: ${phoneRow.secondaryValue}`, valueX, cursorY + phoneRow.primaryValueHeight + 2, {
-            width: phoneRow.valueWidth,
-            lineGap: 1,
-          });
-        }
-      } else {
-        doc.fillColor(COLORS.text).font('Helvetica').fontSize(phoneRow.valueFontSize).text(phoneRow.value, x + phoneRow.labelWidth + phoneRow.labelGap, cursorY, {
-          width: phoneRow.valueWidth,
-          lineGap: 1,
-        });
-      }
-      cursorY += phoneRow.rowHeight + 4;
-    });
-    return cursorY + 4;
-  }
-
-  return cursorY + 8;
-};
-
-const startCompactChapterPage = (doc) => {
-  doc.addPage();
-  drawPageBadge(doc, 'Kapitel 2-13', doc.page.margins.left, 26, 94);
-  doc.fillColor(COLORS.strong).font('Helvetica').fontSize(10.5).text(
-    'Säkerhetsbestämmelser och kontaktvägar',
-    doc.page.width - doc.page.margins.right - 220,
-    32,
-    {
-      width: 220,
-      align: 'right',
-    }
-  );
-
+const drawLegacyHeader = (doc, dispSettings, totalPages, pageNumber) => {
   const left = doc.page.margins.left;
   const right = doc.page.width - doc.page.margins.right;
-  const columnGap = 24;
-  const columnWidth = (right - left - columnGap) / 2;
+  const title = `Dispositionsarbetsplan ${cleanText(dispSettings.banNamn || '')}`.trim();
+  const validity = extractValidityLabel(dispSettings.veckaOchDagar || '');
 
-  return {
-    left,
-    right,
-    top: 74,
-    bottom: getContentBottomY(doc),
-    columnGap,
-    columnWidth,
-    currentColumn: 0,
-    x: left,
-    y: 74,
-  };
-};
+  doc.save();
+  doc.fillColor('#000000').font(PDF_FONTS.header).fontSize(8).text(title, left, 28, {
+    width: 280,
+    lineBreak: false,
+  });
 
-const advanceCompactChapterColumn = (doc, layout) => {
-  if (layout.currentColumn === 0) {
-    layout.currentColumn = 1;
-    layout.x = layout.left + layout.columnWidth + layout.columnGap;
-    layout.y = layout.top;
-    return;
+  if (fs.existsSync(LEGACY_LOGO_PATH)) {
+    doc.image(LEGACY_LOGO_PATH, right - 182, 16, {
+      fit: [182, 57],
+      align: 'right',
+      valign: 'top',
+    });
   }
 
-  const nextLayout = startCompactChapterPage(doc);
-  layout.currentColumn = nextLayout.currentColumn;
-  layout.x = nextLayout.x;
-  layout.y = nextLayout.y;
-  layout.top = nextLayout.top;
-  layout.bottom = nextLayout.bottom;
-  layout.columnWidth = nextLayout.columnWidth;
-  layout.columnGap = nextLayout.columnGap;
+  const labelY = 44;
+  const valueY = 59;
+  doc.font(PDF_FONTS.header).fontSize(8).text('Giltig', left, labelY, { lineBreak: false });
+  doc.text('Versionsnummer', left + 92, labelY, { lineBreak: false });
+  doc.text('Antal sidor', left + 204, labelY, { lineBreak: false });
+
+  doc.text(validity, left, valueY, { lineBreak: false });
+  doc.text(cleanText(dispSettings.versionsnummer || LEGACY_VERSION_NUMBER), left + 92, valueY, { lineBreak: false });
+  doc.text(String(totalPages), left + 204, valueY, { lineBreak: false });
+  doc.text('Vallåkra Rail AB', left, 74, { lineBreak: false });
+  doc.restore();
 };
 
-const addCoverPage = (doc, project, entries, sections, dispSettings) => {
-  const outerGranspunkter = cleanText(project.granspunkter || '');
+const estimateChapterOnePageCount = (entries, sections) => {
+  const firstPageCapacity = 22;
+  const continuedPageCapacity = 24;
+  const entryRows = entries.length + 1;
+  const sectionRows = sections.length;
+  const firstPageSectionCapacity = Math.max(0, firstPageCapacity - entryRows);
+
+  if (sectionRows <= firstPageSectionCapacity) return 1;
+  return 1 + Math.ceil((sectionRows - firstPageSectionCapacity) / continuedPageCapacity);
+};
+
+const estimateLegacyTotalPages = (entries, sections) => 2 + estimateChapterOnePageCount(entries, sections) + 4;
+
+const addCoverPage = (doc, project, dispSettings) => {
+  const left = doc.page.margins.left;
+  const width = doc.page.width - doc.page.margins.left - doc.page.margins.right;
   const routeLine = cleanText(project.plats || '');
-  const htsmTelefon = cleanText(project.formState?.htsmTelefon || '');
-  const title = ['Dispositionsarbetsplan', dispSettings.rubrik].filter(Boolean).join(' ');
+  const displayRouteLine = routeLine && !/[.!?]$/.test(routeLine) ? `${routeLine}.` : routeLine;
+  const weekLine = formatLegacyWeekLine(dispSettings.veckaOchDagar || '');
+  const boundary = formatLegacyBoundaryText(project.granspunkter || '');
 
-  drawPageBadge(doc, 'Dispositionsarbetsplan', doc.page.margins.left, 28, 150);
-  drawTopRule(doc, 78);
-  drawTopMetaLabel(doc, 'Banobjekt-Vnr', dispSettings.banobjektVnr || 'Ej angivet', 62);
-  doc.y = 90;
-  doc.x = doc.page.margins.left;
-  const textWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
-  doc.fillColor(COLORS.strong).font('Helvetica-Bold').fontSize(28).text(title, doc.page.margins.left, doc.y, {
-    width: textWidth,
-    align: 'left',
-  });
-  doc.moveDown(0.55);
-  doc.fontSize(23).text(dispSettings.banNamn || 'Ange banans namn', doc.page.margins.left, doc.y, {
-    width: textWidth,
-    align: 'left',
-  });
-  doc.moveDown(0.25);
-  doc.fontSize(16.5).text(dispSettings.veckaOchDagar || 'Ange vecka och dagar/nätter', doc.page.margins.left, doc.y, {
-    width: textWidth,
-    align: 'left',
-  });
-  doc.moveDown(0.75);
+  const coverRoute = buildLegacyCoverRoute(project, dispSettings);
 
-  const topY = doc.y;
-  const availableWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
-  const cardGap = 12;
-  const cardWidth = (availableWidth - cardGap) / 2;
-  const topLeftCardHeight = drawInfoCard(
-    doc,
-    'Banobjekt-Vnr',
-    dispSettings.banobjektVnr || 'Ej angivet',
-    doc.page.margins.left,
-    topY,
-    cardWidth,
-    true,
+  doc.fillColor('#000000').font(PDF_FONTS.headerBoldItalic).fontSize(30).text('Dispositionsarbetsplan', left, 206, {
+    width,
+    align: 'center',
+  });
+  doc.font(PDF_FONTS.headerBoldItalic).fontSize(24).text(coverRoute, left, 274, {
+    width,
+    align: 'center',
+    underline: true,
+  });
+  doc.font(PDF_FONTS.headerBoldItalic).fontSize(24).text(weekLine, left, 326, {
+    width,
+    align: 'center',
+  });
+
+  const banobjektY = 390;
+  const banLabel = 'Banobjekt-Vnr';
+  const banValue = cleanText(dispSettings.banobjektVnr || 'Ej angivet');
+  const banLabelWidth = doc.font(PDF_FONTS.headerBoldItalic).fontSize(16).widthOfString(`${banLabel} `);
+  const banValueWidth = doc.font(PDF_FONTS.headerBoldItalic).fontSize(16).widthOfString(banValue);
+  const banLineX = left + (width - banLabelWidth - banValueWidth) / 2;
+
+  doc.fillColor('#000000').font(PDF_FONTS.headerBoldItalic).fontSize(16).text(banLabel, banLineX, banobjektY, {
+    lineBreak: false,
+  });
+  doc.fillColor('#b91c1c').text(banValue, banLineX + banLabelWidth, banobjektY, {
+    lineBreak: false,
+  });
+  doc.fillColor('#000000').font(PDF_FONTS.headerBoldItalic).fontSize(16).text('(uppges vid förplanering)', left, 420, {
+    width,
+    align: 'center',
+  });
+
+  doc.font(PDF_FONTS.header).fontSize(18).fillColor('#000000').text(displayRouteLine || 'Ej angivet', left + 122, 536, {
+    width: width - 244,
+    align: 'left',
+    lineGap: 4,
+  });
+
+  doc.fillColor('#ff0000').font(PDF_FONTS.headerBold).fontSize(16).text(
+    `Förplanera ca:${cleanText(dispSettings.forplaneraCa || '1 tim innan start')}`,
+    left + 120,
+    640
+  );
+  doc.fillColor('#000000').font(PDF_FONTS.body).fontSize(12).text(
+    'Gränspunkter som ej får passeras utan TKL:s medgivande är:',
+    left + 58,
+    688,
     {
-      titleFont: 'Helvetica-Bold',
-      titleFontSize: 10.2,
-      titleColor: '#475569',
+      width: width - 116,
+      align: 'left',
     }
   );
-  const topRightCardHeight = drawInfoCard(
-    doc,
-    'Förplanera ca',
-    dispSettings.forplaneraCa || 'Ej angivet',
-    doc.page.margins.left + cardWidth + cardGap,
-    topY,
-    cardWidth
-  );
-  doc.y = topY + Math.max(topLeftCardHeight, topRightCardHeight) + 14;
-
-  const routeCardHeight = drawInfoCard(
-    doc,
-    'Berörda driftplatser',
-    routeLine || 'Ej angivet',
-    doc.page.margins.left,
-    doc.y,
-    availableWidth,
-    false
-  );
-  doc.y += routeCardHeight + 14;
-  const htsmCardHeight = drawInfoCard(
-    doc,
-    'HTSM telefonnr',
-    htsmTelefon || 'Ej angivet',
-    doc.page.margins.left,
-    doc.y,
-    availableWidth,
-    false
-  );
-  doc.y += htsmCardHeight + 14;
-
-  doc.fillColor(COLORS.strong).font('Helvetica-Bold').fontSize(13).text(
-    'Gränspunkter som ej får passeras utan TKL:s medgivande är:',
-    { lineGap: 2 }
-  );
-  doc.moveDown(0.15);
-  doc.fillColor(COLORS.accent).font('Helvetica-Bold').fontSize(19).text(
-    outerGranspunkter || 'Ej angivet',
-    { lineGap: 2 }
-  );
-
-  doc.moveDown(1);
-  doc.fillColor(COLORS.text).font('Helvetica').fontSize(10).text(
-    `Skapad via Vallåkra Railworker. ${entries.length} post(er) och ${sections.length} delområde(n) ingår i underlaget.`,
-    { lineGap: 2 }
-  );
+  doc.fillColor('#ff0000').font(PDF_FONTS.body).fontSize(12).text(boundary || 'Ej angivet', left + 58, 736, {
+    width: width - 116,
+    align: 'left',
+  });
 };
 
 const addContentsPage = (doc, chapterPages = null, pageIndex = null) => {
   if (pageIndex === null) {
     doc.addPage();
-    return getCurrentPageNumber(doc) - 1;
+    return doc.bufferedPageRange().count - 1;
   }
 
   doc.switchToPage(pageIndex);
-  doc.x = doc.page.margins.left;
-  doc.y = 78;
-  doc.fillColor(COLORS.strong).font('Helvetica-Bold').fontSize(26).text('Innehållsförteckning');
-  doc.moveDown(1.05);
+  const left = doc.page.margins.left + 36;
+  const numberX = left;
+  const titleX = left + 26;
+  const pageX = doc.page.width - doc.page.margins.right - 70;
+  doc.x = left;
+  doc.y = 176;
+  doc.fillColor('#000000').font(PDF_FONTS.bodyBold).fontSize(14).text('Innehållsförteckning');
+  doc.moveDown(0.9);
 
   const items = [
     ['1', 'Gränspunkter och delområde', String(chapterPages?.[1] || 3)],
     ['2', 'Allmänt', String(chapterPages?.[2] || 4)],
     ['3', 'Ansvarsfrågor', String(chapterPages?.[3] || 4)],
     ['4', 'Skyddsåtgärder', String(chapterPages?.[4] || 4)],
-    ['5', 'Skydds och Säkerhetssamtal', String(chapterPages?.[5] || 5)],
+    ['5', 'Säkerhetssamtal', String(chapterPages?.[5] || 5)],
     ['6', 'Huvudtillsyningsman (HTSM)', String(chapterPages?.[6] || 5)],
     ['7', 'Arbeten och trafikverksamheter', String(chapterPages?.[7] || 5)],
     ['8', 'Uppställning eller kvarlämnande av arbetsredskap/fordon', String(chapterPages?.[8] || 6)],
-    ['9', 'Förändringar i spåranläggningen', String(chapterPages?.[9] || 6)],
-    ['10', 'Åtgärder vid plankorsningar', String(chapterPages?.[10] || 6)],
+    ['9', 'Förändringar i Spåranläggningen', String(chapterPages?.[9] || 6)],
+    ['10', 'Åtgärder vid Plankorsningar', String(chapterPages?.[10] || 6)],
     ['11', 'Växlar', String(chapterPages?.[11] || 6)],
-    ['12', 'Sidospår', String(chapterPages?.[12] || 6)],
-    ['13', 'Telefonnummer', String(chapterPages?.[13] || 6)],
+    ['12', 'Sidospår', String(chapterPages?.[12] || 7)],
+    ['13', 'Telefonnummer', String(chapterPages?.[13] || 7)],
   ];
 
   items.forEach(([index, title, page]) => {
-    doc.fillColor(COLORS.text).font('Helvetica-Bold').fontSize(13).text(index, doc.page.margins.left, doc.y, {
-      width: 24,
+    const y = doc.y + 2;
+    doc.fillColor('#000000').font(PDF_FONTS.bodyBold).fontSize(10.2).text(index, numberX, y, {
+      width: 18,
+      lineBreak: false,
     });
-    doc.font('Helvetica').fontSize(13).text(title, doc.page.margins.left + 32, doc.y - 13, {
-      width: 420,
+    doc.text(title, titleX, y, {
+      width: 330,
+      lineGap: 1,
     });
-    doc.font('Helvetica-Bold').fontSize(13).text(page, doc.page.width - doc.page.margins.right - 20, doc.y - 13, {
-      width: 20,
+    doc.text(page, pageX, y, {
+      width: 14,
       align: 'right',
+      lineBreak: false,
     });
-    doc.moveDown(0.62);
+    doc.y = y + 20;
   });
+
+  const lineY = doc.y + 4;
+  doc.moveTo(left, lineY)
+    .lineTo(doc.page.width - doc.page.margins.right - 8, lineY)
+    .lineWidth(0.8)
+    .strokeColor('#777777')
+    .stroke();
+  doc.font(PDF_FONTS.bodyBold).fontSize(11).fillColor('#000000').text('Bilagor:', left, lineY + 8);
 };
 
-const addEntriesAndSectionsPage = (doc, project, entries, sections) => {
+const drawLegacyChapterHeading = (doc, text) => {
+  doc.fillColor('#000000').font(PDF_FONTS.headerBold).fontSize(15).text(text, doc.page.margins.left, 116, {
+    lineBreak: false,
+  });
+  doc.y = 144;
+};
+
+const drawLegacySplitChapterHeading = (doc, chapterNumber, title, y) => {
+  const left = doc.page.margins.left;
+  const numberText = String(chapterNumber);
+  const numberX = left - 10;
+  const numberWidth = Math.max(24, Math.ceil(doc.font(PDF_FONTS.headerBold).fontSize(15).widthOfString(numberText)) + 6);
+  const titleX = numberX + numberWidth + 22;
+
+  doc.fillColor('#000000').font(PDF_FONTS.headerBold).fontSize(15).text(numberText, numberX, y, {
+    width: numberWidth,
+    align: 'left',
+    lineBreak: false,
+  });
+  doc.text(`${title}.`, titleX, y, {
+    width: doc.page.width - titleX - doc.page.margins.right,
+  });
+  return doc.y;
+};
+
+const getLegacyRowHeight = (doc, row, columns, fontSize = 11) =>
+  Math.ceil(columns.reduce((maxHeight, column) => {
+    const cellHeight = getTextHeight(doc, row[column.key] || '', column.width, {
+      font: PDF_FONTS.body,
+      fontSize,
+      lineGap: 1,
+    });
+    return Math.max(maxHeight, cellHeight);
+  }, fontSize + 2)) + 2;
+
+const drawLegacyBoundarySegment = (doc, text, x, y, highlightTokens = []) => {
+  const normalizedText = cleanText(text);
+  const dashMatch = normalizedText.match(/^(.+?)\s*[–-]\s*(.+)$/);
+  doc.font(PDF_FONTS.bodyBold).fontSize(12);
+
+  if (!dashMatch) {
+    const color = highlightTokens.includes(normalizeBoundaryToken(normalizedText)) ? '#c1121f' : '#000000';
+    doc.fillColor(color).text(normalizedText, x, y, { lineBreak: false });
+    return;
+  }
+
+  const leftToken = cleanText(dashMatch[1]);
+  const rightToken = cleanText(dashMatch[2]);
+  const separator = ' – ';
+  const leftColor = highlightTokens.includes(normalizeBoundaryToken(leftToken)) ? '#c1121f' : '#000000';
+  const rightColor = highlightTokens.includes(normalizeBoundaryToken(rightToken)) ? '#c1121f' : '#000000';
+
+  doc.fillColor(leftColor).text(leftToken, x, y, { lineBreak: false });
+  const leftWidth = doc.widthOfString(leftToken);
+  doc.fillColor('#000000').text(separator, x + leftWidth, y, { lineBreak: false });
+  const separatorWidth = doc.widthOfString(separator);
+  doc.fillColor(rightColor).text(rightToken, x + leftWidth + separatorWidth, y, { lineBreak: false });
+};
+
+const drawLegacyChapterOneTable = (doc, rows, config) => {
+  const {
+    left,
+    top,
+    width,
+    rowHeight,
+    headerHeight,
+    entryColumns,
+    sectionColumns,
+    noteText,
+    highlightTokens,
+    mode = 'full',
+    showNote = true,
+  } = config;
+  const totalHeight = headerHeight + (rows.length * rowHeight) + 12;
+  const bottom = top + totalHeight;
+  const headerFontSize = 12;
+  const rowFontSize = 12;
+
+  doc.save();
+  doc.lineWidth(0.7).strokeColor('#666666').rect(left, top, width, totalHeight).stroke();
+
+  const entryHeaderY = top + 7;
+  doc.font(PDF_FONTS.bodyBold).fontSize(headerFontSize).fillColor('#000000');
+  if (mode === 'full') {
+    doc.text('Beteckning', left + entryColumns.beteckning.x, entryHeaderY, { lineBreak: false });
+    doc.text('Startdag och tid', left + entryColumns.start.x, entryHeaderY, { lineBreak: false });
+    doc.text('Slutdag och tid', left + entryColumns.end.x, entryHeaderY, { lineBreak: false });
+  } else {
+    doc.text('Delområde', left + sectionColumns.label.x, entryHeaderY, { lineBreak: false });
+    doc.text('Sträcka / område', left + sectionColumns.name.x, entryHeaderY, { lineBreak: false });
+    doc.text('Gränspunkter', left + sectionColumns.granspunkter.x, entryHeaderY, { lineBreak: false });
+    doc.text('Spår', left + sectionColumns.spar.x, entryHeaderY, { lineBreak: false });
+  }
+
+  let y = top + headerHeight;
+
+  rows.forEach((row) => {
+    if (row.kind === 'entry') {
+      doc.font(PDF_FONTS.bodyBold).fontSize(rowFontSize).fillColor('#000000');
+      doc.text(row.beteckning, left + entryColumns.beteckning.x, y, {
+        width: entryColumns.beteckning.width,
+        lineBreak: false,
+      });
+      doc.text(row.dayLabel, left + entryColumns.start.x, y, {
+        width: entryColumns.startDay.width,
+        lineBreak: false,
+      });
+      doc.font(PDF_FONTS.bodyBold).fontSize(rowFontSize).text(row.startDateTime, left + entryColumns.startDateTime.x, y, {
+        width: entryColumns.startDateTime.width,
+        lineBreak: false,
+      });
+      doc.text(`—     ${row.endDateTime}`, left + entryColumns.end.x, y, {
+        width: entryColumns.end.width,
+        lineBreak: false,
+      });
+    } else if (row.kind === 'spacer') {
+      // Keep the visual gap between entry rows and section rows, but remove the extra header line.
+    } else if (row.kind === 'section') {
+      doc.font(PDF_FONTS.bodyBold).fontSize(rowFontSize).fillColor('#000000');
+      doc.text(row.label, left + sectionColumns.label.x, y, {
+        width: sectionColumns.label.width,
+        lineBreak: false,
+      });
+      doc.text(row.name, left + sectionColumns.name.x, y, {
+        width: sectionColumns.name.width,
+        lineBreak: false,
+      });
+      drawLegacyBoundarySegment(doc, row.granspunkter, left + sectionColumns.granspunkter.x, y, highlightTokens);
+      doc.font(PDF_FONTS.bodyBold).fontSize(12).text(row.spar, left + sectionColumns.spar.x, y, {
+        width: sectionColumns.spar.width,
+        lineBreak: false,
+      });
+    }
+
+    y += rowHeight;
+  });
+
+  if (showNote) {
+    const redNoteWord = 'rödmarkerade.';
+    const notePrefix = noteText.endsWith(redNoteWord)
+      ? noteText.slice(0, -redNoteWord.length)
+      : noteText;
+    doc.font(PDF_FONTS.bodyBold).fontSize(10.5).fillColor('#000000').text(notePrefix, left + 8, bottom + 10, {
+      width: width - 16,
+      lineBreak: false,
+    });
+    const prefixWidth = doc.widthOfString(notePrefix);
+    doc.fillColor('#c1121f').text(redNoteWord, left + 8 + prefixWidth, bottom + 10, {
+      lineBreak: false,
+    });
+  }
+  doc.restore();
+
+  return bottom + (showNote ? 26 : 0);
+};
+
+const addEntriesAndSectionsPage = (doc, project, entries, sections, dispSettings, totalPages) => {
   doc.addPage();
-  const pageNumber = getCurrentPageNumber(doc);
-  renderChapterOneHeading(doc);
+  const firstPageNumber = doc.bufferedPageRange().count;
+  drawLegacyHeader(doc, dispSettings, totalPages, firstPageNumber);
+  const pageWidth = doc.page.width;
+  const tableLeft = 74;
+  const tableWidth = pageWidth - 2 * tableLeft;
+  const rowHeight = 21;
+  const headerHeight = 31;
+  const noteText = 'Yttre gränspunkter som ej får passeras utan medgivande från TKL är rödmarkerade.';
+  const weekLine = cleanText(dispSettings.veckaOchDagar || '');
+  const explicitHighlightValue = cleanText(dispSettings.rodmarkeradeGranspunkter || '');
+  const highlightSource = explicitHighlightValue || project.granspunkter || '';
+  const highlightTokens = getBoundaryHighlightTokens(highlightSource).map(normalizeBoundaryToken);
 
-  const availableWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+  const entryColumns = {
+    beteckning: { x: 6, width: 82 },
+    start: { x: 116 },
+    startDay: { x: 116, width: 52 },
+    startDateTime: { x: 166, width: 140 },
+    end: { x: 274, width: 154 },
+  };
+  const sectionColumns = {
+    label: { x: 10, width: 92 },
+    name: { x: 108, width: 136 },
+    granspunkter: { x: 244, width: 84 },
+    spar: { x: 344, width: 78 },
+  };
 
-  drawChapterOneTable(doc, {
-    sectionTitle: 'Beteckningar och tider',
-    columns: [
-      { key: 'beteckning', label: 'Beteckning', width: 116 },
-      { key: 'start', label: 'Startdag och tid', width: 189 },
-      { key: 'end', label: 'Slutdag och tid', width: availableWidth - 305 },
-    ],
-    rows: entries.map((entry) => ({
-      beteckning: entry.beteckning,
-      start: [formatDate(entry.startDate), formatTime(entry.startTime)].filter(Boolean).join('  '),
-      end: [formatDate(entry.endDate), formatTime(entry.endTime)].filter(Boolean).join('  '),
-    })),
-    accentColumns: [0, 1, 2],
-  });
+  const entryRows = entries.map((entry) => ({
+    kind: 'entry',
+    beteckning: entry.beteckning,
+    dayLabel: buildEntryDayLabel(entry, weekLine),
+    startDateTime: [formatDate(entry.startDate), formatTime(entry.startTime)].filter(Boolean).join('     '),
+    endDateTime: [formatDate(entry.endDate), formatTime(entry.endTime)].filter(Boolean).join('     '),
+  }));
+  const sectionRows = sections.map((section) => ({
+    kind: 'section',
+    label: section.label,
+    name: cleanText(section.signal || section.name),
+    granspunkter: formatLegacyBoundaryText(section.granspunkter),
+    spar: section.spar ? `Spår ${section.spar}` : '—',
+  }));
+  const firstPageCapacity = 22;
+  const continuedPageCapacity = 24;
+  const firstPageSectionCapacity = Math.max(0, firstPageCapacity - (entryRows.length + 1));
+  const firstPageSectionRows = sectionRows.slice(0, firstPageSectionCapacity);
+  const remainingSectionRows = sectionRows.slice(firstPageSectionCapacity);
+  const continuationChunks = [];
 
-  if (doc.y + 78 > getContentBottomY(doc)) {
-    doc.addPage();
-    renderChapterOneHeading(doc, true);
+  for (let index = 0; index < remainingSectionRows.length; index += continuedPageCapacity) {
+    continuationChunks.push(remainingSectionRows.slice(index, index + continuedPageCapacity));
   }
-  drawChapterOneTable(doc, {
-    sectionTitle: 'Delområden',
-    columns: [
-      { key: 'label', label: 'Delområde', width: 108, noWrap: true, minFontSize: 9 },
-      { key: 'name', label: 'Sträcka / område', width: 156, font: 'Helvetica-Bold', fontSize: 11.8 },
-      { key: 'granspunkter', label: 'Gränspunkter', width: 151, noWrap: true, minFontSize: 9.2, font: 'Helvetica-Bold', fontSize: 11.6 },
-      { key: 'spar', label: 'Spår', width: availableWidth - 415, noWrap: true, minFontSize: 8.8 },
-    ],
-    rows: sections.map((section) => ({
-      label: section.label,
-      name: section.signal || section.name,
-      granspunkter: section.granspunkter,
-      spar: section.spar ? `Spår ${section.spar}` : '',
-    })),
-    accentColumns: [0, 1, 2, 3],
+
+  const rows = [
+    ...entryRows,
+    { kind: 'spacer' },
+    ...firstPageSectionRows,
+  ];
+
+  drawLegacyChapterHeading(doc, '1 Gränspunkter och delområde.');
+  drawLegacyChapterOneTable(doc, rows, {
+    left: tableLeft,
+    top: 248,
+    width: tableWidth,
+    rowHeight,
+    headerHeight,
+    entryColumns,
+    sectionColumns,
+    noteText,
+    highlightTokens,
+    mode: 'full',
+    showNote: continuationChunks.length === 0,
   });
 
-  if (doc.y + 38 > getContentBottomY(doc)) {
+  continuationChunks.forEach((chunk, chunkIndex) => {
     doc.addPage();
-    renderChapterOneHeading(doc, true);
-  }
-  const outerBoundaryX = doc.page.margins.left;
-  const outerBoundaryY = doc.y;
-  const outerBoundaryLabel = 'Yttre gränspunkter som ej får passeras utan medgivande från TKL:';
-  const outerBoundaryValue = cleanText(project.granspunkter || '') || 'Ej angivet';
-  doc.fillColor(COLORS.strong).font('Helvetica-Oblique').fontSize(10).text(outerBoundaryLabel, outerBoundaryX, outerBoundaryY, {
-    width: availableWidth,
-    lineGap: 2,
-  });
-  const outerBoundaryValueY = doc.y + 2;
-  doc.fillColor(COLORS.accent).font('Helvetica-Bold').fontSize(10.5).text(outerBoundaryValue, outerBoundaryX, outerBoundaryValueY, {
-    width: availableWidth,
-    lineGap: 2,
+    const pageNumber = doc.bufferedPageRange().count;
+    drawLegacyHeader(doc, dispSettings, totalPages, pageNumber);
+    drawLegacyChapterHeading(doc, '1 Gränspunkter och delområde.');
+    drawLegacyChapterOneTable(doc, chunk, {
+      left: tableLeft,
+      top: 188,
+      width: tableWidth,
+      rowHeight,
+      headerHeight,
+      entryColumns,
+      sectionColumns,
+      noteText,
+      highlightTokens,
+      mode: 'sections-only',
+      showNote: chunkIndex === continuationChunks.length - 1,
+    });
   });
 
-  return { 1: pageNumber };
+  return { 1: firstPageNumber };
 };
 
-const addStaticTextPages = (doc, project) => {
-  const chapters = getCompactChapters(project);
+const getLegacyChapters = (project = {}, dispSettings = {}) => {
+  const htsmTelefon = cleanText(project.formState?.htsmTelefon || '');
+  const reservnr = cleanText(project.formState?.reservnr || '');
+  const larmTlc = extractPrimaryPhone(project.formState?.nodnummer || '') || 'Ej angivet';
+  const fjtklRawName = cleanText(project.namn || '');
+  const fjtklName = fjtklRawName
+    ? (/^TKL\b/i.test(fjtklRawName) ? fjtklRawName.replace(/^TKL\b/i, 'Fjtkl') : `Fjtkl ${fjtklRawName}`)
+    : 'Fjtkl';
+  const fjtklPhone = extractPrimaryPhone(project.telefonnummer || '') || 'Ej angivet';
+
+  return [
+    {
+      number: 2,
+      title: 'Allmänt',
+      paragraphs: [
+        'Dispositionsarbetsplanen gäller varje dag enligt beviljad Dispositionsarbetsplan och skall alltid medföras av säkerhetspersonal digitalt eller pappersform (TSM/Förare).',
+        'Dispositionen gäller enligt TTJ Modul 16 och med nedanstående tillägg. Alla aktiviteter i spårområdet skall ha en riskbedömning.',
+        'All personal och besökare inom spårområde skall förutom avtalad personlig skyddsutrustning bära varselkläder enligt TDOK 2016:0289.',
+        'Vid förändringar i Dispositionsarbetsplanen meddelar HTSM det till behörig personal.',
+      ],
+    },
+    {
+      number: 3,
+      title: 'Ansvarsfrågor',
+      paragraphs: [
+        'Det dagliga trafiksäkerhetsarbetet inom D-skyddsområdet leds av en tjänstgörande Huvudtillsyningsman (HTSM).',
+        'Innan arbeten får påbörjas skall en genomgång av Dispositionsarbetsplanen ske.',
+        'Arbetsledning, säkerhetspersonal kan beställa Dispositionsarbetsplanen hos tjänstgörande (HTSM).',
+      ],
+    },
+    {
+      number: 4,
+      title: 'Skyddsåtgärder',
+      paragraphs: [
+        'Respektive Tillsyningsman (TSM) ansvarar för att skyddsåtgärder enligt TTJ moduler utförs.',
+      ],
+    },
+    {
+      number: 5,
+      title: 'Säkerhetssamtal',
+      paragraphs: [
+        `Säkerhetssamtal till HTSM ska ske via Telefon ${htsmTelefon || 'Ej angivet'}`,
+        `Reservnr: ${reservnr || 'Ej angivet'}`,
+        `Telvxl öppnar ca: ${cleanText(dispSettings.forplaneraCa || '1 tim innan start')}.`,
+        'Tänk på samtalsdisciplinen, Alla samtal spelas in.',
+      ],
+    },
+    {
+      number: 6,
+      title: 'Huvudtillsyningsman (HTSM)',
+      paragraphs: [
+        'HTSM för anteckningar över, och beviljar A, E, L-Skydd, Spärrfärder och Växling.',
+      ],
+    },
+    {
+      number: 7,
+      title: 'Arbeten och trafikverksamheter',
+      paragraphs: [
+        'Alla skydd och fordonsrörelser inom D-Skyddsområdet skall ske enligt TTJ modul 16 D-skydd.',
+        'För Spärrfärd o Växling gäller halv siktfart. För TSA med spårföljare gäller Sth 20 km/h och att de är besiktigade och godkända.',
+      ],
+    },
+    {
+      number: 8,
+      title: 'Uppställning eller kvarlämnande av fordon/arbetsredskap',
+      paragraphs: [
+        'Uppställning av fordon och arbetsredskap inom D-skyddsområdet kräver medgivande från HTSM. Uppställning får ej ske under spänningssatt kontaktledning.',
+        'TSM skall se till att Fordon/arbetsredskap som lämnas utan tillsyn skall låsas med vagnförstängare, handbroms eller på annat sätt för att förhindras mot rullning eller att fordonen obehörigt används.',
+      ],
+    },
+    {
+      number: 9,
+      title: 'Förändringar i spåranläggningen',
+      paragraphs: [
+        'Skall alltid informeras HTSM.',
+        'Om detta sker skall ibruktagandebesiktning ske enligt gällande regler.',
+      ],
+    },
+    {
+      number: 10,
+      title: 'Åtgärder vid plankorsningar',
+      paragraphs: [
+        'Vägvakt enligt TTJ modul 7 samt spärrfärd och växling i enlighet med TTJ modul 9H pt 3.4 och TTJ modul 10 pt 3.4',
+      ],
+    },
+    {
+      number: 11,
+      title: 'Växlar',
+      paragraphs: [
+        'Skyddsåtgärder för att förhindra felaktig omläggning av en växel eller oavsiktligt signalbesked skall följande åtgärder vidtagas:',
+        'Vid passage av växlar/spårspärrar skall trafikverksamheter framföras så att rörelsen alltid kan stanna framför växel eller spårspärr i fel läge.',
+        'Oavsiktligt signalbesked förhindras genom att Tkl avspärrar sträckan.',
+      ],
+    },
+    {
+      number: 12,
+      title: 'Sidospår',
+      paragraphs: [
+        'Om D-Skyddet gränsar mot Sidospår får passage först ske efter godkännande av HTSM och Infrastrukturförvaltaren för det berörda sidospåret.',
+      ],
+    },
+    {
+      number: 13,
+      title: 'Telefonnummer',
+      lines: [
+        'Vid händelse eller olycka skall personal rapportera till:',
+        '1. SOS Alarm 112 eller',
+        `2. Larm TLC  ${larmTlc}`,
+        `2. HTSM ${htsmTelefon || 'Ej angivet'}${reservnr ? `  (${reservnr})` : ''}`,
+        '3. Ansvarig Arbetsledare',
+        'Vid behov',
+        'Bandriften 010- 127 10 20',
+        'Eldriften Syd 010- 127 02 30',
+        `${fjtklName || 'Fjtkl'}  ${fjtklPhone}`,
+      ],
+    },
+  ];
+};
+
+const addStaticTextPages = (doc, project, dispSettings, totalPages) => {
+  const chapters = getLegacyChapters(project, dispSettings);
   const chapterPages = {};
+  const groups = [
+    [2, 3, 4],
+    [5, 6, 7],
+    [8, 9, 10, 11],
+    [12, 13],
+  ];
+  const chapterMap = new Map(chapters.map((chapter) => [chapter.number, chapter]));
 
-  const layout = startCompactChapterPage(doc);
+  groups.forEach((group) => {
+    doc.addPage();
+    const pageNumber = doc.bufferedPageRange().count;
+    drawLegacyHeader(doc, dispSettings, totalPages, pageNumber);
+    const bodyX = doc.page.margins.left + 48;
+    const bodyWidth = doc.page.width - bodyX - doc.page.margins.right;
+    let y = 122;
 
-  chapters.forEach((chapter) => {
-    if (chapter.pageBreakBefore && (layout.currentColumn !== 0 || layout.y > layout.top + 1)) {
-      Object.assign(layout, startCompactChapterPage(doc));
-    }
+    group.forEach((chapterNumber) => {
+      const chapter = chapterMap.get(chapterNumber);
+      if (!chapter) return;
 
-    const chapterHeight = getCompactChapterHeight(doc, chapter, layout.columnWidth);
+      chapterPages[chapter.number] = pageNumber;
+      y = drawLegacySplitChapterHeading(doc, chapter.number, chapter.title, y) + 8;
 
-    if (layout.y + chapterHeight > layout.bottom) {
-      advanceCompactChapterColumn(doc, layout);
-    }
+      const lines = Array.isArray(chapter.lines) ? chapter.lines : chapter.paragraphs;
+      lines.forEach((line) => {
+        doc.font(PDF_FONTS.body).fontSize(12).fillColor('#000000').text(line, bodyX, y, {
+          width: bodyWidth,
+          lineGap: 2,
+        });
+        y = doc.y + 3;
+      });
 
-    chapterPages[chapter.number] = getCurrentPageNumber(doc);
-    layout.y = drawCompactChapterBlock(doc, chapter, layout.x, layout.y, layout.columnWidth) + 10;
+      y += 18;
+    });
   });
 
   return chapterPages;
@@ -1239,14 +934,18 @@ const createDispPdfBuffer = async (project = {}) => {
   const entries = buildEntries(project);
   const sections = buildSections(project);
   const dispSettings = buildDispSettings(project, entries);
-  const title = ['Dispositionsarbetsplan', dispSettings.rubrik || project.name].filter(Boolean).join(' ');
+  const totalPages = estimateLegacyTotalPages(entries, sections);
+  const title = ['Dispositionsarbetsplan', getPublicDispName(project, dispSettings) || dispSettings.rubrik || project.name].filter(Boolean).join(' ');
   const { doc, toBuffer } = createDocument(title);
 
-  addCoverPage(doc, project, entries, sections, dispSettings);
+  drawLegacyHeader(doc, dispSettings, totalPages, 1);
+  addCoverPage(doc, project, dispSettings);
   const contentsPageIndex = addContentsPage(doc);
+  doc.switchToPage(contentsPageIndex);
+  drawLegacyHeader(doc, dispSettings, totalPages, 2);
   const chapterPages = {
-    ...addEntriesAndSectionsPage(doc, project, entries, sections),
-    ...addStaticTextPages(doc, project),
+    ...addEntriesAndSectionsPage(doc, project, entries, sections, dispSettings, totalPages),
+    ...addStaticTextPages(doc, project, dispSettings, totalPages),
   };
   addContentsPage(doc, chapterPages, contentsPageIndex);
 
@@ -1256,4 +955,5 @@ const createDispPdfBuffer = async (project = {}) => {
 
 module.exports = {
   createDispPdfBuffer,
+  getPublicDispName,
 };

@@ -10,7 +10,8 @@ const { PrismaClient } = require('./generated/prisma/client');
 const { parseBlankett31Pdf } = require('./lib/blankett31Parser');
 const { parseDispPdf } = require('./lib/dispParser');
 const { createPlanWorkbookBuffer } = require('./lib/planExcelExport');
-const { createDispPdfBuffer } = require('./lib/dispPdfExport');
+const { importPlanWorkbookBuffer } = require('./lib/planExcelImport');
+const { createDispPdfBuffer, getPublicDispName } = require('./lib/dispPdfExport');
 const { buildSignalSections, expandDriftplatsSequence } = require('./lib/njdbDriftplatsService');
 require('dotenv').config();
 
@@ -22,6 +23,7 @@ const corsOptions = {
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Content-Disposition', 'Content-Type', 'Content-Length', 'X-Export-Filename'],
 };
 
 app.use(cors(corsOptions));
@@ -83,6 +85,26 @@ const decodeUploadedPdf = (fileData, fileName = '') => {
   }
 
   return pdfBuffer;
+};
+
+const decodeUploadedBinary = (fileData) => {
+  const raw = String(fileData || '').trim();
+  if (!raw) {
+    throw new Error('Fil-data saknas');
+  }
+
+  const dataUrlMatch = raw.match(/^data:([^;,]+)?(?:;charset=[^;]+)?;base64,(.+)$/i);
+  const base64Payload = (dataUrlMatch ? dataUrlMatch[2] : raw).replace(/\s+/g, '');
+  if (!base64Payload) {
+    throw new Error('Ogiltigt filformat');
+  }
+
+  const fileBuffer = Buffer.from(base64Payload, 'base64');
+  if (!fileBuffer.length) {
+    throw new Error('Ogiltigt filformat');
+  }
+
+  return fileBuffer;
 };
 
 const hydrateProjectSections = (project = null) => {
@@ -242,11 +264,19 @@ const sanitizeDownloadFileBase = (value = '', fallback = 'fil') => {
   const normalized = String(value || '')
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^A-Za-z0-9\-_ ]/g, '')
+    .replace(/[<>:"/\\|?*\u0000-\u001F]/g, '')
     .trim()
-    .replace(/\s+/g, '_');
+    .replace(/\s+/g, ' ');
 
   return normalized || fallback;
+};
+
+const buildDispExportBaseName = (project = {}) => {
+  const dispSettings = project?.formState?.dispSettings || {};
+  const explicitFileName = String(dispSettings.publiktDispnamn || '').trim();
+  const fallbackName = String(project?.name || getPublicDispName(project, dispSettings) || '').trim();
+  const baseName = explicitFileName || fallbackName;
+  return baseName.slice(0, 80);
 };
 
 const canAccessProject = (role = '', project = null) => {
@@ -638,7 +668,26 @@ app.get('/api/projects', authMiddleware, async (req, res) => {
         rows: true,
         sections: true,
         beteckningar: true,
-        tsmRows: true,
+        tsmRows: requesterRole === 'TSM'
+          ? {
+              where: {
+                userId: req.user.userId,
+              },
+              orderBy: {
+                createdAt: 'desc',
+              },
+            }
+          : {
+              where: {
+                isPending: true,
+              },
+              include: {
+                user: true,
+              },
+              orderBy: {
+                createdAt: 'desc',
+              },
+            },
         user: {
           select: {
             id: true,
@@ -1017,6 +1066,63 @@ app.get('/api/projects/:id/export-excel', authMiddleware, async (req, res) => {
   }
 });
 
+app.post('/api/projects/:id/import-excel', authMiddleware, async (req, res) => {
+  try {
+    const projectId = parseInt(req.params.id, 10);
+    if (Number.isNaN(projectId)) {
+      return res.status(400).json({ error: 'Ogiltigt projekt-ID' });
+    }
+
+    const { fileData } = req.body;
+    if (!fileData) {
+      return res.status(400).json({ error: 'Excel-data saknas' });
+    }
+
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      include: {
+        sections: true,
+        beteckningar: true,
+      },
+    });
+
+    if (!project) {
+      return res.status(404).json({ error: 'Projekt hittades inte' });
+    }
+
+    if (!canAccessProject(req.user?.role, project)) {
+      return res.status(403).json({ error: 'Du har inte behörighet att importera detta projekt' });
+    }
+
+    const buffer = decodeUploadedBinary(fileData);
+    const imported = await importPlanWorkbookBuffer(buffer, project);
+
+    const updatedProject = await prisma.project.update({
+      where: { id: projectId },
+      data: {
+        rows: imported.rows,
+      },
+      include: {
+        sections: true,
+        beteckningar: true,
+      },
+    });
+
+    res.json({
+      message: `Excel importerad (${imported.importedRowCount} rad(er))`,
+      importedRowCount: imported.importedRowCount,
+      importedSheetNames: imported.importedSheetNames,
+      project: hydrateProjectSections(updatedProject),
+    });
+  } catch (error) {
+    console.error('Fel vid import av Excel:', error);
+    if (error?.message === 'Fil-data saknas' || error?.message === 'Ogiltigt filformat') {
+      return res.status(400).json({ error: error.message });
+    }
+    res.status(500).json({ error: 'Kunde inte importera Excel' });
+  }
+});
+
 app.get('/api/projects/:id/export-disp', authMiddleware, async (req, res) => {
   try {
     const projectId = parseInt(req.params.id, 10);
@@ -1041,9 +1147,14 @@ app.get('/api/projects/:id/export-disp', authMiddleware, async (req, res) => {
     }
 
     const buffer = await createDispPdfBuffer(project);
-    const safeName = sanitizeDownloadFileBase(project.name, 'dispositionsarbetsplan');
+    const safeName = sanitizeDownloadFileBase(buildDispExportBaseName(project), 'dispositionsarbetsplan');
 
     res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+    res.setHeader('X-Export-Filename', `${safeName || 'dispositionsarbetsplan'}.pdf`);
     res.setHeader('Content-Disposition', `attachment; filename=\"${safeName || 'dispositionsarbetsplan'}.pdf\"`);
     res.send(Buffer.from(buffer));
   } catch (error) {
@@ -1151,6 +1262,10 @@ app.put('/api/row/approve/:rowId', authMiddleware, async (req, res) => {
   const userId = req.user.userId;
 
   try {
+    if (String(req.user?.role || '').toUpperCase() !== 'HTSM') {
+      return res.status(403).json({ error: 'Endast HTSM kan godkänna förplaneringar' });
+    }
+
     // Hämta HTSM-användaren
     const approver = await prisma.user.findUnique({ where: { id: userId } });
     if (!approver) return res.status(404).json({ error: 'HTSM-användare hittades inte' });
@@ -1221,6 +1336,37 @@ const newRow = {
   } catch (err) {
     console.error('❌ Fel vid godkännande:', err);
     res.status(500).json({ error: 'Kunde inte godkänna raden' });
+  }
+});
+
+app.put('/api/row/call-in/:rowId', authMiddleware, async (req, res) => {
+  const { rowId } = req.params;
+
+  try {
+    if (String(req.user?.role || '').toUpperCase() !== 'HTSM') {
+      return res.status(403).json({ error: 'Endast HTSM kan hänvisa till att ringa in' });
+    }
+
+    const row = await prisma.row.findUnique({
+      where: { id: Number(rowId) },
+    });
+
+    if (!row) {
+      return res.status(404).json({ error: 'Rad hittades inte' });
+    }
+
+    await prisma.row.update({
+      where: { id: row.id },
+      data: {
+        isPending: false,
+        approvedById: null,
+      },
+    });
+
+    res.json({ message: 'Förplaneringen hänvisades till att ringa in' });
+  } catch (err) {
+    console.error('❌ Fel vid hänvisning till att ringa in:', err);
+    res.status(500).json({ error: 'Kunde inte uppdatera förplaneringen' });
   }
 });
 

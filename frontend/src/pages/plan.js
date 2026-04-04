@@ -261,6 +261,7 @@ const Plan = () => {
   const [, setEditingBodyCell] = useState(null);
   const [bodyContextMenu, setBodyContextMenu] = useState({ open: false, x: 0, y: 0 });
   const bodyContextRef = useRef(null);
+  const excelImportInputRef = useRef(null);
   const [activeRowId, setActiveRowId] = useState(null);
   const [hotkeysOpen, setHotkeysOpen] = useState(false);
   const [btknPrefix, setBtknPrefix] = useState(() => {
@@ -855,6 +856,40 @@ const approveRow = async (rowId) => {
   }
 };
 
+const markRowAsCallInRequired = async (rowId) => {
+  try {
+    const tokenData = localStorage.getItem('user');
+    const token = tokenData ? JSON.parse(tokenData).token : null;
+
+    await axios.put(
+      apiUrl(`/api/row/call-in/${rowId}`),
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    toast({
+      title: 'Förplaneringen hänvisades till att ringa in',
+      status: 'info',
+      duration: 3000,
+      isClosable: true,
+    });
+
+    fetchProject();
+  } catch (error) {
+    console.error('Fel vid hänvisning till att ringa in:', error);
+    toast({
+      title: 'Kunde inte uppdatera förplaneringen',
+      status: 'error',
+      duration: 3000,
+      isClosable: true,
+    });
+  }
+};
+
 const handleApprovalChange = (field, value) => {
   setEditableTsmRow((prev) => ({
     ...prev,
@@ -1002,6 +1037,80 @@ const exportPlanToExcel = async () => {
   } catch (error) {
     console.error('Fel vid Excel-export:', error);
     alert('Kunde inte exportera Excel.');
+  }
+};
+
+const readFileAsDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(new Error('Kunde inte läsa Excel-filen.'));
+    reader.readAsDataURL(file);
+  });
+
+const importPlanFromExcel = async (event) => {
+  const file = event.target.files?.[0];
+  event.target.value = '';
+
+  if (!file) {
+    return;
+  }
+
+  const token = JSON.parse(localStorage.getItem('user'))?.token;
+  if (!token) {
+    alert('Ingen token.');
+    return;
+  }
+
+  try {
+    const fileData = await readFileAsDataUrl(file);
+    const response = await fetch(apiUrl(`/api/projects/${id}/import-excel`), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        fileName: file.name,
+        fileData,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || 'Kunde inte importera Excel');
+    }
+
+    const data = await response.json();
+    const importedProject = data?.project;
+    if (importedProject) {
+      setProject(importedProject);
+      setRows(
+        (Array.isArray(importedProject.rows) ? importedProject.rows : []).map((row) => ({
+          ...row,
+          selectedAreas: Array.isArray(row.selections)
+            ? row.selections.map((selected, index) => (selected ? index : null)).filter((index) => index !== null)
+            : [],
+        }))
+      );
+    }
+
+    toast({
+      title: 'Excel importerad',
+      description: data?.message || 'Plankan uppdaterades från Excel-filen.',
+      status: 'success',
+      duration: 3000,
+      isClosable: true,
+    });
+  } catch (error) {
+    console.error('Fel vid Excel-import:', error);
+    toast({
+      title: 'Import misslyckades',
+      description: error?.message || 'Kunde inte importera Excel.',
+      status: 'error',
+      duration: 4000,
+      isClosable: true,
+    });
   }
 };
 
@@ -2341,6 +2450,23 @@ if (loading || !project) {
           </Button>
           <Button variant="outline" borderRadius="full" borderColor="blue.200" bg="white" onClick={exportPlanToExcel} size="sm">
             Exportera planka
+          </Button>
+          <input
+            ref={excelImportInputRef}
+            type="file"
+            accept=".xlsx"
+            onChange={importPlanFromExcel}
+            style={{ display: 'none' }}
+          />
+          <Button
+            variant="outline"
+            borderRadius="full"
+            borderColor="blue.200"
+            bg="white"
+            onClick={() => excelImportInputRef.current?.click()}
+            size="sm"
+          >
+            Importera Excel
           </Button>
           <Button variant="outline" borderRadius="full" borderColor="blue.200" bg="white" onClick={() => setArchivedModalOpen(true)} size="sm">
             Avslutade
@@ -4180,6 +4306,17 @@ onChange={() =>
         Avbryt
       </Button>
       <Button
+        variant="outline"
+        colorScheme="red"
+        mr={3}
+        onClick={() => {
+          markRowAsCallInRequired(editableTsmRow.id);
+          onCloseApprovalModal();
+        }}
+      >
+        Ring in
+      </Button>
+      <Button
         colorScheme="green"
         onClick={() => {
           approveRow(editableTsmRow.id);
@@ -4235,20 +4372,29 @@ onChange={() =>
                     </Text>
                   )}
                 </Box>
-                <Button
-                  colorScheme="blue"
-                  onClick={() => {
-                    setEditableTsmRow({
-                      ...row,
-                      namn: row.namn || `${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim(),
-                      telefon: row.telefon || row.user?.phone || '',
-                    });
-                    onClosePendingPlans();
-                    onOpenApprovalModal();
-                  }}
-                >
-                  Öppna i plankan
-                </Button>
+                <HStack>
+                  <Button
+                    variant="outline"
+                    colorScheme="red"
+                    onClick={() => markRowAsCallInRequired(row.id)}
+                  >
+                    Ring in
+                  </Button>
+                  <Button
+                    colorScheme="blue"
+                    onClick={() => {
+                      setEditableTsmRow({
+                        ...row,
+                        namn: row.namn || `${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim(),
+                        telefon: row.telefon || row.user?.phone || '',
+                      });
+                      onClosePendingPlans();
+                      onOpenApprovalModal();
+                    }}
+                  >
+                    Granska
+                  </Button>
+                </HStack>
               </Flex>
             </Box>
           ))

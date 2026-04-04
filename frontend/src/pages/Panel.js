@@ -345,6 +345,53 @@ export default function Panel() {
     [getProjectNextPlanDate, getRowPlanDate, getUserPlansForProject]
   );
 
+  const getLatestNextPlanningStatus = useCallback(
+    (project) => {
+      const nextPlanDate = getProjectNextPlanDate(project);
+      if (!nextPlanDate) {
+        return { status: 'none' };
+      }
+
+      const matchingRows = getUserPlansForProject(project)
+        .filter((row) => getRowPlanDate(row) === nextPlanDate)
+        .sort((left, right) => new Date(right?.createdAt || 0) - new Date(left?.createdAt || 0));
+
+      const latestRow = matchingRows[0];
+      if (!latestRow) {
+        return { status: 'none' };
+      }
+
+      if (latestRow.isPending) {
+        return {
+          status: 'pending',
+          title: 'Väntar på svar från HTSM',
+          description: 'Förplanering skickad. Du måste gå in i appen igen för att se om HTSM har godkänt den eller om du måste ringa in din förplanering.',
+          buttonLabel: 'Förplanering skickad',
+          color: 'yellow',
+        };
+      }
+
+      if (latestRow.approvedById) {
+        return {
+          status: 'approved',
+          title: 'Godkänd av HTSM',
+          description: 'Din förplanering är godkänd.',
+          buttonLabel: 'Godkänd av HTSM',
+          color: 'green',
+        };
+      }
+
+      return {
+        status: 'call_in_required',
+        title: 'Ring in',
+        description: 'HTSM kunde inte acceptera din förplanering. Ring in din förplanering.',
+        buttonLabel: 'Ring in',
+        color: 'red',
+      };
+    },
+    [getProjectNextPlanDate, getRowPlanDate, getUserPlansForProject]
+  );
+
   const isPlanningClosedForProject = useCallback(
     (project) => {
       const nextEntry = getNextPlanEntry(project);
@@ -432,7 +479,7 @@ export default function Panel() {
 
       toast({
         title: 'Förplaneringen är skickad.',
-        description: 'HTSM ringer upp.',
+        description: 'Du måste gå in i appen igen för att se om HTSM har godkänt den eller om du måste ringa in din förplanering.',
         status: 'success',
         duration: null,
         isClosable: true,
@@ -473,7 +520,8 @@ export default function Panel() {
       }
 
       setExportingProjectId(project.id);
-      const response = await fetch(apiUrl(`/api/projects/${project.id}/export-disp`), {
+      const response = await fetch(apiUrl(`/api/projects/${project.id}/export-disp?ts=${Date.now()}`), {
+        cache: 'no-store',
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -484,9 +532,11 @@ export default function Panel() {
       }
 
       const blob = await response.blob();
+      const explicitFilename = response.headers.get('X-Export-Filename') || '';
       const contentDisposition = response.headers.get('Content-Disposition') || '';
       const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/i);
-      const filename = filenameMatch?.[1] || `${project.name || 'dispositionsarbetsplan'}.pdf`;
+      const fallbackFilename = `${project.name || 'dispositionsarbetsplan'}-${Date.now()}.pdf`;
+      const filename = explicitFilename || filenameMatch?.[1] || fallbackFilename;
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -620,15 +670,42 @@ export default function Panel() {
                 {projects.map((project) => (
                   <li
                     key={project.id}
-                    className="border rounded p-4 flex justify-between items-center transition duration-200 hover:shadow-md"
+                    className="border rounded p-4 flex justify-between items-center transition duration-200 hover:shadow-md gap-4"
                   >
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-lg text-gray-800">
                         {project.name}
                       </h3>
                       {project.plats && (
                         <p className="text-sm text-gray-500">{project.plats}</p>
                       )}
+                      {(() => {
+                        const planningStatus = getLatestNextPlanningStatus(project);
+                        if (planningStatus.status === 'none') return null;
+
+                        const colorClasses = {
+                          yellow: 'bg-yellow-50 border-yellow-200 text-yellow-900',
+                          green: 'bg-green-50 border-green-200 text-green-900',
+                          red: 'bg-red-50 border-red-200 text-red-900',
+                        };
+
+                        return (
+                          <div className={`mt-3 rounded-xl border px-3 py-3 ${colorClasses[planningStatus.color] || 'bg-gray-50 border-gray-200 text-gray-900'}`}>
+                            <p className="text-xs font-bold uppercase tracking-wide">
+                              Förplanering
+                            </p>
+                            <p className="mt-1 text-sm font-semibold">
+                              {planningStatus.title}
+                            </p>
+                            <p className="mt-1 text-xs leading-5">
+                              {planningStatus.description}
+                            </p>
+                            <p className="mt-2 text-[11px] font-semibold opacity-80">
+                              Kontrollera alltid status i appen innan arbetet påbörjas.
+                            </p>
+                          </div>
+                        );
+                      })()}
                     </div>
                     <div className="flex space-x-2">
                       {user?.role === 'TSM' && (
@@ -645,6 +722,40 @@ export default function Panel() {
                       {user?.role === 'TSM' && (
                         <Button
                           onClick={() => {
+                            const planningStatus = getLatestNextPlanningStatus(project);
+                            if (planningStatus.status === 'pending') {
+                              toast({
+                                title: planningStatus.title,
+                                description: planningStatus.description,
+                                status: 'info',
+                                duration: 5000,
+                                isClosable: true,
+                              });
+                              return;
+                            }
+
+                            if (planningStatus.status === 'approved') {
+                              toast({
+                                title: planningStatus.title,
+                                description: planningStatus.description,
+                                status: 'success',
+                                duration: 4000,
+                                isClosable: true,
+                              });
+                              return;
+                            }
+
+                            if (planningStatus.status === 'call_in_required') {
+                              toast({
+                                title: planningStatus.title,
+                                description: planningStatus.description,
+                                status: 'error',
+                                duration: 5000,
+                                isClosable: true,
+                              });
+                              return;
+                            }
+
                             if (hasExistingNextPlanning(project)) {
                               toast({
                                 title: 'Förplanering finns redan',
@@ -674,13 +785,12 @@ export default function Panel() {
                           colorScheme="blue"
                           isDisabled={!getProjectNextPlanDate(project)}
                         >
-                          {!getProjectNextPlanDate(project)
-                            ? 'Ingen planering'
-                            : hasExistingNextPlanning(project)
-                              ? 'Redan förplanerad'
-                              : isPlanningClosedForProject(project)
-                                ? 'Ring in'
-                                : 'Förplanera'}
+                          {(() => {
+                            if (!getProjectNextPlanDate(project)) return 'Ingen planering';
+                            const planningStatus = getLatestNextPlanningStatus(project);
+                            if (planningStatus.status !== 'none') return planningStatus.buttonLabel;
+                            return isPlanningClosedForProject(project) ? 'Ring in' : 'Förplanera';
+                          })()}
                         </Button>
                       )}
                     </div>
