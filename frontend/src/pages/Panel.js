@@ -78,6 +78,12 @@ const getDesiredEndTime = (project) => {
   return `${nextHours}:${nextMinutes}`;
 };
 
+const getRowSortTimestamp = (row = {}) => {
+  const rawValue = row?.createdAt || row?.skapadDatum || row?.updatedAt || row?.datum || '';
+  const timestamp = new Date(rawValue).getTime();
+  return Number.isFinite(timestamp) ? timestamp : 0;
+};
+
 const buildPlanEntries = (project) => {
   const entries = Array.isArray(project?.formState?.blankett31Entries)
     ? project.formState.blankett31Entries.filter((entry) => entry?.startDate || entry?.beteckning)
@@ -354,11 +360,17 @@ export default function Panel() {
 
       const matchingRows = getUserPlansForProject(project)
         .filter((row) => getRowPlanDate(row) === nextPlanDate)
-        .sort((left, right) => new Date(right?.createdAt || 0) - new Date(left?.createdAt || 0));
+        .sort((left, right) => getRowSortTimestamp(right) - getRowSortTimestamp(left));
 
       const latestRow = matchingRows[0];
       if (!latestRow) {
-        return { status: 'none' };
+        return {
+          status: 'none',
+          title: 'Ingen aktiv förplanering',
+          description: 'Skicka en förplanering för projektets nästa Dag/Natt här i appen.',
+          buttonLabel: 'Förplanera',
+          color: 'gray',
+        };
       }
 
       if (latestRow.isPending) {
@@ -371,7 +383,7 @@ export default function Panel() {
         };
       }
 
-      if (latestRow.approvedById) {
+      if (latestRow.approvedById || latestRow.sourceRowId) {
         return {
           status: 'approved',
           title: 'Godkänd av HTSM',
@@ -681,9 +693,8 @@ export default function Panel() {
                       )}
                       {(() => {
                         const planningStatus = getLatestNextPlanningStatus(project);
-                        if (planningStatus.status === 'none') return null;
-
                         const colorClasses = {
+                          gray: 'bg-gray-50 border-gray-200 text-gray-900',
                           yellow: 'bg-yellow-50 border-yellow-200 text-yellow-900',
                           green: 'bg-green-50 border-green-200 text-green-900',
                           red: 'bg-red-50 border-red-200 text-red-900',
@@ -788,8 +799,10 @@ export default function Panel() {
                           {(() => {
                             if (!getProjectNextPlanDate(project)) return 'Ingen planering';
                             const planningStatus = getLatestNextPlanningStatus(project);
-                            if (planningStatus.status !== 'none') return planningStatus.buttonLabel;
-                            return isPlanningClosedForProject(project) ? 'Ring in' : 'Förplanera';
+                            if (planningStatus.status === 'none') {
+                              return isPlanningClosedForProject(project) ? 'Ring in' : 'Förplanera';
+                            }
+                            return planningStatus.buttonLabel;
                           })()}
                         </Button>
                       )}

@@ -673,7 +673,7 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
         sectionColumns.granspunkter.width,
         highlightTokens
       );
-      doc.font(PDF_FONTS.bodyBold).fontSize(12).text(row.spar, left + sectionColumns.spar.x, y, {
+      doc.fillColor('#000000').font(PDF_FONTS.bodyBold).fontSize(12).text(row.spar, left + sectionColumns.spar.x, y, {
         width: sectionColumns.spar.width,
         lineBreak: false,
       });

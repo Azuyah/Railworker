@@ -260,6 +260,12 @@ const isPlanningWindowOpen = (entry) => Date.now() < getPlanEntryCutoffTimestamp
 const getRowPlanDate = (row = {}) =>
   normalizeDateForInput(row?.begardDatum || row?.datum || row?.startdatum || '');
 
+const getRowSortTimestamp = (row = {}) => {
+  const rawValue = row?.createdAt || row?.skapadDatum || row?.updatedAt || row?.datum || '';
+  const timestamp = new Date(rawValue).getTime();
+  return Number.isFinite(timestamp) ? timestamp : 0;
+};
+
 const sanitizeDownloadFileBase = (value = '', fallback = 'fil') => {
   const normalized = String(value || '')
     .normalize('NFKD')
@@ -1295,6 +1301,7 @@ const newRow = {
   id: Date.now(),
   userId: row.userId || null,
   sourceRowId: row.id,
+  approvedById: userId,
   datum: row.datum,
   anordning: row.anordning,
   section: row.section?.name || '',
@@ -1313,6 +1320,7 @@ const newRow = {
   begard: row.begard || '',
   begardDatum: row.begardDatum || null,
   planEntryKey: row.planEntryKey || null,
+  createdAt: new Date().toISOString(),
 };
 
     // Uppdatera projektets JSON-fält med ny rad

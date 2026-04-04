@@ -4381,18 +4381,10 @@ onChange={() =>
                     Ring in
                   </Button>
                   <Button
-                    colorScheme="blue"
-                    onClick={() => {
-                      setEditableTsmRow({
-                        ...row,
-                        namn: row.namn || `${row.user?.firstName || ''} ${row.user?.lastName || ''}`.trim(),
-                        telefon: row.telefon || row.user?.phone || '',
-                      });
-                      onClosePendingPlans();
-                      onOpenApprovalModal();
-                    }}
+                    colorScheme="green"
+                    onClick={() => approveRow(row.id)}
                   >
-                    Granska
+                    Godkänn
                   </Button>
                 </HStack>
               </Flex>
