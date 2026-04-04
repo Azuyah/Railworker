@@ -11,6 +11,62 @@ const BASE_PHONE_OPTIONS = [
   '010-127 42 25 Storvik - Frövi',
 ];
 
+const normalizeDistrictKey = (value = '') =>
+  String(value || '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+const DISTRICT_CONTACTS = {
+  malmo: {
+    emergency: '010-127 12 99 Malmö',
+    bandrift: '010-127 10 20',
+    eldrift: '010-127 02 30',
+  },
+  gavle: {
+    emergency: '010-127 42 99 Gävle',
+    bandrift: '010-127 40 20',
+    eldrift: '010-127 01 30',
+  },
+  goteborg: {
+    emergency: '010-127 22 99 Göteborg',
+    bandrift: '010-127 20 20',
+    eldrift: '010-127 02 20',
+  },
+  hallsberg: {
+    emergency: '010-127 45 99 Hallsberg',
+    bandrift: '010-127 40 25',
+    eldrift: '010-127 01 60',
+  },
+  norrkoping: {
+    emergency: '010-127 33 99 Norrköping',
+    bandrift: '010-127 30 21',
+    eldrift: '010-127 02 10',
+  },
+  stockholm: {
+    emergency: '010-127 32 99 Stockholm',
+    bandrift: '010-127 30 20',
+    eldrift: '010-127 01 40 N / 010-127 01 50 S',
+  },
+  ange: {
+    emergency: '010-127 43 99 Ånge',
+    bandrift: '010-127 40 24',
+    eldrift: '010-127 01 20',
+  },
+  boden: {
+    emergency: '010-127 44 99 Boden',
+    bandrift: '010-127 40 23',
+    eldrift: '010-127 01 10',
+  },
+  'goteborg stockholm': {
+    emergency: '',
+    bandrift: '',
+    eldrift: '',
+  },
+};
+
 const MALMO_RULES = [
   {
     phone: '010-127 12 32 Hässleholm',
@@ -83,6 +139,35 @@ const splitCatalogTokens = (value = '') =>
     .filter(Boolean);
 
 export const fjtklPhoneOptions = BASE_PHONE_OPTIONS;
+
+export const emergencyPhoneOptions = Array.from(
+  new Set(
+    Object.values(DISTRICT_CONTACTS)
+      .map((entry) => entry.emergency)
+      .filter(Boolean)
+  )
+);
+
+export const bandriftPhoneOptions = Array.from(
+  new Set(
+    Object.values(DISTRICT_CONTACTS)
+      .map((entry) => entry.bandrift)
+      .filter(Boolean)
+  )
+);
+
+export const eldriftPhoneOptions = Array.from(
+  new Set(
+    Object.values(DISTRICT_CONTACTS)
+      .map((entry) => entry.eldrift)
+      .filter(Boolean)
+  )
+);
+
+export const getDistrictContactDefaults = (districtName = '') => {
+  const normalized = normalizeDistrictKey(districtName);
+  return DISTRICT_CONTACTS[normalized] || null;
+};
 
 export const getCatalogPhoneOptions = (extraOptions = []) =>
   Array.from(new Set([...BASE_PHONE_OPTIONS, ...extraOptions].filter(Boolean)));

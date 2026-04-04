@@ -415,6 +415,7 @@ const addCoverPage = (doc, project, dispSettings) => {
   const banobjektY = 390;
   const banLabel = 'Banobjekt-Vnr';
   const banValue = cleanText(dispSettings.banobjektVnr || 'Ej angivet');
+  const htsmTelefon = cleanText(project.formState?.htsmTelefon || '');
   const banLabelWidth = doc.font(PDF_FONTS.headerBoldItalic).fontSize(16).widthOfString(`${banLabel} `);
   const banValueWidth = doc.font(PDF_FONTS.headerBoldItalic).fontSize(16).widthOfString(banValue);
   const banLineX = left + (width - banLabelWidth - banValueWidth) / 2;
@@ -429,28 +430,38 @@ const addCoverPage = (doc, project, dispSettings) => {
     width,
     align: 'center',
   });
+  const forplaneraY = htsmTelefon ? 482 : 452;
+  if (htsmTelefon) {
+    doc.fillColor('#000000').font(PDF_FONTS.headerBold).fontSize(20).text(`HTSM: ${htsmTelefon}`, left, 448, {
+      width,
+      align: 'center',
+    });
+  }
+  doc.fillColor('#ff0000').font(PDF_FONTS.headerBold).fontSize(16).text(
+    `Förplanera ca:${cleanText(dispSettings.forplaneraCa || '1 tim innan start')}`,
+    left,
+    forplaneraY,
+    {
+      width,
+      align: 'center',
+    }
+  );
 
-  doc.font(PDF_FONTS.header).fontSize(18).fillColor('#000000').text(displayRouteLine || 'Ej angivet', left + 122, 536, {
+  doc.font(PDF_FONTS.header).fontSize(18).fillColor('#000000').text(displayRouteLine || 'Ej angivet', left + 122, 560, {
     width: width - 244,
     align: 'left',
     lineGap: 4,
   });
-
-  doc.fillColor('#ff0000').font(PDF_FONTS.headerBold).fontSize(16).text(
-    `Förplanera ca:${cleanText(dispSettings.forplaneraCa || '1 tim innan start')}`,
-    left + 120,
-    640
-  );
   doc.fillColor('#000000').font(PDF_FONTS.body).fontSize(12).text(
     'Gränspunkter som ej får passeras utan TKL:s medgivande är:',
     left + 58,
-    688,
+    712,
     {
       width: width - 116,
       align: 'left',
     }
   );
-  doc.fillColor('#ff0000').font(PDF_FONTS.body).fontSize(12).text(boundary || 'Ej angivet', left + 58, 736, {
+  doc.fillColor('#ff0000').font(PDF_FONTS.body).fontSize(12).text(boundary || 'Ej angivet', left + 58, 760, {
     width: width - 116,
     align: 'left',
   });
@@ -550,14 +561,23 @@ const getLegacyRowHeight = (doc, row, columns, fontSize = 11) =>
     return Math.max(maxHeight, cellHeight);
   }, fontSize + 2)) + 2;
 
-const drawLegacyBoundarySegment = (doc, text, x, y, highlightTokens = []) => {
+const drawLegacyBoundarySegment = (doc, text, x, y, maxWidth, highlightTokens = []) => {
   const normalizedText = cleanText(text);
   const dashMatch = normalizedText.match(/^(.+?)\s*[–-]\s*(.+)$/);
-  doc.font(PDF_FONTS.bodyBold).fontSize(12);
+  const fitFontSize = () => {
+    const sizes = [12, 11.5, 11, 10.5, 10, 9.5, 9];
+    if (!maxWidth) return 12;
+    return sizes.find((size) => {
+      doc.font(PDF_FONTS.bodyBold).fontSize(size);
+      return doc.widthOfString(normalizedText) <= maxWidth;
+    }) || 9;
+  };
+  const fontSize = fitFontSize();
+  doc.font(PDF_FONTS.bodyBold).fontSize(fontSize);
 
   if (!dashMatch) {
     const color = highlightTokens.includes(normalizeBoundaryToken(normalizedText)) ? '#c1121f' : '#000000';
-    doc.fillColor(color).text(normalizedText, x, y, { lineBreak: false });
+    doc.fillColor(color).text(normalizedText, x, y, { width: maxWidth, lineBreak: false });
     return;
   }
 
@@ -571,7 +591,10 @@ const drawLegacyBoundarySegment = (doc, text, x, y, highlightTokens = []) => {
   const leftWidth = doc.widthOfString(leftToken);
   doc.fillColor('#000000').text(separator, x + leftWidth, y, { lineBreak: false });
   const separatorWidth = doc.widthOfString(separator);
-  doc.fillColor(rightColor).text(rightToken, x + leftWidth + separatorWidth, y, { lineBreak: false });
+  doc.fillColor(rightColor).text(rightToken, x + leftWidth + separatorWidth, y, {
+    width: Math.max(0, (maxWidth || 0) - leftWidth - separatorWidth),
+    lineBreak: false,
+  });
 };
 
 const drawLegacyChapterOneTable = (doc, rows, config) => {
@@ -642,7 +665,14 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
         width: sectionColumns.name.width,
         lineBreak: false,
       });
-      drawLegacyBoundarySegment(doc, row.granspunkter, left + sectionColumns.granspunkter.x, y, highlightTokens);
+      drawLegacyBoundarySegment(
+        doc,
+        row.granspunkter,
+        left + sectionColumns.granspunkter.x,
+        y,
+        sectionColumns.granspunkter.width,
+        highlightTokens
+      );
       doc.font(PDF_FONTS.bodyBold).fontSize(12).text(row.spar, left + sectionColumns.spar.x, y, {
         width: sectionColumns.spar.width,
         lineBreak: false,
@@ -772,6 +802,8 @@ const addEntriesAndSectionsPage = (doc, project, entries, sections, dispSettings
 const getLegacyChapters = (project = {}, dispSettings = {}) => {
   const htsmTelefon = cleanText(project.formState?.htsmTelefon || '');
   const reservnr = cleanText(project.formState?.reservnr || '');
+  const bandriftnummer = cleanText(project.formState?.bandriftnummer || '');
+  const eldriftnummer = cleanText(project.formState?.eldriftnummer || '');
   const larmTlc = extractPrimaryPhone(project.formState?.nodnummer || '') || 'Ej angivet';
   const fjtklRawName = cleanText(project.namn || '');
   const fjtklName = fjtklRawName
@@ -880,10 +912,10 @@ const getLegacyChapters = (project = {}, dispSettings = {}) => {
         `2. HTSM ${htsmTelefon || 'Ej angivet'}${reservnr ? `  (${reservnr})` : ''}`,
         '3. Ansvarig Arbetsledare',
         'Vid behov',
-        'Bandriften 010- 127 10 20',
-        'Eldriften Syd 010- 127 02 30',
+        ...(bandriftnummer ? [`Bandriften ${bandriftnummer}`] : []),
+        ...(eldriftnummer ? [`Eldriften ${eldriftnummer}`] : []),
         `${fjtklName || 'Fjtkl'}  ${fjtklPhone}`,
-      ],
+      ].filter(Boolean),
     },
   ];
 };

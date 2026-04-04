@@ -68,8 +68,14 @@ const sheetNameFromDate = (dateValue = '') => {
   return `${match[2]}-${match[3]}`;
 };
 
+const sanitizeWorksheetName = (value = '') =>
+  String(value || '')
+    .replace(/[\\/*?:[\]]/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim();
+
 const ensureUniqueWorksheetName = (baseName, usedNames) => {
-  const trimmedBase = String(baseName || 'Planka').slice(0, 31) || 'Planka';
+  const trimmedBase = sanitizeWorksheetName(baseName || 'Planka').slice(0, 31) || 'Planka';
   if (!usedNames.has(trimmedBase)) {
     usedNames.add(trimmedBase);
     return trimmedBase;
@@ -479,6 +485,18 @@ const buildWorksheetPlans = (project) => {
   });
 };
 
+const placePlanSheetsFirst = (workbook, planWorksheets = []) => {
+  const planIds = new Set(planWorksheets.filter(Boolean).map((worksheet) => worksheet.id));
+  const orderedSheets = [
+    ...planWorksheets.filter(Boolean),
+    ...workbook.worksheets.filter((worksheet) => worksheet && !planIds.has(worksheet.id)),
+  ];
+
+  orderedSheets.forEach((worksheet, index) => {
+    worksheet.orderNo = index;
+  });
+};
+
 const rowMatchesEntry = (row, entry) => {
   if (row?.planEntryKey && entry?.key) {
     return String(row.planEntryKey) === String(entry.key);
@@ -648,6 +666,7 @@ const createPlanWorkbookBuffer = async (project) => {
       .map((sheet) => String(sheet.name || ''))
       .filter(Boolean)
   );
+  const createdPlanSheets = [];
 
   worksheetPlans.forEach((plan, index) => {
     const fallbackName = plan.sheetName || sheetNameFromDate(plan.entries[0]?.startDate);
@@ -656,9 +675,11 @@ const createPlanWorkbookBuffer = async (project) => {
     worksheet.name = sheetName;
     const matchingRows = rows.filter((row) => rowMatchesEntries(row, plan.entries));
     fillWorksheet(worksheet, project, plan.entries, matchingRows);
+    createdPlanSheets.push(worksheet);
   });
 
   workbook.removeWorksheet(templateSheet.id);
+  placePlanSheetsFirst(workbook, createdPlanSheets);
 
   return workbook.xlsx.writeBuffer();
 };

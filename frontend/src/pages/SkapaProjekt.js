@@ -5,6 +5,10 @@ import { getSectionLabel } from '../utils/sectionLabels';
 import { apiUrl } from '../lib/api';
 import {
   fjtklPhoneOptions,
+  emergencyPhoneOptions,
+  bandriftPhoneOptions,
+  eldriftPhoneOptions,
+  getDistrictContactDefaults,
   getCatalogPhoneOptions,
   matchFjtklPhoneFromCatalog,
 } from '../data/fjtklCatalog';
@@ -12,22 +16,12 @@ import {
 const fjtklNameOptions = [
   'Malmö',
   'Gävle',
-  'Göteborg Stockholm',
+  'Göteborg',
+  'Stockholm',
   'Hallsberg',
   'Norrköping',
   'Boden',
   'Ånge',
-];
-
-const emergencyPhoneOptions = [
-  '010-127 12 99 Malmö',
-  '010-127 42 99 Gävle',
-  '010-127 22 99 Göteborg',
-  '010-127 45 99 Hallsberg',
-  '010-127 33 99 Norrköping',
-  '010-127 32 99 Stockholm',
-  '010-127 43 99 Ånge',
-  '010-127 44 99 Boden',
 ];
 
 const htsmPhoneOptions = [
@@ -71,6 +65,19 @@ const defaultBlankett31Entry = () => ({
   avslutningssignatur: '',
 });
 
+const defaultFjtklBlock = () => ({
+  namn: '',
+  telefonnummer: '',
+  nodnummer: '',
+  bandriftnummer: '',
+  eldriftnummer: '',
+  uttagningstid: '',
+  avslutningstid: '',
+  signatur: '',
+  avslutningssignatur: '',
+  avstamt: false,
+});
+
 const normalizeBlankett31Entry = (entry = {}) => ({
   ...defaultBlankett31Entry(),
   ...entry,
@@ -108,7 +115,7 @@ const generatePlanJobId = () =>
 const buildSuggestedPlanJobName = (entries = [], index = 0) => {
   const datedEntries = entries.filter((entry) => entry?.startDate);
   if (datedEntries.length !== 1) {
-    return `Jobb ${index + 1}`;
+    return `Dag/Natt ${index + 1}`;
   }
 
   const entry = datedEntries[0];
@@ -120,8 +127,10 @@ const buildSuggestedPlanJobName = (entries = [], index = 0) => {
     && entry.endDate
     && entry.endDate !== entry.startDate
   );
-  const prefix = spansNight || rawStartHour >= 18 ? 'Nm' : 'Dag';
-  return [prefix, dayLabel].filter(Boolean).join(' ') || `Jobb ${index + 1}`;
+  void rawStartHour;
+  void spansNight;
+  void dayLabel;
+  return `Dag/Natt ${index + 1}`;
 };
 
 const compareBlankett31Entries = (left = {}, right = {}) => {
@@ -240,7 +249,7 @@ const normalizeSectionSortOrder = (items = []) =>
   }));
 
 const defaultDispSettings = () => ({
-  publiktDispnamn: '',
+  publiktDispnamn: 'Disp',
   rubrik: '',
   banNamn: '',
   veckaOchDagar: '',
@@ -249,6 +258,17 @@ const defaultDispSettings = () => ({
   forplaneraCa: '1 tim innan start',
   rodmarkeradeGranspunkter: '',
 });
+
+const shouldReplaceDistrictDefault = (currentValue = '', previousDefault = '', nextDefault = '') => {
+  const current = String(currentValue || '').trim();
+  if (!nextDefault) {
+    return false;
+  }
+  if (!current) {
+    return true;
+  }
+  return Boolean(previousDefault) && current === previousDefault;
+};
 
 const getIsoWeek = (dateValue = '') => {
   const match = String(dateValue || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -323,6 +343,11 @@ const shouldReplaceDispSetting = (currentValue = '', nextValue = '') => {
   return false;
 };
 
+const getDefaultHighlightedBoundaries = (entries = []) =>
+  String(
+    entries.find((entry) => String(entry?.granspunkt || '').trim())?.granspunkt || ''
+  ).trim();
+
 const parseDriftplatsEndpoints = (value = '') => {
   const parts = String(value || '')
     .split(',')
@@ -384,6 +409,8 @@ const SkapaProjekt = () => {
   const [namn, setNamn] = useState('');
   const [telefonnummer, setTelefonnummer] = useState('');
   const [nodnummer, setNodnummer] = useState('');
+  const [bandriftnummer, setBandriftnummer] = useState('');
+  const [eldriftnummer, setEldriftnummer] = useState('');
   const [htsmTelefon, setHtsmTelefon] = useState('');
   const [reservnr, setReservnr] = useState('');
   const [avstamt, setAvstamt] = useState(false);
@@ -485,6 +512,21 @@ const SkapaProjekt = () => {
     alert(`Matchade telefonkatalogen till ${match.phone}`);
   };
 
+  const applyDistrictDefaultsToPrimaryFjtkl = (nextName, previousName = namn) => {
+    const previousDefaults = getDistrictContactDefaults(previousName) || {};
+    const nextDefaults = getDistrictContactDefaults(nextName) || {};
+
+    if (shouldReplaceDistrictDefault(nodnummer, previousDefaults.emergency, nextDefaults.emergency)) {
+      setNodnummer(nextDefaults.emergency || '');
+    }
+    if (shouldReplaceDistrictDefault(bandriftnummer, previousDefaults.bandrift, nextDefaults.bandrift)) {
+      setBandriftnummer(nextDefaults.bandrift || '');
+    }
+    if (shouldReplaceDistrictDefault(eldriftnummer, previousDefaults.eldrift, nextDefaults.eldrift)) {
+      setEldriftnummer(nextDefaults.eldrift || '');
+    }
+  };
+
   const applyCatalogMatchToEntry = (index) => {
     const entry = blankett31Entries[index];
     const match = matchFjtklPhoneFromCatalog({
@@ -574,22 +616,36 @@ const SkapaProjekt = () => {
   const addFjtklBlock = () => {
     setFjtklBlocks([
       ...fjtklBlocks,
-      {
-        namn: '',
-        telefonnummer: '',
-        nodnummer: '',
-        uttagningstid: '',
-        avslutningstid: '',
-        signatur: '',
-        avslutningssignatur: '',
-        avstamt: false,
-      },
+      defaultFjtklBlock(),
     ]);
   };
 
   const updateFjtklBlock = (index, field, value) => {
     const updated = [...fjtklBlocks];
-    updated[index][field] = value;
+    const currentBlock = {
+      ...defaultFjtklBlock(),
+      ...(updated[index] || {}),
+    };
+    const nextBlock = {
+      ...currentBlock,
+      [field]: value,
+    };
+
+    if (field === 'namn') {
+      const previousDefaults = getDistrictContactDefaults(currentBlock.namn) || {};
+      const nextDefaults = getDistrictContactDefaults(value) || {};
+      if (shouldReplaceDistrictDefault(currentBlock.nodnummer, previousDefaults.emergency, nextDefaults.emergency)) {
+        nextBlock.nodnummer = nextDefaults.emergency || '';
+      }
+      if (shouldReplaceDistrictDefault(currentBlock.bandriftnummer, previousDefaults.bandrift, nextDefaults.bandrift)) {
+        nextBlock.bandriftnummer = nextDefaults.bandrift || '';
+      }
+      if (shouldReplaceDistrictDefault(currentBlock.eldriftnummer, previousDefaults.eldrift, nextDefaults.eldrift)) {
+        nextBlock.eldriftnummer = nextDefaults.eldrift || '';
+      }
+    }
+
+    updated[index] = nextBlock;
     setFjtklBlocks(updated);
   };
 
@@ -908,6 +964,7 @@ const SkapaProjekt = () => {
   const applyBlankett31Meta = (parsed = {}, nextEntries = []) => {
     const parsedMeta = parsed?.meta || {};
     setBlankett31Meta(parsedMeta);
+    const defaultHighlightedBoundaries = getDefaultHighlightedBoundaries(nextEntries);
 
     setDispSettings((current) => ({
       ...current,
@@ -915,6 +972,7 @@ const SkapaProjekt = () => {
       veckaOchDagar: current.veckaOchDagar || buildSuggestedWeekLine(nextEntries, parsedMeta.referenceWeek),
       banobjektVnr:
         current.banobjektVnr || (parsedMeta.banarbetsobjektsId ? `${parsedMeta.banarbetsobjektsId}-1` : ''),
+      rodmarkeradeGranspunkter: current.rodmarkeradeGranspunkter || defaultHighlightedBoundaries,
     }));
   };
 
@@ -1215,6 +1273,8 @@ const SkapaProjekt = () => {
         granspunkter: granspunktFritext || '',
         namn: namn || '',
         telefonnummer: telefonnummer || '',
+        bandriftnummer: bandriftnummer || '',
+        eldriftnummer: eldriftnummer || '',
         avstamt,
         objekt,
         uttagningstid,
@@ -1224,6 +1284,8 @@ const SkapaProjekt = () => {
         avslutningssignatur,
         formState: {
           nodnummer,
+          bandriftnummer,
+          eldriftnummer,
           htsmTelefon,
           reservnr,
           avstamt,
@@ -1376,6 +1438,8 @@ const SkapaProjekt = () => {
         setNamn(project.namn || '');
         setTelefonnummer(project.telefonnummer || '');
         setNodnummer(project.formState?.nodnummer || '');
+        setBandriftnummer(project.formState?.bandriftnummer || '');
+        setEldriftnummer(project.formState?.eldriftnummer || '');
         setHtsmTelefon(project.formState?.htsmTelefon || '');
         setReservnr(project.formState?.reservnr || '');
         setAvstamt(Boolean(project.formState?.avstamt));
@@ -1385,7 +1449,10 @@ const SkapaProjekt = () => {
         setAvslutaSkyddTid(project.formState?.avslutaSkyddTid || '');
         setAvslutningstid(project.formState?.avslutningstid || '');
         setAvslutningssignatur(project.formState?.avslutningssignatur || '');
-        setFjtklBlocks(project.formState?.fjtklBlocks || []);
+        setFjtklBlocks((project.formState?.fjtklBlocks || []).map((block) => ({
+          ...defaultFjtklBlock(),
+          ...block,
+        })));
         setBlankett31Meta(project.formState?.blankett31Meta || {});
         setDispSettings({
           ...defaultDispSettings(),
@@ -1680,7 +1747,7 @@ const SkapaProjekt = () => {
                       type="text"
                       value={dispSettings.publiktDispnamn}
                       onChange={(e) => setDispSettings((current) => ({ ...current, publiktDispnamn: e.target.value }))}
-                      placeholder="Ex. Rååbanan export"
+                      placeholder="Ex. Disp Rååbanan"
                       className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
                     />
                     <p className="mt-2 text-xs text-slate-500">
@@ -1775,7 +1842,11 @@ const SkapaProjekt = () => {
                       type="text"
                       list="fjtkl-name-options"
                       value={namn}
-                      onChange={(e) => setNamn(e.target.value)}
+                      onChange={(e) => {
+                        const nextValue = e.target.value;
+                        applyDistrictDefaultsToPrimaryFjtkl(nextValue, namn);
+                        setNamn(nextValue);
+                      }}
                       placeholder="Namn"
                       className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
                     />
@@ -1806,6 +1877,28 @@ const SkapaProjekt = () => {
                       value={nodnummer}
                       onChange={(e) => setNodnummer(e.target.value)}
                       placeholder="Nödnummer"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-semibold text-slate-700">Bandriftnummer</label>
+                    <input
+                      type="text"
+                      list="bandrift-phone-options"
+                      value={bandriftnummer}
+                      onChange={(e) => setBandriftnummer(e.target.value)}
+                      placeholder="Bandriftnummer"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-semibold text-slate-700">Eldriftnummer</label>
+                    <input
+                      type="text"
+                      list="eldrift-phone-options"
+                      value={eldriftnummer}
+                      onChange={(e) => setEldriftnummer(e.target.value)}
+                      placeholder="Eldriftnummer"
                       className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
                     />
                   </div>
@@ -2035,7 +2128,7 @@ const SkapaProjekt = () => {
                           <>
                       <div className="mb-3 flex items-center justify-between gap-3">
                         <div className="text-xs font-semibold uppercase tracking-widest text-slate-500">
-                          Jobb {index + 1}
+                          Dag/Natt {index + 1}
                         </div>
                         <div className="flex flex-wrap items-center justify-end gap-2">
                           <button
@@ -2072,7 +2165,7 @@ const SkapaProjekt = () => {
                             type="text"
                             value={job.name || ''}
                             onChange={(e) => updatePlanJobField(index, 'name', e.target.value)}
-                            placeholder="Ex. Nm Sön eller HBG"
+                            placeholder="Ex. Dag/Natt 1 eller HBG"
                             className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
                           />
                           <p className="mt-2 text-xs text-slate-500">
@@ -2215,6 +2308,28 @@ const SkapaProjekt = () => {
                         value={block.nodnummer}
                         onChange={(e) => updateFjtklBlock(index, 'nodnummer', e.target.value)}
                         placeholder="Nödnummer"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-semibold text-slate-700">Bandriftnummer</label>
+                      <input
+                        type="text"
+                        list="bandrift-phone-options"
+                        value={block.bandriftnummer}
+                        onChange={(e) => updateFjtklBlock(index, 'bandriftnummer', e.target.value)}
+                        placeholder="Bandriftnummer"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-semibold text-slate-700">Eldriftnummer</label>
+                      <input
+                        type="text"
+                        list="eldrift-phone-options"
+                        value={block.eldriftnummer}
+                        onChange={(e) => updateFjtklBlock(index, 'eldriftnummer', e.target.value)}
+                        placeholder="Eldriftnummer"
                         className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
                       />
                     </div>
@@ -2508,6 +2623,16 @@ const SkapaProjekt = () => {
       </datalist>
       <datalist id="emergency-phone-options">
         {emergencyPhoneOptions.map((option) => (
+          <option key={option} value={option} />
+        ))}
+      </datalist>
+      <datalist id="bandrift-phone-options">
+        {bandriftPhoneOptions.map((option) => (
+          <option key={option} value={option} />
+        ))}
+      </datalist>
+      <datalist id="eldrift-phone-options">
+        {eldriftPhoneOptions.map((option) => (
           <option key={option} value={option} />
         ))}
       </datalist>

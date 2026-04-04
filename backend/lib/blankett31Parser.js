@@ -171,8 +171,12 @@ const extractReferenceMeta = (text = '') => {
   const referenceText = cleanFieldValue(referenceSectionMatch?.[2] || '')
     .replace(/\s*Beteckning\s*:.*$/i, '')
     .trim();
-  const referenceWeekMatch = referenceText.match(/\bV\.?\s*(\d{1,2})\b/i);
-  const projectLabelMatch = referenceText.match(/Projekt\s+(.+)$/i);
+  const referenceWeekMatch =
+    referenceText.match(/\bV\.?\s*(\d{1,2})\b/i) ||
+    referenceText.match(/\bv\d{2}(\d{2})\b/i);
+  const projectLabelMatch =
+    referenceText.match(/Projekt\s+(.+)$/i) ||
+    referenceText.match(/:\s*(.+)$/);
   const referenceEntryMatch = String(text || '').match(
     /Banarbetsobjekts-ID[\s\S]{0,260}?Beteckning:\s*([A-Za-z0-9_./-]+)(?:\s+PlaneringsID:\s*([A-Za-z0-9_./-]+))?/i
   );
@@ -185,6 +189,11 @@ const extractReferenceMeta = (text = '') => {
     referenceBeteckning: normalizeBeteckning(referenceEntryMatch?.[1] || ''),
     referencePlaneringsId: cleanFieldValue(referenceEntryMatch?.[2] || ''),
   };
+};
+
+const extractTlcName = (text = '') => {
+  const match = String(text || '').match(/TLC Status:\s*[^\n\r]+\s+([A-ZÅÄÖa-zåäö][A-ZÅÄÖa-zåäö ]{1,40})\s+(?:Företag|Kontaktperson)/i);
+  return cleanFieldValue(match?.[1] || '');
 };
 
 const extractEntries = (text, fallbackGranspunkt) => {
@@ -243,9 +252,14 @@ const extractBlankett31Fields = (ocrPayload) => {
   return {
     beteckning,
     granspunkt,
+    namn: extractTlcName(fullText),
     meta,
     start,
     end,
+    startDate: start.date,
+    startTime: start.time,
+    endDate: end.date,
+    endTime: end.time,
     entries:
       entries.length > 0
         ? entries

@@ -20,6 +20,38 @@ const normalizeProjectTitle = (text = '') =>
     .replace(/\s{2,}/g, ' ')
     .trim();
 
+const looksLikeHeaderMetadata = (text = '') => {
+  const normalized = normalizeForMatching(text);
+  return (
+    normalized.startsWith('giltig') ||
+    normalized.includes('versionsnummer') ||
+    normalized.includes('antal sidor') ||
+    normalized.startsWith('vallakra rail ab') ||
+    normalized === 'dispositionsarbetsplan'
+  );
+};
+
+const sanitizeWeekLine = (text = '') =>
+  normalizeProjectTitle(text)
+    .replace(/\s+\d+\/MA\d+\s+\d+$/i, '')
+    .trim();
+
+const isUsablePlatsValue = (text = '') => {
+  const value = normalizeProjectTitle(text);
+  const normalized = normalizeForMatching(value);
+  if (!value) return false;
+  if (looksLikeHeaderMetadata(value)) return false;
+  if (/\b\d+\/ma\d+\b/i.test(value)) return false;
+  if (/^v\d+\b/i.test(value)) return false;
+  if (/^[a-z]{1,4}\d+\s+\d+\/ma\d+\s+\d+$/i.test(normalized)) return false;
+  return true;
+};
+
+const pickUsablePlats = (...values) =>
+  values
+    .map((value) => normalizeProjectTitle(value))
+    .find((value) => isUsablePlatsValue(value)) || '';
+
 const getMatchingPages = (pages = [], scorePage, isRelevant = (score) => score > 0) =>
   pages
     .map((page) => ({
@@ -116,14 +148,15 @@ const extractOverviewMeta = (pages) => {
           ? firstPageLines[standaloneTitleIndex + 2]
           : ''
       );
-  const weekLine =
+  const weekLine = sanitizeWeekLine(
     mainWeekLine ||
     normalizedLines.find(
       (line) =>
         /^v\d+/i.test(line.raw) &&
         !line.normalized.includes('versionsnummer') &&
         !line.normalized.includes('antal sidor')
-    )?.raw || '';
+    )?.raw || ''
+  );
   const routeLineCandidate = normalizeProjectTitle(
     firstPageLines
       .slice((topTitleIndex >= 0 ? topTitleIndex + 1 : standaloneTitleIndex + 1))
@@ -160,11 +193,12 @@ const extractOverviewMeta = (pages) => {
     banName: normalizeProjectTitle(topTitleLine.replace(/^Dispositionsarbetsplan\s+/i, '')),
     stracka:
       routeLineCandidate &&
+      !looksLikeHeaderMetadata(routeLineCandidate) &&
       !/^dispositionsarbetsplan\b/i.test(routeLineCandidate) &&
       !/^v\d+\b/i.test(routeLineCandidate)
         ? routeLineCandidate
         : '',
-    weekLine: normalizeProjectTitle(weekLine),
+    weekLine: sanitizeWeekLine(weekLine),
     banobjektVnr: banobjektValue,
     forplaneraCa: forplaneraValue,
     berordaDriftplatser: normalizeProjectTitle(berordaDriftplatser),
@@ -188,6 +222,7 @@ const extractPlats = (pages) => {
     }
     if (
       /^v\d+\b/i.test(line) ||
+      looksLikeHeaderMetadata(line) ||
       normalizedLine.startsWith('banobjekt-vnr') ||
       normalizedLine.startsWith('forplanera ca') ||
       normalizedLine.startsWith('berorda driftplatser') ||
@@ -1366,7 +1401,10 @@ const parseDispPdf = async (buffer, blankett31Entries = []) => {
       extractProjectName(ocrPages),
       extractProjectName(preferredPages)
     ),
-    plats: pickParsedValue(
+    plats: pickUsablePlats(
+      overview.berordaDriftplatser,
+      overview.stracka,
+      overview.banName,
       hasUsefulText ? extractPlats(textPages) : '',
       extractPlats(ocrPages),
       extractPlats(preferredPages)
