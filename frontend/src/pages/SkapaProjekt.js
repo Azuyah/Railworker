@@ -253,10 +253,12 @@ const defaultDispSettings = () => ({
   rubrik: '',
   banNamn: '',
   veckaOchDagar: '',
-  versionsnummer: '1/MA09',
+  versionsnummer: '1/MA10',
   banobjektVnr: '',
   forplaneraCa: '1 tim innan start',
   rodmarkeradeGranspunkter: '',
+  visaBeteckningarKapitel1: true,
+  komprimeraLikaTiderKapitel1: true,
 });
 
 const shouldReplaceDistrictDefault = (currentValue = '', previousDefault = '', nextDefault = '') => {
@@ -284,11 +286,17 @@ const getIsoWeek = (dateValue = '') => {
   return `V${String(weekNo).padStart(2, '0')}`;
 };
 
-const swedishShortDays = ['Sön', 'Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör'];
+const swedishShortDays = ['Sön', 'Mån', 'Tis', 'Ons', 'Tors', 'Fre', 'Lör'];
+
+const getSummaryDateForEntry = (entry = {}) => {
+  const startDate = entry?.startDate || '';
+  const endDate = entry?.endDate || '';
+  return endDate && endDate !== startDate ? endDate : startDate;
+};
 
 const buildSuggestedWeekLine = (entries = [], explicitWeek = '') => {
   const weekValue = explicitWeek || getIsoWeek(entries[0]?.startDate || '');
-  const uniqueDates = [...new Set(entries.map((entry) => entry.startDate).filter(Boolean))].sort();
+  const uniqueDates = [...new Set(entries.map((entry) => getSummaryDateForEntry(entry)).filter(Boolean))].sort();
   const dayLabels = uniqueDates
     .map((dateValue) => {
       const date = new Date(`${dateValue}T00:00:00Z`);
@@ -330,8 +338,7 @@ const normalizeTrackValue = (value = '') => {
 
 const normalizeSectionAreaName = (value = '') =>
   sanitizeSectionText(value)
-    .replace(/\s+Driftplats(?:er)?$/i, '')
-    .replace(/s$/i, '');
+    .replace(/\s+Driftplats(?:er)?$/i, '');
 
 const shouldReplaceDispSetting = (currentValue = '', nextValue = '') => {
   const current = String(currentValue || '').trim();
@@ -1780,7 +1787,7 @@ const SkapaProjekt = () => {
                       type="text"
                       value={dispSettings.versionsnummer}
                       onChange={(e) => setDispSettings((current) => ({ ...current, versionsnummer: e.target.value }))}
-                      placeholder="Ex. 1/MA09"
+                      placeholder="Ex. 1/MA10"
                       className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
                     />
                   </div>
@@ -1813,6 +1820,50 @@ const SkapaProjekt = () => {
                       placeholder="Ex. Hb103, Tp33, Tp82"
                       className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
                     />
+                  </div>
+                  <div className="md:col-span-2">
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-sm font-semibold text-slate-700">Kapitel 1 i dispen</p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Styr hur rutan med tider och delområden ska visas i den färdiga dispositionsarbetsplanen.
+                      </p>
+                      <div className="mt-4 grid gap-3 md:grid-cols-2">
+                        <label className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(dispSettings.visaBeteckningarKapitel1)}
+                            onChange={(e) => setDispSettings((current) => ({
+                              ...current,
+                              visaBeteckningarKapitel1: e.target.checked,
+                            }))}
+                            className="mt-1"
+                          />
+                          <span>
+                            <span className="block font-semibold">Visa beteckningar</span>
+                            <span className="mt-1 block text-xs text-slate-500">
+                              Visar kolumnen med Blankett 31-beteckningar i kapitel 1.
+                            </span>
+                          </span>
+                        </label>
+                        <label className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(dispSettings.komprimeraLikaTiderKapitel1)}
+                            onChange={(e) => setDispSettings((current) => ({
+                              ...current,
+                              komprimeraLikaTiderKapitel1: e.target.checked,
+                            }))}
+                            className="mt-1"
+                          />
+                          <span>
+                            <span className="block font-semibold">Komprimera lika tider</span>
+                            <span className="mt-1 block text-xs text-slate-500">
+                              Slår ihop upprepade tider till en kompakt rad, till exempel `Mån - Sön 09.00 - 15.00`.
+                            </span>
+                          </span>
+                        </label>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

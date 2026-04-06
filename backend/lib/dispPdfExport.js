@@ -3,7 +3,7 @@ const path = require('path');
 const PDFDocument = require('pdfkit');
 
 const LEGACY_LOGO_PATH = path.join(__dirname, '..', 'assets', 'vallakra-logo-cropped.png');
-const LEGACY_VERSION_NUMBER = '1/MA09';
+const LEGACY_VERSION_NUMBER = '1/MA10';
 const FONT_PATHS = {
   verdana: '/System/Library/Fonts/Supplemental/Verdana.ttf',
   verdanaBold: '/System/Library/Fonts/Supplemental/Verdana Bold.ttf',
@@ -25,8 +25,7 @@ const PDF_FONTS = {
   bodyBoldItalic: 'LegacyTimesBoldItalic',
 };
 
-const SWEDISH_SHORT_DAYS = ['Sön', 'Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör'];
-
+const SWEDISH_SHORT_DAYS = ['Sön', 'Mån', 'Tis', 'Ons', 'Tors', 'Fre', 'Lör'];
 const cleanText = (value = '') =>
   String(value || '')
     .replace(/\r/g, '')
@@ -44,8 +43,7 @@ const sanitizeSectionText = (value = '') =>
 
 const normalizeSectionAreaName = (value = '') =>
   sanitizeSectionText(value)
-    .replace(/\s+Driftplats(?:er)?$/i, '')
-    .replace(/s$/i, '');
+    .replace(/\s+Driftplats(?:er)?$/i, '');
 
 const normalizeTrackValue = (value = '') => {
   const normalized = sanitizeSectionText(value).replace(/^sp[aå]r\s*/i, '');
@@ -165,8 +163,14 @@ const getIsoWeek = (dateValue = '') => {
   return `V${String(weekNo).padStart(2, '0')}`;
 };
 
+const getSummaryDateForEntry = (entry = {}) => {
+  const startDate = cleanText(entry?.startDate);
+  const endDate = cleanText(entry?.endDate);
+  return endDate && endDate !== startDate ? endDate : startDate;
+};
+
 const buildDayRangeLabel = (entries = []) => {
-  const uniqueDates = [...new Set(entries.map((entry) => entry.startDate).filter(Boolean))].sort();
+  const uniqueDates = [...new Set(entries.map((entry) => getSummaryDateForEntry(entry)).filter(Boolean))].sort();
   if (!uniqueDates.length) return '';
 
   const labels = uniqueDates.map((dateValue) => {
@@ -181,9 +185,7 @@ const buildDayRangeLabel = (entries = []) => {
 
 const formatLegacyWeekLine = (value = '') =>
   cleanText(value)
-    .replace(/Nm/gi, 'NM')
-    .replace(/Em/gi, 'EM')
-    .replace(/Kv/gi, 'KV')
+    .replace(/\bTor\b/gi, 'Tors')
     .replace(/Lör,\s*Sön/gi, 'Lör-Sön')
     .replace(/Fre,\s*Lör/gi, 'Fre-Lör');
 
@@ -233,6 +235,8 @@ const buildDispSettings = (project = {}, entries = []) => {
     ),
     forplaneraCa: cleanText(settings.forplaneraCa || '1 tim innan start'),
     rodmarkeradeGranspunkter: cleanText(settings.rodmarkeradeGranspunkter || settings.highlightedBoundaries || ''),
+    visaBeteckningarKapitel1: settings.visaBeteckningarKapitel1 !== false,
+    komprimeraLikaTiderKapitel1: settings.komprimeraLikaTiderKapitel1 !== false,
   };
 };
 
@@ -256,12 +260,6 @@ const extractValidityLabel = (weekLine = '') => {
   return match ? match[0].toUpperCase() : 'V00';
 };
 
-const extractPeriodPrefix = (weekLine = '') => {
-  const match = cleanText(weekLine).match(/\bV\d{1,2}\s+([A-Za-zÅÄÖåäö]+)/);
-  const token = match ? cleanText(match[1]) : '';
-  return ['Nm', 'Em', 'Kv'].includes(token) ? token : '';
-};
-
 const getShortDayName = (dateValue = '') => {
   const match = String(dateValue || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!match) return '';
@@ -269,12 +267,57 @@ const getShortDayName = (dateValue = '') => {
   return Number.isNaN(date.getTime()) ? '' : SWEDISH_SHORT_DAYS[date.getUTCDay()];
 };
 
-const buildEntryDayLabel = (entry = {}, weekLine = '') => {
-  const day = getShortDayName(entry.startDate);
-  const prefix = extractPeriodPrefix(weekLine);
-  if (!prefix) return day;
-  if (cleanText(prefix).toLowerCase() === cleanText(day).toLowerCase()) return day;
-  return [prefix, day].filter(Boolean).join(' ');
+const buildEntryDayLabel = (entry = {}) => getShortDayName(entry.startDate);
+
+const buildCompactEntryDayRangeLabel = (entries = []) => {
+  const datedEntries = entries.filter((entry) => entry?.startDate);
+  if (!datedEntries.length) return '';
+
+  const sortedDates = [...new Set(datedEntries.map((entry) => entry.startDate))].sort();
+  const firstEntry = datedEntries.find((entry) => entry.startDate === sortedDates[0]) || datedEntries[0];
+  const lastEntry = datedEntries.find((entry) => entry.startDate === sortedDates[sortedDates.length - 1]) || datedEntries[datedEntries.length - 1];
+  const firstLabel = buildEntryDayLabel(firstEntry);
+  const lastLabel = buildEntryDayLabel(lastEntry);
+
+  if (!firstLabel) return '';
+  if (!lastLabel || firstLabel === lastLabel) return firstLabel;
+  return `${firstLabel} - ${lastLabel}`;
+};
+
+const shouldCompactChapterOneEntries = (entries = [], dispSettings = {}) => {
+  if (!Boolean(dispSettings?.komprimeraLikaTiderKapitel1) || entries.length < 2) {
+    return false;
+  }
+
+  const first = entries[0] || {};
+  return entries.every((entry) =>
+    cleanText(entry?.startTime) === cleanText(first.startTime) &&
+    cleanText(entry?.endTime) === cleanText(first.endTime)
+  );
+};
+
+const buildChapterOneEntryRows = (entries = [], dispSettings = {}, weekLine = '') => {
+  if (shouldCompactChapterOneEntries(entries, dispSettings)) {
+    return [{
+      kind: 'entry',
+      isCompactSummary: true,
+      beteckning: Boolean(dispSettings?.visaBeteckningarKapitel1) ? 'Samtliga' : '',
+      dayLabel: buildCompactEntryDayRangeLabel(entries),
+      startDateTime: formatTime(entries[0]?.startTime),
+      endDateTime: formatTime(entries[0]?.endTime),
+    }];
+  }
+
+  return entries.map((entry) => ({
+    kind: 'entry',
+    beteckning: entry.beteckning,
+    dayLabel: buildEntryDayLabel(entry),
+    startDateLabel: formatDate(entry.startDate),
+    startTimeLabel: formatTime(entry.startTime),
+    endDayLabel: getShortDayName(entry.endDate),
+    endDateLabel: formatDate(entry.endDate),
+    endTimeLabel: formatTime(entry.endTime),
+  }));
 };
 
 const getBoundaryHighlightTokens = (boundaryText = '') =>
@@ -375,18 +418,197 @@ const drawLegacyHeader = (doc, dispSettings, totalPages, pageNumber) => {
   doc.restore();
 };
 
-const estimateChapterOnePageCount = (entries, sections) => {
-  const firstPageCapacity = 22;
-  const continuedPageCapacity = 24;
-  const entryRows = entries.length + 1;
-  const sectionRows = sections.length;
-  const firstPageSectionCapacity = Math.max(0, firstPageCapacity - entryRows);
+const getLegacyEntryRowHeight = (doc, row, entryColumns, fontSize = 12) =>
+  Math.max(
+    21,
+    getLegacyRowHeight(
+      doc,
+      row.isCompactSummary
+        ? {
+            beteckning: row.beteckning,
+            dayLabel: row.dayLabel,
+            startDateTime: row.startDateTime,
+            endDateTime: row.endDateTime,
+          }
+        : {
+            beteckning: row.beteckning,
+            dayLabel: row.dayLabel,
+            startDateLabel: row.startDateLabel,
+            startTimeLabel: row.startTimeLabel,
+            endDayLabel: row.endDayLabel,
+            endDateLabel: row.endDateLabel,
+            endTimeLabel: row.endTimeLabel,
+          },
+      row.isCompactSummary
+        ? [
+            { key: 'beteckning', width: entryColumns.beteckning.width },
+            { key: 'dayLabel', width: entryColumns.startDay.width },
+            { key: 'startDateTime', width: 52 },
+            { key: 'endDateTime', width: 56 },
+          ]
+        : [
+            { key: 'beteckning', width: entryColumns.beteckning.width },
+            { key: 'dayLabel', width: entryColumns.startDay.width },
+            { key: 'startDateLabel', width: entryColumns.startDate.width },
+            { key: 'startTimeLabel', width: entryColumns.startTime.width },
+            { key: 'endDayLabel', width: entryColumns.endDay.width },
+            { key: 'endDateLabel', width: entryColumns.endDate.width },
+            { key: 'endTimeLabel', width: entryColumns.endTime.width },
+          ],
+      fontSize
+    ) + 2
+  );
 
-  if (sectionRows <= firstPageSectionCapacity) return 1;
-  return 1 + Math.ceil((sectionRows - firstPageSectionCapacity) / continuedPageCapacity);
+const getLegacySectionRowHeight = (doc, row, sectionColumns, fontSize = 12) =>
+  Math.max(
+    21,
+    Math.ceil(
+      Math.max(
+        getTextHeight(doc, row.label, sectionColumns.label.width, {
+          font: PDF_FONTS.bodyBold,
+          fontSize,
+          lineGap: 1,
+        }),
+        getTextHeight(doc, row.name, sectionColumns.name.width, {
+          font: PDF_FONTS.bodyBold,
+          fontSize,
+          lineGap: 1,
+        }),
+        getLegacyBoundarySegmentHeight(doc, row.granspunkter, sectionColumns.granspunkter.width, fontSize),
+        getTextHeight(doc, row.spar, sectionColumns.spar.width, {
+          font: PDF_FONTS.bodyBold,
+          fontSize,
+          lineGap: 1,
+        })
+      )
+    ) + 4
+  );
+
+const getLegacyChapterOneRowHeight = (doc, row, entryColumns, sectionColumns) => {
+  if (row.kind === 'spacer') return 14;
+  if (row.kind === 'entry') return getLegacyEntryRowHeight(doc, row, entryColumns);
+  if (row.kind === 'section') return getLegacySectionRowHeight(doc, row, sectionColumns);
+  return 21;
 };
 
-const estimateLegacyTotalPages = (entries, sections) => 2 + estimateChapterOnePageCount(entries, sections) + 4;
+const paginateLegacyChapterOneRows = (doc, rows, availableHeight, entryColumns, sectionColumns) => {
+  const pages = [];
+  let currentPage = [];
+  let usedHeight = 0;
+
+  rows.forEach((row) => {
+    const rowHeight = getLegacyChapterOneRowHeight(doc, row, entryColumns, sectionColumns);
+    const preparedRow = { ...row, rowHeight };
+    if (currentPage.length > 0 && usedHeight + rowHeight > availableHeight) {
+      pages.push(currentPage);
+      currentPage = [preparedRow];
+      usedHeight = rowHeight;
+      return;
+    }
+    currentPage.push(preparedRow);
+    usedHeight += rowHeight;
+  });
+
+  if (currentPage.length > 0) pages.push(currentPage);
+  return pages;
+};
+
+const estimateChapterOnePageCount = (doc, entries, sections, dispSettings = {}) => {
+  const entryColumns = getLegacyEntryColumns(Boolean(dispSettings?.visaBeteckningarKapitel1));
+  const sectionColumns = {
+    label: { x: 10, width: 92 },
+    name: { x: 108, width: 136 },
+    granspunkter: { x: 244, width: 84 },
+    spar: { x: 344, width: 78 },
+  };
+  const entryRows = buildChapterOneEntryRows(entries, dispSettings, '');
+  const sectionRows = sections.map((section) => ({
+    kind: 'section',
+    label: section.label,
+    name: cleanText(section.signal || section.name),
+    granspunkter: formatLegacyBoundaryText(section.granspunkter),
+    spar: section.spar ? `Spår ${section.spar}` : '—',
+  }));
+  const firstPageRows = [...entryRows, { kind: 'spacer' }, ...sectionRows];
+  const firstPageAvailableHeight = 560 - 31 - 12;
+  const continuedPageAvailableHeight = 620 - 31 - 12;
+  const firstPageChunks = paginateLegacyChapterOneRows(doc, firstPageRows, firstPageAvailableHeight, entryColumns, sectionColumns);
+  if (firstPageChunks.length <= 1) return 1;
+
+  const remainingSectionRows = [];
+  firstPageChunks.slice(1).forEach((chunk) => {
+    chunk.forEach((row) => {
+      if (row.kind === 'section') remainingSectionRows.push(row);
+    });
+  });
+
+  const continuedChunks = paginateLegacyChapterOneRows(
+    doc,
+    remainingSectionRows,
+    continuedPageAvailableHeight,
+    entryColumns,
+    sectionColumns
+  );
+  return 1 + continuedChunks.length;
+};
+
+const getStaticChapterLayoutMetrics = (doc) => {
+  const pageLeft = doc.page.margins.left;
+  const bodyX = pageLeft + 48;
+  const bodyWidth = doc.page.width - bodyX - doc.page.margins.right;
+  const titleX = pageLeft + 42;
+  const titleWidth = doc.page.width - titleX - doc.page.margins.right;
+  const startY = 122;
+  const bottomY = getContentBottomY(doc) - 18;
+
+  return {
+    bodyX,
+    bodyWidth,
+    titleX,
+    titleWidth,
+    startY,
+    bottomY,
+  };
+};
+
+const getStaticChapterBlockHeight = (doc, chapter, metrics) => {
+  const headingHeight = getTextHeight(doc, `${chapter.title}.`, metrics.titleWidth, {
+    font: PDF_FONTS.headerBold,
+    fontSize: 15,
+    lineGap: 1,
+  });
+  const lines = Array.isArray(chapter.lines) ? chapter.lines : chapter.paragraphs;
+  const linesHeight = lines.reduce((sum, line) => (
+    sum + getTextHeight(doc, line, metrics.bodyWidth, {
+      font: PDF_FONTS.body,
+      fontSize: 12,
+      lineGap: 2,
+    }) + 3
+  ), 0);
+
+  return headingHeight + 8 + linesHeight + 18;
+};
+
+const estimateStaticTextPageCount = (doc, project, dispSettings) => {
+  const chapters = getLegacyChapters(project, dispSettings);
+  const metrics = getStaticChapterLayoutMetrics(doc);
+  let pageCount = 1;
+  let y = metrics.startY;
+
+  chapters.forEach((chapter) => {
+    const blockHeight = getStaticChapterBlockHeight(doc, chapter, metrics);
+    if (y > metrics.startY && y + blockHeight > metrics.bottomY) {
+      pageCount += 1;
+      y = metrics.startY;
+    }
+    y += blockHeight;
+  });
+
+  return pageCount;
+};
+
+const estimateLegacyTotalPages = (doc, entries, sections, dispSettings = {}, project = {}) =>
+  2 + estimateChapterOnePageCount(doc, entries, sections, dispSettings) + estimateStaticTextPageCount(doc, project, dispSettings);
 
 const addCoverPage = (doc, project, dispSettings) => {
   const left = doc.page.margins.left;
@@ -561,18 +783,29 @@ const getLegacyRowHeight = (doc, row, columns, fontSize = 11) =>
     return Math.max(maxHeight, cellHeight);
   }, fontSize + 2)) + 2;
 
+const getLegacyBoundarySegmentFontSize = (doc, text, maxWidth, defaultFontSize = 12) => {
+  const normalizedText = cleanText(text);
+  const sizes = [defaultFontSize, 11.5, 11, 10.5, 10, 9.5, 9];
+  if (!maxWidth) return defaultFontSize;
+  return sizes.find((size) => {
+    doc.font(PDF_FONTS.bodyBold).fontSize(size);
+    return doc.widthOfString(normalizedText) <= maxWidth;
+  }) || 9;
+};
+
+const getLegacyBoundarySegmentHeight = (doc, text, maxWidth, defaultFontSize = 12) => {
+  const fittedFontSize = getLegacyBoundarySegmentFontSize(doc, text, maxWidth, defaultFontSize);
+  return getTextHeight(doc, cleanText(text), maxWidth, {
+    font: PDF_FONTS.bodyBold,
+    fontSize: fittedFontSize,
+    lineGap: 1,
+  });
+};
+
 const drawLegacyBoundarySegment = (doc, text, x, y, maxWidth, highlightTokens = []) => {
   const normalizedText = cleanText(text);
   const dashMatch = normalizedText.match(/^(.+?)\s*[–-]\s*(.+)$/);
-  const fitFontSize = () => {
-    const sizes = [12, 11.5, 11, 10.5, 10, 9.5, 9];
-    if (!maxWidth) return 12;
-    return sizes.find((size) => {
-      doc.font(PDF_FONTS.bodyBold).fontSize(size);
-      return doc.widthOfString(normalizedText) <= maxWidth;
-    }) || 9;
-  };
-  const fontSize = fitFontSize();
+  const fontSize = getLegacyBoundarySegmentFontSize(doc, normalizedText, maxWidth, 12);
   doc.font(PDF_FONTS.bodyBold).fontSize(fontSize);
 
   if (!dashMatch) {
@@ -597,6 +830,34 @@ const drawLegacyBoundarySegment = (doc, text, x, y, maxWidth, highlightTokens = 
   });
 };
 
+const getLegacyEntryColumns = (showBeteckning = true) => (
+  showBeteckning
+    ? {
+        beteckning: { x: 6, width: 82 },
+        start: { x: 116 },
+        startDay: { x: 116, width: 52 },
+        startDate: { x: 166, width: 88 },
+        startTime: { x: 258, width: 48 },
+        end: { x: 274, width: 154 },
+        endDash: { x: 274, width: 16 },
+        endDay: { x: 292, width: 34 },
+        endDate: { x: 326, width: 88 },
+        endTime: { x: 414, width: 48 },
+      }
+    : {
+        beteckning: { x: 0, width: 0 },
+        start: { x: 12 },
+        startDay: { x: 18, width: 52 },
+        startDate: { x: 76, width: 88 },
+        startTime: { x: 168, width: 42 },
+        end: { x: 214, width: 156 },
+        endDash: { x: 214, width: 16 },
+        endDay: { x: 236, width: 34 },
+        endDate: { x: 270, width: 88 },
+        endTime: { x: 358, width: 42 },
+      }
+);
+
 const drawLegacyChapterOneTable = (doc, rows, config) => {
   const {
     left,
@@ -611,10 +872,22 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
     mode = 'full',
     showNote = true,
   } = config;
-  const totalHeight = headerHeight + (rows.length * rowHeight) + 12;
+  const totalHeight = headerHeight + rows.reduce((sum, row) => sum + (row.rowHeight || rowHeight), 0) + 12;
   const bottom = top + totalHeight;
   const headerFontSize = 12;
   const rowFontSize = 12;
+  const hasCompactSummary = mode === 'full' && entryColumns.beteckning.width === 0 && rows.some((row) => row.kind === 'entry' && row.isCompactSummary);
+  const compactStartHeaderX = left + sectionColumns.name.x;
+  const compactDayX = compactStartHeaderX;
+  const compactDayWidth = 86;
+  const compactTimeX = compactDayX + compactDayWidth + 10;
+  const compactTimeWidth = 46;
+  const compactDashWidth = 14;
+  const compactDashCenterX = compactTimeX + compactTimeWidth + 14;
+  const compactDashX = compactDashCenterX - (compactDashWidth / 2);
+  const compactEndTimeX = compactDashCenterX + 18;
+  const compactEndTimeWidth = 46;
+  const compactEndHeaderX = compactEndTimeX - 8;
 
   doc.save();
   doc.lineWidth(0.7).strokeColor('#666666').rect(left, top, width, totalHeight).stroke();
@@ -622,9 +895,16 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
   const entryHeaderY = top + 7;
   doc.font(PDF_FONTS.bodyBold).fontSize(headerFontSize).fillColor('#000000');
   if (mode === 'full') {
-    doc.text('Beteckning', left + entryColumns.beteckning.x, entryHeaderY, { lineBreak: false });
-    doc.text('Startdag och tid', left + entryColumns.start.x, entryHeaderY, { lineBreak: false });
-    doc.text('Slutdag och tid', left + entryColumns.end.x, entryHeaderY, { lineBreak: false });
+    if (hasCompactSummary) {
+      doc.text('Startdag och tid', compactStartHeaderX, entryHeaderY, { lineBreak: false });
+      doc.text('Slutdag och tid', compactEndHeaderX, entryHeaderY, { lineBreak: false });
+    } else {
+      if (entryColumns.beteckning.width > 0) {
+        doc.text('Beteckning', left + entryColumns.beteckning.x, entryHeaderY, { lineBreak: false });
+      }
+      doc.text('Startdag och tid', left + entryColumns.start.x, entryHeaderY, { lineBreak: false });
+      doc.text('Slutdag och tid', left + entryColumns.end.x, entryHeaderY, { lineBreak: false });
+    }
   } else {
     doc.text('Delområde', left + sectionColumns.label.x, entryHeaderY, { lineBreak: false });
     doc.text('Sträcka / område', left + sectionColumns.name.x, entryHeaderY, { lineBreak: false });
@@ -635,24 +915,65 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
   let y = top + headerHeight;
 
   rows.forEach((row) => {
+    const currentRowHeight = row.rowHeight || rowHeight;
+
     if (row.kind === 'entry') {
       doc.font(PDF_FONTS.bodyBold).fontSize(rowFontSize).fillColor('#000000');
-      doc.text(row.beteckning, left + entryColumns.beteckning.x, y, {
-        width: entryColumns.beteckning.width,
-        lineBreak: false,
-      });
-      doc.text(row.dayLabel, left + entryColumns.start.x, y, {
-        width: entryColumns.startDay.width,
-        lineBreak: false,
-      });
-      doc.font(PDF_FONTS.bodyBold).fontSize(rowFontSize).text(row.startDateTime, left + entryColumns.startDateTime.x, y, {
-        width: entryColumns.startDateTime.width,
-        lineBreak: false,
-      });
-      doc.text(`—     ${row.endDateTime}`, left + entryColumns.end.x, y, {
-        width: entryColumns.end.width,
-        lineBreak: false,
-      });
+      if (row.isCompactSummary && entryColumns.beteckning.width === 0) {
+        doc.text(row.dayLabel, compactDayX, y, {
+          width: compactDayWidth,
+          lineBreak: false,
+        });
+        doc.text(row.startDateTime, compactTimeX, y, {
+          width: compactTimeWidth,
+          lineBreak: false,
+        });
+        doc.text('—', compactDashX, y, {
+          width: compactDashWidth,
+          align: 'center',
+          lineBreak: false,
+        });
+        doc.text(row.endDateTime, compactEndTimeX, y, {
+          width: compactEndTimeWidth,
+          lineBreak: false,
+        });
+      } else {
+        if (entryColumns.beteckning.width > 0) {
+          doc.text(row.beteckning, left + entryColumns.beteckning.x, y, {
+            width: entryColumns.beteckning.width,
+            lineBreak: false,
+          });
+        }
+        doc.text(row.dayLabel, left + entryColumns.start.x, y, {
+          width: entryColumns.startDay.width,
+          lineBreak: false,
+        });
+        doc.font(PDF_FONTS.bodyBold).fontSize(rowFontSize).text(row.startDateLabel, left + entryColumns.startDate.x, y, {
+          width: entryColumns.startDate.width,
+          lineBreak: false,
+        });
+        doc.text(row.startTimeLabel, left + entryColumns.startTime.x, y, {
+          width: entryColumns.startTime.width,
+          lineBreak: false,
+        });
+        doc.text('—', left + entryColumns.endDash.x, y, {
+          width: entryColumns.endDash.width,
+          align: 'center',
+          lineBreak: false,
+        });
+        doc.text(row.endDayLabel, left + entryColumns.endDay.x, y, {
+          width: entryColumns.endDay.width,
+          lineBreak: false,
+        });
+        doc.text(row.endDateLabel, left + entryColumns.endDate.x, y, {
+          width: entryColumns.endDate.width,
+          lineBreak: false,
+        });
+        doc.text(row.endTimeLabel, left + entryColumns.endTime.x, y, {
+          width: entryColumns.endTime.width,
+          lineBreak: false,
+        });
+      }
     } else if (row.kind === 'spacer') {
       // Keep the visual gap between entry rows and section rows, but remove the extra header line.
     } else if (row.kind === 'section') {
@@ -663,7 +984,7 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
       });
       doc.text(row.name, left + sectionColumns.name.x, y, {
         width: sectionColumns.name.width,
-        lineBreak: false,
+        lineGap: 1,
       });
       drawLegacyBoundarySegment(
         doc,
@@ -679,7 +1000,7 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
       });
     }
 
-    y += rowHeight;
+    y += currentRowHeight;
   });
 
   if (showNote) {
@@ -708,7 +1029,6 @@ const addEntriesAndSectionsPage = (doc, project, entries, sections, dispSettings
   const pageWidth = doc.page.width;
   const tableLeft = 74;
   const tableWidth = pageWidth - 2 * tableLeft;
-  const rowHeight = 21;
   const headerHeight = 31;
   const noteText = 'Yttre gränspunkter som ej får passeras utan medgivande från TKL är rödmarkerade.';
   const weekLine = cleanText(dispSettings.veckaOchDagar || '');
@@ -716,13 +1036,7 @@ const addEntriesAndSectionsPage = (doc, project, entries, sections, dispSettings
   const highlightSource = explicitHighlightValue || project.granspunkter || '';
   const highlightTokens = getBoundaryHighlightTokens(highlightSource).map(normalizeBoundaryToken);
 
-  const entryColumns = {
-    beteckning: { x: 6, width: 82 },
-    start: { x: 116 },
-    startDay: { x: 116, width: 52 },
-    startDateTime: { x: 166, width: 140 },
-    end: { x: 274, width: 154 },
-  };
+  const entryColumns = getLegacyEntryColumns(Boolean(dispSettings.visaBeteckningarKapitel1));
   const sectionColumns = {
     label: { x: 10, width: 92 },
     name: { x: 108, width: 136 },
@@ -730,13 +1044,7 @@ const addEntriesAndSectionsPage = (doc, project, entries, sections, dispSettings
     spar: { x: 344, width: 78 },
   };
 
-  const entryRows = entries.map((entry) => ({
-    kind: 'entry',
-    beteckning: entry.beteckning,
-    dayLabel: buildEntryDayLabel(entry, weekLine),
-    startDateTime: [formatDate(entry.startDate), formatTime(entry.startTime)].filter(Boolean).join('     '),
-    endDateTime: [formatDate(entry.endDate), formatTime(entry.endTime)].filter(Boolean).join('     '),
-  }));
+  const entryRows = buildChapterOneEntryRows(entries, dispSettings, weekLine);
   const sectionRows = sections.map((section) => ({
     kind: 'section',
     label: section.label,
@@ -744,29 +1052,38 @@ const addEntriesAndSectionsPage = (doc, project, entries, sections, dispSettings
     granspunkter: formatLegacyBoundaryText(section.granspunkter),
     spar: section.spar ? `Spår ${section.spar}` : '—',
   }));
-  const firstPageCapacity = 22;
-  const continuedPageCapacity = 24;
-  const firstPageSectionCapacity = Math.max(0, firstPageCapacity - (entryRows.length + 1));
-  const firstPageSectionRows = sectionRows.slice(0, firstPageSectionCapacity);
-  const remainingSectionRows = sectionRows.slice(firstPageSectionCapacity);
-  const continuationChunks = [];
-
-  for (let index = 0; index < remainingSectionRows.length; index += continuedPageCapacity) {
-    continuationChunks.push(remainingSectionRows.slice(index, index + continuedPageCapacity));
-  }
-
   const rows = [
     ...entryRows,
     { kind: 'spacer' },
-    ...firstPageSectionRows,
+    ...sectionRows,
   ];
+  const firstPageAvailableHeight = 560 - headerHeight - 12;
+  const continuedPageAvailableHeight = 620 - headerHeight - 12;
+  const firstPageChunks = paginateLegacyChapterOneRows(doc, rows, firstPageAvailableHeight, entryColumns, sectionColumns);
+  const firstPageRows = firstPageChunks[0] || rows.map((row) => ({
+    ...row,
+    rowHeight: getLegacyChapterOneRowHeight(doc, row, entryColumns, sectionColumns),
+  }));
+  const remainingSectionRows = [];
+  firstPageChunks.slice(1).forEach((chunk) => {
+    chunk.forEach((row) => {
+      if (row.kind === 'section') remainingSectionRows.push({ ...row, rowHeight: undefined });
+    });
+  });
+  const continuationChunks = paginateLegacyChapterOneRows(
+    doc,
+    remainingSectionRows,
+    continuedPageAvailableHeight,
+    entryColumns,
+    sectionColumns
+  );
 
   drawLegacyChapterHeading(doc, '1 Gränspunkter och delområde.');
-  drawLegacyChapterOneTable(doc, rows, {
+  drawLegacyChapterOneTable(doc, firstPageRows, {
     left: tableLeft,
     top: 248,
     width: tableWidth,
-    rowHeight,
+    rowHeight: 21,
     headerHeight,
     entryColumns,
     sectionColumns,
@@ -785,7 +1102,7 @@ const addEntriesAndSectionsPage = (doc, project, entries, sections, dispSettings
       left: tableLeft,
       top: 188,
       width: tableWidth,
-      rowHeight,
+      rowHeight: 21,
       headerHeight,
       entryColumns,
       sectionColumns,
@@ -923,40 +1240,37 @@ const getLegacyChapters = (project = {}, dispSettings = {}) => {
 const addStaticTextPages = (doc, project, dispSettings, totalPages) => {
   const chapters = getLegacyChapters(project, dispSettings);
   const chapterPages = {};
-  const groups = [
-    [2, 3, 4],
-    [5, 6, 7],
-    [8, 9, 10, 11],
-    [12, 13],
-  ];
-  const chapterMap = new Map(chapters.map((chapter) => [chapter.number, chapter]));
+  const metrics = getStaticChapterLayoutMetrics(doc);
+  let pageNumber = null;
+  let y = metrics.startY;
 
-  groups.forEach((group) => {
-    doc.addPage();
-    const pageNumber = doc.bufferedPageRange().count;
-    drawLegacyHeader(doc, dispSettings, totalPages, pageNumber);
-    const bodyX = doc.page.margins.left + 48;
-    const bodyWidth = doc.page.width - bodyX - doc.page.margins.right;
-    let y = 122;
+  chapters.forEach((chapter, index) => {
+    const blockHeight = getStaticChapterBlockHeight(doc, chapter, metrics);
+    if (pageNumber === null || (y > metrics.startY && y + blockHeight > metrics.bottomY)) {
+      doc.addPage();
+      pageNumber = doc.bufferedPageRange().count;
+      drawLegacyHeader(doc, dispSettings, totalPages, pageNumber);
+      y = metrics.startY;
+    }
 
-    group.forEach((chapterNumber) => {
-      const chapter = chapterMap.get(chapterNumber);
-      if (!chapter) return;
+    chapterPages[chapter.number] = pageNumber;
+    y = drawLegacySplitChapterHeading(doc, chapter.number, chapter.title, y) + 8;
 
-      chapterPages[chapter.number] = pageNumber;
-      y = drawLegacySplitChapterHeading(doc, chapter.number, chapter.title, y) + 8;
-
-      const lines = Array.isArray(chapter.lines) ? chapter.lines : chapter.paragraphs;
-      lines.forEach((line) => {
-        doc.font(PDF_FONTS.body).fontSize(12).fillColor('#000000').text(line, bodyX, y, {
-          width: bodyWidth,
-          lineGap: 2,
-        });
-        y = doc.y + 3;
+    const lines = Array.isArray(chapter.lines) ? chapter.lines : chapter.paragraphs;
+    lines.forEach((line) => {
+      doc.font(PDF_FONTS.body).fontSize(12).fillColor('#000000').text(line, metrics.bodyX, y, {
+        width: metrics.bodyWidth,
+        lineGap: 2,
       });
-
-      y += 18;
+      y = doc.y + 3;
     });
+
+    y += 18;
+    if (index === chapters.length - 1) return;
+    if (y > metrics.bottomY) {
+      y = metrics.startY;
+      pageNumber = null;
+    }
   });
 
   return chapterPages;
@@ -966,9 +1280,9 @@ const createDispPdfBuffer = async (project = {}) => {
   const entries = buildEntries(project);
   const sections = buildSections(project);
   const dispSettings = buildDispSettings(project, entries);
-  const totalPages = estimateLegacyTotalPages(entries, sections);
   const title = ['Dispositionsarbetsplan', getPublicDispName(project, dispSettings) || dispSettings.rubrik || project.name].filter(Boolean).join(' ');
   const { doc, toBuffer } = createDocument(title);
+  const totalPages = estimateLegacyTotalPages(doc, entries, sections, dispSettings, project);
 
   drawLegacyHeader(doc, dispSettings, totalPages, 1);
   addCoverPage(doc, project, dispSettings);
