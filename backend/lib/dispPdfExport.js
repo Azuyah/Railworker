@@ -49,16 +49,12 @@ const normalizeTrackValue = (value = '') => {
   const normalized = sanitizeSectionText(value).replace(/^sp[aå]r\s*/i, '');
   if (!normalized) return '';
 
-  const compactNumeric = normalized.match(/^\d+(?:[\s,]+\d+)*/)?.[0];
-  if (compactNumeric) {
-    return compactNumeric
-      .split(/[\s,]+/)
-      .filter(Boolean)
-      .join(', ');
-  }
-
-  const letterTrack = normalized.match(/^[A-Za-z](?:,\s*[A-Za-z])*/)?.[0];
-  return cleanText(letterTrack || normalized);
+  return cleanText(
+    normalized
+      .replace(/\s*-\s*/g, '-')
+      .replace(/\s*\/\s*/g, '/')
+      .replace(/\s*,\s*/g, ', ')
+  );
 };
 
 const formatDate = (value = '') => {
@@ -784,13 +780,10 @@ const getLegacyRowHeight = (doc, row, columns, fontSize = 11) =>
   }, fontSize + 2)) + 2;
 
 const getLegacyBoundarySegmentFontSize = (doc, text, maxWidth, defaultFontSize = 12) => {
-  const normalizedText = cleanText(text);
-  const sizes = [defaultFontSize, 11.5, 11, 10.5, 10, 9.5, 9];
-  if (!maxWidth) return defaultFontSize;
-  return sizes.find((size) => {
-    doc.font(PDF_FONTS.bodyBold).fontSize(size);
-    return doc.widthOfString(normalizedText) <= maxWidth;
-  }) || 9;
+  void doc;
+  void text;
+  void maxWidth;
+  return defaultFontSize;
 };
 
 const getLegacyBoundarySegmentHeight = (doc, text, maxWidth, defaultFontSize = 12) => {
@@ -810,7 +803,7 @@ const drawLegacyBoundarySegment = (doc, text, x, y, maxWidth, highlightTokens = 
 
   if (!dashMatch) {
     const color = highlightTokens.includes(normalizeBoundaryToken(normalizedText)) ? '#c1121f' : '#000000';
-    doc.fillColor(color).text(normalizedText, x, y, { width: maxWidth, lineBreak: false });
+    doc.fillColor(color).text(normalizedText, x, y, { width: maxWidth, lineGap: 1 });
     return;
   }
 
@@ -820,13 +813,18 @@ const drawLegacyBoundarySegment = (doc, text, x, y, maxWidth, highlightTokens = 
   const leftColor = highlightTokens.includes(normalizeBoundaryToken(leftToken)) ? '#c1121f' : '#000000';
   const rightColor = highlightTokens.includes(normalizeBoundaryToken(rightToken)) ? '#c1121f' : '#000000';
 
-  doc.fillColor(leftColor).text(leftToken, x, y, { lineBreak: false });
-  const leftWidth = doc.widthOfString(leftToken);
-  doc.fillColor('#000000').text(separator, x + leftWidth, y, { lineBreak: false });
-  const separatorWidth = doc.widthOfString(separator);
-  doc.fillColor(rightColor).text(rightToken, x + leftWidth + separatorWidth, y, {
-    width: Math.max(0, (maxWidth || 0) - leftWidth - separatorWidth),
-    lineBreak: false,
+  doc.fillColor(leftColor).text(leftToken, x, y, {
+    width: maxWidth,
+    continued: true,
+    lineGap: 1,
+  });
+  doc.fillColor('#000000').text(separator, {
+    continued: true,
+    lineGap: 1,
+  });
+  doc.fillColor(rightColor).text(rightToken, {
+    width: maxWidth,
+    lineGap: 1,
   });
 };
 
@@ -839,10 +837,10 @@ const getLegacyEntryColumns = (showBeteckning = true) => (
         startDate: { x: 166, width: 88 },
         startTime: { x: 258, width: 48 },
         end: { x: 274, width: 154 },
-        endDash: { x: 274, width: 16 },
+        endDash: { x: 274, width: 12 },
         endDay: { x: 292, width: 34 },
         endDate: { x: 326, width: 88 },
-        endTime: { x: 414, width: 48 },
+        endTime: { x: 434, width: 48 },
       }
     : {
         beteckning: { x: 0, width: 0 },
@@ -851,10 +849,10 @@ const getLegacyEntryColumns = (showBeteckning = true) => (
         startDate: { x: 76, width: 88 },
         startTime: { x: 168, width: 42 },
         end: { x: 214, width: 156 },
-        endDash: { x: 214, width: 16 },
-        endDay: { x: 236, width: 34 },
-        endDate: { x: 270, width: 88 },
-        endTime: { x: 358, width: 42 },
+        endDash: { x: 214, width: 12 },
+        endDay: { x: 232, width: 34 },
+        endDate: { x: 266, width: 88 },
+        endTime: { x: 374, width: 42 },
       }
 );
 

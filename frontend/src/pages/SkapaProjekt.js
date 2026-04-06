@@ -324,16 +324,12 @@ const normalizeTrackValue = (value = '') => {
     return '';
   }
 
-  const compactNumeric = normalized.match(/^\d+(?:[\s,]+\d+)*/)?.[0];
-  if (compactNumeric) {
-    return compactNumeric
-      .split(/[\s,]+/)
-      .filter(Boolean)
-      .join(', ');
-  }
-
-  const letterTrack = normalized.match(/^[A-Za-z](?:,\s*[A-Za-z])*/)?.[0];
-  return (letterTrack || normalized).trim();
+  return normalized
+    .replace(/\s*-\s*/g, '-')
+    .replace(/\s*\/\s*/g, '/')
+    .replace(/\s*,\s*/g, ', ')
+    .replace(/\s+/g, ' ')
+    .trim();
 };
 
 const normalizeSectionAreaName = (value = '') =>
