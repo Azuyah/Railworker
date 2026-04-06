@@ -170,18 +170,17 @@ const validatePlanningSelectionRules = (sections = [], selections = [], anordnin
   }
 
   if (anordning.includes('A-S')) {
-    if (selectedIndexes.length !== 2) {
-      return 'A-Skydd kräver två delområden.';
+    if (selectedIndexes.length === 0) {
+      return 'A-Skydd kräver minst ett delområde.';
     }
 
-    const [firstIndex, secondIndex] = selectedIndexes;
-    const firstSection = sections[firstIndex];
-    const secondSection = sections[secondIndex];
-    const hasOneLineAndOneDp = isLineSection(firstSection) !== isLineSection(secondSection);
-    const isAdjacent = Math.abs(firstIndex - secondIndex) === 1;
+    const sortedIndexes = [...selectedIndexes].sort((left, right) => left - right);
+    const isContiguousChain = sortedIndexes.every((index, currentIndex) => (
+      currentIndex === 0 || index - sortedIndexes[currentIndex - 1] === 1
+    ));
 
-    if (!hasOneLineAndOneDp || !isAdjacent) {
-      return 'A-Skydd kräver en driftplats och en intilliggande linje.';
+    if (!isContiguousChain) {
+      return 'A-Skydd måste vara en sammanhängande kedja av angränsande delområden.';
     }
   }
 
@@ -259,6 +258,44 @@ const isPlanningWindowOpen = (entry) => Date.now() < getPlanEntryCutoffTimestamp
 
 const getRowPlanDate = (row = {}) =>
   normalizeDateForInput(row?.begardDatum || row?.datum || row?.startdatum || '');
+
+const getApproverBtknPrefix = (user = {}) => {
+  const explicitSignature = String(user?.signature || '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .trim();
+
+  if (explicitSignature) {
+    return explicitSignature;
+  }
+
+  const fallback = `${String(user?.firstName || '').trim()[0] || ''}${String(user?.lastName || '').trim()[0] || ''}`
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .trim();
+
+  return fallback || 'HT';
+};
+
+const getNextProjectBtkn = (prefix = '', rows = []) => {
+  const safePrefix = String(prefix || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (!safePrefix) {
+    return '';
+  }
+
+  const regex = new RegExp(`^${safePrefix}(\\d+)$`);
+  let maxNumber = 0;
+
+  (rows || []).forEach((row) => {
+    const match = String(row?.btkn || '').trim().toUpperCase().match(regex);
+    if (match?.[1]) {
+      maxNumber = Math.max(maxNumber, Number.parseInt(match[1], 10) || 0);
+    }
+  });
+
+  const nextNumber = String(maxNumber + 1).padStart(2, '0');
+  return `${safePrefix}${nextNumber}`;
+};
 
 const getRowSortTimestamp = (row = {}) => {
   const rawValue = row?.createdAt || row?.skapadDatum || row?.updatedAt || row?.datum || '';
@@ -1296,6 +1333,7 @@ app.put('/api/row/approve/:rowId', authMiddleware, async (req, res) => {
 
     const project = row.project;
     const existingRows = Array.isArray(project.rows) ? project.rows : [];
+    const generatedBtkn = getNextProjectBtkn(getApproverBtknPrefix(approver), existingRows);
 
 const newRow = {
   id: Date.now(),
@@ -1314,6 +1352,7 @@ const newRow = {
   avslutadAv: '',
   avslutat: '',
   avslutatDatum: '',
+  btkn: generatedBtkn,
   selections: row.selections,
   tsa: Boolean(row.tsa),
   anteckning: row.anteckning || '',
@@ -1340,7 +1379,11 @@ const newRow = {
       },
     });
 
-    res.json({ message: 'Rad godkänd och tillagd i projektet', addedRow: newRow });
+    res.json({
+      message: 'Rad godkänd och tillagd i projektet',
+      addedRow: newRow,
+      generatedBtkn,
+    });
   } catch (err) {
     console.error('❌ Fel vid godkännande:', err);
     res.status(500).json({ error: 'Kunde inte godkänna raden' });

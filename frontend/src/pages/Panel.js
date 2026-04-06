@@ -140,6 +140,70 @@ const formatPlanDateForDisplay = (value = '') => {
   return `${day}/${month}/${year}`;
 };
 
+const getProjectPlanningSummary = (project = {}) => {
+  const explicitWeekLine = String(project?.formState?.dispSettings?.veckaOchDagar || '').trim();
+  if (explicitWeekLine) {
+    return explicitWeekLine;
+  }
+
+  const nextEntry = getNextPlanEntry(project);
+  if (!nextEntry) {
+    return '';
+  }
+
+  const date = formatPlanDateForDisplay(nextEntry.startDate || nextEntry.endDate || '');
+  const startTime = formatPlanTime(nextEntry.startTime || '');
+  const endTime = formatPlanTime(nextEntry.endTime || '');
+  return [date, [startTime, endTime].filter(Boolean).join(' - ')].filter(Boolean).join(' ');
+};
+
+const playCallInAlert = () => {
+  if (typeof window === 'undefined') return;
+
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return;
+
+  try {
+    const audioContext = new AudioContextClass();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+    gainNode.gain.setValueAtTime(0.0001, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.12, audioContext.currentTime + 0.02);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.45);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.45);
+
+    oscillator.onended = () => {
+      audioContext.close().catch(() => {});
+    };
+  } catch (error) {
+    // Ignore browser audio restrictions silently.
+  }
+};
+
+const rowBelongsToCurrentTsm = (row = {}, user = {}) => {
+  const currentUserId = Number(user?.id);
+  const rowUserId = Number(row?.userId);
+  const currentPhone = String(user?.phone || '').trim();
+  const rowPhone = String(row?.telefon || '').trim();
+
+  if (Number.isFinite(currentUserId) && Number.isFinite(rowUserId) && rowUserId > 0) {
+    return rowUserId === currentUserId;
+  }
+
+  if (currentPhone && rowPhone) {
+    return rowPhone === currentPhone;
+  }
+
+  return false;
+};
+
 const isLineSection = (section = {}) => {
   const explicitType = String(section?.type || section?.sectionType || '').trim().toLowerCase();
   if (explicitType.includes('linje') || explicitType.includes('sträcka')) {
@@ -153,28 +217,28 @@ const isLineSection = (section = {}) => {
   return label.includes(' - ');
 };
 
-const getAllowedAskyddPairIds = (sections = [], selectedIds = []) => {
+const getAllowedAskyddSelectionIds = (sections = [], selectedIds = []) => {
   const selectedSet = new Set(selectedIds);
   if (selectedIds.length === 0) {
     return new Set(sections.map((section) => section.id));
   }
 
-  if (selectedIds.length >= 2) {
-    return selectedSet;
-  }
+  const selectedIndexes = sections
+    .map((section, index) => (selectedSet.has(section.id) ? index : -1))
+    .filter((index) => index >= 0)
+    .sort((left, right) => left - right);
 
-  const firstSelected = sections.find((section) => section.id === selectedIds[0]);
-  if (!firstSelected) {
+  if (selectedIndexes.length === 0) {
     return new Set(sections.map((section) => section.id));
   }
 
-  const firstIndex = sections.findIndex((section) => section.id === firstSelected.id);
-  const validIds = new Set([firstSelected.id]);
+  const minIndex = selectedIndexes[0];
+  const maxIndex = selectedIndexes[selectedIndexes.length - 1];
+  const validIds = new Set(selectedIds);
 
-  [firstIndex - 1, firstIndex + 1].forEach((candidateIndex) => {
+  [minIndex - 1, maxIndex + 1].forEach((candidateIndex) => {
     const candidate = sections[candidateIndex];
     if (!candidate) return;
-    if (isLineSection(candidate) === isLineSection(firstSelected)) return;
     validIds.add(candidate.id);
   });
 
@@ -192,17 +256,7 @@ const normalizeSelectedSectionIds = (sections = [], selectedIds = [], anordning 
   }
 
   if (anordning.includes('A-S')) {
-    if (uniqueSelectedIds.length === 0) return [];
-
-    const firstSelected = sections.find((section) => section.id === uniqueSelectedIds[0]);
-    if (!firstSelected) return [];
-
-    const validIds = getAllowedAskyddPairIds(sections, [firstSelected.id]);
-    const secondSelectedId = uniqueSelectedIds
-      .slice(1)
-      .find((id) => validIds.has(id) && id !== firstSelected.id);
-
-    return secondSelectedId ? [firstSelected.id, secondSelectedId] : [firstSelected.id];
+    return uniqueSelectedIds;
   }
 
   return uniqueSelectedIds;
@@ -210,6 +264,11 @@ const normalizeSelectedSectionIds = (sections = [], selectedIds = [], anordning 
 
 export default function Panel() {
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const {
+    isOpen: isStatusOpen,
+    onOpen: onStatusOpen,
+    onClose: onStatusClose,
+  } = useDisclosure();
   const [projects, setProjects] = useState([]);
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
@@ -222,6 +281,7 @@ export default function Panel() {
   const [anteckning, setAnteckning] = useState('');
   const [anordning, setAnordning] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
+  const [statusProject, setStatusProject] = useState(null);
   const [exportingProjectId, setExportingProjectId] = useState(null);
   const namn = `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
   const telefon = user?.phone || '';
@@ -233,26 +293,16 @@ export default function Panel() {
 
   const getUserPlansForProject = useCallback(
     (project) => {
-      const fullName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim().toLowerCase();
-      const phone = String(user?.phone || '').trim();
-      const pendingRows = Array.isArray(project?.tsmRows)
-        ? project.tsmRows.filter((row) => row.userId === user?.id && row.isPending !== false)
+      const tsmRows = Array.isArray(project?.tsmRows)
+        ? project.tsmRows.filter((row) => rowBelongsToCurrentTsm(row, user))
         : [];
       const approvedRows = Array.isArray(project?.rows)
-        ? project.rows.filter((row) => {
-            const rowName = String(row?.namn || '').trim().toLowerCase();
-            const rowPhone = String(row?.telefon || '').trim();
-            return (
-              row?.userId === user?.id ||
-              (!!phone && rowPhone === phone) ||
-              (!!fullName && rowName === fullName)
-            );
-          })
+        ? project.rows.filter((row) => rowBelongsToCurrentTsm(row, user))
         : [];
 
-      return [...approvedRows, ...pendingRows];
+      return [...approvedRows, ...tsmRows];
     },
-    [user?.firstName, user?.id, user?.lastName, user?.phone]
+    [user]
   );
 
   const isAnordningOptionDisabled = useCallback((optionValue) => {
@@ -271,7 +321,7 @@ export default function Panel() {
       return !isLineSection(section);
     }
     if (isASkyddSelected) {
-      const allowedIds = getAllowedAskyddPairIds(selectedProject.sections, selectedSectionIds);
+      const allowedIds = getAllowedAskyddSelectionIds(selectedProject.sections, selectedSectionIds);
       return !allowedIds.has(section.id);
     }
     return false;
@@ -354,15 +404,14 @@ export default function Panel() {
   const getLatestNextPlanningStatus = useCallback(
     (project) => {
       const nextPlanDate = getProjectNextPlanDate(project);
-      if (!nextPlanDate) {
-        return { status: 'none' };
-      }
-
-      const matchingRows = getUserPlansForProject(project)
-        .filter((row) => getRowPlanDate(row) === nextPlanDate)
+      const userRows = getUserPlansForProject(project)
         .sort((left, right) => getRowSortTimestamp(right) - getRowSortTimestamp(left));
+      const matchingRows = nextPlanDate
+        ? userRows.filter((row) => getRowPlanDate(row) === nextPlanDate)
+        : [];
 
-      const latestRow = matchingRows[0];
+      const latestRow = matchingRows[0] || userRows[0];
+
       if (!latestRow) {
         return {
           status: 'none',
@@ -384,12 +433,16 @@ export default function Panel() {
       }
 
       if (latestRow.approvedById || latestRow.sourceRowId) {
+        const btkn = String(latestRow.btkn || '').trim();
         return {
           status: 'approved',
           title: 'Godkänd av HTSM',
-          description: 'Din förplanering är godkänd.',
+          description: btkn
+            ? `Din förplanering är godkänd. Din beteckning är ${btkn}.`
+            : 'Din förplanering är godkänd.',
           buttonLabel: 'Godkänd av HTSM',
           color: 'green',
+          btkn,
         };
       }
 
@@ -415,13 +468,17 @@ export default function Panel() {
 
   const handleSelfEnroll = async () => {
     try {
-      let storedUser = null;
-      try {
-        storedUser = JSON.parse(localStorage.getItem('user') || 'null');
-      } catch (error) {
-        storedUser = null;
+      const requestToken = token || user?.token || null;
+      if (!requestToken) {
+        toast({
+          title: 'Du behöver logga in igen.',
+          description: 'Ingen giltig inloggning hittades för att skicka förplaneringen.',
+          status: 'error',
+          duration: 4000,
+          isClosable: true,
+        });
+        return;
       }
-      const token = storedUser?.token || null;
       const targetPlanEntry = getNextPlanEntry(selectedProject);
       const targetPlanDate = normalizeDateForInput(targetPlanEntry?.startDate || targetPlanEntry?.endDate);
 
@@ -478,7 +535,7 @@ export default function Panel() {
         },
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${requestToken}`,
           },
         }
       );
@@ -512,8 +569,9 @@ export default function Panel() {
       console.error('❌ Fel vid TSM-anmälan:', err);
       toast({
         title: 'Kunde inte skicka anmälan.',
+        description: err?.response?.data?.error || err?.response?.data?.details || 'Något gick fel när förplaneringen skulle skickas.',
         status: 'error',
-        duration: 3000,
+        duration: 5000,
         isClosable: true,
       });
     }
@@ -597,6 +655,58 @@ export default function Panel() {
   }, [fetchAllProjects, navigate, token]);
 
   useEffect(() => {
+    if (!token || user?.role !== 'TSM') {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      fetchAllProjects();
+    }, 15000);
+
+    const refreshOnFocus = () => {
+      fetchAllProjects();
+    };
+
+    const refreshOnVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchAllProjects();
+      }
+    };
+
+    window.addEventListener('focus', refreshOnFocus);
+    document.addEventListener('visibilitychange', refreshOnVisibility);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', refreshOnFocus);
+      document.removeEventListener('visibilitychange', refreshOnVisibility);
+    };
+  }, [fetchAllProjects, token, user?.role]);
+
+  useEffect(() => {
+    if (user?.role !== 'TSM') return;
+
+    projects.forEach((project) => {
+      const status = getLatestNextPlanningStatus(project);
+      if (status.status !== 'call_in_required') return;
+
+      const nextPlanDate = getProjectNextPlanDate(project) || 'unknown';
+      const alertKey = `railworker.callin.${project.id}.${nextPlanDate}`;
+      if (localStorage.getItem(alertKey)) return;
+
+      localStorage.setItem(alertKey, 'seen');
+      playCallInAlert();
+      toast({
+        title: 'Ring in',
+        description: 'HTSM kunde inte acceptera din förplanering. Ring in din förplanering.',
+        status: 'error',
+        duration: null,
+        isClosable: true,
+      });
+    });
+  }, [getLatestNextPlanningStatus, getProjectNextPlanDate, projects, toast, user?.role]);
+
+  useEffect(() => {
     if (!isOpen || !selectedProject) return;
     setBegard(getDesiredEndTime(nextPlanEntry || selectedProject));
     setBegardDatum(
@@ -666,7 +776,7 @@ export default function Panel() {
       </style>
 
       <Header />
-      <div className="pt-24 p-6 max-w-7xl mx-auto">
+      <div className="pt-40 px-3 py-4 sm:px-6 sm:pt-32 sm:pb-6 max-w-7xl mx-auto">
         <div className="grid grid-cols-1 gap-6">
           <div className="fancy-card p-6">
             <div className="mb-4">
@@ -682,43 +792,19 @@ export default function Panel() {
                 {projects.map((project) => (
                   <li
                     key={project.id}
-                    className="border rounded p-4 flex justify-between items-center transition duration-200 hover:shadow-md gap-4"
+                    className="border rounded p-4 flex flex-col items-stretch gap-4 transition duration-200 hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-lg text-gray-800">
                         {project.name}
                       </h3>
-                      {project.plats && (
-                        <p className="text-sm text-gray-500">{project.plats}</p>
+                      {getProjectPlanningSummary(project) && (
+                        <p className="text-sm text-gray-500 break-words">
+                          {getProjectPlanningSummary(project)}
+                        </p>
                       )}
-                      {(() => {
-                        const planningStatus = getLatestNextPlanningStatus(project);
-                        const colorClasses = {
-                          gray: 'bg-gray-50 border-gray-200 text-gray-900',
-                          yellow: 'bg-yellow-50 border-yellow-200 text-yellow-900',
-                          green: 'bg-green-50 border-green-200 text-green-900',
-                          red: 'bg-red-50 border-red-200 text-red-900',
-                        };
-
-                        return (
-                          <div className={`mt-3 rounded-xl border px-3 py-3 ${colorClasses[planningStatus.color] || 'bg-gray-50 border-gray-200 text-gray-900'}`}>
-                            <p className="text-xs font-bold uppercase tracking-wide">
-                              Förplanering
-                            </p>
-                            <p className="mt-1 text-sm font-semibold">
-                              {planningStatus.title}
-                            </p>
-                            <p className="mt-1 text-xs leading-5">
-                              {planningStatus.description}
-                            </p>
-                            <p className="mt-2 text-[11px] font-semibold opacity-80">
-                              Kontrollera alltid status i appen innan arbetet påbörjas.
-                            </p>
-                          </div>
-                        );
-                      })()}
                     </div>
-                    <div className="flex space-x-2">
+                    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:space-x-2 sm:gap-0">
                       {user?.role === 'TSM' && (
                         <Button
                           onClick={() => handleExportDisp(project)}
@@ -726,6 +812,7 @@ export default function Panel() {
                           colorScheme="blue"
                           isLoading={exportingProjectId === project.id}
                           loadingText="Laddar"
+                          width={{ base: '100%', sm: 'auto' }}
                         >
                           Ladda ner disp
                         </Button>
@@ -734,47 +821,9 @@ export default function Panel() {
                         <Button
                           onClick={() => {
                             const planningStatus = getLatestNextPlanningStatus(project);
-                            if (planningStatus.status === 'pending') {
-                              toast({
-                                title: planningStatus.title,
-                                description: planningStatus.description,
-                                status: 'info',
-                                duration: 5000,
-                                isClosable: true,
-                              });
-                              return;
-                            }
-
-                            if (planningStatus.status === 'approved') {
-                              toast({
-                                title: planningStatus.title,
-                                description: planningStatus.description,
-                                status: 'success',
-                                duration: 4000,
-                                isClosable: true,
-                              });
-                              return;
-                            }
-
-                            if (planningStatus.status === 'call_in_required') {
-                              toast({
-                                title: planningStatus.title,
-                                description: planningStatus.description,
-                                status: 'error',
-                                duration: 5000,
-                                isClosable: true,
-                              });
-                              return;
-                            }
-
-                            if (hasExistingNextPlanning(project)) {
-                              toast({
-                                title: 'Förplanering finns redan',
-                                description: 'Du har redan skickat en förplanering för projektets nästa planering.',
-                                status: 'info',
-                                duration: 5000,
-                                isClosable: true,
-                              });
+                            if (planningStatus.status !== 'none') {
+                              setStatusProject(project);
+                              onStatusOpen();
                               return;
                             }
 
@@ -795,14 +844,14 @@ export default function Panel() {
                           className="fancy-button"
                           colorScheme="blue"
                           isDisabled={!getProjectNextPlanDate(project)}
+                          width={{ base: '100%', sm: 'auto' }}
                         >
                           {(() => {
                             if (!getProjectNextPlanDate(project)) return 'Ingen planering';
                             const planningStatus = getLatestNextPlanningStatus(project);
-                            if (planningStatus.status === 'none') {
-                              return isPlanningClosedForProject(project) ? 'Ring in' : 'Förplanera';
-                            }
-                            return planningStatus.buttonLabel;
+                            return planningStatus.status === 'none'
+                              ? 'Förplanera'
+                              : 'Kontrollera status';
                           })()}
                         </Button>
                       )}
@@ -844,7 +893,7 @@ export default function Panel() {
                 </FormControl>
               )}
 
-              <SimpleGrid columns={2} spacing={4}>
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                 <FormControl>
                   <FormLabel>Ditt namn</FormLabel>
                   <Input value={namn} isDisabled />
@@ -855,11 +904,11 @@ export default function Panel() {
                 </FormControl>
               </SimpleGrid>
 
-              <SimpleGrid columns={2} spacing={4}>
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                 <FormControl>
                   <FormLabel>Delområden</FormLabel>
                   <Menu closeOnSelect={false}>
-                    <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
+                    <MenuButton as={Button} rightIcon={<ChevronDownIcon />} width="100%">
                       {selectedSectionIds.length
                         ? `${selectedSectionIds.length} valda`
                         : 'Välj delområden'}
@@ -895,7 +944,7 @@ export default function Panel() {
                   )}
                   {isASkyddSelected && (
                     <FormLabel mt={2} fontSize="xs" color="orange.600">
-                      A-Skydd kräver exakt två delområden: en driftplats och en intilliggande linje.
+                      A-Skydd kan omfatta en eller flera angränsande delområden. HTSM kan vid behov justera omfattningen vidare.
                     </FormLabel>
                   )}
                 </FormControl>
@@ -903,7 +952,7 @@ export default function Panel() {
                 <FormControl>
                   <FormLabel>Skyddsanordning</FormLabel>
                   <Menu closeOnSelect={false}>
-                    <MenuButton as={Button} rightIcon={<ChevronDownIcon />}>
+                    <MenuButton as={Button} rightIcon={<ChevronDownIcon />} width="100%">
                       {anordning.length ? `${anordning.length} valda` : 'Välj skyddsanordning'}
                     </MenuButton>
                     <MenuList>
@@ -923,7 +972,7 @@ export default function Panel() {
                 </FormControl>
               </SimpleGrid>
 
-              <SimpleGrid columns={2} spacing={4}>
+              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                 <FormControl>
                   <FormLabel>Önskad sluttid</FormLabel>
                   <Input type="time" value={begard} onChange={e => setBegard(e.target.value)} />
@@ -967,6 +1016,90 @@ export default function Panel() {
 >
   Skicka
 </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+      <Modal isOpen={isStatusOpen} onClose={onStatusClose} size="md">
+        <ModalOverlay />
+        <ModalContent bg="white" color="black">
+          <ModalHeader>Status för förplanering</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            {(() => {
+              const planningStatus = getLatestNextPlanningStatus(statusProject);
+              const colorMap = {
+                gray: {
+                  bg: 'gray.50',
+                  border: 'gray.200',
+                  text: 'gray.900',
+                },
+                yellow: {
+                  bg: 'yellow.50',
+                  border: 'yellow.200',
+                  text: 'yellow.900',
+                },
+                green: {
+                  bg: 'green.50',
+                  border: 'green.200',
+                  text: 'green.900',
+                },
+                red: {
+                  bg: 'red.50',
+                  border: 'red.200',
+                  text: 'red.900',
+                },
+              };
+              const colors = colorMap[planningStatus.color] || colorMap.gray;
+
+              return (
+                <div
+                  style={{
+                    background: `var(--chakra-colors-${colors.bg.replace('.', '-')})`,
+                    border: `1px solid var(--chakra-colors-${colors.border.replace('.', '-')})`,
+                    color: `var(--chakra-colors-${colors.text.replace('.', '-')})`,
+                  }}
+                  className="rounded-xl px-4 py-4 break-words"
+                >
+                  <p className="text-xs font-bold uppercase tracking-wide">
+                    Förplanering
+                  </p>
+                  <p className="mt-1 text-base font-semibold">
+                    {planningStatus.title}
+                  </p>
+                  <p className="mt-2 text-sm leading-6">
+                    {planningStatus.description}
+                  </p>
+                  {planningStatus.status === 'approved' && planningStatus.btkn && (
+                    <div className="mt-4 rounded-xl border border-green-300 bg-white/80 px-4 py-3 text-center shadow-sm">
+                      <p className="text-xs font-bold uppercase tracking-[0.2em] text-green-800">
+                        Din beteckning
+                      </p>
+                      <p className="mt-2 text-3xl font-extrabold tracking-wide text-green-900">
+                        {planningStatus.btkn}
+                      </p>
+                    </div>
+                  )}
+                  {planningStatus.status === 'pending' && (
+                    <p className="mt-3 text-sm font-semibold opacity-90">
+                      Kontrollera status i appen innan arbetet påbörjas.
+                    </p>
+                  )}
+                  {planningStatus.status === 'approved' && (
+                    <p className="mt-3 text-sm font-semibold text-orange-700">
+                      Obs! Godkänd förplanering är inte starttillstånd. Arbetet får inte påbörjas förrän HTSM lämnat starttillstånd.
+                    </p>
+                  )}
+                  {planningStatus.status === 'call_in_required' && (
+                    <p className="mt-3 text-sm font-semibold opacity-90">
+                      Webbförplaneringen gäller inte. Ring in din förplanering till HTSM.
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
+          </ModalBody>
+          <ModalFooter>
+            <Button onClick={onStatusClose} colorScheme="blue">Stäng</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

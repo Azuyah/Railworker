@@ -828,7 +828,7 @@ const approveRow = async (rowId) => {
     const tokenData = localStorage.getItem('user');
     const token = tokenData ? JSON.parse(tokenData).token : null;
 
-    await axios.put(
+    const response = await axios.put(
       apiUrl(`/api/row/approve/${rowId}`),
       {},
       {
@@ -844,6 +844,9 @@ const approveRow = async (rowId) => {
     // 2. Visa bekräftelse
     toast({
       title: 'Raden godkänd.',
+      description: response?.data?.generatedBtkn
+        ? `Beteckning: ${response.data.generatedBtkn}`
+        : undefined,
       status: 'success',
       duration: 3000,
       isClosable: true,

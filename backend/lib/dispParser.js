@@ -4,6 +4,7 @@ const {
   parsePdfText,
   parsePdfWithOcr,
 } = require('./ocrPdf');
+const { loadCachedDriftplatser } = require('./njdbDriftplatsService');
 
 const extractAllMatches = (text, regex) => {
   const matches = [];
@@ -51,6 +52,130 @@ const pickUsablePlats = (...values) =>
   values
     .map((value) => normalizeProjectTitle(value))
     .find((value) => isUsablePlatsValue(value)) || '';
+
+let cachedKnownDriftplatsNames = null;
+
+const normalizeStationLookup = (value = '') =>
+  String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/gi, '')
+    .toLowerCase();
+
+const getKnownDriftplatsNames = () => {
+  if (cachedKnownDriftplatsNames) {
+    return cachedKnownDriftplatsNames;
+  }
+
+  cachedKnownDriftplatsNames = loadCachedDriftplatser()
+    .map((item) => cleanMatchedValue(item?.name || ''))
+    .filter(Boolean);
+
+  return cachedKnownDriftplatsNames;
+};
+
+const splitReferenceNames = (value = '') =>
+  normalizeText(value)
+    .split(/\s*,\s*|\s+-\s+/)
+    .map((part) => cleanMatchedValue(part))
+    .filter(Boolean);
+
+const collectSectionReferenceNames = (sections = []) => {
+  const names = new Set();
+
+  sections.forEach((section) => {
+    const endpoints = splitSectionNameEndpoints(section?.name || section?.signal || '');
+    [endpoints.left, endpoints.right].forEach((value) => {
+      const cleaned = cleanMatchedValue(value);
+      if (cleaned) {
+        names.add(cleaned);
+      }
+    });
+  });
+
+  return [...names];
+};
+
+const scoreStationCandidate = (inputKey = '', candidateKey = '') => {
+  if (!inputKey || !candidateKey) {
+    return Number.NEGATIVE_INFINITY;
+  }
+
+  if (inputKey === candidateKey) {
+    return 1000;
+  }
+
+  let score = 0;
+  if (candidateKey.startsWith(inputKey)) {
+    score += 500;
+  }
+  if (inputKey.startsWith(candidateKey)) {
+    score += 400;
+  }
+
+  let prefixLength = 0;
+  while (
+    prefixLength < inputKey.length &&
+    prefixLength < candidateKey.length &&
+    inputKey[prefixLength] === candidateKey[prefixLength]
+  ) {
+    prefixLength += 1;
+  }
+
+  score += prefixLength * 10;
+  score -= Math.abs(candidateKey.length - inputKey.length) * 15;
+  return score;
+};
+
+const resolveStationName = (value = '', projectNames = [], globalNames = []) => {
+  const cleaned = cleanMatchedValue(value);
+  const inputKey = normalizeStationLookup(cleaned);
+  if (!cleaned || !inputKey || inputKey.length < 3) {
+    return cleaned;
+  }
+
+  const localCandidates = [...new Set(projectNames.map((name) => cleanMatchedValue(name)).filter(Boolean))];
+  const exactLocal = localCandidates.find((name) => normalizeStationLookup(name) === inputKey);
+  if (exactLocal) {
+    return exactLocal;
+  }
+
+  const localMatches = localCandidates
+    .map((name) => ({ name, key: normalizeStationLookup(name) }))
+    .filter(({ key }) =>
+      key &&
+      (key.startsWith(inputKey) || inputKey.startsWith(key)) &&
+      Math.abs(key.length - inputKey.length) <= 2
+    )
+    .sort((left, right) => scoreStationCandidate(inputKey, right.key) - scoreStationCandidate(inputKey, left.key));
+
+  if (localMatches.length === 1) {
+    return localMatches[0].name;
+  }
+
+  if (localMatches.length > 1) {
+    const [best, second] = localMatches;
+    if (scoreStationCandidate(inputKey, best.key) > scoreStationCandidate(inputKey, second.key)) {
+      return best.name;
+    }
+    return cleaned;
+  }
+
+  const globalMatches = globalNames
+    .map((name) => ({ name, key: normalizeStationLookup(name) }))
+    .filter(({ key }) =>
+      key &&
+      key.startsWith(inputKey) &&
+      Math.abs(key.length - inputKey.length) <= 1
+    )
+    .sort((left, right) => scoreStationCandidate(inputKey, right.key) - scoreStationCandidate(inputKey, left.key));
+
+  if (globalMatches.length === 1) {
+    return globalMatches[0].name;
+  }
+
+  return cleaned;
+};
 
 const getMatchingPages = (pages = [], scorePage, isRelevant = (score) => score > 0) =>
   pages
@@ -852,6 +977,128 @@ const mergeDispSections = (sections = []) =>
       index,
     }));
 
+const splitSectionNameEndpoints = (value = '') => {
+  const parts = normalizeSectionName(value)
+    .split(/\s+-\s+/)
+    .map((part) => cleanMatchedValue(part))
+    .filter(Boolean);
+
+  if (parts.length < 2) {
+    return {
+      left: parts[0] || '',
+      right: parts[0] || '',
+      isRange: false,
+    };
+  }
+
+  return {
+    left: parts[0] || '',
+    right: parts[parts.length - 1] || '',
+    isRange: true,
+  };
+};
+
+const areCloseSectionNames = (left = '', right = '') => {
+  const a = cleanMatchedValue(left).toLowerCase();
+  const b = cleanMatchedValue(right).toLowerCase();
+  if (!a || !b) return false;
+  if (a === b) return true;
+  if (Math.abs(a.length - b.length) > 1) return false;
+  return a.startsWith(b) || b.startsWith(a);
+};
+
+const pickPreferredSectionName = (...values) =>
+  values
+    .map((value) => cleanMatchedValue(value))
+    .filter(Boolean)
+    .sort((left, right) => right.length - left.length)[0] || '';
+
+const reconcileSingleSectionNames = (sections = []) =>
+  sections.map((section, index, collection) => {
+    const currentName = normalizeSectionName(section.name || section.signal || '');
+    if (!currentName || currentName.includes(' - ')) {
+      return section;
+    }
+
+    const prev = collection[index - 1];
+    const next = collection[index + 1];
+    const prevEndpoints = splitSectionNameEndpoints(prev?.name || prev?.signal || '');
+    const nextEndpoints = splitSectionNameEndpoints(next?.name || next?.signal || '');
+    const candidate = pickPreferredSectionName(
+      areCloseSectionNames(currentName, prevEndpoints.right) ? prevEndpoints.right : '',
+      areCloseSectionNames(currentName, nextEndpoints.left) ? nextEndpoints.left : '',
+      currentName
+    );
+
+    return candidate && candidate !== currentName
+      ? { ...section, name: candidate }
+      : section;
+  });
+
+const reconcileRangeSectionNames = (sections = []) =>
+  sections.map((section, index, collection) => {
+    const currentName = normalizeSectionName(section.name || section.signal || '');
+    if (!currentName || !currentName.includes(' - ')) {
+      return section;
+    }
+
+    const prev = collection[index - 1];
+    const next = collection[index + 1];
+    const prevEndpoints = splitSectionNameEndpoints(prev?.name || prev?.signal || '');
+    const nextEndpoints = splitSectionNameEndpoints(next?.name || next?.signal || '');
+    const currentEndpoints = splitSectionNameEndpoints(currentName);
+    const resolvedLeft = pickPreferredSectionName(
+      areCloseSectionNames(currentEndpoints.left, prevEndpoints.right) ? prevEndpoints.right : '',
+      currentEndpoints.left
+    );
+    const resolvedRight = pickPreferredSectionName(
+      areCloseSectionNames(currentEndpoints.right, nextEndpoints.left) ? nextEndpoints.left : '',
+      currentEndpoints.right
+    );
+    const candidate = [resolvedLeft, resolvedRight].filter(Boolean).join(' - ');
+
+    return candidate && candidate !== currentName
+      ? { ...section, name: candidate }
+      : section;
+  });
+
+const reconcileAdjacentSectionNames = (sections = []) =>
+  reconcileRangeSectionNames(reconcileSingleSectionNames(sections));
+
+const refineSectionNamesWithReferences = (sections = [], overview = {}) => {
+  const projectNames = [
+    ...splitReferenceNames(overview?.berordaDriftplatser || ''),
+    ...splitReferenceNames(overview?.stracka || ''),
+    ...collectSectionReferenceNames(sections),
+  ];
+  const globalNames = getKnownDriftplatsNames();
+
+  const refined = sections.map((section) => {
+    const currentName = normalizeSectionName(section.name || section.signal || '');
+    if (!currentName) {
+      return section;
+    }
+
+    const endpoints = splitSectionNameEndpoints(currentName);
+    const resolvedLeft = resolveStationName(endpoints.left, projectNames, globalNames);
+    const resolvedRight = resolveStationName(endpoints.right, projectNames, globalNames);
+    const nextName = endpoints.isRange
+      ? [resolvedLeft, resolvedRight].filter(Boolean).join(' - ')
+      : resolvedLeft;
+
+    if (!nextName || nextName === currentName) {
+      return section;
+    }
+
+    return {
+      ...section,
+      name: nextName,
+    };
+  });
+
+  return reconcileAdjacentSectionNames(refined);
+};
+
 const normalizeSectionField = (value = '') =>
   cleanBoundaryToken(value)
     .replace(/^(signaler?|granspunkter?|spar)\s*[:\-]?\s*/i, '')
@@ -1353,7 +1600,7 @@ const parseDispPdf = async (buffer, blankett31Entries = []) => {
     extractPhoneNumbers(extractPhoneSection(textPages)),
     extractPhoneNumbers(extractPhoneSection(ocrPages))
   );
-  const sections = extractMergedDispSections(textPages, ocrPages);
+  const rawSections = reconcileAdjacentSectionNames(extractMergedDispSections(textPages, ocrPages));
   const textOverview = hasUsefulText ? extractOverviewMeta(textPages) : {};
   const ocrOverview = extractOverviewMeta(ocrPages);
   const preferredOverview = extractOverviewMeta(preferredPages);
@@ -1394,6 +1641,7 @@ const parseDispPdf = async (buffer, blankett31Entries = []) => {
       preferredOverview.outerGranspunkter
     ),
   };
+  const sections = refineSectionNamesWithReferences(rawSections, overview);
 
   return {
     projectName: pickParsedValue(
