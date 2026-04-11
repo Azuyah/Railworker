@@ -316,13 +316,56 @@ const buildChapterOneEntryRows = (entries = [], dispSettings = {}, weekLine = ''
   }));
 };
 
-const getBoundaryHighlightTokens = (boundaryText = '') =>
-  cleanText(boundaryText)
+const getBoundaryHighlightTokens = (boundaryText = '') => {
+  const normalized = cleanText(boundaryText);
+  if (!normalized) return [];
+
+  const parts = normalized
     .split(/\s*[-–]\s*|,\s*/)
     .map((token) => cleanText(token))
     .filter(Boolean);
 
+  return [...new Set([
+    normalized,
+    ...parts,
+  ])];
+};
+
 const normalizeBoundaryToken = (value = '') => cleanText(value).replace(/\s+/g, '').toLowerCase();
+
+const getBoundaryNumericCore = (value = '') =>
+  normalizeBoundaryToken(value).replace(/[a-zåäö]+/gi, '');
+
+const shouldHighlightBoundaryText = (text = '', highlightTokens = []) => {
+  const normalizedText = normalizeBoundaryToken(text);
+  if (!normalizedText) return false;
+
+  const textParts = cleanText(text)
+    .split(/\s*,\s*/)
+    .map((part) => cleanText(part))
+    .filter(Boolean);
+  const normalizedParts = textParts.map(normalizeBoundaryToken);
+  const numericParts = textParts.map(getBoundaryNumericCore).filter(Boolean);
+
+  return highlightTokens.some((token) => {
+    const normalizedToken = normalizeBoundaryToken(token);
+    const numericToken = getBoundaryNumericCore(token);
+
+    if (normalizedToken && (normalizedToken === normalizedText || normalizedText.includes(normalizedToken))) {
+      return true;
+    }
+
+    if (normalizedToken && normalizedParts.some((part) => part === normalizedToken || part.includes(normalizedToken))) {
+      return true;
+    }
+
+    if (numericToken && numericParts.some((part) => part === numericToken)) {
+      return true;
+    }
+
+    return false;
+  });
+};
 
 const createDocument = (title = 'Dispositionsarbetsplan') => {
   const doc = new PDFDocument({
@@ -465,11 +508,6 @@ const getLegacySectionRowHeight = (doc, row, sectionColumns, fontSize = 12) =>
           fontSize,
           lineGap: 1,
         }),
-        getTextHeight(doc, row.name, sectionColumns.name.width, {
-          font: PDF_FONTS.bodyBold,
-          fontSize,
-          lineGap: 1,
-        }),
         getLegacyBoundarySegmentHeight(doc, row.granspunkter, sectionColumns.granspunkter.width, fontSize),
         getTextHeight(doc, row.spar, sectionColumns.spar.width, {
           font: PDF_FONTS.bodyBold,
@@ -481,7 +519,7 @@ const getLegacySectionRowHeight = (doc, row, sectionColumns, fontSize = 12) =>
   );
 
 const getLegacyChapterOneRowHeight = (doc, row, entryColumns, sectionColumns) => {
-  if (row.kind === 'spacer') return 14;
+  if (row.kind === 'spacer') return 22;
   if (row.kind === 'entry') return getLegacyEntryRowHeight(doc, row, entryColumns);
   if (row.kind === 'section') return getLegacySectionRowHeight(doc, row, sectionColumns);
   return 21;
@@ -512,18 +550,16 @@ const paginateLegacyChapterOneRows = (doc, rows, availableHeight, entryColumns, 
 const estimateChapterOnePageCount = (doc, entries, sections, dispSettings = {}) => {
   const entryColumns = getLegacyEntryColumns(Boolean(dispSettings?.visaBeteckningarKapitel1));
   const sectionColumns = {
-    label: { x: 10, width: 92 },
-    name: { x: 108, width: 136 },
-    granspunkter: { x: 244, width: 84 },
-    spar: { x: 344, width: 78 },
+    label: { x: 10, width: 74 },
+    granspunkter: { x: 86, width: 236 },
+    spar: { x: 336, width: 78 },
   };
   const entryRows = buildChapterOneEntryRows(entries, dispSettings, '');
   const sectionRows = sections.map((section) => ({
     kind: 'section',
-    label: section.label,
-    name: cleanText(section.signal || section.name),
+    label: cleanText(section.customLabel || section.displayIndex || '') ? `${cleanText(section.customLabel || section.displayIndex || '')}.` : '',
     granspunkter: formatLegacyBoundaryText(section.granspunkter),
-    spar: section.spar ? `Spår ${section.spar}` : '—',
+    spar: section.spar || '—',
   }));
   const firstPageRows = [...entryRows, { kind: 'spacer' }, ...sectionRows];
   const firstPageAvailableHeight = 560 - 31 - 12;
@@ -802,7 +838,7 @@ const drawLegacyBoundarySegment = (doc, text, x, y, maxWidth, highlightTokens = 
   doc.font(PDF_FONTS.bodyBold).fontSize(fontSize);
 
   if (!dashMatch) {
-    const color = highlightTokens.includes(normalizeBoundaryToken(normalizedText)) ? '#c1121f' : '#000000';
+    const color = shouldHighlightBoundaryText(normalizedText, highlightTokens) ? '#c1121f' : '#000000';
     doc.fillColor(color).text(normalizedText, x, y, { width: maxWidth, lineGap: 1 });
     return;
   }
@@ -810,8 +846,8 @@ const drawLegacyBoundarySegment = (doc, text, x, y, maxWidth, highlightTokens = 
   const leftToken = cleanText(dashMatch[1]);
   const rightToken = cleanText(dashMatch[2]);
   const separator = ' – ';
-  const leftColor = highlightTokens.includes(normalizeBoundaryToken(leftToken)) ? '#c1121f' : '#000000';
-  const rightColor = highlightTokens.includes(normalizeBoundaryToken(rightToken)) ? '#c1121f' : '#000000';
+  const leftColor = shouldHighlightBoundaryText(leftToken, highlightTokens) ? '#c1121f' : '#000000';
+  const rightColor = shouldHighlightBoundaryText(rightToken, highlightTokens) ? '#c1121f' : '#000000';
 
   doc.fillColor(leftColor).text(leftToken, x, y, {
     width: maxWidth,
@@ -835,24 +871,24 @@ const getLegacyEntryColumns = (showBeteckning = true) => (
         start: { x: 116 },
         startDay: { x: 116, width: 52 },
         startDate: { x: 166, width: 88 },
-        startTime: { x: 258, width: 48 },
+        startTime: { x: 258, width: 40 },
         end: { x: 274, width: 154 },
-        endDash: { x: 274, width: 12 },
-        endDay: { x: 292, width: 34 },
-        endDate: { x: 326, width: 88 },
-        endTime: { x: 434, width: 48 },
+        endDash: { x: 306, width: 12 },
+        endDay: { x: 322, width: 30 },
+        endDate: { x: 354, width: 82 },
+        endTime: { x: 442, width: 40 },
       }
     : {
         beteckning: { x: 0, width: 0 },
         start: { x: 12 },
         startDay: { x: 18, width: 52 },
         startDate: { x: 76, width: 88 },
-        startTime: { x: 168, width: 42 },
+        startTime: { x: 168, width: 38 },
         end: { x: 214, width: 156 },
-        endDash: { x: 214, width: 12 },
-        endDay: { x: 232, width: 34 },
-        endDate: { x: 266, width: 88 },
-        endTime: { x: 374, width: 42 },
+        endDash: { x: 206, width: 8 },
+        endDay: { x: 224, width: 32 },
+        endDate: { x: 262, width: 82 },
+        endTime: { x: 350, width: 34 },
       }
 );
 
@@ -875,16 +911,16 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
   const headerFontSize = 12;
   const rowFontSize = 12;
   const hasCompactSummary = mode === 'full' && entryColumns.beteckning.width === 0 && rows.some((row) => row.kind === 'entry' && row.isCompactSummary);
-  const compactStartHeaderX = left + sectionColumns.name.x;
+  const compactStartHeaderX = left + 112;
   const compactDayX = compactStartHeaderX;
-  const compactDayWidth = 86;
-  const compactTimeX = compactDayX + compactDayWidth + 10;
-  const compactTimeWidth = 46;
+  const compactDayWidth = 92;
+  const compactTimeX = compactDayX + compactDayWidth + 12;
+  const compactTimeWidth = 48;
   const compactDashWidth = 14;
-  const compactDashCenterX = compactTimeX + compactTimeWidth + 14;
+  const compactDashCenterX = compactTimeX + compactTimeWidth + 18;
   const compactDashX = compactDashCenterX - (compactDashWidth / 2);
-  const compactEndTimeX = compactDashCenterX + 18;
-  const compactEndTimeWidth = 46;
+  const compactEndTimeX = compactDashCenterX + 22;
+  const compactEndTimeWidth = 48;
   const compactEndHeaderX = compactEndTimeX - 8;
 
   doc.save();
@@ -905,7 +941,6 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
     }
   } else {
     doc.text('Delområde', left + sectionColumns.label.x, entryHeaderY, { lineBreak: false });
-    doc.text('Sträcka / område', left + sectionColumns.name.x, entryHeaderY, { lineBreak: false });
     doc.text('Gränspunkter', left + sectionColumns.granspunkter.x, entryHeaderY, { lineBreak: false });
     doc.text('Spår', left + sectionColumns.spar.x, entryHeaderY, { lineBreak: false });
   }
@@ -954,7 +989,7 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
           width: entryColumns.startTime.width,
           lineBreak: false,
         });
-        doc.text('—', left + entryColumns.endDash.x, y, {
+        doc.text('–', left + entryColumns.endDash.x, y, {
           width: entryColumns.endDash.width,
           align: 'center',
           lineBreak: false,
@@ -973,16 +1008,24 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
         });
       }
     } else if (row.kind === 'spacer') {
-      // Keep the visual gap between entry rows and section rows, but remove the extra header line.
+      doc.font(PDF_FONTS.bodyBold).fontSize(11.5).fillColor('#000000');
+      doc.text('Delområde', left + sectionColumns.label.x, y + 2, {
+        width: sectionColumns.label.width,
+        lineBreak: false,
+      });
+      doc.text('Gränspunkter', left + sectionColumns.granspunkter.x, y + 2, {
+        width: sectionColumns.granspunkter.width,
+        lineBreak: false,
+      });
+      doc.text('Spår', left + sectionColumns.spar.x, y + 2, {
+        width: sectionColumns.spar.width,
+        lineBreak: false,
+      });
     } else if (row.kind === 'section') {
       doc.font(PDF_FONTS.bodyBold).fontSize(rowFontSize).fillColor('#000000');
       doc.text(row.label, left + sectionColumns.label.x, y, {
         width: sectionColumns.label.width,
         lineBreak: false,
-      });
-      doc.text(row.name, left + sectionColumns.name.x, y, {
-        width: sectionColumns.name.width,
-        lineGap: 1,
       });
       drawLegacyBoundarySegment(
         doc,
@@ -1036,19 +1079,17 @@ const addEntriesAndSectionsPage = (doc, project, entries, sections, dispSettings
 
   const entryColumns = getLegacyEntryColumns(Boolean(dispSettings.visaBeteckningarKapitel1));
   const sectionColumns = {
-    label: { x: 10, width: 92 },
-    name: { x: 108, width: 136 },
-    granspunkter: { x: 244, width: 84 },
-    spar: { x: 344, width: 78 },
+    label: { x: 10, width: 74 },
+    granspunkter: { x: 86, width: 236 },
+    spar: { x: 336, width: 78 },
   };
 
   const entryRows = buildChapterOneEntryRows(entries, dispSettings, weekLine);
   const sectionRows = sections.map((section) => ({
     kind: 'section',
-    label: section.label,
-    name: cleanText(section.signal || section.name),
+    label: cleanText(section.customLabel || section.displayIndex || '') ? `${cleanText(section.customLabel || section.displayIndex || '')}.` : '',
     granspunkter: formatLegacyBoundaryText(section.granspunkter),
-    spar: section.spar ? `Spår ${section.spar}` : '—',
+    spar: section.spar || '—',
   }));
   const rows = [
     ...entryRows,
