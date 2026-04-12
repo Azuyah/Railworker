@@ -1920,6 +1920,10 @@ const SkapaProjekt = () => {
                       placeholder="Telefonnummer"
                       className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
                     />
+                    <p className="mt-2 text-xs text-slate-500">
+                      Huvudnummer. Anvands som projektets vanliga FJTKL-nummer och som fallback i disp/planka nar ingen
+                      Blankett 31-post styr ett eget nummer.
+                    </p>
                     <button
                       type="button"
                       onClick={applyCatalogMatchToProject}
@@ -2009,7 +2013,10 @@ const SkapaProjekt = () => {
                 <div className="mt-6 border-t border-slate-200 pt-6">
                   <div className="mb-4">
                     <h3 className="text-base font-semibold text-slate-900">Blankett 31 poster</h3>
-                    <p className="text-xs text-slate-500">Alla dagar och tider som lästs in från Blankett 31</p>
+                    <p className="text-xs text-slate-500">
+                      Alla dagar och tider som lästs in från Blankett 31. Telefonnummer pa varje post foljer med till
+                      dispens telefonkapitel och planka nar posten anvands.
+                    </p>
                   </div>
                   <div className="space-y-3">
                     {blankett31Entries.map((entry, index) => (
@@ -2083,6 +2090,9 @@ const SkapaProjekt = () => {
                                 </option>
                               ))}
                             </select>
+                            <p className="mt-2 text-[11px] text-slate-500">
+                              Detta nummer foljer med just den har Blankett 31-posten till disp och planka.
+                            </p>
                             <button
                               type="button"
                               onClick={() => applyCatalogMatchToEntry(index)}

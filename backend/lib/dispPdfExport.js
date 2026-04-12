@@ -103,6 +103,8 @@ const buildEntries = (project = {}) => {
       startTime: cleanText(entry?.startTime),
       endDate: cleanText(entry?.endDate),
       endTime: cleanText(entry?.endTime),
+      telefonnummer: cleanText(entry?.telefonnummer),
+      namn: cleanText(entry?.namn),
     }))
     .filter((entry) => entry.beteckning || entry.startDate || entry.endDate);
 
@@ -280,6 +282,50 @@ const formatLegacyBoundaryText = (value = '') =>
 const extractPrimaryPhone = (value = '') => {
   const match = cleanText(value).match(/010[- ]?\s*\d{3}\s*\d{2}\s*\d{2}/);
   return match ? cleanText(match[0]) : cleanText(value);
+};
+
+const extractPhoneContext = (value = '') => {
+  const cleaned = cleanText(value);
+  if (!cleaned) return '';
+
+  const primaryPhone = extractPrimaryPhone(cleaned);
+  if (!primaryPhone) return cleaned;
+
+  return cleanText(cleaned.replace(primaryPhone, ''));
+};
+
+const formatFjtklName = (value = '') => {
+  const rawName = cleanText(value);
+  if (!rawName) return 'Fjtkl';
+  return /^TKL\b/i.test(rawName) ? rawName.replace(/^TKL\b/i, 'Fjtkl') : `Fjtkl ${rawName}`;
+};
+
+const buildFjtklContactLines = (project = {}) => {
+  const contacts = [];
+  const seenPhones = new Set();
+  const addContact = (nameValue, phoneValue) => {
+    const phone = extractPrimaryPhone(phoneValue || '');
+    if (!phone || seenPhones.has(phone)) {
+      return;
+    }
+    seenPhones.add(phone);
+    contacts.push(`${formatFjtklName(nameValue)}  ${phone}`);
+  };
+
+  addContact(project.namn || '', project.telefonnummer || '');
+
+  const entries = buildEntries(project);
+  entries.forEach((entry) => {
+    const inferredName = cleanText(entry?.namn || extractPhoneContext(entry?.telefonnummer || ''));
+    addContact(inferredName || project.namn || '', entry?.telefonnummer || '');
+  });
+
+  if (!contacts.length) {
+    const fallbackPhone = extractPrimaryPhone(project.telefonnummer || '') || 'Ej angivet';
+    return [`${formatFjtklName(project.namn || '')}  ${fallbackPhone}`];
+  }
+
+  return contacts;
 };
 
 const extractValidityLabel = (weekLine = '') => {
@@ -1383,11 +1429,7 @@ const getLegacyChapters = (project = {}, dispSettings = {}) => {
   const bandriftnummer = cleanText(project.formState?.bandriftnummer || '');
   const eldriftnummer = cleanText(project.formState?.eldriftnummer || '');
   const larmTlc = extractPrimaryPhone(project.formState?.nodnummer || '') || 'Ej angivet';
-  const fjtklRawName = cleanText(project.namn || '');
-  const fjtklName = fjtklRawName
-    ? (/^TKL\b/i.test(fjtklRawName) ? fjtklRawName.replace(/^TKL\b/i, 'Fjtkl') : `Fjtkl ${fjtklRawName}`)
-    : 'Fjtkl';
-  const fjtklPhone = extractPrimaryPhone(project.telefonnummer || '') || 'Ej angivet';
+  const fjtklContactLines = buildFjtklContactLines(project);
 
   return [
     {
@@ -1492,7 +1534,7 @@ const getLegacyChapters = (project = {}, dispSettings = {}) => {
         'Vid behov',
         ...(bandriftnummer ? [`Bandriften ${bandriftnummer}`] : []),
         ...(eldriftnummer ? [`Eldriften ${eldriftnummer}`] : []),
-        `${fjtklName || 'Fjtkl'}  ${fjtklPhone}`,
+        ...fjtklContactLines,
       ].filter(Boolean),
     },
   ];
