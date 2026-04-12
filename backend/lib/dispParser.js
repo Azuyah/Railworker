@@ -454,11 +454,15 @@ const isDispTablePage = (page = {}) => {
   const normalized = normalizeForMatching(text);
   const beteckningMatches = text.match(/26(?:[_\s-]?\d{4,})/gi)?.length || 0;
   const dateTimeMatches = text.match(/\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}/g)?.length || 0;
+  const compactSectionRows = text.match(/^\d+\.\s+/gim)?.length || 0;
+  const hasCompactSectionHeader = normalized.includes('delomrade granspunkter spar');
 
   return (
     beteckningMatches > 0 ||
     dateTimeMatches >= 2 ||
-    /delomrade\s+\d+/.test(normalized)
+    /delomrade\s+\d+/.test(normalized) ||
+    compactSectionRows > 0 ||
+    hasCompactSectionHeader
   );
 };
 const getDispTablePageScore = (page = {}) => {
@@ -466,10 +470,18 @@ const getDispTablePageScore = (page = {}) => {
   const normalized = normalizeForMatching(text);
   const beteckningMatches = text.match(/26(?:[_\s-]?\d{4,})/gi)?.length || 0;
   const dateTimeMatches = text.match(/\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}/g)?.length || 0;
+  const compactSectionRows = text.match(/^\d+\.\s+/gim)?.length || 0;
+  const hasCompactSectionHeader = normalized.includes('delomrade granspunkter spar');
 
   let score = 0;
   if (/delomrade\s+\d+/.test(normalized)) {
     score += 5;
+  }
+  if (compactSectionRows) {
+    score += Math.min(compactSectionRows, 6);
+  }
+  if (hasCompactSectionHeader) {
+    score += 4;
   }
   if (beteckningMatches) {
     score += beteckningMatches * 2;
@@ -1174,7 +1186,28 @@ const parseInlineDispSectionText = (value = '') => {
 
   const rowMatch = normalizedRow.match(/^Delomr(?:\u00E5de|ade)\s+(\d+)\s+(.+)$/i);
   if (!rowMatch) {
-    return null;
+    const compactRowMatch = normalizedRow.match(/^(\d+)\.\s+(.+?)\s+([A-Za-z\u00C5\u00C4\u00D6\u00E5\u00E4\u00F60-9]+(?:,\s*[A-Za-z\u00C5\u00C4\u00D6\u00E5\u00E4\u00F60-9]+)*)$/i);
+    if (!compactRowMatch) {
+      return null;
+    }
+
+    const displayIndex = Number(compactRowMatch[1] || 0);
+    const granspunkter = normalizeSectionRowText(compactRowMatch[2] || '');
+    const spar = normalizeSectionRowText(compactRowMatch[3] || '');
+    if (!displayIndex || !granspunkter || !spar) {
+      return null;
+    }
+
+    return {
+      ...buildDispSection({
+        displayIndex,
+        signal: granspunkter,
+        granspunkter,
+        spar,
+      }),
+      displayIndex,
+      name: '',
+    };
   }
 
   const displayIndex = Number(rowMatch[1] || 0);
@@ -1204,6 +1237,25 @@ const parseInlineDispSectionText = (value = '') => {
     displayIndex,
     name: sectionName,
   };
+};
+
+const parseSectionDisplayIndex = (value = '') => {
+  const normalizedRow = normalizeSectionRowText(value);
+  if (!normalizedRow) {
+    return null;
+  }
+
+  const legacyMatch = normalizedRow.match(/^Delomr(?:\u00E5de|ade)\s+(\d+)\b/i);
+  if (legacyMatch) {
+    return Number(legacyMatch[1] || 0) || null;
+  }
+
+  const compactMatch = normalizedRow.match(/^(\d+)\.\s*(?:$|\S+)/);
+  if (compactMatch) {
+    return Number(compactMatch[1] || 0) || null;
+  }
+
+  return null;
 };
 
 const groupLinesByApproximateRow = (lines = [], tolerance = 0.012) => {
@@ -1298,11 +1350,18 @@ const extractDispSectionsFromColumns = (pages = []) =>
       }
 
       const sectionRows = normalizedLines
-        .filter((line) => /^delomrade\s+\d+/.test(line.normalized))
+        .filter((line) => {
+          const displayIndex = parseSectionDisplayIndex(line.text || line.normalized || '');
+          if (!displayIndex) {
+            return false;
+          }
+
+          return Number(line.x) >= columns.delomrade - 0.03 && Number(line.x) < columns.granspunkter - 0.02;
+        })
         .sort((a, b) => Number(b.y) - Number(a.y));
 
       return sectionRows.map((row, index) => {
-        const displayIndex = Number(String(row.normalized).match(/^delomrade\s+(\d+)/)?.[1] || index + 1);
+        const displayIndex = parseSectionDisplayIndex(row.text || row.normalized || '') || index + 1;
         const sameRow = normalizedLines.filter((line) => Math.abs(Number(line.y) - Number(row.y)) < 0.02);
 
         return buildDispSection({
@@ -1380,7 +1439,7 @@ const extractDispSectionsFromRows = (pages = []) =>
       }));
 
       const sectionRows = normalizedLines
-        .filter((line) => /^delomrade\s+\d+/.test(line.normalized))
+        .filter((line) => parseSectionDisplayIndex(line.text || line.normalized || ''))
         .sort((a, b) => Number(b.y) - Number(a.y));
 
       return sectionRows
@@ -1408,11 +1467,11 @@ const extractDispSections = (pages) => {
   }));
 
   const sectionRows = normalizedLines
-    .filter((line) => /^delomrade\s+\d+/.test(line.normalized))
+    .filter((line) => parseSectionDisplayIndex(line.text || line.normalized || ''))
     .sort((a, b) => b.y - a.y);
 
   return sectionRows.map((row, index) => {
-    const displayIndex = Number(String(row.normalized).match(/^delomrade\s+(\d+)/)?.[1] || index + 1);
+    const displayIndex = parseSectionDisplayIndex(row.text || row.normalized || '') || index + 1;
     const sameRow = normalizedLines.filter((line) => Math.abs(Number(line.y) - Number(row.y)) < 0.015);
     const leftBoundary = sameRow
       .filter(
@@ -1475,11 +1534,11 @@ const extractAllDispSections = (pages = []) =>
       }));
 
       const sectionRows = normalizedLines
-        .filter((line) => /^delomrade\s+\d+/.test(line.normalized))
+        .filter((line) => parseSectionDisplayIndex(line.text || line.normalized || ''))
         .sort((a, b) => b.y - a.y);
 
       return sectionRows.map((row, index) => {
-        const displayIndex = Number(String(row.normalized).match(/^delomrade\s+(\d+)/)?.[1] || index + 1);
+        const displayIndex = parseSectionDisplayIndex(row.text || row.normalized || '') || index + 1;
         const sameRow = normalizedLines.filter((line) => Math.abs(Number(line.y) - Number(row.y)) < 0.015);
         const leftBoundary = sameRow
           .filter(

@@ -68,6 +68,29 @@ const formatTime = (value = '') => cleanText(value);
 const buildPlanJobEntryKey = (entry = {}, index = 0) =>
   `${entry.beteckning || 'entry'}|${entry.startDate || ''}|${index}`;
 
+const getDispSelectedEntries = (entries = [], project = {}) => {
+  const storedJobs = Array.isArray(project.formState?.planJobs)
+    ? project.formState.planJobs.filter((job) => job && Array.isArray(job.selectedEntryKeys) && job.selectedEntryKeys.length)
+    : [];
+
+  if (!storedJobs.length) {
+    return entries;
+  }
+
+  const entryMap = new Map(entries.map((entry, index) => [buildPlanJobEntryKey(entry, index), entry]));
+  const dispEntries = storedJobs
+    .map((job) => {
+      const selectedKeys = Array.isArray(job.selectedEntryKeys) ? job.selectedEntryKeys : [];
+      const preferredKey = selectedKeys.includes(job.primaryDispEntryKey)
+        ? job.primaryDispEntryKey
+        : selectedKeys[0] || '';
+      return entryMap.get(preferredKey) || null;
+    })
+    .filter(Boolean);
+
+  return dispEntries.length ? dispEntries : entries;
+};
+
 const buildEntries = (project = {}) => {
   const rawEntries = Array.isArray(project.formState?.blankett31Entries)
     ? project.formState.blankett31Entries
@@ -89,7 +112,9 @@ const buildEntries = (project = {}) => {
     return leftKey.localeCompare(rightKey, 'sv');
   });
 
-  return normalizedEntries.filter((entry, index, collection) => {
+  const dispEntries = getDispSelectedEntries(normalizedEntries, project);
+
+  return dispEntries.filter((entry, index, collection) => {
     const key = `${entry.beteckning}|${entry.startDate}|${entry.startTime}|${entry.endDate}|${entry.endTime}`;
     return collection.findIndex((candidate) =>
       `${candidate.beteckning}|${candidate.startDate}|${candidate.startTime}|${candidate.endDate}|${candidate.endTime}` === key
@@ -142,6 +167,12 @@ const buildSections = (project = {}) => {
         signal: areaName,
         granspunkter,
         spar: normalizeTrackValue(details.spar),
+        granspunktStart,
+        granspunktSlut,
+        highlightStart: Boolean(details.highlightStart),
+        highlightEnd: Boolean(details.highlightEnd),
+        highlightStartPart: cleanText(details.highlightStartPart),
+        highlightEndPart: cleanText(details.highlightEndPart),
       };
     })
     .sort((left, right) => left.sortOrder - right.sortOrder);
@@ -280,16 +311,50 @@ const buildCompactEntryDayRangeLabel = (entries = []) => {
   return `${firstLabel} - ${lastLabel}`;
 };
 
+const buildCompactEntryEndDayRangeLabel = (entries = []) => {
+  const datedEntries = entries
+    .filter((entry) => entry?.endDate)
+    .sort((a, b) => new Date(a.endDate) - new Date(b.endDate));
+
+  if (datedEntries.length === 0) return '';
+
+  const firstLabel = getShortDayName(datedEntries[0]?.endDate);
+  const lastLabel = getShortDayName(datedEntries[datedEntries.length - 1]?.endDate);
+
+  if (!firstLabel) return '';
+  if (!lastLabel || firstLabel === lastLabel) return firstLabel;
+  return `${firstLabel} - ${lastLabel}`;
+};
+
 const shouldCompactChapterOneEntries = (entries = [], dispSettings = {}) => {
   if (!Boolean(dispSettings?.komprimeraLikaTiderKapitel1) || entries.length < 2) {
     return false;
   }
 
   const first = entries[0] || {};
-  return entries.every((entry) =>
+  const hasUniformTimes = entries.every((entry) =>
     cleanText(entry?.startTime) === cleanText(first.startTime) &&
     cleanText(entry?.endTime) === cleanText(first.endTime)
   );
+
+  if (!hasUniformTimes) {
+    return false;
+  }
+
+  const crossesMidnight = entries.some((entry) => {
+    const startTime = cleanText(entry?.startTime);
+    const endTime = cleanText(entry?.endTime);
+    if (!startTime || !endTime) {
+      return false;
+    }
+    return startTime > endTime;
+  });
+
+  if (crossesMidnight) {
+    return false;
+  }
+
+  return true;
 };
 
 const buildChapterOneEntryRows = (entries = [], dispSettings = {}, weekLine = '') => {
@@ -299,8 +364,9 @@ const buildChapterOneEntryRows = (entries = [], dispSettings = {}, weekLine = ''
       isCompactSummary: true,
       beteckning: Boolean(dispSettings?.visaBeteckningarKapitel1) ? 'Samtliga' : '',
       dayLabel: buildCompactEntryDayRangeLabel(entries),
-      startDateTime: formatTime(entries[0]?.startTime),
-      endDateTime: formatTime(entries[0]?.endTime),
+      startTimeLabel: formatTime(entries[0]?.startTime),
+      endDayLabel: buildCompactEntryEndDayRangeLabel(entries),
+      endTimeLabel: formatTime(entries[0]?.endTime),
     }];
   }
 
@@ -365,6 +431,76 @@ const shouldHighlightBoundaryText = (text = '', highlightTokens = []) => {
 
     return false;
   });
+};
+
+const splitTokenByHighlightPart = (token = '', highlightPart = '') => {
+  const cleanToken = cleanText(token);
+  const cleanPart = cleanText(highlightPart);
+  if (!cleanToken || !cleanPart) {
+    return null;
+  }
+
+  const lowerToken = cleanToken.toLowerCase();
+  const lowerPart = cleanPart.toLowerCase();
+  const startIndex = lowerToken.indexOf(lowerPart);
+  if (startIndex === -1) {
+    return null;
+  }
+
+  return {
+    before: cleanToken.slice(0, startIndex),
+    highlight: cleanToken.slice(startIndex, startIndex + cleanPart.length),
+    after: cleanToken.slice(startIndex + cleanPart.length),
+  };
+};
+
+const drawBoundaryToken = (doc, token, options = {}) => {
+  const {
+    x,
+    y,
+    highlightWhole = false,
+    highlightPart = '',
+    continued = false,
+    width,
+    lineGap = 1,
+  } = options;
+  let isFirstChunk = true;
+  const buildOptions = (chunkContinued) => {
+    const textOptions = {
+      width,
+      continued: chunkContinued,
+      lineGap,
+    };
+    if (isFirstChunk && typeof x === 'number' && typeof y === 'number') {
+      textOptions.lineBreak = false;
+    }
+    return textOptions;
+  };
+  const writeChunk = (value, color, chunkContinued) => {
+    if (!value) return;
+    const textOptions = buildOptions(chunkContinued);
+    if (isFirstChunk && typeof x === 'number' && typeof y === 'number') {
+      doc.fillColor(color).text(value, x, y, textOptions);
+    } else {
+      doc.fillColor(color).text(value, textOptions);
+    }
+    isFirstChunk = false;
+  };
+
+  if (highlightWhole) {
+    writeChunk(token, '#c1121f', continued);
+    return;
+  }
+
+  const split = splitTokenByHighlightPart(token, highlightPart);
+  if (!split) {
+    writeChunk(token, '#000000', continued);
+    return;
+  }
+
+  writeChunk(split.before, '#000000', true);
+  writeChunk(split.highlight, '#c1121f', Boolean(split.after) || continued);
+  writeChunk(split.after, '#000000', continued);
 };
 
 const createDocument = (title = 'Dispositionsarbetsplan') => {
@@ -466,8 +602,9 @@ const getLegacyEntryRowHeight = (doc, row, entryColumns, fontSize = 12) =>
         ? {
             beteckning: row.beteckning,
             dayLabel: row.dayLabel,
-            startDateTime: row.startDateTime,
-            endDateTime: row.endDateTime,
+            startTimeLabel: row.startTimeLabel,
+            endDayLabel: row.endDayLabel,
+            endTimeLabel: row.endTimeLabel,
           }
         : {
             beteckning: row.beteckning,
@@ -481,9 +618,10 @@ const getLegacyEntryRowHeight = (doc, row, entryColumns, fontSize = 12) =>
       row.isCompactSummary
         ? [
             { key: 'beteckning', width: entryColumns.beteckning.width },
-            { key: 'dayLabel', width: entryColumns.startDay.width },
-            { key: 'startDateTime', width: 52 },
-            { key: 'endDateTime', width: 56 },
+            { key: 'dayLabel', width: 98 },
+            { key: 'startTimeLabel', width: 50 },
+            { key: 'endDayLabel', width: 74 },
+            { key: 'endTimeLabel', width: 48 },
           ]
         : [
             { key: 'beteckning', width: entryColumns.beteckning.width },
@@ -519,7 +657,7 @@ const getLegacySectionRowHeight = (doc, row, sectionColumns, fontSize = 12) =>
   );
 
 const getLegacyChapterOneRowHeight = (doc, row, entryColumns, sectionColumns) => {
-  if (row.kind === 'spacer') return 22;
+  if (row.kind === 'spacer') return 28;
   if (row.kind === 'entry') return getLegacyEntryRowHeight(doc, row, entryColumns);
   if (row.kind === 'section') return getLegacySectionRowHeight(doc, row, sectionColumns);
   return 21;
@@ -831,7 +969,7 @@ const getLegacyBoundarySegmentHeight = (doc, text, maxWidth, defaultFontSize = 1
   });
 };
 
-const drawLegacyBoundarySegment = (doc, text, x, y, maxWidth, highlightTokens = []) => {
+const drawLegacyBoundarySegment = (doc, text, x, y, maxWidth, highlightTokens = [], options = {}) => {
   const normalizedText = cleanText(text);
   const dashMatch = normalizedText.match(/^(.+?)\s*[–-]\s*(.+)$/);
   const fontSize = getLegacyBoundarySegmentFontSize(doc, normalizedText, maxWidth, 12);
@@ -846,21 +984,28 @@ const drawLegacyBoundarySegment = (doc, text, x, y, maxWidth, highlightTokens = 
   const leftToken = cleanText(dashMatch[1]);
   const rightToken = cleanText(dashMatch[2]);
   const separator = ' – ';
-  const leftColor = shouldHighlightBoundaryText(leftToken, highlightTokens) ? '#c1121f' : '#000000';
-  const rightColor = shouldHighlightBoundaryText(rightToken, highlightTokens) ? '#c1121f' : '#000000';
+  const highlightLeftWhole = options.highlightLeft && !cleanText(options.highlightLeftPart);
+  const highlightRightWhole = options.highlightRight && !cleanText(options.highlightRightPart);
 
-  doc.fillColor(leftColor).text(leftToken, x, y, {
+  drawBoundaryToken(doc, leftToken, {
+    x,
+    y,
     width: maxWidth,
     continued: true,
     lineGap: 1,
+    highlightWhole: highlightLeftWhole || (!options.highlightLeft && shouldHighlightBoundaryText(leftToken, highlightTokens)),
+    highlightPart: options.highlightLeft ? cleanText(options.highlightLeftPart) : '',
   });
   doc.fillColor('#000000').text(separator, {
     continued: true,
     lineGap: 1,
   });
-  doc.fillColor(rightColor).text(rightToken, {
+  drawBoundaryToken(doc, rightToken, {
     width: maxWidth,
+    continued: false,
     lineGap: 1,
+    highlightWhole: highlightRightWhole || (!options.highlightRight && shouldHighlightBoundaryText(rightToken, highlightTokens)),
+    highlightPart: options.highlightRight ? cleanText(options.highlightRightPart) : '',
   });
 };
 
@@ -913,15 +1058,18 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
   const hasCompactSummary = mode === 'full' && entryColumns.beteckning.width === 0 && rows.some((row) => row.kind === 'entry' && row.isCompactSummary);
   const compactStartHeaderX = left + 112;
   const compactDayX = compactStartHeaderX;
-  const compactDayWidth = 92;
-  const compactTimeX = compactDayX + compactDayWidth + 12;
-  const compactTimeWidth = 48;
+  const compactDayWidth = 98;
+  const compactTimeX = compactDayX + compactDayWidth + 14;
+  const compactTimeWidth = 50;
   const compactDashWidth = 14;
-  const compactDashCenterX = compactTimeX + compactTimeWidth + 18;
+  const compactDashCenterX = compactTimeX + compactTimeWidth + 26;
   const compactDashX = compactDashCenterX - (compactDashWidth / 2);
-  const compactEndTimeX = compactDashCenterX + 22;
+  const compactEndDayX = compactDashCenterX + 18;
+  const compactEndDayWidth = 74;
+  const compactEndTimeX = compactEndDayX + compactEndDayWidth + 12;
   const compactEndTimeWidth = 48;
-  const compactEndHeaderX = compactEndTimeX - 8;
+  const compactEndHeaderX = compactEndDayX;
+  const sectionHeaderOffsetY = 8;
 
   doc.save();
   doc.lineWidth(0.7).strokeColor('#666666').rect(left, top, width, totalHeight).stroke();
@@ -957,7 +1105,7 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
           width: compactDayWidth,
           lineBreak: false,
         });
-        doc.text(row.startDateTime, compactTimeX, y, {
+        doc.text(row.startTimeLabel, compactTimeX, y, {
           width: compactTimeWidth,
           lineBreak: false,
         });
@@ -966,7 +1114,11 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
           align: 'center',
           lineBreak: false,
         });
-        doc.text(row.endDateTime, compactEndTimeX, y, {
+        doc.text(row.endDayLabel, compactEndDayX, y, {
+          width: compactEndDayWidth,
+          lineBreak: false,
+        });
+        doc.text(row.endTimeLabel, compactEndTimeX, y, {
           width: compactEndTimeWidth,
           lineBreak: false,
         });
@@ -1008,19 +1160,47 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
         });
       }
     } else if (row.kind === 'spacer') {
+      const dividerY = y - 6;
+      doc
+        .save()
+        .lineWidth(0.45)
+        .strokeColor('#b8b8b8')
+        .moveTo(left + 8, dividerY)
+        .lineTo(left + width - 8, dividerY)
+        .stroke()
+        .restore();
+
       doc.font(PDF_FONTS.bodyBold).fontSize(11.5).fillColor('#000000');
-      doc.text('Delområde', left + sectionColumns.label.x, y + 2, {
+      const labelHeaderX = left + sectionColumns.label.x;
+      const boundaryHeaderX = left + sectionColumns.granspunkter.x;
+      const trackHeaderX = left + sectionColumns.spar.x;
+      const sectionHeaderY = y + sectionHeaderOffsetY;
+      doc.text('Delområde', labelHeaderX, sectionHeaderY, {
         width: sectionColumns.label.width,
         lineBreak: false,
       });
-      doc.text('Gränspunkter', left + sectionColumns.granspunkter.x, y + 2, {
+      doc.text('Gränspunkter', boundaryHeaderX, sectionHeaderY, {
         width: sectionColumns.granspunkter.width,
         lineBreak: false,
       });
-      doc.text('Spår', left + sectionColumns.spar.x, y + 2, {
+      doc.text('Spår', trackHeaderX, sectionHeaderY, {
         width: sectionColumns.spar.width,
         lineBreak: false,
       });
+      const underlineY = sectionHeaderY + 13;
+      const underlineWidth = (text) => doc.widthOfString(text);
+      doc
+        .save()
+        .lineWidth(0.35)
+        .strokeColor('#777777')
+        .moveTo(labelHeaderX, underlineY)
+        .lineTo(labelHeaderX + underlineWidth('Delområde'), underlineY)
+        .moveTo(boundaryHeaderX, underlineY)
+        .lineTo(boundaryHeaderX + underlineWidth('Gränspunkter'), underlineY)
+        .moveTo(trackHeaderX, underlineY)
+        .lineTo(trackHeaderX + underlineWidth('Spår'), underlineY)
+        .stroke()
+        .restore();
     } else if (row.kind === 'section') {
       doc.font(PDF_FONTS.bodyBold).fontSize(rowFontSize).fillColor('#000000');
       doc.text(row.label, left + sectionColumns.label.x, y, {
@@ -1033,10 +1213,17 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
         left + sectionColumns.granspunkter.x,
         y,
         sectionColumns.granspunkter.width,
-        highlightTokens
+        highlightTokens,
+        {
+          highlightLeft: Boolean(row.highlightStart),
+          highlightRight: Boolean(row.highlightEnd),
+          highlightLeftPart: row.highlightStartPart,
+          highlightRightPart: row.highlightEndPart,
+        }
       );
       doc.fillColor('#000000').font(PDF_FONTS.bodyBold).fontSize(12).text(row.spar, left + sectionColumns.spar.x, y, {
         width: sectionColumns.spar.width,
+        align: 'left',
         lineBreak: false,
       });
     }
@@ -1090,6 +1277,10 @@ const addEntriesAndSectionsPage = (doc, project, entries, sections, dispSettings
     label: cleanText(section.customLabel || section.displayIndex || '') ? `${cleanText(section.customLabel || section.displayIndex || '')}.` : '',
     granspunkter: formatLegacyBoundaryText(section.granspunkter),
     spar: section.spar || '—',
+    highlightStart: Boolean(section.highlightStart),
+    highlightEnd: Boolean(section.highlightEnd),
+    highlightStartPart: cleanText(section.highlightStartPart),
+    highlightEndPart: cleanText(section.highlightEndPart),
   }));
   const rows = [
     ...entryRows,

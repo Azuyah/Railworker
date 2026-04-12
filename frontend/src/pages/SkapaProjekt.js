@@ -232,6 +232,10 @@ const defaultSection = () => ({
   granspunktSlut: '',
   granspunkter: '',
   spar: '',
+  highlightStart: false,
+  highlightEnd: false,
+  highlightStartPart: '',
+  highlightEndPart: '',
 });
 
 const createDefaultSections = (count = 10) =>
@@ -391,6 +395,10 @@ const mergeSectionDetails = (sections = [], sectionDetails = [], fallbackAreaNam
       granspunktSlut,
       granspunkter,
       spar: normalizeTrackValue(details.spar || ''),
+      highlightStart: Boolean(details.highlightStart),
+      highlightEnd: Boolean(details.highlightEnd),
+      highlightStartPart: String(details.highlightStartPart || '').trim(),
+      highlightEndPart: String(details.highlightEndPart || '').trim(),
     };
   }).sort((left, right) => (left.sortOrder ?? 0) - (right.sortOrder ?? 0)));
 
@@ -1319,6 +1327,10 @@ const SkapaProjekt = () => {
             granspunktSlut: sec.granspunktSlut || '',
             granspunkter: sec.granspunkter || '',
             spar: sec.spar || '',
+            highlightStart: Boolean(sec.highlightStart),
+            highlightEnd: Boolean(sec.highlightEnd),
+            highlightStartPart: sec.highlightStartPart || '',
+            highlightEndPart: sec.highlightEndPart || '',
           })),
           blankett31Files: blankett31Files.map((file) => ({
             name: file.name,
@@ -2248,6 +2260,9 @@ const SkapaProjekt = () => {
                                   </option>
                                 ))}
                               </select>
+                              <p className="mt-2 text-xs text-slate-500">
+                                Dispen visar bara den valda beteckningen för jobbet, även om plankan visar flera.
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -2604,6 +2619,44 @@ const SkapaProjekt = () => {
                         onChange={(e) => updateSectionField(i, 'spar', e.target.value)}
                         className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm focus:border-slate-900 focus:outline-none"
                       />
+                    </div>
+                    <div className="mt-3 grid gap-3 md:grid-cols-2">
+                      <div className="rounded-xl border border-rose-100 bg-rose-50/60 px-3 py-2">
+                        <label className="flex items-center gap-2 text-sm text-slate-700">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(sec.highlightStart)}
+                            onChange={(e) => updateSectionField(i, 'highlightStart', e.target.checked)}
+                            className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+                          />
+                          Rödmarkera startpunkt
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Endast röd del, ex 21"
+                          value={sec.highlightStartPart || ''}
+                          onChange={(e) => updateSectionField(i, 'highlightStartPart', e.target.value)}
+                          className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
+                        />
+                      </div>
+                      <div className="rounded-xl border border-rose-100 bg-rose-50/60 px-3 py-2">
+                        <label className="flex items-center gap-2 text-sm text-slate-700">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(sec.highlightEnd)}
+                            onChange={(e) => updateSectionField(i, 'highlightEnd', e.target.checked)}
+                            className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+                          />
+                          Rödmarkera slutpunkt
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Endast röd del, ex 22"
+                          value={sec.highlightEndPart || ''}
+                          onChange={(e) => updateSectionField(i, 'highlightEndPart', e.target.value)}
+                          className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
+                        />
+                      </div>
                     </div>
                     <div className="mt-2 text-xs text-slate-500">
                       Etikett: {getSectionLabel(sec, i)}. Lämna "Egen etikett" tom för automatisk numrering eller bokstav.
