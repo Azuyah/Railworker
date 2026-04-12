@@ -2,8 +2,10 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
+  Badge,
   Box,
   Button,
+  Collapse,
   Input,
   Spinner,
   Switch,
@@ -24,6 +26,8 @@ const Dashboard = () => {
   const [loadError, setLoadError] = useState('');
   const [exportingProjectId, setExportingProjectId] = useState(null);
   const [updatingVisibilityId, setUpdatingVisibilityId] = useState(null);
+  const [updatingSentStatusId, setUpdatingSentStatusId] = useState(null);
+  const [showSentProjects, setShowSentProjects] = useState(false);
   const toast = useToast();
   const fetchUserAndProjects = useCallback(async () => {
     let storedUser = null;
@@ -59,9 +63,14 @@ const Dashboard = () => {
     }
   }, []);
 
+  const isProjectSent = (project) => Boolean(project?.formState?.sentToManagement);
+
   const filteredProjects = projects.filter((project) =>
     project.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const activeProjects = filteredProjects.filter((project) => !isProjectSent(project));
+  const sentProjects = filteredProjects.filter((project) => isProjectSent(project));
 
   useEffect(() => {
     fetchUserAndProjects();
@@ -175,6 +184,188 @@ const Dashboard = () => {
       setUpdatingVisibilityId(null);
     }
   };
+
+  const handleSentStatusChange = async (project, nextSentStatus) => {
+    let storedUser = null;
+    try {
+      storedUser = JSON.parse(localStorage.getItem('user') || 'null');
+    } catch (error) {
+      storedUser = null;
+    }
+
+    const token = storedUser?.token || localStorage.getItem('token');
+    if (!token || !project?.id) {
+      setLoadError('Logga in igen för att uppdatera skickat-status.');
+      return;
+    }
+
+    try {
+      setUpdatingSentStatusId(project.id);
+      setProjects((prev) => prev.map((item) => (
+        item.id === project.id
+          ? {
+              ...item,
+              formState: {
+                ...(item.formState || {}),
+                sentToManagement: nextSentStatus,
+              },
+            }
+          : item
+      )));
+
+      await axios.patch(
+        apiUrl(`/api/projects/${project.id}/sent-status`),
+        { sentToManagement: nextSentStatus },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      toast({
+        title: nextSentStatus ? 'Projekt markerat som skickat' : 'Projekt åter i aktiv lista',
+        status: 'success',
+        duration: 2500,
+        isClosable: true,
+      });
+    } catch (error) {
+      console.error('Kunde inte uppdatera skickat-status:', error);
+      setProjects((prev) => prev.map((item) => (
+        item.id === project.id
+          ? {
+              ...item,
+              formState: {
+                ...(item.formState || {}),
+                sentToManagement: !nextSentStatus,
+              },
+            }
+          : item
+      )));
+      toast({
+        title: error?.response?.data?.error || 'Kunde inte uppdatera skickat-status',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setUpdatingSentStatusId(null);
+    }
+  };
+
+  const handleOpenProject = (project, destination) => {
+    if (isProjectSent(project)) {
+      const confirmed = window.confirm(
+        'Det här projektet är markerat som skickat till arbetsledningen. Om du öppnar det nu riskerar du att ändra i ett aktivt projekt. Vill du fortsätta?'
+      );
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    if (destination === 'project') {
+      navigate('/skapa-projekt', { state: { projectId: project.id } });
+      return;
+    }
+
+    if (destination === 'plan') {
+      navigate(`/plan/${project.id}`);
+    }
+  };
+
+  const renderProjectCard = (project) => (
+    <Box
+      key={project.id}
+      border="1px solid"
+      borderColor={isProjectSent(project) ? 'amber.200' : 'gray.200'}
+      borderRadius="xl"
+      p={4}
+      bg={isProjectSent(project) ? 'amber.50' : 'white'}
+      transition="all 0.2s ease"
+      _hover={{ borderColor: isProjectSent(project) ? 'amber.300' : 'gray.400', boxShadow: '0 8px 20px rgba(15,23,42,0.08)' }}
+    >
+      <HStack justify="space-between" align="center" wrap="wrap" spacing={3}>
+        <Box>
+          <HStack spacing={3} align="center" wrap="wrap">
+            <Text fontWeight="700" color="gray.900">
+              {project.name}
+            </Text>
+            {isProjectSent(project) && (
+              <Badge colorScheme="orange" borderRadius="full" px={3} py={1} textTransform="none">
+                Skickat
+              </Badge>
+            )}
+          </HStack>
+          {project.plats && (
+            <Text fontSize="sm" color="gray.600">
+              {project.plats}
+            </Text>
+          )}
+          <HStack spacing={3} mt={3} wrap="wrap">
+            <HStack spacing={2}>
+              <Switch
+                colorScheme="green"
+                isChecked={Boolean(project.visibleToTsm)}
+                isDisabled={updatingVisibilityId === project.id}
+                onChange={(event) => handleVisibilityChange(project, event.target.checked)}
+              />
+              <Text fontSize="sm" color="gray.700" fontWeight="600">
+                Visa för TSM
+              </Text>
+            </HStack>
+            <Text fontSize="xs" color={project.visibleToTsm ? 'green.600' : 'gray.500'}>
+              {project.visibleToTsm ? 'Synligt i TSM-panelen' : 'Dolt från TSM-panelen'}
+            </Text>
+            <Button
+              variant={isProjectSent(project) ? 'solid' : 'outline'}
+              colorScheme={isProjectSent(project) ? 'orange' : 'gray'}
+              borderRadius="full"
+              size="xs"
+              isLoading={updatingSentStatusId === project.id}
+              onClick={() => handleSentStatusChange(project, !isProjectSent(project))}
+            >
+              {isProjectSent(project) ? 'Ta tillbaka till aktiv' : 'Markera som skickat'}
+            </Button>
+          </HStack>
+          {isProjectSent(project) && (
+            <Text mt={2} fontSize="xs" color="orange.700">
+              Projektet är undanlagt från huvudlistan och varnar innan öppning.
+            </Text>
+          )}
+        </Box>
+        <HStack spacing={2}>
+          <Button
+            variant="outline"
+            borderRadius="full"
+            size="sm"
+            onClick={() => handleExportDisp(project)}
+            isLoading={exportingProjectId === project.id}
+            loadingText="Skapar disp"
+          >
+            Skapa disp
+          </Button>
+          <Button
+            variant="outline"
+            borderRadius="full"
+            size="sm"
+            onClick={() => handleOpenProject(project, 'project')}
+          >
+            Visa projekt
+          </Button>
+          <Button
+            bg="gray.900"
+            color="white"
+            borderRadius="full"
+            size="sm"
+            _hover={{ bg: 'gray.800' }}
+            onClick={() => handleOpenProject(project, 'plan')}
+          >
+            Visa planka
+          </Button>
+        </HStack>
+      </HStack>
+    </Box>
+  );
 
   return (
     <Box minH="100vh" bg="#F4F6FA">
@@ -291,77 +482,63 @@ const Dashboard = () => {
               </Box>
             ) : (
               <VStack spacing={4} align="stretch">
-                {filteredProjects.map((project) => (
+                {activeProjects.length ? (
+                  activeProjects.map(renderProjectCard)
+                ) : (
                   <Box
-                    key={project.id}
-                    border="1px solid"
-                    borderColor="gray.200"
+                    border="1px dashed"
+                    borderColor="gray.300"
                     borderRadius="xl"
-                    p={4}
-                    bg="white"
-                    transition="all 0.2s ease"
-                    _hover={{ borderColor: 'gray.400', boxShadow: '0 8px 20px rgba(15,23,42,0.08)' }}
+                    p={5}
+                    textAlign="center"
+                    color="gray.500"
+                    bg="gray.50"
                   >
-                    <HStack justify="space-between" align="center" wrap="wrap" spacing={3}>
-                      <Box>
-                        <Text fontWeight="700" color="gray.900">
-                          {project.name}
-                        </Text>
-                        {project.plats && (
-                          <Text fontSize="sm" color="gray.600">
-                            {project.plats}
-                          </Text>
-                        )}
-                        <HStack spacing={3} mt={3}>
-                          <HStack spacing={2}>
-                            <Switch
-                              colorScheme="green"
-                              isChecked={Boolean(project.visibleToTsm)}
-                              isDisabled={updatingVisibilityId === project.id}
-                              onChange={(event) => handleVisibilityChange(project, event.target.checked)}
-                            />
-                            <Text fontSize="sm" color="gray.700" fontWeight="600">
-                              Visa för TSM
-                            </Text>
-                          </HStack>
-                          <Text fontSize="xs" color={project.visibleToTsm ? 'green.600' : 'gray.500'}>
-                            {project.visibleToTsm ? 'Synligt i TSM-panelen' : 'Dolt från TSM-panelen'}
-                          </Text>
-                        </HStack>
-                      </Box>
-                      <HStack spacing={2}>
-                        <Button
-                          variant="outline"
-                          borderRadius="full"
-                          size="sm"
-                          onClick={() => handleExportDisp(project)}
-                          isLoading={exportingProjectId === project.id}
-                          loadingText="Skapar disp"
-                        >
-                          Skapa disp
-                        </Button>
-                        <Button
-                          variant="outline"
-                          borderRadius="full"
-                          size="sm"
-                          onClick={() => navigate('/skapa-projekt', { state: { projectId: project.id } })}
-                        >
-                          Visa projekt
-                        </Button>
-                        <Button
-                          bg="gray.900"
-                          color="white"
-                          borderRadius="full"
-                          size="sm"
-                          _hover={{ bg: 'gray.800' }}
-                          onClick={() => navigate(`/plan/${project.id}`)}
-                        >
-                          Visa planka
-                        </Button>
-                      </HStack>
-                    </HStack>
+                    Inga aktiva projekt matchar din sökning.
                   </Box>
-                ))}
+                )}
+
+                <Box borderTop="1px solid" borderColor="gray.200" pt={2}>
+                  <Button
+                    variant="ghost"
+                    justifyContent="space-between"
+                    width="full"
+                    borderRadius="xl"
+                    px={3}
+                    onClick={() => setShowSentProjects((prev) => !prev)}
+                  >
+                    <HStack spacing={3}>
+                      <Text fontWeight="700" color="gray.800">
+                        Skickade projekt
+                      </Text>
+                      <Badge colorScheme="orange" borderRadius="full" px={3} py={1} textTransform="none">
+                        {sentProjects.length}
+                      </Badge>
+                    </HStack>
+                    <Text fontSize="sm" color="gray.500">
+                      {showSentProjects ? 'Dölj' : 'Visa'}
+                    </Text>
+                  </Button>
+                  <Collapse in={showSentProjects} animateOpacity>
+                    <VStack spacing={4} align="stretch" mt={4}>
+                      {sentProjects.length ? (
+                        sentProjects.map(renderProjectCard)
+                      ) : (
+                        <Box
+                          border="1px dashed"
+                          borderColor="gray.300"
+                          borderRadius="xl"
+                          p={5}
+                          textAlign="center"
+                          color="gray.500"
+                          bg="gray.50"
+                        >
+                          Inga skickade projekt matchar din sökning.
+                        </Box>
+                      )}
+                    </VStack>
+                  </Collapse>
+                </Box>
               </VStack>
             )}
           </Box>

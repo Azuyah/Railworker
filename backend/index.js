@@ -1011,6 +1011,54 @@ app.patch('/api/projects/:id/visibility', authMiddleware, async (req, res) => {
   }
 });
 
+app.patch('/api/projects/:id/sent-status', authMiddleware, async (req, res) => {
+  try {
+    const projectId = parseInt(req.params.id, 10);
+    if (Number.isNaN(projectId)) {
+      return res.status(400).json({ error: 'Ogiltigt projekt-ID' });
+    }
+
+    const { sentToManagement } = req.body || {};
+    if (typeof sentToManagement !== 'boolean') {
+      return res.status(400).json({ error: 'sentToManagement måste vara true eller false' });
+    }
+
+    const existingProject = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: {
+        id: true,
+        formState: true,
+      },
+    });
+
+    if (!existingProject) {
+      return res.status(404).json({ error: 'Projekt hittades inte' });
+    }
+
+    const nextFormState = {
+      ...(existingProject.formState || {}),
+      sentToManagement,
+    };
+
+    const project = await prisma.project.update({
+      where: { id: projectId },
+      data: { formState: nextFormState },
+      select: {
+        id: true,
+        formState: true,
+      },
+    });
+
+    res.json({
+      id: project.id,
+      sentToManagement: Boolean(project.formState?.sentToManagement),
+    });
+  } catch (error) {
+    console.error('Fel vid uppdatering av skickat-status:', error);
+    res.status(500).json({ error: 'Kunde inte uppdatera skickat-status' });
+  }
+});
+
 app.post('/api/pdf/blankett31/parse', authMiddleware, async (req, res) => {
   const { fileName, fileData } = req.body;
 
