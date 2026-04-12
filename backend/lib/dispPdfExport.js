@@ -294,7 +294,13 @@ const getShortDayName = (dateValue = '') => {
   return Number.isNaN(date.getTime()) ? '' : SWEDISH_SHORT_DAYS[date.getUTCDay()];
 };
 
-const buildEntryDayLabel = (entry = {}) => getShortDayName(entry.startDate);
+const withDayDot = (label = '') => {
+  const cleanLabel = cleanText(label);
+  if (!cleanLabel) return '';
+  return cleanLabel.endsWith('.') ? cleanLabel : `${cleanLabel}.`;
+};
+
+const buildEntryDayLabel = (entry = {}) => withDayDot(getShortDayName(entry.startDate));
 
 const buildCompactEntryDayRangeLabel = (entries = []) => {
   const datedEntries = entries.filter((entry) => entry?.startDate);
@@ -318,8 +324,8 @@ const buildCompactEntryEndDayRangeLabel = (entries = []) => {
 
   if (datedEntries.length === 0) return '';
 
-  const firstLabel = getShortDayName(datedEntries[0]?.endDate);
-  const lastLabel = getShortDayName(datedEntries[datedEntries.length - 1]?.endDate);
+  const firstLabel = withDayDot(getShortDayName(datedEntries[0]?.endDate));
+  const lastLabel = withDayDot(getShortDayName(datedEntries[datedEntries.length - 1]?.endDate));
 
   if (!firstLabel) return '';
   if (!lastLabel || firstLabel === lastLabel) return firstLabel;
@@ -376,7 +382,7 @@ const buildChapterOneEntryRows = (entries = [], dispSettings = {}, weekLine = ''
     dayLabel: buildEntryDayLabel(entry),
     startDateLabel: formatDate(entry.startDate),
     startTimeLabel: formatTime(entry.startTime),
-    endDayLabel: getShortDayName(entry.endDate),
+    endDayLabel: withDayDot(getShortDayName(entry.endDate)),
     endDateLabel: formatDate(entry.endDate),
     endTimeLabel: formatTime(entry.endTime),
   }));
@@ -1053,7 +1059,7 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
   } = config;
   const totalHeight = headerHeight + rows.reduce((sum, row) => sum + (row.rowHeight || rowHeight), 0) + 12;
   const bottom = top + totalHeight;
-  const headerFontSize = 12;
+  const headerFontSize = 12.8;
   const rowFontSize = 12;
   const hasCompactSummary = mode === 'full' && entryColumns.beteckning.width === 0 && rows.some((row) => row.kind === 'entry' && row.isCompactSummary);
   const compactStartHeaderX = left + 112;
@@ -1070,6 +1076,8 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
   const compactEndTimeWidth = 48;
   const compactEndHeaderX = compactEndDayX;
   const sectionHeaderOffsetY = 8;
+  const underlineWidth = (text) => doc.widthOfString(text);
+  let sectionRowIndex = 0;
 
   doc.save();
   doc.lineWidth(0.7).strokeColor('#666666').rect(left, top, width, totalHeight).stroke();
@@ -1080,12 +1088,36 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
     if (hasCompactSummary) {
       doc.text('Startdag och tid', compactStartHeaderX, entryHeaderY, { lineBreak: false });
       doc.text('Slutdag och tid', compactEndHeaderX, entryHeaderY, { lineBreak: false });
+      const entryUnderlineY = entryHeaderY + 13;
+      doc
+        .save()
+        .lineWidth(0.35)
+        .strokeColor('#777777')
+        .moveTo(compactStartHeaderX, entryUnderlineY)
+        .lineTo(compactStartHeaderX + underlineWidth('Startdag och tid'), entryUnderlineY)
+        .moveTo(compactEndHeaderX, entryUnderlineY)
+        .lineTo(compactEndHeaderX + underlineWidth('Slutdag och tid'), entryUnderlineY)
+        .stroke()
+        .restore();
     } else {
       if (entryColumns.beteckning.width > 0) {
         doc.text('Beteckning', left + entryColumns.beteckning.x, entryHeaderY, { lineBreak: false });
       }
-      doc.text('Startdag och tid', left + entryColumns.start.x, entryHeaderY, { lineBreak: false });
-      doc.text('Slutdag och tid', left + entryColumns.end.x, entryHeaderY, { lineBreak: false });
+      const startHeaderX = left + entryColumns.start.x;
+      const endHeaderX = left + entryColumns.end.x;
+      doc.text('Startdag och tid', startHeaderX, entryHeaderY, { lineBreak: false });
+      doc.text('Slutdag och tid', endHeaderX, entryHeaderY, { lineBreak: false });
+      const entryUnderlineY = entryHeaderY + 13;
+      doc
+        .save()
+        .lineWidth(0.35)
+        .strokeColor('#777777')
+        .moveTo(startHeaderX, entryUnderlineY)
+        .lineTo(startHeaderX + underlineWidth('Startdag och tid'), entryUnderlineY)
+        .moveTo(endHeaderX, entryUnderlineY)
+        .lineTo(endHeaderX + underlineWidth('Slutdag och tid'), entryUnderlineY)
+        .stroke()
+        .restore();
     }
   } else {
     doc.text('Delområde', left + sectionColumns.label.x, entryHeaderY, { lineBreak: false });
@@ -1160,17 +1192,7 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
         });
       }
     } else if (row.kind === 'spacer') {
-      const dividerY = y - 6;
-      doc
-        .save()
-        .lineWidth(0.45)
-        .strokeColor('#b8b8b8')
-        .moveTo(left + 8, dividerY)
-        .lineTo(left + width - 8, dividerY)
-        .stroke()
-        .restore();
-
-      doc.font(PDF_FONTS.bodyBold).fontSize(11.5).fillColor('#000000');
+      doc.font(PDF_FONTS.bodyBold).fontSize(12.2).fillColor('#000000');
       const labelHeaderX = left + sectionColumns.label.x;
       const boundaryHeaderX = left + sectionColumns.granspunkter.x;
       const trackHeaderX = left + sectionColumns.spar.x;
@@ -1188,7 +1210,6 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
         lineBreak: false,
       });
       const underlineY = sectionHeaderY + 13;
-      const underlineWidth = (text) => doc.widthOfString(text);
       doc
         .save()
         .lineWidth(0.35)
@@ -1202,6 +1223,15 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
         .stroke()
         .restore();
     } else if (row.kind === 'section') {
+      if (sectionRowIndex % 2 === 0) {
+        doc
+          .save()
+          .fillColor('#e9ecef')
+          .rect(left + 10, y - 1, width - 20, currentRowHeight - 2)
+          .fill()
+          .restore();
+      }
+
       doc.font(PDF_FONTS.bodyBold).fontSize(rowFontSize).fillColor('#000000');
       doc.text(row.label, left + sectionColumns.label.x, y, {
         width: sectionColumns.label.width,
@@ -1226,6 +1256,7 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
         align: 'left',
         lineBreak: false,
       });
+      sectionRowIndex += 1;
     }
 
     y += currentRowHeight;
