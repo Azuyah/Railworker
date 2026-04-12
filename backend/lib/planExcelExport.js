@@ -1,8 +1,17 @@
 const path = require('path');
 const fs = require('fs');
 const ExcelJS = require('exceljs');
+const njdbDriftplatser = require('../data/njdb-driftplatser.json');
 
 const TEMPLATE_PATH = path.join(__dirname, '..', 'assets', 'plan-template.xlsx');
+const DRIFTPLATS_CODE_BY_NAME = new Map(
+  Array.isArray(njdbDriftplatser?.items)
+    ? njdbDriftplatser.items
+        .filter((item) => item?.name && item?.code)
+        .map((item) => [String(item.name).trim(), String(item.code).trim()])
+    : []
+);
+const DRIFTPLATS_NAMES_BY_LENGTH = [...DRIFTPLATS_CODE_BY_NAME.keys()].sort((left, right) => right.length - left.length);
 
 const formatAnordningLabel = (item = '') => {
   const upper = String(item).toUpperCase();
@@ -43,10 +52,29 @@ const getSectionSignalAndTrack = (section = {}) => {
 };
 
 const getSectionBoundaryText = (section = {}) =>
-  String(section.granspunkter || '')
+  abbreviateBoundaryText(String(section.granspunkter || ''))
     .trim()
     .replace(/\s*-\s*/g, '-')
     .replace(/\s*,\s*/g, ', ');
+
+const escapeRegExp = (value = '') => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const abbreviateBoundaryText = (value = '') => {
+  let text = String(value || '').trim();
+  if (!text) {
+    return '';
+  }
+
+  for (const name of DRIFTPLATS_NAMES_BY_LENGTH) {
+    const code = DRIFTPLATS_CODE_BY_NAME.get(name);
+    if (!code) continue;
+
+    const regex = new RegExp(`(^|[\\s\\-–,(/])(${escapeRegExp(name)})(?=(?:\\s+\\d|\\s*[\\-–,/)])|$)`, 'gu');
+    text = text.replace(regex, (_, prefix = '') => `${prefix}${code}`);
+  }
+
+  return text;
+};
 
 const extractWeek = (projectName = '') => {
   const match = String(projectName).match(/\b(V\d+)\b/i);
@@ -99,6 +127,14 @@ const setCell = (worksheet, cellAddress, value) => {
   worksheet.getCell(cellAddress).value = value;
 };
 
+const forceBlackFont = (cell) => {
+  if (!cell) return;
+  cell.font = {
+    ...(cell.font || {}),
+    color: { argb: 'FF000000' },
+  };
+};
+
 const MAX_TOP_ENTRY_ROWS = 6;
 
 const getTemplateKind = (worksheet) => {
@@ -123,7 +159,7 @@ const getEntryFjtklValue = (project = {}, entry = {}) =>
     .join(' ');
 
 const getEntryBoundaryValue = (project = {}, entry = {}) =>
-  String(entry?.granspunkt || project.granspunkter || '')
+  abbreviateBoundaryText(String(entry?.granspunkt || project.granspunkter || ''))
     .trim()
     .replace(/\s*-\s*/g, '-')
     .replace(/\s*,\s*/g, ', ');
@@ -141,6 +177,9 @@ const setTopInfoRows = (worksheet, project = {}, entries = []) => {
       setCell(worksheet, `D${rowNumber}`, hasEntry ? (entry?.beteckning || '') : '');
       setCell(worksheet, `E${rowNumber}`, hasEntry ? getEntryBoundaryValue(project, entry) : '');
       setCell(worksheet, `L${rowNumber}`, hasEntry ? getEntryFjtklValue(project, entry) : '');
+      forceBlackFont(worksheet.getCell(`D${rowNumber}`));
+      forceBlackFont(worksheet.getCell(`E${rowNumber}`));
+      forceBlackFont(worksheet.getCell(`L${rowNumber}`));
       worksheet.getCell(`L${rowNumber}`).alignment = {
         ...(worksheet.getCell(`L${rowNumber}`).alignment || {}),
         horizontal: 'left',
@@ -153,6 +192,8 @@ const setTopInfoRows = (worksheet, project = {}, entries = []) => {
     if (templateKind === 'legacy') {
       setCell(worksheet, `E${rowNumber}`, hasEntry ? (entry?.beteckning || '') : '');
       setCell(worksheet, `L${rowNumber}`, hasEntry ? getEntryFjtklValue(project, entry) : '');
+      forceBlackFont(worksheet.getCell(`E${rowNumber}`));
+      forceBlackFont(worksheet.getCell(`L${rowNumber}`));
       worksheet.getCell(`L${rowNumber}`).alignment = {
         ...(worksheet.getCell(`L${rowNumber}`).alignment || {}),
         horizontal: 'left',
@@ -165,6 +206,28 @@ const setTopInfoRows = (worksheet, project = {}, entries = []) => {
     setCell(worksheet, `D${rowNumber}`, hasEntry ? getEntryBoundaryValue(project, entry) : '');
     setCell(worksheet, `E${rowNumber}`, hasEntry ? (entry?.beteckning || '') : '');
     setCell(worksheet, `O${rowNumber}`, hasEntry ? getEntryFjtklValue(project, entry) : '');
+    forceBlackFont(worksheet.getCell(`D${rowNumber}`));
+    forceBlackFont(worksheet.getCell(`E${rowNumber}`));
+    forceBlackFont(worksheet.getCell(`O${rowNumber}`));
+  }
+};
+
+const styleTopInfoBlock = (worksheet) => {
+  for (let rowNumber = 1; rowNumber <= 4; rowNumber += 1) {
+    for (let columnNumber = 4; columnNumber <= 11; columnNumber += 1) {
+      const cell = worksheet.getCell(rowNumber, columnNumber);
+      cell.font = {
+        ...(cell.font || {}),
+        name: 'Calibri',
+        size: 14,
+        bold: true,
+      };
+      cell.alignment = {
+        ...(cell.alignment || {}),
+        horizontal: 'left',
+        vertical: 'middle',
+      };
+    }
   }
 };
 
@@ -398,8 +461,26 @@ const setSectionHeaders = (worksheet, sections, sectionColumns, layout) => {
       name: 'Calibri',
     };
     setCell(worksheet, `${column}${boundaryRow}`, getSectionBoundaryText(section) || getSectionSignalAndTrack(section).signal || '');
+    worksheet.getCell(`${column}${boundaryRow}`).font = {
+      ...(worksheet.getCell(`${column}${boundaryRow}`).font || {}),
+      bold: true,
+      size: 12,
+      name: 'Calibri',
+      color: { argb: 'FF000000' },
+    };
     setCell(worksheet, `${column}${typeRow}`, isDp ? 'DP' : 'Linje');
     setCell(worksheet, `${column}${numberRow}`, getSectionDisplayIndex(section, mappedSection.index));
+    worksheet.getCell(`${column}${numberRow}`).fill = isDp
+      ? {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFFFFF00' },
+          bgColor: { indexed: 64 },
+        }
+      : {
+          type: 'pattern',
+          pattern: 'none',
+        };
   });
 
   return sectionColumnMap;
@@ -440,7 +521,9 @@ const ensureWorksheetHasSectionCapacity = (worksheet, sections, layout = {}) => 
   const neutralTemplateColumn = templateTrailingBase + 5;
 
   for (let offset = 0; offset < 5; offset += 1) {
-    copyColumnStyles(worksheet, templateTrailingBase + offset, trailingBase + offset);
+    if (trailingBase + offset !== templateTrailingBase + offset) {
+      copyColumnStyles(worksheet, templateTrailingBase + offset, trailingBase + offset);
+    }
   }
 
   const lastUsedColumn = trailingBase + 4;
@@ -617,8 +700,9 @@ const rowMatchesEntries = (row, entries = []) => {
 const cloneWorksheetFromTemplate = (workbook, templateSource, sheetName) => {
   const clonedSheet = workbook.addWorksheet(sheetName);
   const templateModel = JSON.parse(JSON.stringify(templateSource));
+  const templateMerges = Array.isArray(templateModel?.merges) ? [...templateModel.merges] : [];
   if (Array.isArray(templateModel?.merges)) {
-    templateModel.merges = templateModel.merges.filter((range) => range !== 'G5:Z5');
+    templateModel.merges = [];
   }
   if (Array.isArray(templateModel?.rows)) {
     templateModel.rows.forEach((row) => {
@@ -634,7 +718,22 @@ const cloneWorksheetFromTemplate = (workbook, templateSource, sheetName) => {
     ...templateModel,
     name: sheetName,
   };
+  clonedSheet._railworkerTemplateMerges = templateMerges;
   return clonedSheet;
+};
+
+const reapplyTemplateMerges = (worksheet) => {
+  const templateMerges = Array.isArray(worksheet?._railworkerTemplateMerges)
+    ? worksheet._railworkerTemplateMerges
+    : [];
+
+  templateMerges.forEach((range) => {
+    try {
+      worksheet.mergeCells(range);
+    } catch (error) {
+      // ignore ranges that are already merged or invalid after template adjustments
+    }
+  });
 };
 
 const fillWorksheet = (worksheet, project, entriesForSheet, rows) => {
@@ -652,6 +751,7 @@ const fillWorksheet = (worksheet, project, entriesForSheet, rows) => {
   const previewLabelCell = worksheet.getCell(`G${layout.summaryRow}`);
 
   setTopInfoRows(worksheet, project, sheetEntries);
+  styleTopInfoBlock(worksheet);
   if (!layout.isNewTemplate) {
     applyTopGridBorders(worksheet);
     clearRangeValues(worksheet, 15, 26, 1, 4);
@@ -666,7 +766,6 @@ const fillWorksheet = (worksheet, project, entriesForSheet, rows) => {
     routeCell.font = {
       ...(routeCell.font || {}),
       bold: true,
-      size: 12,
       color: { argb: 'FF000000' },
     };
     worksheet.getRow(5).height = 36;
@@ -677,6 +776,8 @@ const fillWorksheet = (worksheet, project, entriesForSheet, rows) => {
   }
   setCell(worksheet, `C${layout.summaryRow}`, extractWeek(project.name));
   setCell(worksheet, `E${layout.summaryRow}`, formatProjectPeriodFromEntries(sheetEntries, project));
+  forceBlackFont(worksheet.getCell(`C${layout.summaryRow}`));
+  forceBlackFont(worksheet.getCell(`E${layout.summaryRow}`));
   const { sectionColumns, trailingColumns } = ensureWorksheetHasSectionCapacity(worksheet, sections, layout);
   setCell(worksheet, `G${layout.summaryRow}`, 'Tittibild:');
   previewLabelCell.alignment = {
@@ -688,7 +789,6 @@ const fillWorksheet = (worksheet, project, entriesForSheet, rows) => {
   previewLabelCell.font = {
     ...(previewLabelCell.font || {}),
     bold: true,
-    size: 12,
     color: { argb: 'FF000000' },
   };
   setCell(worksheet, `${trailingColumns.nodnummer}${layout.sectionBoundaryRow}`, `Nöd nr ${projectFormState.nodnummer || ''}`.trim());
@@ -698,6 +798,8 @@ const fillWorksheet = (worksheet, project, entriesForSheet, rows) => {
   setCell(worksheet, `${trailingColumns.avslutat}${layout.sectionNumberRow}`, 'Avslutat');
   setCell(worksheet, `${trailingColumns.tsa}${layout.sectionNumberRow}`, 'TSA');
   setCell(worksheet, `${trailingColumns.anteckning}${layout.sectionNumberRow}`, 'Anteckningar');
+  forceBlackFont(worksheet.getCell(`${trailingColumns.nodnummer}${layout.sectionBoundaryRow}`));
+  forceBlackFont(worksheet.getCell(`${trailingColumns.sluttid}${layout.sectionTypeRow}`));
 
   const sectionColumnMap = setSectionHeaders(worksheet, sections, sectionColumns, layout);
 
@@ -733,6 +835,12 @@ const fillWorksheet = (worksheet, project, entriesForSheet, rows) => {
     );
     setCell(worksheet, `${trailingColumns.anteckning}${excelRow}`, row.anteckning || '');
   });
+
+  for (let rowNumber = 11; rowNumber <= 27; rowNumber += 1) {
+    setCell(worksheet, `E${rowNumber}`, rows[rowNumber - startRow]?.namn ? worksheet.getCell(`E${rowNumber}`).value : '');
+  }
+
+  reapplyTemplateMerges(worksheet);
 };
 
 const createPlanWorkbookBuffer = async (project) => {
