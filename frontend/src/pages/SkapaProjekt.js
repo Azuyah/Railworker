@@ -340,16 +340,6 @@ const normalizeSectionAreaName = (value = '') =>
   sanitizeSectionText(value)
     .replace(/\s+Driftplats(?:er)?$/i, '');
 
-const shouldReplaceDispSetting = (currentValue = '', nextValue = '') => {
-  const current = String(currentValue || '').trim();
-  const next = String(nextValue || '').trim();
-  if (!next) return false;
-  if (!current) return true;
-  if (current.length <= 2) return true;
-  if (/^(rr|r|test)$/i.test(current)) return true;
-  return false;
-};
-
 const getDefaultHighlightedBoundaries = (entries = []) =>
   String(
     entries.find((entry) => String(entry?.granspunkt || '').trim())?.granspunkt || ''
@@ -450,6 +440,10 @@ const SkapaProjekt = () => {
   const [driftplatsStatus, setDriftplatsStatus] = useState('');
   const [isResolvingSections, setIsResolvingSections] = useState(false);
   const [sectionStatus, setSectionStatus] = useState('');
+  const [showProjectTemplatePicker, setShowProjectTemplatePicker] = useState(false);
+  const [projectTemplateSearch, setProjectTemplateSearch] = useState('');
+  const [projectTemplateOptions, setProjectTemplateOptions] = useState([]);
+  const [isLoadingProjectTemplates, setIsLoadingProjectTemplates] = useState(false);
   const blankett31InputRef = useRef(null);
   const dispInputRef = useRef(null);
   const availableHtsmPhoneOptions = htsmPhoneOptions.filter((option) => option === htsmTelefon || option !== reservnr);
@@ -564,6 +558,93 @@ const SkapaProjekt = () => {
       syncProtectionFieldsFromEntries(nextEntries);
       return nextEntries;
     });
+  };
+
+  const applyProjectTemplate = (project) => {
+    if (!project) {
+      return;
+    }
+
+    setProjektNamn(project.name || '');
+    setPlats(project.plats || '');
+    setTelefonnummer(project.telefonnummer || '');
+    setGranspunktFritext(project.granspunkter || '');
+
+    const sourceSections = project.sections?.length
+      ? mergeSectionDetails(
+          project.sections.map((sec) => ({
+            ...defaultSection(),
+            ...sec,
+            signal: sec.name || sec.signal || '',
+          })),
+          project.formState?.sectionDetails || [],
+          (project.sections?.length || 0) === 1 ? normalizeSectionAreaName(project.plats || '') : ''
+        )
+      : createDefaultSections();
+
+    setSections(sourceSections);
+    setDispStatus('Projektet är nu förifyllt från en befintlig Railworker-disp. Ladda Blankett 31 för tider och beteckningar.');
+    setShowProjectTemplatePicker(false);
+  };
+
+  const loadProjectTemplateOptions = async () => {
+    const token = JSON.parse(localStorage.getItem('user'))?.token;
+    if (!token) {
+      setDispStatus('Logga in för att välja disp från Railworker.');
+      return;
+    }
+
+    setIsLoadingProjectTemplates(true);
+    try {
+      const response = await fetch(apiUrl('/api/projects'), {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(await getApiErrorMessage(response, 'Kunde inte hämta projekt från Railworker.'));
+      }
+
+      const data = await response.json();
+      const options = Array.isArray(data) ? data.filter((project) => project.id !== currentProjectId) : [];
+      setProjectTemplateOptions(options);
+      setShowProjectTemplatePicker(true);
+    } catch (error) {
+      console.error('Fel vid hämtning av projektmallar:', error);
+      setDispStatus(error?.message || 'Kunde inte hämta projekt från Railworker.');
+    } finally {
+      setIsLoadingProjectTemplates(false);
+    }
+  };
+
+  const handleApplyProjectTemplate = async (projectId) => {
+    const token = JSON.parse(localStorage.getItem('user'))?.token;
+    if (!token) {
+      setDispStatus('Logga in för att välja disp från Railworker.');
+      return;
+    }
+
+    try {
+      setIsLoadingProjectTemplates(true);
+      const response = await fetch(apiUrl(`/api/project/${projectId}`), {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(await getApiErrorMessage(response, 'Kunde inte läsa projektet från Railworker.'));
+      }
+
+      const project = await response.json();
+      applyProjectTemplate(project);
+    } catch (error) {
+      console.error('Fel vid val av projektmall:', error);
+      setDispStatus(error?.message || 'Kunde inte använda projektet som utgångsmaterial.');
+    } finally {
+      setIsLoadingProjectTemplates(false);
+    }
   };
 
   const addPlanJob = () => {
@@ -987,33 +1068,6 @@ const SkapaProjekt = () => {
     }));
   };
 
-  const applyDispEntries = (parsed) => {
-    const parsedEntries = mergeBlankett31EntryPhones(sortBlankett31Entries(dedupeBlankett31Entries(
-      (Array.isArray(parsed?.entries) ? parsed.entries : [])
-        .map((entry) => normalizeBlankett31Entry({
-          ...entry,
-          granspunkt: '',
-          uttagningstid: '',
-          signatur: '',
-          avslutningstid: '',
-          avslutningssignatur: '',
-        }))
-        .filter((entry) => entry.beteckning || entry.startDate || entry.endDate)
-    )), blankett31Entries, telefonnummer);
-
-    if (!parsedEntries.length) {
-      return;
-    }
-
-    setBeteckningar(parsedEntries.map((entry) => ({ value: entry.beteckning || '' })));
-    syncSummaryDatesFromEntries(parsedEntries);
-
-    const hasExistingBlankett31Data = blankett31Entries.some((entry) => Object.values(entry || {}).some(Boolean));
-    if (!hasExistingBlankett31Data) {
-      setBlankett31Entries(parsedEntries);
-    }
-  };
-
   const handleBlankett31Upload = async (event) => {
     const files = Array.from(event.target.files || []).filter(
       (file) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
@@ -1112,35 +1166,7 @@ const SkapaProjekt = () => {
       setPlats(parsed?.overview?.berordaDriftplatser || parsed.plats);
     }
 
-    setNamn(parsed?.namn || '');
     setTelefonnummer(parsed?.telefonnummer || '');
-    setNodnummer(parsed?.nodnummer || '');
-    setHtsmTelefon(parsed?.htsmTelefon || '');
-    setReservnr(parsed?.reservnr || '');
-
-    if (parsed?.overview) {
-      setDispSettings((current) => ({
-        ...current,
-        banNamn: shouldReplaceDispSetting(current.banNamn, parsed.overview.banName)
-          ? parsed.overview.banName || ''
-          : current.banNamn,
-        veckaOchDagar: shouldReplaceDispSetting(current.veckaOchDagar, parsed.overview.weekLine)
-          ? parsed.overview.weekLine || ''
-          : current.veckaOchDagar,
-        banobjektVnr: shouldReplaceDispSetting(current.banobjektVnr, parsed.overview.banobjektVnr)
-          ? parsed.overview.banobjektVnr || ''
-          : current.banobjektVnr,
-        forplaneraCa: current.forplaneraCa || parsed.overview.forplaneraCa || '1 tim innan start',
-        rodmarkeradeGranspunkter:
-          current.rodmarkeradeGranspunkter || parsed.overview.outerGranspunkter || '',
-      }));
-
-      if (!granspunktFritext && parsed.overview.outerGranspunkter) {
-        setGranspunktFritext(parsed.overview.outerGranspunkter);
-      }
-    }
-
-    applyDispEntries(parsed);
 
     if (Array.isArray(parsed?.sections) && parsed.sections.length) {
       const fallbackAreaName = parsed.sections.length === 1 ? normalizeSectionAreaName(plats || parsed.plats || dispSettings.banNamn) : '';
@@ -1201,11 +1227,11 @@ const SkapaProjekt = () => {
       applyDispData(data.parsed);
 
       if (data.parsed?.match?.matches) {
-        setDispStatus('Disp tolkad och matchar Blankett 31.');
+        setDispStatus('Disp inläst som utgångsmaterial. Ladda nu Blankett 31 för tider och beteckningar.');
       } else if (data.parsed?.match?.issues?.length) {
-        setDispStatus(`Disp tolkad, men kontroll behövs: ${data.parsed.match.issues.join(', ')}`);
+        setDispStatus(`Disp inläst som utgångsmaterial, men kontroll behövs: ${data.parsed.match.issues.join(', ')}`);
       } else {
-        setDispStatus('Disp tolkad och ruta 01 är uppdaterad.');
+        setDispStatus('Disp inläst som utgångsmaterial. Projekt, delområden, gränspunkter, spår och telefonnummer är uppdaterade.');
       }
     } catch (error) {
       console.error('Fel vid tolkning av Disp:', error);
@@ -1604,11 +1630,56 @@ const SkapaProjekt = () => {
                 )}
                 <button
                   type="button"
+                  onClick={loadProjectTemplateOptions}
+                  disabled={isLoadingProjectTemplates}
+                  className="mt-3 w-full rounded-xl border border-slate-900 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50"
+                >
+                  {isLoadingProjectTemplates ? 'Hämtar projekt...' : 'Utgå ifrån Railworker-disp'}
+                </button>
+                {showProjectTemplatePicker && (
+                  <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <input
+                      type="text"
+                      value={projectTemplateSearch}
+                      onChange={(e) => setProjectTemplateSearch(e.target.value)}
+                      placeholder="Sök projekt"
+                      className="mb-3 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
+                    />
+                    <div className="max-h-64 space-y-2 overflow-y-auto">
+                      {projectTemplateOptions
+                        .filter((project) => (
+                          !projectTemplateSearch.trim()
+                            || String(project.name || '').toLowerCase().includes(projectTemplateSearch.trim().toLowerCase())
+                            || String(project.plats || '').toLowerCase().includes(projectTemplateSearch.trim().toLowerCase())
+                        ))
+                        .map((project) => (
+                          <button
+                            key={project.id}
+                            type="button"
+                            onClick={() => handleApplyProjectTemplate(project.id)}
+                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-50"
+                          >
+                            <div className="text-sm font-semibold text-slate-900">{project.name || 'Namnlöst projekt'}</div>
+                            <div className="mt-1 text-xs text-slate-500">{project.plats || 'Plats saknas'}</div>
+                          </button>
+                        ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowProjectTemplatePicker(false)}
+                      className="mt-3 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-white"
+                    >
+                      Stäng
+                    </button>
+                  </div>
+                )}
+                <button
+                  type="button"
                   onClick={() => dispInputRef.current?.click()}
                   disabled={isParsingDisp}
                   className="mt-3 w-full rounded-xl border border-slate-900 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50"
                 >
-                  {isParsingDisp ? 'Tolkar Disp...' : 'Disp'}
+                  {isParsingDisp ? 'Läser in PDF-disp...' : 'Läs in PDF-disp'}
                 </button>
                 {dispStatus && (
                   <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
