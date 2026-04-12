@@ -417,9 +417,6 @@ const getSectionLocationLabel = (section = {}, index = 0) => {
   if (isDpSection(section, index)) {
     return label;
   }
-  if (index === 0 && label.includes(' - ')) {
-    return label.split(/\s*-\s*/)[0] || '';
-  }
   return '';
 };
 
@@ -728,6 +725,9 @@ const reapplyTemplateMerges = (worksheet) => {
     : [];
 
   templateMerges.forEach((range) => {
+    if (range === 'G5:Z5') {
+      return;
+    }
     try {
       worksheet.mergeCells(range);
     } catch (error) {
