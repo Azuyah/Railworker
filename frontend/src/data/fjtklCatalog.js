@@ -1,14 +1,14 @@
 const BASE_PHONE_OPTIONS = [
-  '010-127 12 60 Helsingborg - Halmstad',
-  '010-127 12 61 Helsingborg - Arlöv, Teckomatorp, Lund',
-  '010-127 12 62 Helsingborg',
+  '010-127 12 60',
+  '010-127 12 61',
+  '010-127 12 62',
   '010-127 12 80 Pebberholmen',
-  '010-127 12 32 Hässleholm',
-  '010-127 12 42 Helsingborg - Åstorp, Teckomatorp, Hässleholm',
-  '010-127 12 41 Kristianstad',
+  '010-127 12 32',
+  '010-127 12 42',
+  '010-127 12 41',
   '010-127 42 35 Borlänge',
-  '010-127 42 24 Borlänge - Avesta Krylbo',
-  '010-127 42 25 Storvik - Frövi',
+  '010-127 42 24',
+  '010-127 42 25',
 ];
 
 const normalizeDistrictKey = (value = '') =>
@@ -69,22 +69,22 @@ const DISTRICT_CONTACTS = {
 
 const MALMO_RULES = [
   {
-    phone: '010-127 12 32 Hässleholm',
+    phone: '010-127 12 32',
     keywords: ['hassleholm', 'hm'],
     minScore: 1,
   },
   {
-    phone: '010-127 12 62 Helsingborg',
+    phone: '010-127 12 62',
     keywords: ['helsingborg', 'hbgb', 'helsingborg central'],
     minScore: 1,
   },
   {
-    phone: '010-127 12 60 Helsingborg - Halmstad',
+    phone: '010-127 12 60',
     keywords: ['helsingborg', 'kattarp', 'angelholm', 'eldsberga', 'halmstad'],
     minScore: 2,
   },
   {
-    phone: '010-127 12 61 Helsingborg - Arlöv, Teckomatorp, Lund',
+    phone: '010-127 12 61',
     keywords: [
       'helsingborg',
       'gantofta',
@@ -104,7 +104,7 @@ const MALMO_RULES = [
     minScore: 2,
   },
   {
-    phone: '010-127 12 42 Helsingborg - Åstorp, Teckomatorp, Hässleholm',
+    phone: '010-127 12 42',
     keywords: [
       'helsingborg',
       'astorp',
@@ -119,7 +119,7 @@ const MALMO_RULES = [
     minScore: 2,
   },
   {
-    phone: '010-127 12 41 Kristianstad',
+    phone: '010-127 12 41',
     keywords: ['kristianstad', 'crgb'],
     minScore: 1,
   },

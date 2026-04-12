@@ -565,10 +565,42 @@ const SkapaProjekt = () => {
       return;
     }
 
+    const templatePlats = project.plats || '';
+    const { from, to } = parseDriftplatsEndpoints(templatePlats);
+    const resetDispSettings = defaultDispSettings();
+
     setProjektNamn(project.name || '');
-    setPlats(project.plats || '');
+    setPlats(templatePlats);
+    setFromDriftplats(from);
+    setToDriftplats(to);
     setTelefonnummer(project.telefonnummer || '');
     setGranspunktFritext(project.granspunkter || '');
+    setStartDate('');
+    setStartTime('');
+    setEndDate('');
+    setEndTime('');
+    setNamn('');
+    setNodnummer('');
+    setBandriftnummer('');
+    setEldriftnummer('');
+    setHtsmTelefon('');
+    setReservnr('');
+    setAvstamt(false);
+    setObjekt('');
+    setUttagningstid('');
+    setSignatur('');
+    setAvslutaSkyddTid('');
+    setAvslutningstid('');
+    setAvslutningssignatur('');
+    setBeteckningar([{ value: '' }]);
+    setBlankett31Meta({});
+    setDispSettings(resetDispSettings);
+    setFjtklBlocks([]);
+    setBlankett31Files([]);
+    setBlankett31Entries([defaultBlankett31Entry()]);
+    setPlanJobs(normalizePlanJobs([], []));
+    setDispFiles([]);
+    setAnteckningar([]);
 
     const sourceSections = project.sections?.length
       ? mergeSectionDetails(

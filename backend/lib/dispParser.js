@@ -456,13 +456,14 @@ const isDispTablePage = (page = {}) => {
   const dateTimeMatches = text.match(/\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}/g)?.length || 0;
   const compactSectionRows = text.match(/^\d+\.\s+/gim)?.length || 0;
   const hasCompactSectionHeader = normalized.includes('delomrade granspunkter spar');
+  const hasSectionChapterTitle = normalized.includes('granspunkter och delomrade');
 
   return (
     beteckningMatches > 0 ||
     dateTimeMatches >= 2 ||
     /delomrade\s+\d+/.test(normalized) ||
-    compactSectionRows > 0 ||
-    hasCompactSectionHeader
+    hasCompactSectionHeader ||
+    (compactSectionRows > 0 && hasSectionChapterTitle)
   );
 };
 const getDispTablePageScore = (page = {}) => {
@@ -472,15 +473,19 @@ const getDispTablePageScore = (page = {}) => {
   const dateTimeMatches = text.match(/\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}/g)?.length || 0;
   const compactSectionRows = text.match(/^\d+\.\s+/gim)?.length || 0;
   const hasCompactSectionHeader = normalized.includes('delomrade granspunkter spar');
+  const hasSectionChapterTitle = normalized.includes('granspunkter och delomrade');
 
   let score = 0;
   if (/delomrade\s+\d+/.test(normalized)) {
     score += 5;
   }
-  if (compactSectionRows) {
+  if (compactSectionRows && hasSectionChapterTitle) {
     score += Math.min(compactSectionRows, 6);
   }
   if (hasCompactSectionHeader) {
+    score += 4;
+  }
+  if (hasSectionChapterTitle) {
     score += 4;
   }
   if (beteckningMatches) {
@@ -1258,6 +1263,83 @@ const parseSectionDisplayIndex = (value = '') => {
   return null;
 };
 
+const COMPACT_TRACK_ONLY_PATTERN = /^(?:[A-Za-zÅÄÖåäö0-9]+(?:\s*-\s*[A-Za-zÅÄÖåäö0-9]+)?)(?:,\s*[A-Za-zÅÄÖåäö0-9]+(?:\s*-\s*[A-Za-zÅÄÖåäö0-9]+)?)*$/;
+
+const isCompactTrackOnlyLine = (value = '') =>
+  COMPACT_TRACK_ONLY_PATTERN.test(
+    normalizeSectionRowText(value)
+      .replace(/^sp[aå]r\s*/i, '')
+      .trim()
+  );
+
+const parseCompactDispSectionBlock = (lines = []) => {
+  if (!lines.length) {
+    return null;
+  }
+
+  const normalizedLines = lines
+    .map((line) => normalizeSectionRowText(line))
+    .filter(Boolean);
+
+  if (!normalizedLines.length) {
+    return null;
+  }
+
+  const displayIndex = parseSectionDisplayIndex(normalizedLines[0]);
+  if (!displayIndex) {
+    return null;
+  }
+
+  const bodyLines = [
+    normalizedLines[0].replace(/^(\d+)[\.,]\s*/, ''),
+    ...normalizedLines.slice(1),
+  ].filter(Boolean);
+
+  let spar = '';
+  if (bodyLines.length > 1 && isCompactTrackOnlyLine(bodyLines[bodyLines.length - 1])) {
+    spar = bodyLines.pop();
+  }
+
+  const body = bodyLines.join(' ').trim();
+  const inlineSection = !spar
+    ? parseInlineDispSectionText(`${displayIndex}. ${body}`)
+    : null;
+  if (inlineSection && inlineSection.granspunkter && inlineSection.spar) {
+    return inlineSection;
+  }
+
+  if (spar && body.includes(' - ')) {
+    return {
+      ...buildDispSection({
+        displayIndex,
+        signal: body,
+        granspunkter: body,
+        spar,
+      }),
+      displayIndex,
+      name: '',
+    };
+  }
+
+  const boundaryMatch = body.match(DISP_SECTION_BOUNDARY_RANGE_REGEX);
+  if (!boundaryMatch || !spar) {
+    return inlineSection;
+  }
+
+  const granspunkter = `${cleanBoundaryToken(boundaryMatch[1] || '')} - ${cleanBoundaryToken(boundaryMatch[2] || '')}`;
+
+  return {
+    ...buildDispSection({
+      displayIndex,
+      signal: granspunkter,
+      granspunkter,
+      spar,
+    }),
+    displayIndex,
+    name: '',
+  };
+};
+
 const groupLinesByApproximateRow = (lines = [], tolerance = 0.012) => {
   const groups = [];
 
@@ -1281,6 +1363,95 @@ const groupLinesByApproximateRow = (lines = [], tolerance = 0.012) => {
     ...group,
     lines: group.lines.sort((left, right) => Number(left.x) - Number(right.x)),
   }));
+};
+
+const isDispSectionFooterText = (value = '') => {
+  const normalized = normalizeForMatching(value);
+  return (
+    normalized.startsWith('yttre granspunkter') ||
+    normalized.startsWith('granspunkter som ej far passeras') ||
+    normalized.startsWith('granspunkter som ej får passeras')
+  );
+};
+
+const isDispChapterHeadingText = (value = '') =>
+  /^\d+\s+[A-Za-zÅÄÖåäö].+\.$/.test(normalizeText(value));
+
+const findDispSectionHeaderRow = (lines = []) => {
+  const rowGroups = groupLinesByApproximateRow(lines);
+
+  return rowGroups
+    .map((group) => {
+      const groupText = group.lines
+        .map((line) => String(line.normalized || normalizeForMatching(line.text || '')))
+        .join(' ');
+      let score = 0;
+
+      if (groupText.includes('delomrade')) {
+        score += 2;
+      }
+      if (groupText.includes('spar')) {
+        score += 2;
+      }
+      if (groupText.includes('granspunkter') || groupText.includes('punkter')) {
+        score += 2;
+      }
+
+      return {
+        group,
+        score,
+      };
+    })
+    .filter((candidate) => candidate.score >= 4)
+    .sort((left, right) => right.score - left.score || Number(right.group.y) - Number(left.group.y))[0] || null;
+};
+
+const getDispSectionOcrLines = (page = {}) => {
+  const normalizedLines = (Array.isArray(page?.lines) ? page.lines : []).map((line) => ({
+    ...line,
+    text: cleanBoundaryToken(line.text || ''),
+    normalized: normalizeForMatching(cleanBoundaryToken(line.text || '')),
+  }));
+  const headerRow = findDispSectionHeaderRow(normalizedLines);
+
+  if (!headerRow) {
+    return normalizedLines;
+  }
+
+  const headerY = Number(headerRow.group.y);
+  const footerLine = normalizedLines
+    .filter((line) => Number(line.y) < headerY - 0.015)
+    .find((line) => (
+      isDispSectionFooterText(line.text || line.normalized || '') ||
+      isDispChapterHeadingText(line.text || line.normalized || '')
+    ));
+  const footerY = Number(footerLine?.y ?? 0);
+
+  return normalizedLines.filter((line) => (
+    Number(line.y) < headerY - 0.01 &&
+    Number(line.y) > footerY + 0.005
+  ));
+};
+
+const getDispSectionTextLines = (page = {}) => {
+  const lines = getPageLines(page);
+  const headerIndex = lines.findIndex((line) => {
+    const normalized = normalizeForMatching(line);
+    return normalized.includes('delomrade') && normalized.includes('spar') && normalized.includes('punkter');
+  });
+
+  if (headerIndex === -1) {
+    return lines;
+  }
+
+  const footerIndex = lines.findIndex((line, index) => (
+    index > headerIndex && (
+      isDispSectionFooterText(line) ||
+      isDispChapterHeadingText(line)
+    )
+  ));
+
+  return lines.slice(headerIndex + 1, footerIndex === -1 ? undefined : footerIndex);
 };
 
 const findSectionHeaderColumns = (lines = []) => {
@@ -1339,11 +1510,7 @@ const extractColumnText = (lines = [], startX = 0, endX = 1) =>
 const extractDispSectionsFromColumns = (pages = []) =>
   mergeDispSections(
     getDispTablePages(pages).flatMap((page) => {
-      const normalizedLines = (Array.isArray(page?.lines) ? page.lines : []).map((line) => ({
-        ...line,
-        text: cleanBoundaryToken(line.text || ''),
-        normalized: normalizeForMatching(cleanBoundaryToken(line.text || '')),
-      }));
+      const normalizedLines = getDispSectionOcrLines(page);
       const columns = findSectionHeaderColumns(normalizedLines);
       if (!columns) {
         return [];
@@ -1377,11 +1544,38 @@ const extractDispSectionsFromColumns = (pages = []) =>
 const extractDispSectionsFromText = (pages = []) =>
   mergeDispSections(
     getDispTablePages(pages).flatMap((page) => {
-      const lines = getPageLines(page);
+      const lines = getDispSectionTextLines(page);
       const sections = [];
 
       for (let index = 0; index < lines.length; index += 1) {
         const line = lines[index];
+        const displayIndex = parseSectionDisplayIndex(line);
+        const isCompactRow = /^\d+\.\s*/.test(normalizeSectionRowText(line));
+
+        if (displayIndex && isCompactRow) {
+          const blockLines = [line];
+
+          for (let lookahead = index + 1; lookahead < lines.length; lookahead += 1) {
+            const nextLine = lines[lookahead];
+            if (
+              parseSectionDisplayIndex(nextLine) ||
+              isDispSectionFooterText(nextLine) ||
+              isDispChapterHeadingText(nextLine)
+            ) {
+              break;
+            }
+
+            blockLines.push(nextLine);
+          }
+
+          const compactBlockSection = parseCompactDispSectionBlock(blockLines);
+          if (compactBlockSection) {
+            sections.push(compactBlockSection);
+            index += blockLines.length - 1;
+            continue;
+          }
+        }
+
         const inlineSection = parseInlineDispSectionText(line);
         if (inlineSection) {
           sections.push(inlineSection);
@@ -1432,7 +1626,7 @@ const extractDispSectionsFromText = (pages = []) =>
 const extractDispSectionsFromRows = (pages = []) =>
   mergeDispSections(
     getDispTablePages(pages).flatMap((page) => {
-      const normalizedLines = (Array.isArray(page?.lines) ? page.lines : []).map((line) => ({
+      const normalizedLines = getDispSectionOcrLines(page).map((line) => ({
         ...line,
         text: normalizeSectionRowText(line.text || ''),
         normalized: normalizeForMatching(normalizeSectionRowText(line.text || '')),
@@ -1459,12 +1653,7 @@ const extractDispSectionsFromRows = (pages = []) =>
 
 const extractDispSections = (pages) => {
   const page = findDispTablePage(pages);
-  const lines = Array.isArray(page?.lines) ? page.lines : [];
-  const normalizedLines = lines.map((line) => ({
-    ...line,
-    text: cleanBoundaryToken(line.text || ''),
-    normalized: normalizeForMatching(cleanBoundaryToken(line.text || '')),
-  }));
+  const normalizedLines = getDispSectionOcrLines(page);
 
   const sectionRows = normalizedLines
     .filter((line) => parseSectionDisplayIndex(line.text || line.normalized || ''))
@@ -1526,12 +1715,7 @@ const extractDispSections = (pages) => {
 const extractAllDispSections = (pages = []) =>
   dedupeDispSections(
     getDispTablePages(pages).flatMap((page) => {
-      const lines = Array.isArray(page?.lines) ? page.lines : [];
-      const normalizedLines = lines.map((line) => ({
-        ...line,
-        text: cleanBoundaryToken(line.text || ''),
-        normalized: normalizeForMatching(cleanBoundaryToken(line.text || '')),
-      }));
+      const normalizedLines = getDispSectionOcrLines(page);
 
       const sectionRows = normalizedLines
         .filter((line) => parseSectionDisplayIndex(line.text || line.normalized || ''))
@@ -1591,8 +1775,12 @@ const extractAllDispSections = (pages = []) =>
   );
 
 const extractMergedDispSections = (textPages = [], ocrPages = []) => {
+  const textSections = mergeDispSections(extractDispSectionsFromText(textPages));
+  if (textSections.length) {
+    return textSections;
+  }
+
   const primarySections = mergeDispSections([
-    ...extractDispSectionsFromText(textPages),
     ...extractDispSectionsFromRows(ocrPages),
     ...extractDispSectionsFromColumns(ocrPages),
   ]);
