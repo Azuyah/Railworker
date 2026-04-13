@@ -24,6 +24,10 @@ const fjtklNameOptions = [
   'Ånge',
 ];
 
+const TELEFONKATALOG_URL = apiUrl('/api/telefonkatalog');
+const NJDB_URL = 'https://njdbwebb.trafikverket.se/map';
+const TRAFIKVERKET_BLANKETTER_URL = 'https://bransch.trafikverket.se/tjanster/publikationer-och-styrande-dokument/trafikverkets-styrande-dokument/blanketter-och-mallar-tillhorande-styrande-dokument/';
+
 const htsmPhoneOptions = [
   '010-149 01 64',
   '010-149 01 65',
@@ -257,7 +261,7 @@ const defaultDispSettings = () => ({
   rubrik: '',
   banNamn: '',
   veckaOchDagar: '',
-  versionsnummer: '1/MA10',
+  versionsnummer: '1/MA11',
   banobjektVnr: '',
   forplaneraCa: '1 tim innan start',
   rodmarkeradeGranspunkter: '',
@@ -430,7 +434,7 @@ const SkapaProjekt = () => {
   const [blankett31Entries, setBlankett31Entries] = useState([defaultBlankett31Entry()]);
   const [planJobs, setPlanJobs] = useState(() => normalizePlanJobs([], []));
   const [dispFiles, setDispFiles] = useState([]);
-  const [anteckningar, setAnteckningar] = useState([]);
+  const [, setAnteckningar] = useState([]);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [isParsingBlankett31, setIsParsingBlankett31] = useState(false);
   const [blankett31Status, setBlankett31Status] = useState('');
@@ -1273,55 +1277,8 @@ const SkapaProjekt = () => {
     }
   };
 
-  const buildHandelseLoggContent = () => {
-    const sortedAnteckningar = [...anteckningar].sort(
-      (a, b) => new Date(a.timestamp || 0).getTime() - new Date(b.timestamp || 0).getTime()
-    );
-
-    const subject = `Händelselogg - ${projektNamn || 'Projekt'}`;
-    const headerLines = [
-      `Projekt: ${projektNamn || 'Ej angivet'}`,
-      `Plats: ${plats || 'Ej angivet'}`,
-      `Skydd uttaget: ${uttagningstid || 'Ej angivet'}`,
-      `Skydd avslutat: ${avslutningstid || 'Ej angivet'}`,
-      '',
-      'Händelselogg:',
-    ];
-
-    const eventLines = sortedAnteckningar.length
-      ? sortedAnteckningar.flatMap((note, index) => {
-          const timestamp = note.timestamp
-            ? new Date(note.timestamp).toLocaleString('sv-SE')
-            : 'Tid saknas';
-          const author = note.author ? ` av ${note.author}` : '';
-          return [
-            `${index + 1}. ${note.text || ''}`,
-            `   ${timestamp}${author}`,
-            '',
-          ];
-        })
-      : ['Inga anteckningar registrerade ännu.'];
-
-    const body = [...headerLines, ...eventLines].join('\n');
-    return { subject, body };
-  };
-
-  const handleHandelseLogg = () => {
-    const { subject, body } = buildHandelseLoggContent();
-    const openInOutlook = window.confirm(
-      'Vill du öppna händelselogg i Outlook?\nVälj Avbryt för vanligt e-postutkast.'
-    );
-
-    if (openInOutlook) {
-      window.open(
-        `https://outlook.office.com/mail/deeplink/compose?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`,
-        '_blank',
-        'noopener,noreferrer'
-      );
-      return;
-    }
-
-    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  const openExternalResource = (url) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const handleCreateProject = async () => {
@@ -1429,7 +1386,7 @@ const SkapaProjekt = () => {
       const data = await response.json();
       console.log('✅ Projekt skapat med beteckningar:', data.beteckningar);
 
-      navigate(`/plan/${data.id || currentProjectId}`);
+      navigate('/htsmpanel');
     } catch (err) {
       console.error('Fel vid projekt-skapande:', err);
       alert('Något gick fel. Försök igen.');
@@ -1588,7 +1545,7 @@ const SkapaProjekt = () => {
   }, [currentProjectId]);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-slate-50 text-black">
       <div className="pointer-events-none fixed inset-0">
         <div className="absolute -top-32 right-0 h-80 w-80 rounded-full bg-amber-200/40 blur-3xl" />
         <div className="absolute bottom-0 left-0 h-80 w-80 rounded-full bg-sky-200/40 blur-3xl" />
@@ -1600,8 +1557,8 @@ const SkapaProjekt = () => {
         <div className="mb-8 flex flex-col gap-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Skapa projekt</p>
-              <h1 className="mt-2 text-3xl font-semibold text-slate-900">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-700">Skapa projekt</p>
+              <h1 className="mt-2 text-3xl font-semibold text-black">
                 {currentProjectId ? 'Redigera dispositionsarbetsplan' : 'Ny dispositionsarbetsplan'}
               </h1>
               <p className="mt-2 text-sm text-slate-600">
@@ -1618,10 +1575,15 @@ const SkapaProjekt = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[300px_1fr]">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[260px_1fr]">
           <aside className="space-y-6 lg:sticky lg:top-24">
-            <div className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm backdrop-blur">
+            <div className="rounded-3xl border border-slate-700 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-4 text-white shadow-xl shadow-slate-900/15">
               <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-300">Import & utgångspunkt</p>
+                <h2 className="mt-2 text-lg font-semibold">Bygg projektet smart</h2>
+                <p className="mt-1.5 text-xs leading-5 text-slate-300">
+                  Börja med Blankett 31, återanvänd en gammal Railworker-disp eller läs in en PDF när du behöver ett snabbt utgångsläge.
+                </p>
                 <input
                   ref={blankett31InputRef}
                   type="file"
@@ -1642,19 +1604,19 @@ const SkapaProjekt = () => {
                   type="button"
                   onClick={() => blankett31InputRef.current?.click()}
                   disabled={isParsingBlankett31}
-                  className="w-full rounded-xl border border-slate-900 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50"
+                  className="mt-4 w-full rounded-2xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-100"
                 >
                   {isParsingBlankett31 ? 'Tolkar Blankett 31...' : 'Blankett 31'}
                 </button>
                 {blankett31Status && (
-                  <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                  <div className="mt-3 rounded-xl bg-white/10 px-3 py-2 text-[11px] text-slate-100">
                     {blankett31Status}
                   </div>
                 )}
                 {blankett31Files.length > 0 && (
-                  <div className="mt-3 space-y-2 text-xs text-slate-600">
+                  <div className="mt-3 space-y-2 text-xs text-slate-100">
                     {blankett31Files.map((file) => (
-                      <div key={`${file.name}-${file.size}`} className="rounded-lg bg-slate-50 px-3 py-2">
+                      <div key={`${file.name}-${file.size}`} className="rounded-xl bg-white/10 px-3 py-2">
                         {file.name}
                       </div>
                     ))}
@@ -1664,18 +1626,18 @@ const SkapaProjekt = () => {
                   type="button"
                   onClick={loadProjectTemplateOptions}
                   disabled={isLoadingProjectTemplates}
-                  className="mt-3 w-full rounded-xl border border-slate-900 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50"
+                  className="mt-3 w-full rounded-2xl border border-emerald-300/50 bg-emerald-500/20 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500/30"
                 >
                   {isLoadingProjectTemplates ? 'Hämtar projekt...' : 'Utgå ifrån Railworker-disp'}
                 </button>
                 {showProjectTemplatePicker && (
-                  <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <div className="mt-3 rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur">
                     <input
                       type="text"
                       value={projectTemplateSearch}
                       onChange={(e) => setProjectTemplateSearch(e.target.value)}
                       placeholder="Sök projekt"
-                      className="mb-3 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
+                      className="mb-3 w-full rounded-xl border border-white/15 bg-white px-3 py-2 text-sm text-slate-700"
                     />
                     <div className="max-h-64 space-y-2 overflow-y-auto">
                       {projectTemplateOptions
@@ -1689,7 +1651,7 @@ const SkapaProjekt = () => {
                             key={project.id}
                             type="button"
                             onClick={() => handleApplyProjectTemplate(project.id)}
-                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-50"
+                            className="w-full rounded-xl border border-white/15 bg-white px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-50"
                           >
                             <div className="text-sm font-semibold text-slate-900">{project.name || 'Namnlöst projekt'}</div>
                             <div className="mt-1 text-xs text-slate-500">{project.plats || 'Plats saknas'}</div>
@@ -1699,7 +1661,7 @@ const SkapaProjekt = () => {
                     <button
                       type="button"
                       onClick={() => setShowProjectTemplatePicker(false)}
-                      className="mt-3 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-white"
+                      className="mt-3 w-full rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm text-white hover:bg-white/15"
                     >
                       Stäng
                     </button>
@@ -1709,50 +1671,78 @@ const SkapaProjekt = () => {
                   type="button"
                   onClick={() => dispInputRef.current?.click()}
                   disabled={isParsingDisp}
-                  className="mt-3 w-full rounded-xl border border-slate-900 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50"
+                  className="mt-3 w-full rounded-2xl border border-white/20 bg-transparent px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
                 >
                   {isParsingDisp ? 'Läser in PDF-disp...' : 'Läs in PDF-disp'}
                 </button>
                 {dispStatus && (
-                  <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                  <div className="mt-3 rounded-xl bg-white/10 px-3 py-2 text-[11px] text-slate-100">
                     {dispStatus}
                   </div>
                 )}
                 {dispFiles.length > 0 && (
-                  <div className="mt-3 space-y-2 text-xs text-slate-600">
+                  <div className="mt-3 space-y-2 text-xs text-slate-100">
                     {dispFiles.map((file) => (
-                      <div key={`${file.name}-${file.size}`} className="rounded-lg bg-slate-50 px-3 py-2">
+                      <div key={`${file.name}-${file.size}`} className="rounded-xl bg-white/10 px-3 py-2">
                         {file.name}
                       </div>
                     ))}
                   </div>
                 )}
-                <button
-                  type="button"
-                  onClick={handleHandelseLogg}
-                  className="mt-3 w-full rounded-xl border border-slate-900 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50"
-                >
-                  Händelselogg
-                </button>
+                <div className="mt-4 rounded-2xl border border-white/15 bg-white/5 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-300">Snabblänkar</p>
+                  <div className="mt-3 space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => openExternalResource(TELEFONKATALOG_URL)}
+                      className="w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/15"
+                    >
+                      Telefonkatalog
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openExternalResource(NJDB_URL)}
+                      className="w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/15"
+                    >
+                      NJDB
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openExternalResource(TRAFIKVERKET_BLANKETTER_URL)}
+                      className="w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/15"
+                    >
+                      Trafikverket
+                    </button>
+                  </div>
+                </div>
               </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Arbetsordning</p>
+              <ol className="mt-3 space-y-2 text-sm text-slate-600">
+                <li className="rounded-xl bg-slate-50 px-3 py-2"><span className="font-semibold text-slate-900">1.</span> Bygg från Blankett 31 eller tidigare disp.</li>
+                <li className="rounded-xl bg-slate-50 px-3 py-2"><span className="font-semibold text-slate-900">2.</span> Kontrollera FJTKL, jobb och telefonnummer.</li>
+                <li className="rounded-xl bg-slate-50 px-3 py-2"><span className="font-semibold text-slate-900">3.</span> Finjustera delområden innan du sparar projektet.</li>
+              </ol>
             </div>
 
           </aside>
 
           <main className="space-y-6">
-            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <section className="rounded-2xl border border-blue-400 bg-gradient-to-br from-blue-100 via-white to-blue-200/80 p-6 shadow-sm shadow-blue-100/60">
               <div className="mb-6 flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-slate-900">Projektöversikt</h2>
+                  <h2 className="text-lg font-semibold text-black">Projektöversikt</h2>
                   <p className="text-xs text-slate-500">Namngivning och tidsram</p>
                 </div>
-                <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-500">
+                <span className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
                   01
                 </span>
               </div>
               <div className="grid gap-4 lg:grid-cols-2">
                 <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700">Projektnamn</label>
+                  <label className="mb-1 block text-sm font-semibold text-slate-900">Projektnamn</label>
                   <input
                     type="text"
                     value={projektNamn}
@@ -1762,7 +1752,7 @@ const SkapaProjekt = () => {
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700">Driftplats/er</label>
+                  <label className="mb-1 block text-sm font-semibold text-slate-900">Driftplats/er</label>
                   <div className="mb-3 grid gap-3 xl:grid-cols-[1fr_1fr_auto]">
                     <input
                       type="text"
@@ -1841,14 +1831,14 @@ const SkapaProjekt = () => {
               </div>
               <div className="mt-5 border-t border-slate-200 pt-6">
                 <div className="mb-4">
-                  <h3 className="text-base font-semibold text-slate-900">Disp-inställningar</h3>
+                  <h3 className="text-base font-semibold text-black">Disp-inställningar</h3>
                   <p className="text-xs text-slate-500">
                     Rubrik och sidhuvud för den färdiga dispositionsarbetsplanen.
                   </p>
                 </div>
                 <div className="grid gap-4 lg:grid-cols-2 items-start auto-rows-auto">
                   <div>
-                    <label className="mb-1 block text-sm font-semibold text-slate-700">
+                    <label className="mb-1 block text-sm font-semibold text-slate-900">
                       Rubrik efter "Dispositionsarbetsplan"
                     </label>
                     <input
@@ -1860,7 +1850,7 @@ const SkapaProjekt = () => {
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-semibold text-slate-700">PDF-filnamn</label>
+                    <label className="mb-1 block text-sm font-semibold text-slate-900">PDF-filnamn</label>
                     <input
                       type="text"
                       value={dispSettings.publiktDispnamn}
@@ -1873,7 +1863,7 @@ const SkapaProjekt = () => {
                     </p>
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-semibold text-slate-700">Banans namn</label>
+                    <label className="mb-1 block text-sm font-semibold text-slate-900">Banans namn</label>
                     <input
                       type="text"
                       value={dispSettings.banNamn}
@@ -1883,7 +1873,7 @@ const SkapaProjekt = () => {
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-semibold text-slate-700">Vecka / dagar / nätter</label>
+                    <label className="mb-1 block text-sm font-semibold text-slate-900">Vecka / dagar / nätter</label>
                     <input
                       type="text"
                       value={dispSettings.veckaOchDagar}
@@ -1893,17 +1883,17 @@ const SkapaProjekt = () => {
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-semibold text-slate-700">Versionsnummer</label>
+                    <label className="mb-1 block text-sm font-semibold text-slate-900">Versionsnummer</label>
                     <input
                       type="text"
                       value={dispSettings.versionsnummer}
                       onChange={(e) => setDispSettings((current) => ({ ...current, versionsnummer: e.target.value }))}
-                      placeholder="Ex. 1/MA10"
+                      placeholder="Ex. 1/MA11"
                       className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-semibold text-slate-700">Banobjekt-Vnr</label>
+                    <label className="mb-1 block text-sm font-semibold text-slate-900">Banobjekt-Vnr</label>
                     <input
                       type="text"
                       value={dispSettings.banobjektVnr}
@@ -1913,7 +1903,7 @@ const SkapaProjekt = () => {
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-semibold text-slate-700">Förplanera ca</label>
+                    <label className="mb-1 block text-sm font-semibold text-slate-900">Förplanera ca</label>
                     <input
                       type="text"
                       value={dispSettings.forplaneraCa}
@@ -1923,7 +1913,7 @@ const SkapaProjekt = () => {
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="mb-1 block text-sm font-semibold text-slate-700">Rödmarkera gränspunkter</label>
+                    <label className="mb-1 block text-sm font-semibold text-slate-900">Rödmarkera gränspunkter</label>
                     <input
                       type="text"
                       value={dispSettings.rodmarkeradeGranspunkter}
@@ -1933,8 +1923,8 @@ const SkapaProjekt = () => {
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <p className="text-sm font-semibold text-slate-700">Kapitel 1 i dispen</p>
+                    <div className="rounded-2xl border border-indigo-400 bg-indigo-200/70 p-4 shadow-sm shadow-indigo-100/70">
+                      <p className="text-sm font-semibold text-slate-900">Kapitel 1 i dispen</p>
                       <p className="mt-1 text-xs text-slate-500">
                         Styr hur rutan med tider och delområden ska visas i den färdiga dispositionsarbetsplanen.
                       </p>
@@ -1981,25 +1971,25 @@ const SkapaProjekt = () => {
               <div className="mt-5 border-t border-slate-200 pt-6">
                 <div className="mb-4 flex items-center justify-between">
                   <div>
-                    <h3 className="text-base font-semibold text-slate-900">FJTKL</h3>
+                    <h3 className="text-base font-semibold text-black">FJTKL</h3>
                     <p className="text-xs text-slate-500">Ansvarig kontakt och nödnummer</p>
                   </div>
                   <div className="flex items-center gap-3">
                     <button
                       type="button"
                       onClick={addFjtklBlock}
-                      className="rounded-full border border-slate-900 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-slate-900 hover:bg-slate-50"
+                      className="rounded-full border border-slate-900 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-slate-900 hover:bg-white/80"
                     >
                       + Ny FJTKL
                     </button>
                     <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-500">
-                      02
+                      Kontakt
                     </span>
                   </div>
                 </div>
                 <div className="grid gap-4 md:grid-cols-4">
                   <div>
-                    <label className="mb-1 block text-sm font-semibold text-slate-700">FJTKL namn</label>
+                    <label className="mb-1 block text-sm font-semibold text-slate-900">FJTKL namn</label>
                     <input
                       type="text"
                       list="fjtkl-name-options"
@@ -2014,7 +2004,7 @@ const SkapaProjekt = () => {
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-semibold text-slate-700">FJTKL telefon</label>
+                    <label className="mb-1 block text-sm font-semibold text-slate-900">FJTKL telefon</label>
                     <input
                       type="text"
                       list="fjtkl-phone-options"
@@ -2036,7 +2026,7 @@ const SkapaProjekt = () => {
                     </button>
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-semibold text-slate-700">Nödnummer</label>
+                    <label className="mb-1 block text-sm font-semibold text-slate-900">Nödnummer</label>
                     <input
                       type="text"
                       list="emergency-phone-options"
@@ -2047,7 +2037,7 @@ const SkapaProjekt = () => {
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-semibold text-slate-700">Bandriftnummer</label>
+                    <label className="mb-1 block text-sm font-semibold text-slate-900">Bandriftnummer</label>
                     <input
                       type="text"
                       list="bandrift-phone-options"
@@ -2058,7 +2048,7 @@ const SkapaProjekt = () => {
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-semibold text-slate-700">Eldriftnummer</label>
+                    <label className="mb-1 block text-sm font-semibold text-slate-900">Eldriftnummer</label>
                     <input
                       type="text"
                       list="eldrift-phone-options"
@@ -2069,7 +2059,7 @@ const SkapaProjekt = () => {
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-semibold text-slate-700">HTSM telefon</label>
+                    <label className="mb-1 block text-sm font-semibold text-slate-900">HTSM telefon</label>
                     <select
                       value={htsmTelefon}
                       onChange={(e) => {
@@ -2090,7 +2080,7 @@ const SkapaProjekt = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-semibold text-slate-700">Reservnr</label>
+                    <label className="mb-1 block text-sm font-semibold text-slate-900">Reservnr</label>
                     <select
                       value={reservnr}
                       onChange={(e) => {
@@ -2115,7 +2105,7 @@ const SkapaProjekt = () => {
               {blankett31Entries.length > 0 && (
                 <div className="mt-6 border-t border-slate-200 pt-6">
                   <div className="mb-4">
-                    <h3 className="text-base font-semibold text-slate-900">Blankett 31 poster</h3>
+                    <h3 className="text-base font-semibold text-black">Blankett 31 poster</h3>
                     <p className="text-xs text-slate-500">
                       Alla dagar och tider som lästs in från Blankett 31. Telefonnummer pa varje post foljer med till
                       dispens telefonkapitel och planka nar posten anvands.
@@ -2123,7 +2113,7 @@ const SkapaProjekt = () => {
                   </div>
                   <div className="space-y-3">
                     {blankett31Entries.map((entry, index) => (
-                      <div key={`${entry.beteckning || 'post'}-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <div key={`${entry.beteckning || 'post'}-${index}`} className="rounded-2xl border border-amber-400 bg-amber-200/75 p-4 shadow-sm shadow-amber-100/80">
                         <div className="mb-3 flex items-center justify-between gap-3">
                           <div className="text-xs font-semibold uppercase tracking-widest text-slate-500">
                             Post {index + 1}
@@ -2176,7 +2166,7 @@ const SkapaProjekt = () => {
                             className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-900 focus:outline-none"
                           />
                         </div>
-                        <div className="mt-3 grid gap-3 md:grid-cols-4">
+                        <div className="mt-3 grid gap-3 md:grid-cols-3">
                           <div>
                             <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-500">
                               FJTKL telefon
@@ -2204,70 +2194,6 @@ const SkapaProjekt = () => {
                               Matcha från katalog
                             </button>
                           </div>
-                          <div>
-                            <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-500">
-                              Uttagningstid
-                            </label>
-                            <div className="flex gap-2">
-                              <input
-                                type="time"
-                                value={entry.uttagningstid || ''}
-                                onChange={(e) => updateBlankett31Entry(index, 'uttagningstid', e.target.value)}
-                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-900 focus:outline-none"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => updateBlankett31Entry(index, 'uttagningstid', getCurrentTime())}
-                                className="shrink-0 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-white"
-                              >
-                                Nu
-                              </button>
-                            </div>
-                          </div>
-                          <div>
-                            <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-500">
-                              Signatur
-                            </label>
-                            <input
-                              type="text"
-                              value={entry.signatur || ''}
-                              onChange={(e) => updateBlankett31Entry(index, 'signatur', e.target.value)}
-                              placeholder="Signatur"
-                              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-900 focus:outline-none"
-                            />
-                          </div>
-                          <div>
-                            <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-500">
-                              Avslutningstid
-                            </label>
-                            <div className="flex gap-2">
-                              <input
-                                type="time"
-                                value={entry.avslutningstid || ''}
-                                onChange={(e) => updateBlankett31Entry(index, 'avslutningstid', e.target.value)}
-                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-900 focus:outline-none"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => updateBlankett31Entry(index, 'avslutningstid', getCurrentTime())}
-                                className="shrink-0 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-white"
-                              >
-                                Nu
-                              </button>
-                            </div>
-                          </div>
-                          <div>
-                            <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-500">
-                              Avslutningssignatur
-                            </label>
-                            <input
-                              type="text"
-                              value={entry.avslutningssignatur || ''}
-                              onChange={(e) => updateBlankett31Entry(index, 'avslutningssignatur', e.target.value)}
-                              placeholder="Signatur"
-                              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-900 focus:outline-none"
-                            />
-                          </div>
                         </div>
                       </div>
                     ))}
@@ -2278,7 +2204,7 @@ const SkapaProjekt = () => {
               <div className="mt-6 border-t border-slate-200 pt-6">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-base font-semibold text-slate-900">Jobb / planka</h3>
+                    <h3 className="text-base font-semibold text-black">Jobb / planka</h3>
                     <p className="text-xs text-slate-500">
                       Varje jobb blir senare en egen planka och Excel-flik. Ett jobb kan ha en eller flera Blankett 31.
                     </p>
@@ -2293,7 +2219,7 @@ const SkapaProjekt = () => {
                 </div>
                 <div className="space-y-3">
                   {planJobs.map((job, index) => (
-                    <div key={job.id || index} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div key={job.id || index} className="rounded-2xl border border-emerald-400 bg-emerald-200/75 p-4 shadow-sm shadow-emerald-100/80">
                       {(() => {
                         const selectedOptions = getPlanJobSelectedOptions(job);
                         return (
@@ -2418,7 +2344,7 @@ const SkapaProjekt = () => {
 
               <div className="mt-6 border-t border-slate-200 pt-6">
                 <div className="mb-4">
-                  <h3 className="text-base font-semibold text-slate-900">Gränspunkter</h3>
+                  <h3 className="text-base font-semibold text-black">Gränspunkter</h3>
                   <p className="text-xs text-slate-500">Egen ruta för kompletterande gränspunkter</p>
                 </div>
                 <textarea
@@ -2432,11 +2358,11 @@ const SkapaProjekt = () => {
             </section>
 
             {fjtklBlocks.map((block, index) => (
-              <section key={index} className="grid gap-6 lg:grid-cols-2">
-                <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <section key={index}>
+                <div className="rounded-2xl border border-sky-400 bg-gradient-to-br from-sky-100 via-white to-sky-200/80 p-6 shadow-sm shadow-sky-100/60">
                   <div className="mb-6 flex items-center justify-between">
                     <div>
-                      <h2 className="text-lg font-semibold text-slate-900">FJTKL</h2>
+                      <h2 className="text-lg font-semibold text-black">FJTKL</h2>
                       <p className="text-xs text-slate-500">Ansvarig kontakt</p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -2447,14 +2373,14 @@ const SkapaProjekt = () => {
                       >
                         Ta bort
                       </button>
-                      <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-500">
-                        02
+                      <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">
+                        Extra FJTKL
                       </span>
                     </div>
                   </div>
-                  <div className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                     <div>
-                      <label className="mb-1 block text-sm font-semibold text-slate-700">FJTKL namn</label>
+                      <label className="mb-1 block text-sm font-semibold text-slate-900">FJTKL namn</label>
                       <input
                         type="text"
                         list="fjtkl-name-options"
@@ -2465,7 +2391,7 @@ const SkapaProjekt = () => {
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-sm font-semibold text-slate-700">FJTKL telefon</label>
+                      <label className="mb-1 block text-sm font-semibold text-slate-900">FJTKL telefon</label>
                       <input
                         type="text"
                         list="fjtkl-phone-options"
@@ -2476,7 +2402,7 @@ const SkapaProjekt = () => {
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-sm font-semibold text-slate-700">Nödnummer</label>
+                      <label className="mb-1 block text-sm font-semibold text-slate-900">Nödnummer</label>
                       <input
                         type="text"
                         list="emergency-phone-options"
@@ -2487,7 +2413,7 @@ const SkapaProjekt = () => {
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-sm font-semibold text-slate-700">Bandriftnummer</label>
+                      <label className="mb-1 block text-sm font-semibold text-slate-900">Bandriftnummer</label>
                       <input
                         type="text"
                         list="bandrift-phone-options"
@@ -2498,7 +2424,7 @@ const SkapaProjekt = () => {
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-sm font-semibold text-slate-700">Eldriftnummer</label>
+                      <label className="mb-1 block text-sm font-semibold text-slate-900">Eldriftnummer</label>
                       <input
                         type="text"
                         list="eldrift-phone-options"
@@ -2508,85 +2434,25 @@ const SkapaProjekt = () => {
                         className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
                       />
                     </div>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                  <div className="mb-6 flex items-center justify-between">
                     <div>
-                      <h2 className="text-lg font-semibold text-slate-900">Skydd & Signatur</h2>
-                      <p className="text-xs text-slate-500">Tider och signering</p>
-                    </div>
-                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-500">
-                      03
-                    </span>
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-500">
-                        Uttagningstid
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="time"
-                          value={block.uttagningstid}
-                          onChange={(e) => updateFjtklBlock(index, 'uttagningstid', e.target.value)}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-900 focus:outline-none"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => updateFjtklBlock(index, 'uttagningstid', getCurrentTime())}
-                          className="shrink-0 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                        >
-                          Nu
-                        </button>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-500">
-                        Avslutningstid
-                      </label>
+                      <label className="mb-1 block text-sm font-semibold text-slate-900">Avslutningstid</label>
                       <div className="flex gap-2">
                         <input
                           type="time"
                           value={block.avslutningstid}
                           onChange={(e) => updateFjtklBlock(index, 'avslutningstid', e.target.value)}
-                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-900 focus:outline-none"
+                          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm focus:border-slate-900 focus:outline-none"
                         />
                         <button
                           type="button"
                           onClick={() => updateFjtklBlock(index, 'avslutningstid', getCurrentTime())}
-                          className="shrink-0 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                          className="shrink-0 rounded-xl border border-slate-200 px-3 py-3 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                         >
                           Nu
                         </button>
                       </div>
                     </div>
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-500">
-                        Signatur
-                      </label>
-                      <input
-                        type="text"
-                        value={block.signatur}
-                        onChange={(e) => updateFjtklBlock(index, 'signatur', e.target.value)}
-                        placeholder="Signatur"
-                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm focus:border-slate-900 focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold uppercase tracking-widest text-slate-500">
-                        Avslutningssignatur
-                      </label>
-                      <input
-                        type="text"
-                        value={block.avslutningssignatur}
-                        onChange={(e) => updateFjtklBlock(index, 'avslutningssignatur', e.target.value)}
-                        placeholder="Signatur"
-                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm focus:border-slate-900 focus:outline-none"
-                      />
-                    </div>
-                    <label className="md:col-span-2 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+                    <label className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 md:col-span-2 xl:col-span-1 xl:self-end">
                       <input
                         type="checkbox"
                         checked={block.avstamt}
@@ -2600,10 +2466,10 @@ const SkapaProjekt = () => {
               </section>
             ))}
 
-            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <section className="rounded-2xl border border-rose-400 bg-gradient-to-br from-rose-100 via-white to-rose-200/70 p-6 shadow-sm shadow-rose-100/60">
               <div className="mb-6 flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-slate-900">Delområden</h2>
+                  <h2 className="text-lg font-semibold text-black">Delområden</h2>
                   <p className="text-xs text-slate-500">Skapa DP/Linje och ange signaltext</p>
                 </div>
                 <div className="flex flex-wrap items-center justify-end gap-2">
@@ -2629,7 +2495,7 @@ const SkapaProjekt = () => {
 
               <div className="space-y-3">
                 {sections.map((sec, i) => (
-                  <div key={i} className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4">
+                  <div key={i} className="rounded-2xl border border-rose-400 bg-rose-200/70 px-5 py-4 shadow-sm shadow-rose-100/70">
                     <div className="mb-3 flex items-center justify-between">
                       <div className="text-sm font-semibold text-slate-700">
                         {getSectionLabel(sec, i)}
@@ -2790,7 +2656,7 @@ const SkapaProjekt = () => {
               onClick={handleCreateProject}
               className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800"
             >
-              Skapa projekt
+              {currentProjectId ? 'Spara projekt' : 'Skapa projekt'}
             </button>
             {currentProjectId && !confirmDeleteOpen && (
               <button

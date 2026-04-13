@@ -3,7 +3,7 @@ const path = require('path');
 const PDFDocument = require('pdfkit');
 
 const LEGACY_LOGO_PATH = path.join(__dirname, '..', 'assets', 'vallakra-logo-cropped.png');
-const LEGACY_VERSION_NUMBER = '1/MA10';
+const LEGACY_VERSION_NUMBER = '1/MA11';
 const FONT_PATHS = {
   verdana: '/System/Library/Fonts/Supplemental/Verdana.ttf',
   verdanaBold: '/System/Library/Fonts/Supplemental/Verdana Bold.ttf',

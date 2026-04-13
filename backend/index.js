@@ -17,6 +17,7 @@ require('dotenv').config();
 
 const app = express();
 const prisma = new PrismaClient();
+const TELEFONKATALOG_PATH = '/Users/matsmalleandersson/Desktop/Disp Arbetsmall/Telefonkatalog 2024-10-03.pdf';
 
 const corsOptions = {
   origin: true,
@@ -29,6 +30,19 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 app.use(express.json({ limit: '25mb' }));
+
+app.get('/api/telefonkatalog', (req, res) => {
+  if (!fs.existsSync(TELEFONKATALOG_PATH)) {
+    return res.status(404).json({ error: 'Telefonkatalogen kunde inte hittas.' });
+  }
+
+  return res.sendFile(TELEFONKATALOG_PATH, {
+    headers: {
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'inline; filename="Telefonkatalog-2024-10-03.pdf"',
+    },
+  });
+});
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {

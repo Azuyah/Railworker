@@ -277,12 +277,12 @@ const Dashboard = () => {
     <Box
       key={project.id}
       border="1px solid"
-      borderColor={isProjectSent(project) ? 'amber.200' : 'gray.200'}
+      borderColor={isProjectSent(project) ? 'orange.300' : 'blue.300'}
       borderRadius="xl"
       p={4}
-      bg={isProjectSent(project) ? 'amber.50' : 'white'}
+      bg={isProjectSent(project) ? 'orange.100' : 'blue.50'}
       transition="all 0.2s ease"
-      _hover={{ borderColor: isProjectSent(project) ? 'amber.300' : 'gray.400', boxShadow: '0 8px 20px rgba(15,23,42,0.08)' }}
+      _hover={{ borderColor: isProjectSent(project) ? 'orange.400' : 'blue.400', boxShadow: '0 10px 24px rgba(15,23,42,0.10)' }}
     >
       <HStack justify="space-between" align="center" wrap="wrap" spacing={3}>
         <Box>
@@ -334,10 +334,12 @@ const Dashboard = () => {
           )}
         </Box>
         <HStack spacing={2}>
-          <Button
+            <Button
             variant="outline"
             borderRadius="full"
             size="sm"
+            borderColor={isProjectSent(project) ? 'orange.400' : 'blue.400'}
+            bg={isProjectSent(project) ? 'whiteAlpha.800' : 'white'}
             onClick={() => handleExportDisp(project)}
             isLoading={exportingProjectId === project.id}
             loadingText="Skapar disp"
@@ -348,16 +350,18 @@ const Dashboard = () => {
             variant="outline"
             borderRadius="full"
             size="sm"
+            borderColor={isProjectSent(project) ? 'orange.400' : 'blue.400'}
+            bg={isProjectSent(project) ? 'whiteAlpha.800' : 'white'}
             onClick={() => handleOpenProject(project, 'project')}
           >
             Visa projekt
           </Button>
           <Button
-            bg="gray.900"
+            bg={isProjectSent(project) ? 'orange.500' : 'blue.700'}
             color="white"
             borderRadius="full"
             size="sm"
-            _hover={{ bg: 'gray.800' }}
+            _hover={{ bg: isProjectSent(project) ? 'orange.600' : 'blue.800' }}
             onClick={() => handleOpenProject(project, 'plan')}
           >
             Visa planka
@@ -373,7 +377,7 @@ const Dashboard = () => {
         position="fixed"
         inset={0}
         zIndex={0}
-        bgGradient="radial(900px 500px at 90% 10%, rgba(251,191,36,0.18), transparent 60%), radial(700px 450px at 10% 90%, rgba(96,165,250,0.18), transparent 60%)"
+        bgGradient="radial(900px 500px at 90% 10%, rgba(251,191,36,0.24), transparent 60%), radial(700px 450px at 10% 90%, rgba(96,165,250,0.24), transparent 60%)"
       />
       <Header />
       <Box position="relative" zIndex={1} pt="110px" px={6} pb={16} maxW="1200px" mx="auto">
@@ -381,31 +385,31 @@ const Dashboard = () => {
           <Box
             borderRadius="2xl"
             border="1px solid"
-            borderColor="gray.200"
-            bg="whiteAlpha.900"
-            boxShadow="0 20px 60px rgba(15,23,42,0.08)"
+            borderColor="blue.200"
+            bgGradient="linear(to-br, blue.50, white, blue.100)"
+            boxShadow="0 20px 60px rgba(59,130,246,0.10)"
             p={[6, 8]}
           >
             <Stack spacing={6}>
               <HStack justify="space-between" align="start" wrap="wrap" spacing={4}>
                 <Box>
-                  <Text fontSize="xs" textTransform="uppercase" letterSpacing="0.3em" color="gray.500" fontWeight="600">
+                  <Text fontSize="xs" textTransform="uppercase" letterSpacing="0.3em" color="blue.700" fontWeight="700">
                     HTSM Panel
                   </Text>
-                  <Text fontSize="2xl" fontWeight="700" color="gray.900" mt={2}>
+                  <Text fontSize="2xl" fontWeight="700" color="black" mt={2}>
                     Hantera dina dispositionsplaner
                   </Text>
-                  <Text fontSize="sm" color="gray.600" mt={2} maxW="520px">
+                  <Text fontSize="sm" color="gray.700" mt={2} maxW="520px">
                     Skapa nya projekt, följ status och öppna planerna direkt. Allt samlat i en snabb vy.
                   </Text>
                 </Box>
                 <Button
-                  bg="gray.900"
+                  bg="blue.700"
                   color="white"
                   size="lg"
                   borderRadius="full"
                   px={8}
-                  _hover={{ bg: 'gray.800' }}
+                  _hover={{ bg: 'blue.800' }}
                   onClick={() => navigate('/skapa-projekt')}
                 >
                   + Skapa nytt projekt
@@ -417,17 +421,17 @@ const Dashboard = () => {
           <Box
             borderRadius="2xl"
             border="1px solid"
-            borderColor="gray.200"
-            bg="whiteAlpha.900"
-            boxShadow="0 16px 40px rgba(15,23,42,0.06)"
+            borderColor="emerald.200"
+            bgGradient="linear(to-br, emerald.50, white, emerald.100)"
+            boxShadow="0 16px 40px rgba(16,185,129,0.08)"
             p={[6, 8]}
           >
             <HStack justify="space-between" mb={6} wrap="wrap" spacing={3}>
               <Box>
-                <Text fontSize="sm" fontWeight="700" color="gray.900">
+                <Text fontSize="sm" fontWeight="700" color="black">
                   Projekt
                 </Text>
-                <Text fontSize="xs" color="gray.500">
+                <Text fontSize="xs" color="gray.700">
                   Öppna ett projekt för att gå till dispositionsplanen.
                 </Text>
               </Box>
@@ -438,13 +442,14 @@ const Dashboard = () => {
                 maxW="280px"
                 borderRadius="full"
                 bg="white"
+                borderColor="emerald.300"
               />
             </HStack>
 
             {loading ? (
               <VStack spacing={3} align="center" py={6}>
-                <Spinner color="gray.700" size="lg" />
-                <Text color="gray.600">Hämtar projekt...</Text>
+                <Spinner color="blue.700" size="lg" />
+                <Text color="gray.700">Hämtar projekt...</Text>
               </VStack>
             ) : loadError ? (
               <Box
@@ -508,7 +513,7 @@ const Dashboard = () => {
                     onClick={() => setShowSentProjects((prev) => !prev)}
                   >
                     <HStack spacing={3}>
-                      <Text fontWeight="700" color="gray.800">
+                      <Text fontWeight="700" color="black">
                         Skickade projekt
                       </Text>
                       <Badge colorScheme="orange" borderRadius="full" px={3} py={1} textTransform="none">

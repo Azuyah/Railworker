@@ -39,7 +39,7 @@ const Header = () => {
       bg="rgba(30, 58, 138, 0.85)"
       color="white"
       px={{ base: 3, md: 6 }}
-      py={{ base: 2, md: 4 }}
+      py={{ base: 2, md: 2.5 }}
       position="fixed"
       top={0}
       left={0}
@@ -49,19 +49,24 @@ const Header = () => {
       backdropFilter="blur(10px)"
       borderBottom="1px solid rgba(255,255,255,0.1)"
     >
-      <Flex maxW="7xl" mx="auto" direction="column" gap={{ base: 2, md: 3 }}>
-        <Flex align="center" justify="space-between" gap={3}>
-          <Flex align="center" gap={{ base: 2, md: 3 }} minW={0}>
+      <Flex maxW="7xl" mx="auto" direction="column" gap={{ base: 2, md: 0 }}>
+        <Flex
+          align="center"
+          justify="space-between"
+          gap={3}
+          display={{ base: 'none', md: 'flex' }}
+        >
+          <Flex align="center" gap={3} minW={0}>
             <Image
               src="/railworkerlogo.svg"
               alt="Railworker logo"
-              boxSize={{ base: '30px', md: '40px' }}
+              boxSize="34px"
               filter="drop-shadow(0 0 6px rgba(255,255,255,0.3))"
               flexShrink={0}
             />
             <Heading
-              size={{ base: 'md', md: 'lg' }}
-              letterSpacing={{ base: 'wide', md: 'widest' }}
+              size="lg"
+              letterSpacing="widest"
               textTransform="uppercase"
               fontWeight="extrabold"
               color="whiteAlpha.900"
@@ -71,17 +76,101 @@ const Header = () => {
             </Heading>
           </Flex>
 
+          <SimpleGrid columns={3} spacing={3} flex="1" maxW="2xl" mx={8}>
+            <MotionButton
+              bg="whiteAlpha.180"
+              _hover={{ bg: 'whiteAlpha.260', boxShadow: '0 0 6px rgba(255,255,255,0.4)' }}
+              color="white"
+              px={4}
+              py={2}
+              minH="40px"
+              borderRadius="lg"
+              fontWeight="medium"
+              fontSize="md"
+              transition="all 0.2s"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => navigate('/dashboard')}
+            >
+              Start
+            </MotionButton>
+
+            <MotionButton
+              bg="whiteAlpha.180"
+              _hover={{ bg: 'whiteAlpha.260', boxShadow: '0 0 6px rgba(255,255,255,0.4)' }}
+              color="white"
+              px={4}
+              py={2}
+              minH="40px"
+              borderRadius="lg"
+              fontWeight="medium"
+              fontSize="md"
+              transition="all 0.2s"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => navigate('/profil')}
+            >
+              Min profil
+            </MotionButton>
+
+            <MotionButton
+              bg="red.500"
+              _hover={{ bg: 'red.600' }}
+              color="white"
+              px={4}
+              py={2}
+              minH="40px"
+              borderRadius="lg"
+              fontWeight="medium"
+              fontSize="md"
+              boxShadow="0 0 8px rgba(255, 0, 0, 0.35)"
+              transition="all 0.2s"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={logout}
+            >
+              Logga ut
+            </MotionButton>
+          </SimpleGrid>
+
           <Text
             fontSize="sm"
             color="whiteAlpha.800"
             whiteSpace="nowrap"
-            display={{ base: 'none', lg: 'block' }}
+            flexShrink={0}
           >
             Inloggad som: <strong>{displayName}</strong>
           </Text>
         </Flex>
 
-        <SimpleGrid columns={3} spacing={{ base: 2, md: 3 }}>
+        <Flex
+          align="center"
+          justify="space-between"
+          gap={3}
+          display={{ base: 'flex', md: 'none' }}
+        >
+          <Flex align="center" gap={2} minW={0}>
+            <Image
+              src="/railworkerlogo.svg"
+              alt="Railworker logo"
+              boxSize="30px"
+              filter="drop-shadow(0 0 6px rgba(255,255,255,0.3))"
+              flexShrink={0}
+            />
+            <Heading
+              size="md"
+              letterSpacing="wide"
+              textTransform="uppercase"
+              fontWeight="extrabold"
+              color="whiteAlpha.900"
+              whiteSpace="nowrap"
+            >
+              Railworker
+            </Heading>
+          </Flex>
+        </Flex>
+
+        <SimpleGrid columns={3} spacing={{ base: 2, md: 3 }} display={{ base: 'grid', md: 'none' }}>
           <MotionButton
             bg="whiteAlpha.200"
             _hover={{ bg: 'whiteAlpha.300', boxShadow: '0 0 6px rgba(255,255,255,0.4)' }}
@@ -139,7 +228,7 @@ const Header = () => {
           fontSize="xs"
           color="whiteAlpha.800"
           textAlign="center"
-          display={{ base: 'block', lg: 'none' }}
+          display={{ base: 'block', md: 'none' }}
           noOfLines={1}
         >
           Inloggad som: <strong>{displayName}</strong>
