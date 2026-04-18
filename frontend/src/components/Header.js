@@ -33,7 +33,12 @@ const Header = () => {
     user?.firstName && user?.lastName
       ? `${user.firstName} ${user.lastName}`
       : 'Okänd användare';
+  const role = user?.role || '';
   const isAuthenticated = Boolean(user?.role);
+  const handleStart = () => navigate(isAuthenticated ? '/dashboard' : '/panel');
+  const showStartButton = role === 'HTSM';
+  const desktopNavColumns = showStartButton ? (isAuthenticated ? 3 : 1) : (isAuthenticated ? 2 : 1);
+  const mobileNavColumns = desktopNavColumns;
 
   return (
     <Box
@@ -58,14 +63,23 @@ const Header = () => {
           display={{ base: 'none', md: 'flex' }}
         >
           <Flex align="center" gap={3} minW={0}>
-            <Image
-              src="/vallakra-railworker-logo.png"
-              alt="Vallåkra Railworker logo"
-              h="38px"
-              w="auto"
-              objectFit="contain"
+            <Box
+              bg="white"
+              px={2}
+              py={1}
+              borderRadius="lg"
+              boxShadow="0 8px 18px rgba(15,23,42,0.18)"
+              border="1px solid rgba(255,255,255,0.75)"
               flexShrink={0}
-            />
+            >
+              <Image
+                src="/vallakra-railworker-logo.png"
+                alt="Vallåkra Railworker logo"
+                h="38px"
+                w="auto"
+                objectFit="contain"
+              />
+            </Box>
             <Heading
               size="md"
               letterSpacing="wide"
@@ -77,24 +91,26 @@ const Header = () => {
             </Heading>
           </Flex>
 
-          <SimpleGrid columns={isAuthenticated ? 3 : 1} spacing={3} flex="1" maxW="2xl" mx={8}>
-            <MotionButton
-              bg="whiteAlpha.180"
-              _hover={{ bg: 'whiteAlpha.260', boxShadow: '0 0 6px rgba(255,255,255,0.4)' }}
-              color="white"
-              px={4}
-              py={2}
-              minH="40px"
-              borderRadius="lg"
-              fontWeight="medium"
-              fontSize="md"
-              transition="all 0.2s"
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => navigate('/dashboard')}
-            >
-              Start
-            </MotionButton>
+          <SimpleGrid columns={desktopNavColumns} spacing={3} flex="1" maxW="2xl" mx={8}>
+            {showStartButton ? (
+              <MotionButton
+                bg="whiteAlpha.180"
+                _hover={{ bg: 'whiteAlpha.260', boxShadow: '0 0 6px rgba(255,255,255,0.4)' }}
+                color="white"
+                px={4}
+                py={2}
+                minH="40px"
+                borderRadius="lg"
+                fontWeight="medium"
+                fontSize="md"
+                transition="all 0.2s"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={handleStart}
+              >
+                Start
+              </MotionButton>
+            ) : null}
 
             {isAuthenticated ? (
               <>
@@ -175,14 +191,23 @@ const Header = () => {
           display={{ base: 'flex', md: 'none' }}
         >
           <Flex align="center" gap={2} minW={0}>
-            <Image
-              src="/vallakra-railworker-logo.png"
-              alt="Vallåkra Railworker logo"
-              h="32px"
-              w="auto"
-              objectFit="contain"
+            <Box
+              bg="white"
+              px={2}
+              py={1}
+              borderRadius="md"
+              boxShadow="0 6px 16px rgba(15,23,42,0.16)"
+              border="1px solid rgba(255,255,255,0.72)"
               flexShrink={0}
-            />
+            >
+              <Image
+                src="/vallakra-railworker-logo.png"
+                alt="Vallåkra Railworker logo"
+                h="32px"
+                w="auto"
+                objectFit="contain"
+              />
+            </Box>
             <Heading
               size="sm"
               letterSpacing="normal"
@@ -195,23 +220,25 @@ const Header = () => {
           </Flex>
         </Flex>
 
-        <SimpleGrid columns={isAuthenticated ? 3 : 1} spacing={{ base: 2, md: 3 }} display={{ base: 'grid', md: 'none' }}>
-          <MotionButton
-            bg="whiteAlpha.200"
-            _hover={{ bg: 'whiteAlpha.300', boxShadow: '0 0 6px rgba(255,255,255,0.4)' }}
-            color="white"
-            px={{ base: 2, md: 5 }}
-            py={{ base: 2, md: 2 }}
-            borderRadius="lg"
-            fontWeight="medium"
-            fontSize={{ base: 'sm', md: 'md' }}
-            transition="all 0.2s"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate('/dashboard')}
-          >
-            Start
-          </MotionButton>
+        <SimpleGrid columns={mobileNavColumns} spacing={{ base: 2, md: 3 }} display={{ base: 'grid', md: 'none' }}>
+          {showStartButton ? (
+            <MotionButton
+              bg="whiteAlpha.200"
+              _hover={{ bg: 'whiteAlpha.300', boxShadow: '0 0 6px rgba(255,255,255,0.4)' }}
+              color="white"
+              px={{ base: 2, md: 5 }}
+              py={{ base: 2, md: 2 }}
+              borderRadius="lg"
+              fontWeight="medium"
+              fontSize={{ base: 'sm', md: 'md' }}
+              transition="all 0.2s"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleStart}
+            >
+              Start
+            </MotionButton>
+          ) : null}
 
           {isAuthenticated ? (
             <>
