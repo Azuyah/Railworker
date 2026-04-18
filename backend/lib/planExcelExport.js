@@ -367,7 +367,7 @@ const getSectionDisplayIndex = (section, index) => {
 };
 
 const buildSamradText = (row, project) => {
-  const sections = mergeSectionDetails(project);
+  const sections = Array.isArray(project) ? project : mergeSectionDetails(project);
   const selections = Array.isArray(row.selections) ? row.selections : [];
   const active = selections
     .map((selected, index) => (selected ? getSectionDisplayIndex(sections[index], index) : null))
@@ -565,6 +565,116 @@ const mergeSectionDetails = (project = {}) => {
   }));
 };
 
+const sectionHasVisibleContent = (section = {}) =>
+  Boolean(
+    String(section?.signal || section?.name || '').trim() ||
+    String(section?.granspunkter || '').trim() ||
+    String(section?.granspunktStart || '').trim() ||
+    String(section?.granspunktSlut || '').trim() ||
+    String(section?.spar || '').trim()
+  );
+
+const normalizeGroupSections = (sections = []) =>
+  (Array.isArray(sections) ? sections : [])
+    .filter(sectionHasVisibleContent)
+    .map((section, index) => ({
+      ...section,
+      sortOrder: Number.isFinite(Number(section?.sortOrder)) ? Number(section.sortOrder) : index,
+    }))
+    .sort((left, right) => Number(left.sortOrder || 0) - Number(right.sortOrder || 0));
+
+const buildDispSectionContexts = (project = {}, entries = []) => {
+  const allEntryKeys = entries.map((entry) => entry.key).filter(Boolean);
+  const primarySections = normalizeGroupSections(mergeSectionDetails(project));
+  const configuredPrimaryKeys = Array.isArray(project.formState?.primaryDispSectionEntryKeys)
+    ? project.formState.primaryDispSectionEntryKeys.filter(Boolean)
+    : [];
+  const primarySelectedEntryKeys = configuredPrimaryKeys.length ? configuredPrimaryKeys : allEntryKeys;
+
+  const groups = [
+    {
+      id: 'primary-disp-group',
+      title: 'Delområdesruta 1',
+      selectedEntryKeys: primarySelectedEntryKeys,
+      sections: primarySections,
+    },
+  ];
+
+  const extraGroups = Array.isArray(project.formState?.dispSectionGroups)
+    ? project.formState.dispSectionGroups
+    : [];
+
+  extraGroups.forEach((group, index) => {
+    const sections = normalizeGroupSections(group?.sections);
+    if (!sections.length) {
+      return;
+    }
+
+    groups.push({
+      id: String(group?.id || `disp-group-${index + 2}`),
+      title: String(group?.title || `Delområdesruta ${index + 2}`).trim(),
+      selectedEntryKeys: Array.isArray(group?.selectedEntryKeys) ? group.selectedEntryKeys.filter(Boolean) : [],
+      sections,
+    });
+  });
+
+  return groups;
+};
+
+const resolveJobEntries = (job = {}, entryMap = new Map(), entries = [], storedJobsCount = 0) => {
+  const selectedEntries = Array.isArray(job.selectedEntryKeys)
+    ? job.selectedEntryKeys.map((key) => entryMap.get(key)).filter(Boolean)
+    : [];
+
+  if (selectedEntries.length) {
+    return sortEntries(selectedEntries);
+  }
+
+  const fallbackKeys = [
+    String(job.primaryPlanEntryKey || '').trim(),
+    String(job.primaryDispEntryKey || '').trim(),
+  ].filter(Boolean);
+  const fallbackEntries = fallbackKeys.map((key) => entryMap.get(key)).filter(Boolean);
+
+  if (fallbackEntries.length) {
+    return sortEntries(fallbackEntries);
+  }
+
+  if (storedJobsCount === 1) {
+    return sortEntries(entries);
+  }
+
+  return [];
+};
+
+const resolveJobSectionContext = (job = {}, contexts = []) => {
+  const candidateKeys = [
+    String(job.primaryDispEntryKey || '').trim(),
+    ...(Array.isArray(job.selectedEntryKeys) ? job.selectedEntryKeys.map((key) => String(key || '').trim()) : []),
+    String(job.primaryPlanEntryKey || '').trim(),
+  ].filter(Boolean);
+
+  for (const key of candidateKeys) {
+    const matchingContext = contexts.find((context) =>
+      Array.isArray(context?.selectedEntryKeys) && context.selectedEntryKeys.includes(key)
+    );
+    if (matchingContext) {
+      return matchingContext;
+    }
+  }
+
+  const overlapContext = contexts.find((context) => {
+    const keys = Array.isArray(context?.selectedEntryKeys) ? context.selectedEntryKeys : [];
+    return candidateKeys.some((key) => keys.includes(key));
+  });
+
+  if (overlapContext) {
+    return overlapContext;
+  }
+
+  return contexts[0] || { sections: [] };
+};
+
 const getProjectEntries = (project) => {
   const entries = Array.isArray(project.formState?.blankett31Entries)
     ? project.formState.blankett31Entries.filter((entry) => entry?.beteckning)
@@ -620,6 +730,7 @@ const formatProjectPeriodFromEntries = (entries = [], project = {}) => {
 const buildWorksheetPlans = (project) => {
   const entries = getProjectEntries(project);
   const entryMap = new Map(entries.map((entry, index) => [buildPlanJobEntryKey(entry, index), entry]));
+  const dispSectionContexts = buildDispSectionContexts(project, entries);
   const storedJobs = Array.isArray(project.formState?.planJobs)
     ? project.formState.planJobs.filter((job) => job && (job.name || Array.isArray(job.selectedEntryKeys)))
     : [];
@@ -628,22 +739,20 @@ const buildWorksheetPlans = (project) => {
     return entries.map((entry, index) => ({
       sheetName: sheetNameFromDate(entry.startDate),
       entries: [{ ...entry, key: buildPlanJobEntryKey(entry, index) }],
+      sections: dispSectionContexts[0]?.sections || mergeSectionDetails(project),
     }));
   }
 
   return storedJobs.map((job, index) => {
-    const selectedEntries = Array.isArray(job.selectedEntryKeys)
-      ? job.selectedEntryKeys.map((key) => entryMap.get(key)).filter(Boolean)
-      : [];
-    const resolvedEntries = selectedEntries.length
-      ? selectedEntries
-      : storedJobs.length === 1
-        ? entries
-        : [];
+    const resolvedEntries = resolveJobEntries(job, entryMap, entries, storedJobs.length);
+    const sectionContext = resolveJobSectionContext(job, dispSectionContexts);
 
     return {
       sheetName: String(job.name || '').trim() || sheetNameFromDate(resolvedEntries[0]?.startDate) || `Plan ${index + 1}`,
       entries: sortEntries(resolvedEntries),
+      sections: Array.isArray(sectionContext?.sections) && sectionContext.sections.length
+        ? sectionContext.sections
+        : (dispSectionContexts[0]?.sections || mergeSectionDetails(project)),
     };
   });
 };
@@ -738,8 +847,17 @@ const reapplyTemplateMerges = (worksheet) => {
 
 const fillWorksheet = (worksheet, project, entriesForSheet, rows) => {
   const projectFormState = project.formState || {};
-  const sections = mergeSectionDetails(project);
-  const sheetEntries = Array.isArray(entriesForSheet) ? entriesForSheet : [];
+  const sections = Array.isArray(entriesForSheet?.sections)
+    ? entriesForSheet.sections
+    : Array.isArray(entriesForSheet)
+      ? mergeSectionDetails(project)
+      : mergeSectionDetails(project);
+  const normalizedEntries = Array.isArray(entriesForSheet?.entries)
+    ? entriesForSheet.entries
+    : Array.isArray(entriesForSheet)
+      ? entriesForSheet
+      : [];
+  const sheetEntries = normalizedEntries;
   const primaryEntry = sheetEntries[0] || {};
   const layout = compactTopEntryRows(worksheet, sheetEntries.length);
   try {
@@ -814,7 +932,7 @@ const fillWorksheet = (worksheet, project, entriesForSheet, rows) => {
       `F${excelRow}`,
       Array.isArray(row.anordning) ? row.anordning.map(formatAnordningLabel).join(', ') : ''
     );
-    setCell(worksheet, `G${excelRow}`, buildSamradText(row, project));
+    setCell(worksheet, `G${excelRow}`, buildSamradText(row, sections));
 
     sectionColumns.forEach((column, columnIndex) => {
       const mappedSection = sectionColumnMap.get(columnIndex);
@@ -869,7 +987,7 @@ const createPlanWorkbookBuffer = async (project) => {
     const worksheet = cloneWorksheetFromTemplate(workbook, templateSheetModel, sheetName);
     worksheet.name = sheetName;
     const matchingRows = rows.filter((row) => rowMatchesEntries(row, plan.entries));
-    fillWorksheet(worksheet, project, plan.entries, matchingRows);
+    fillWorksheet(worksheet, project, plan, matchingRows);
     createdPlanSheets.push(worksheet);
   });
 

@@ -114,9 +114,7 @@ const buildEntries = (project = {}) => {
     return leftKey.localeCompare(rightKey, 'sv');
   });
 
-  const dispEntries = getDispSelectedEntries(normalizedEntries, project);
-
-  return dispEntries.filter((entry, index, collection) => {
+  return normalizedEntries.filter((entry, index, collection) => {
     const key = `${entry.beteckning}|${entry.startDate}|${entry.startTime}|${entry.endDate}|${entry.endTime}`;
     return collection.findIndex((candidate) =>
       `${candidate.beteckning}|${candidate.startDate}|${candidate.startTime}|${candidate.endDate}|${candidate.endTime}` === key
@@ -178,6 +176,84 @@ const buildSections = (project = {}) => {
       };
     })
     .sort((left, right) => left.sortOrder - right.sortOrder);
+};
+
+const sectionHasVisibleContent = (section = {}) =>
+  [
+    section?.signal,
+    section?.name,
+    section?.granspunktStart,
+    section?.granspunktSlut,
+    section?.granspunkter,
+    section?.spar,
+    section?.customLabel,
+  ].some((value) => cleanText(value));
+
+const buildChapterOneGroups = (project = {}, entries = []) => {
+  const entryMap = new Map(entries.map((entry, index) => [buildPlanJobEntryKey(entry, index), entry]));
+  const allSections = buildSections(project).filter(sectionHasVisibleContent);
+  const explicitPrimaryKeys = Array.isArray(project.formState?.primaryDispSectionEntryKeys)
+    ? project.formState.primaryDispSectionEntryKeys.filter((key) => entryMap.has(key))
+    : [];
+  const fallbackEntries = getDispSelectedEntries(entries, project);
+  const primaryEntries = explicitPrimaryKeys.length
+    ? explicitPrimaryKeys.map((key) => entryMap.get(key)).filter(Boolean)
+    : fallbackEntries;
+
+  const groups = [{
+    id: 'primary',
+    title: 'Delområdesruta 1',
+    entries: primaryEntries,
+    sections: allSections,
+  }];
+
+  const storedGroups = Array.isArray(project.formState?.dispSectionGroups)
+    ? project.formState.dispSectionGroups
+    : [];
+
+  storedGroups.forEach((group, index) => {
+    const groupEntries = Array.isArray(group?.selectedEntryKeys)
+      ? group.selectedEntryKeys.map((key) => entryMap.get(key)).filter(Boolean)
+      : [];
+    const groupSections = Array.isArray(group?.sections)
+      ? group.sections
+        .map((section, sectionIndex) => ({
+          displayIndex: Number.isFinite(Number(section?.displayIndex))
+            ? Number(section.displayIndex)
+            : sectionIndex + 1,
+          sortOrder: Number.isFinite(Number(section?.sortOrder))
+            ? Number(section.sortOrder)
+            : sectionIndex,
+          label: `Delområde ${cleanText(section?.customLabel || section?.displayIndex || sectionIndex + 1)}`,
+          name: normalizeSectionAreaName(section?.name || section?.signal || ''),
+          signal: normalizeSectionAreaName(section?.signal || section?.name || ''),
+          granspunkter: sanitizeSectionText(
+            section?.granspunkter ||
+            [section?.granspunktStart, section?.granspunktSlut].filter(Boolean).join(' - ')
+          ),
+          spar: normalizeTrackValue(section?.spar),
+          granspunktStart: sanitizeSectionText(section?.granspunktStart),
+          granspunktSlut: sanitizeSectionText(section?.granspunktSlut),
+          highlightStart: Boolean(section?.highlightStart),
+          highlightEnd: Boolean(section?.highlightEnd),
+          highlightStartPart: cleanText(section?.highlightStartPart),
+          highlightEndPart: cleanText(section?.highlightEndPart),
+          customLabel: cleanText(section?.customLabel),
+        }))
+        .filter(sectionHasVisibleContent)
+      : [];
+
+    if (groupEntries.length || groupSections.length) {
+      groups.push({
+        id: cleanText(group?.id || `group-${index + 2}`),
+        title: cleanText(group?.title || `Delområdesruta ${index + 2}`) || `Delområdesruta ${index + 2}`,
+        entries: groupEntries,
+        sections: groupSections,
+      });
+    }
+  });
+
+  return groups.filter((group) => (group.entries || []).length || (group.sections || []).length);
 };
 
 const getIsoWeek = (dateValue = '') => {
@@ -294,13 +370,31 @@ const extractPhoneContext = (value = '') => {
   return cleanText(cleaned.replace(primaryPhone, ''));
 };
 
+const KNOWN_FJTKL_PHONE_LABELS = {
+  '010-127 12 32': 'Hässleholm',
+  '010-127 12 62': 'Helsingborg',
+  '010-127 12 80': 'Pebberholmen',
+  '010-127 42 35': 'Borlänge',
+};
+
 const formatFjtklName = (value = '') => {
   const rawName = cleanText(value);
   if (!rawName) return 'Fjtkl';
   return /^TKL\b/i.test(rawName) ? rawName.replace(/^TKL\b/i, 'Fjtkl') : `Fjtkl ${rawName}`;
 };
 
-const buildFjtklContactLines = (project = {}) => {
+const formatManualFjtklContactLine = (value = '') => {
+  const cleaned = cleanText(value);
+  if (!cleaned) return '';
+  const phone = extractPrimaryPhone(cleaned);
+  if (!phone) {
+    return formatFjtklName(cleaned);
+  }
+  const namePart = cleanText(cleaned.replace(phone, ''));
+  return `${formatFjtklName(namePart)}  ${phone}`;
+};
+
+const buildFjtklContactLines = (project = {}, chapterOneGroups = []) => {
   const contacts = [];
   const seenPhones = new Set();
   const addContact = (nameValue, phoneValue) => {
@@ -314,9 +408,27 @@ const buildFjtklContactLines = (project = {}) => {
 
   addContact(project.namn || '', project.telefonnummer || '');
 
-  const entries = buildEntries(project);
+  const manualLines = Array.isArray(project.formState?.customDispPhoneLines)
+    ? project.formState.customDispPhoneLines
+        .map((line) => formatManualFjtklContactLine(line?.value || ''))
+        .filter(Boolean)
+    : [];
+  manualLines.forEach((line) => {
+    contacts.push(line);
+  });
+
+  const groupedEntries = Array.isArray(chapterOneGroups)
+    ? chapterOneGroups.flatMap((group) => group?.entries || [])
+    : [];
+  const entries = groupedEntries.length ? groupedEntries : buildEntries(project);
   entries.forEach((entry) => {
-    const inferredName = cleanText(entry?.namn || extractPhoneContext(entry?.telefonnummer || ''));
+    const inferredName = cleanText(
+      entry?.namn ||
+      extractPhoneContext(entry?.telefonnummer || '') ||
+      KNOWN_FJTKL_PHONE_LABELS[extractPrimaryPhone(entry?.telefonnummer || '')] ||
+      project.namn ||
+      ''
+    );
     addContact(inferredName || project.namn || '', entry?.telefonnummer || '');
   });
 
@@ -737,7 +849,7 @@ const paginateLegacyChapterOneRows = (doc, rows, availableHeight, entryColumns, 
   return pages;
 };
 
-const estimateChapterOnePageCount = (doc, entries, sections, dispSettings = {}) => {
+const estimateChapterOnePageCountForGroup = (doc, entries, sections, dispSettings = {}, showGroupTitle = false) => {
   const entryColumns = getLegacyEntryColumns(Boolean(dispSettings?.visaBeteckningarKapitel1));
   const sectionColumns = {
     label: { x: 10, width: 74 },
@@ -752,8 +864,8 @@ const estimateChapterOnePageCount = (doc, entries, sections, dispSettings = {}) 
     spar: section.spar || '—',
   }));
   const firstPageRows = [...entryRows, { kind: 'spacer' }, ...sectionRows];
-  const firstPageAvailableHeight = 560 - 31 - 12;
-  const continuedPageAvailableHeight = 620 - 31 - 12;
+  const firstPageAvailableHeight = (showGroupTitle ? 546 : 560) - 31 - 12;
+  const continuedPageAvailableHeight = (showGroupTitle ? 606 : 620) - 31 - 12;
   const firstPageChunks = paginateLegacyChapterOneRows(doc, firstPageRows, firstPageAvailableHeight, entryColumns, sectionColumns);
   if (firstPageChunks.length <= 1) return 1;
 
@@ -772,6 +884,17 @@ const estimateChapterOnePageCount = (doc, entries, sections, dispSettings = {}) 
     sectionColumns
   );
   return 1 + continuedChunks.length;
+};
+
+const estimateChapterOnePageCount = (doc, chapterOneGroups = [], dispSettings = {}) => {
+  const groups = Array.isArray(chapterOneGroups) && chapterOneGroups.length
+    ? chapterOneGroups
+    : [{ entries: [], sections: [] }];
+  const showGroupTitle = groups.length > 1;
+
+  return groups.reduce((sum, group) => (
+    sum + estimateChapterOnePageCountForGroup(doc, group.entries || [], group.sections || [], dispSettings, showGroupTitle)
+  ), 0);
 };
 
 const getStaticChapterLayoutMetrics = (doc) => {
@@ -829,8 +952,8 @@ const estimateStaticTextPageCount = (doc, project, dispSettings) => {
   return pageCount;
 };
 
-const estimateLegacyTotalPages = (doc, entries, sections, dispSettings = {}, project = {}) =>
-  2 + estimateChapterOnePageCount(doc, entries, sections, dispSettings) + estimateStaticTextPageCount(doc, project, dispSettings);
+const estimateLegacyTotalPages = (doc, chapterOneGroups, dispSettings = {}, project = {}) =>
+  2 + estimateChapterOnePageCount(doc, chapterOneGroups, dispSettings) + estimateStaticTextPageCount(doc, project, dispSettings);
 
 const addCoverPage = (doc, project, dispSettings) => {
   const left = doc.page.margins.left;
@@ -1327,7 +1450,16 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
   return bottom + (showNote ? 26 : 0);
 };
 
-const addEntriesAndSectionsPage = (doc, project, entries, sections, dispSettings, totalPages) => {
+const addEntriesAndSectionsPageForGroup = (
+  doc,
+  project,
+  entries,
+  sections,
+  dispSettings,
+  totalPages,
+  groupTitle = '',
+  showGroupTitle = false
+) => {
   doc.addPage();
   const firstPageNumber = doc.bufferedPageRange().count;
   drawLegacyHeader(doc, dispSettings, totalPages, firstPageNumber);
@@ -1338,7 +1470,11 @@ const addEntriesAndSectionsPage = (doc, project, entries, sections, dispSettings
   const noteText = 'Yttre gränspunkter som ej får passeras utan medgivande från TKL är rödmarkerade.';
   const weekLine = cleanText(dispSettings.veckaOchDagar || '');
   const explicitHighlightValue = cleanText(dispSettings.rodmarkeradeGranspunkter || '');
-  const highlightSource = explicitHighlightValue || project.granspunkter || '';
+  const entryBoundaries = entries
+    .map((entry) => sanitizeSectionText(entry?.granspunkt || ''))
+    .filter(Boolean)
+    .join(' - ');
+  const highlightSource = explicitHighlightValue || entryBoundaries || project.granspunkter || '';
   const highlightTokens = getBoundaryHighlightTokens(highlightSource).map(normalizeBoundaryToken);
 
   const entryColumns = getLegacyEntryColumns(Boolean(dispSettings.visaBeteckningarKapitel1));
@@ -1386,9 +1522,18 @@ const addEntriesAndSectionsPage = (doc, project, entries, sections, dispSettings
   );
 
   drawLegacyChapterHeading(doc, '1 Gränspunkter och delområde.');
+  if (showGroupTitle && cleanText(groupTitle)) {
+    doc.font(PDF_FONTS.headerBold)
+      .fontSize(11)
+      .fillColor('#374151')
+      .text(cleanText(groupTitle), tableLeft, 226, {
+        width: tableWidth,
+        align: 'left',
+      });
+  }
   drawLegacyChapterOneTable(doc, firstPageRows, {
     left: tableLeft,
-    top: 248,
+    top: showGroupTitle ? 262 : 248,
     width: tableWidth,
     rowHeight: 21,
     headerHeight,
@@ -1405,9 +1550,18 @@ const addEntriesAndSectionsPage = (doc, project, entries, sections, dispSettings
     const pageNumber = doc.bufferedPageRange().count;
     drawLegacyHeader(doc, dispSettings, totalPages, pageNumber);
     drawLegacyChapterHeading(doc, '1 Gränspunkter och delområde.');
+    if (showGroupTitle && cleanText(groupTitle)) {
+      doc.font(PDF_FONTS.headerBold)
+        .fontSize(11)
+        .fillColor('#374151')
+        .text(`${cleanText(groupTitle)} (forts.)`, tableLeft, 166, {
+          width: tableWidth,
+          align: 'left',
+        });
+    }
     drawLegacyChapterOneTable(doc, chunk, {
       left: tableLeft,
-      top: 188,
+      top: showGroupTitle ? 202 : 188,
       width: tableWidth,
       rowHeight: 21,
       headerHeight,
@@ -1423,13 +1577,40 @@ const addEntriesAndSectionsPage = (doc, project, entries, sections, dispSettings
   return { 1: firstPageNumber };
 };
 
-const getLegacyChapters = (project = {}, dispSettings = {}) => {
+const addEntriesAndSectionsPage = (doc, project, chapterOneGroups, dispSettings, totalPages) => {
+  const groups = Array.isArray(chapterOneGroups) && chapterOneGroups.length
+    ? chapterOneGroups
+    : [{ title: 'Delområdesruta 1', entries: [], sections: [] }];
+  const showGroupTitle = groups.length > 1;
+  let firstChapterPageNumber = null;
+
+  groups.forEach((group) => {
+    const pageMap = addEntriesAndSectionsPageForGroup(
+      doc,
+      project,
+      group.entries || [],
+      group.sections || [],
+      dispSettings,
+      totalPages,
+      group.title || '',
+      showGroupTitle
+    );
+
+    if (firstChapterPageNumber === null) {
+      firstChapterPageNumber = pageMap[1];
+    }
+  });
+
+  return { 1: firstChapterPageNumber || 3 };
+};
+
+const getLegacyChapters = (project = {}, dispSettings = {}, chapterOneGroups = []) => {
   const htsmTelefon = cleanText(project.formState?.htsmTelefon || '');
   const reservnr = cleanText(project.formState?.reservnr || '');
   const bandriftnummer = cleanText(project.formState?.bandriftnummer || '');
   const eldriftnummer = cleanText(project.formState?.eldriftnummer || '');
   const larmTlc = extractPrimaryPhone(project.formState?.nodnummer || '') || 'Ej angivet';
-  const fjtklContactLines = buildFjtklContactLines(project);
+  const fjtklContactLines = buildFjtklContactLines(project, chapterOneGroups);
 
   return [
     {
@@ -1540,8 +1721,8 @@ const getLegacyChapters = (project = {}, dispSettings = {}) => {
   ];
 };
 
-const addStaticTextPages = (doc, project, dispSettings, totalPages) => {
-  const chapters = getLegacyChapters(project, dispSettings);
+const addStaticTextPages = (doc, project, dispSettings, totalPages, chapterOneGroups = []) => {
+  const chapters = getLegacyChapters(project, dispSettings, chapterOneGroups);
   const chapterPages = {};
   const metrics = getStaticChapterLayoutMetrics(doc);
   let pageNumber = null;
@@ -1581,11 +1762,11 @@ const addStaticTextPages = (doc, project, dispSettings, totalPages) => {
 
 const createDispPdfBuffer = async (project = {}) => {
   const entries = buildEntries(project);
-  const sections = buildSections(project);
   const dispSettings = buildDispSettings(project, entries);
+  const chapterOneGroups = buildChapterOneGroups(project, entries);
   const title = ['Dispositionsarbetsplan', getPublicDispName(project, dispSettings) || dispSettings.rubrik || project.name].filter(Boolean).join(' ');
   const { doc, toBuffer } = createDocument(title);
-  const totalPages = estimateLegacyTotalPages(doc, entries, sections, dispSettings, project);
+  const totalPages = estimateLegacyTotalPages(doc, chapterOneGroups, dispSettings, project);
 
   drawLegacyHeader(doc, dispSettings, totalPages, 1);
   addCoverPage(doc, project, dispSettings);
@@ -1593,8 +1774,8 @@ const createDispPdfBuffer = async (project = {}) => {
   doc.switchToPage(contentsPageIndex);
   drawLegacyHeader(doc, dispSettings, totalPages, 2);
   const chapterPages = {
-    ...addEntriesAndSectionsPage(doc, project, entries, sections, dispSettings, totalPages),
-    ...addStaticTextPages(doc, project, dispSettings, totalPages),
+    ...addEntriesAndSectionsPage(doc, project, chapterOneGroups, dispSettings, totalPages),
+    ...addStaticTextPages(doc, project, dispSettings, totalPages, chapterOneGroups),
   };
   addContentsPage(doc, chapterPages, contentsPageIndex);
 

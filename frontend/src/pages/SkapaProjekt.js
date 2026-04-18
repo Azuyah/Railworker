@@ -1,5 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
+  useDisclosure,
+} from '@chakra-ui/react';
 import Header from '../components/Header';
 import { getSectionLabel } from '../utils/sectionLabels';
 import { apiUrl } from '../lib/api';
@@ -80,6 +90,10 @@ const defaultFjtklBlock = () => ({
   signatur: '',
   avslutningssignatur: '',
   avstamt: false,
+});
+
+const defaultCustomDispPhoneLine = () => ({
+  value: '',
 });
 
 const normalizeBlankett31Entry = (entry = {}) => ({
@@ -256,6 +270,135 @@ const normalizeSectionSortOrder = (items = []) =>
     sortOrder: index,
   }));
 
+const generateDispSectionGroupId = () =>
+  `disp-group-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+const defaultDispSectionGroup = (index = 0) => ({
+  id: generateDispSectionGroupId(),
+  title: `Delområdesruta ${index + 2}`,
+  selectedEntryKeys: [],
+  sections: createDefaultSections(),
+});
+
+const normalizeDispSectionGroups = (groups = [], entries = []) => {
+  const availableKeys = new Set(entries.map((entry, index) => buildPlanJobEntryKey(entry, index)));
+
+  return (Array.isArray(groups) ? groups : []).map((group, index) => ({
+    id: String(group?.id || generateDispSectionGroupId()),
+    title: String(group?.title || `Delområdesruta ${index + 2}`).trim(),
+    selectedEntryKeys: Array.isArray(group?.selectedEntryKeys)
+      ? group.selectedEntryKeys.filter((key) => availableKeys.has(key))
+      : [],
+    sections: normalizeSectionSortOrder(
+      Array.isArray(group?.sections) && group.sections.length
+        ? group.sections.map((section) => ({
+            ...defaultSection(),
+            ...section,
+          }))
+        : createDefaultSections()
+    ),
+  }));
+};
+
+const getHighestSectionDisplayIndex = (sectionList = []) =>
+  sectionList.reduce((maxValue, section) => {
+    const parsed = Number(section?.displayIndex);
+    return Number.isFinite(parsed) ? Math.max(maxValue, parsed) : maxValue;
+  }, 0);
+
+const addSectionToList = (sectionList = []) =>
+  normalizeSectionSortOrder([
+    ...sectionList,
+    {
+      ...defaultSection(),
+      displayIndex: getHighestSectionDisplayIndex(sectionList) + 1,
+    },
+  ]);
+
+const insertSectionAfterInList = (sectionList = [], index = 0) =>
+  normalizeSectionSortOrder([
+    ...sectionList.slice(0, index + 1),
+    {
+      ...defaultSection(),
+      displayIndex: getHighestSectionDisplayIndex(sectionList) + 1,
+    },
+    ...sectionList.slice(index + 1),
+  ]);
+
+const moveSectionInList = (sectionList = [], index = 0, direction = 0) => {
+  const targetIndex = index + direction;
+  if (targetIndex < 0 || targetIndex >= sectionList.length) {
+    return sectionList;
+  }
+
+  const updated = [...sectionList];
+  [updated[index], updated[targetIndex]] = [updated[targetIndex], updated[index]];
+  return normalizeSectionSortOrder(updated);
+};
+
+const updateSectionTypeInList = (sectionList = [], index = 0, type = 'Delområde') =>
+  normalizeSectionSortOrder(sectionList.map((section, sectionIndex) => (
+    sectionIndex === index ? { ...section, type } : section
+  )));
+
+const updateSectionNamingModeInList = (sectionList = [], index = 0, namingMode = 'LETTERS') =>
+  normalizeSectionSortOrder(sectionList.map((section, sectionIndex) => {
+    if (sectionIndex !== index) {
+      return section;
+    }
+
+    const updated = { ...section, namingMode };
+    if (namingMode === 'NUMBERS' && !updated.displayIndex) {
+      updated.displayIndex = index + 1;
+    }
+    return updated;
+  }));
+
+const updateSectionFieldInList = (sectionList = [], index = 0, field = '', value = '') =>
+  normalizeSectionSortOrder(sectionList.map((section, sectionIndex) => {
+    if (sectionIndex !== index) {
+      return section;
+    }
+
+    const updatedSection = {
+      ...section,
+      [field]: value,
+    };
+
+    if (field === 'signal' || field === 'name') {
+      updatedSection.name = value;
+      updatedSection.signal = value;
+    }
+
+    if (field === 'displayIndex') {
+      updatedSection.displayIndex = value === '' ? null : Number(value);
+    }
+
+    if (field === 'granspunktStart' || field === 'granspunktSlut') {
+      updatedSection.granspunkter = [updatedSection.granspunktStart, updatedSection.granspunktSlut]
+        .filter(Boolean)
+        .join(' - ');
+    }
+
+    return updatedSection;
+  }));
+
+const removeSectionFromList = (sectionList = [], index = 0) =>
+  normalizeSectionSortOrder(sectionList.filter((_, sectionIndex) => sectionIndex !== index));
+
+const buildDefaultDispEntrySelection = (entries = [], jobs = []) => {
+  const normalizedJobs = normalizePlanJobs(jobs, entries);
+  const explicitDispKeys = normalizedJobs
+    .map((job) => String(job.primaryDispEntryKey || '').trim())
+    .filter(Boolean);
+
+  if (explicitDispKeys.length) {
+    return [...new Set(explicitDispKeys)];
+  }
+
+  return entries.map((entry, index) => buildPlanJobEntryKey(entry, index));
+};
+
 const defaultDispSettings = () => ({
   publiktDispnamn: 'Disp',
   rubrik: '',
@@ -344,6 +487,174 @@ const normalizeSectionAreaName = (value = '') =>
   sanitizeSectionText(value)
     .replace(/\s+Driftplats(?:er)?$/i, '');
 
+const hasValue = (value) => String(value || '').trim().length > 0;
+
+const sectionHasContent = (section = {}) =>
+  [
+    section?.signal,
+    section?.name,
+    section?.granspunktStart,
+    section?.granspunktSlut,
+    section?.spar,
+    section?.customLabel,
+  ].some(hasValue);
+
+const buildProjectPreflightSummary = ({
+  projektNamn,
+  namn,
+  telefonnummer,
+  dispSettings,
+  sections,
+  blankett31Entries,
+  planJobs,
+  primaryDispEntryKeys,
+  dispSectionGroups,
+}) => {
+  const errors = [];
+  const warnings = [];
+
+  const activeSections = sections.filter(sectionHasContent);
+  const activeEntries = blankett31Entries.filter((entry) =>
+    Object.values(entry || {}).some((value) => hasValue(value))
+  );
+  const normalizedJobs = normalizePlanJobs(planJobs, activeEntries);
+
+  if (!hasValue(projektNamn)) {
+    errors.push('Projektnamn saknas.');
+  }
+
+  if (!hasValue(namn)) {
+    errors.push('FJTKL-namn saknas.');
+  }
+
+  if (!hasValue(telefonnummer)) {
+    errors.push('FJTKL-telefon saknas.');
+  }
+
+  if (!activeSections.length) {
+    errors.push('Minst ett delområde måste vara ifyllt.');
+  }
+
+  activeSections.forEach((section, index) => {
+    const label = getSectionLabel(section, index);
+    const signal = String(section.signal || section.name || '').trim();
+    const startBoundary = String(section.granspunktStart || '').trim();
+    const endBoundary = String(section.granspunktSlut || '').trim();
+    const track = String(section.spar || '').trim();
+
+    if (!signal) {
+      errors.push(`${label}: delområde/sträcka saknas.`);
+    }
+
+    if (!startBoundary || !endBoundary) {
+      errors.push(`${label}: både gränspunkt start och gränspunkt slut måste vara ifyllda.`);
+    }
+
+    if (!track) {
+      errors.push(`${label}: spår saknas.`);
+    }
+
+    if (hasValue(section.highlightStartPart) && !section.highlightStart) {
+      warnings.push(`${label}: röd del för startpunkt är ifylld men rutan "Rödmarkera startpunkt" är inte ikryssad.`);
+    }
+
+    if (hasValue(section.highlightEndPart) && !section.highlightEnd) {
+      warnings.push(`${label}: röd del för slutpunkt är ifylld men rutan "Rödmarkera slutpunkt" är inte ikryssad.`);
+    }
+  });
+
+  if (!activeEntries.length) {
+    warnings.push('Ingen Blankett 31-post är ifylld ännu. Projektet kan sparas, men tider och beteckningar behöver då läggas in senare.');
+  }
+
+  activeEntries.forEach((entry, index) => {
+    const label = entry.beteckning || `Blankett 31-post ${index + 1}`;
+    const requiredFields = [
+      ['beteckning', 'beteckning'],
+      ['startDate', 'startdatum'],
+      ['startTime', 'starttid'],
+      ['endDate', 'slutdatum'],
+      ['endTime', 'sluttid'],
+    ];
+
+    requiredFields.forEach(([field, description]) => {
+      if (!hasValue(entry[field])) {
+        errors.push(`${label}: ${description} saknas.`);
+      }
+    });
+
+    if (!hasValue(entry.telefonnummer) && !hasValue(telefonnummer)) {
+      warnings.push(`${label}: telefonnummer saknas både på posten och som projektets FJTKL-telefon.`);
+    }
+  });
+
+  if (activeEntries.length && !normalizedJobs.some((job) => (job.selectedEntryKeys || []).length > 0)) {
+    errors.push('Minst ett jobb i plankan måste vara kopplat till en Blankett 31-post.');
+  }
+
+  const multipleDispBoxes = Array.isArray(dispSectionGroups) && dispSectionGroups.length > 0;
+  if (multipleDispBoxes) {
+    if (!primaryDispEntryKeys.length) {
+      errors.push('Delområdesruta 1 i DISP saknar valda Blankett 31-poster.');
+    }
+
+    dispSectionGroups.forEach((group, index) => {
+      const label = group?.title || `Delområdesruta ${index + 2}`;
+      const groupSections = Array.isArray(group?.sections) ? group.sections.filter(sectionHasContent) : [];
+      const groupEntryKeys = Array.isArray(group?.selectedEntryKeys) ? group.selectedEntryKeys : [];
+
+      if (!groupEntryKeys.length) {
+        errors.push(`${label}: välj minst en Blankett 31-post som ska höra till rutan.`);
+      }
+
+      if (!groupSections.length) {
+        errors.push(`${label}: minst ett delområde måste vara ifyllt.`);
+      }
+    });
+  }
+
+  normalizedJobs.forEach((job) => {
+    if (!hasValue(job.name)) {
+      warnings.push('Ett jobb i plankan saknar namn.');
+    }
+
+    if ((job.selectedEntryKeys || []).length && !hasValue(job.primaryDispEntryKey)) {
+      errors.push(`Jobbet "${job.name || 'Utan namn'}" saknar vald "Visas i DISP".`);
+    }
+
+    if ((job.selectedEntryKeys || []).length && !hasValue(job.primaryPlanEntryKey)) {
+      errors.push(`Jobbet "${job.name || 'Utan namn'}" saknar vald "Visas i planka".`);
+    }
+  });
+
+  if (!hasValue(dispSettings.versionsnummer)) {
+    errors.push('Versionsnummer saknas i disp-inställningar.');
+  }
+
+  if (!hasValue(dispSettings.banobjektVnr)) {
+    warnings.push('Banobjekt-Vnr saknas.');
+  }
+
+  if (!hasValue(dispSettings.rubrik)) {
+    warnings.push('Rubrik efter "Dispositionsarbetsplan" är tom.');
+  }
+
+  if (!hasValue(dispSettings.publiktDispnamn)) {
+    warnings.push('PDF-filnamn är tomt.');
+  }
+
+  const duplicateDisplayIndexes = activeSections
+    .map((section) => Number(section.displayIndex))
+    .filter((value) => Number.isFinite(value))
+    .filter((value, index, values) => values.indexOf(value) !== index);
+
+  if (duplicateDisplayIndexes.length) {
+    warnings.push(`Det finns dubbla delområdesnummer: ${[...new Set(duplicateDisplayIndexes)].join(', ')}.`);
+  }
+
+  return { errors, warnings };
+};
+
 const getDefaultHighlightedBoundaries = (entries = []) =>
   String(
     entries.find((entry) => String(entry?.granspunkt || '').trim())?.granspunkt || ''
@@ -430,9 +741,12 @@ const SkapaProjekt = () => {
   const [blankett31Meta, setBlankett31Meta] = useState({});
   const [dispSettings, setDispSettings] = useState(() => defaultDispSettings());
   const [fjtklBlocks, setFjtklBlocks] = useState([]);
+  const [customDispPhoneLines, setCustomDispPhoneLines] = useState([]);
   const [blankett31Files, setBlankett31Files] = useState([]);
   const [blankett31Entries, setBlankett31Entries] = useState([defaultBlankett31Entry()]);
   const [planJobs, setPlanJobs] = useState(() => normalizePlanJobs([], []));
+  const [primaryDispEntryKeys, setPrimaryDispEntryKeys] = useState([]);
+  const [dispSectionGroups, setDispSectionGroups] = useState([]);
   const [dispFiles, setDispFiles] = useState([]);
   const [, setAnteckningar] = useState([]);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -444,10 +758,17 @@ const SkapaProjekt = () => {
   const [driftplatsStatus, setDriftplatsStatus] = useState('');
   const [isResolvingSections, setIsResolvingSections] = useState(false);
   const [sectionStatus, setSectionStatus] = useState('');
+  const [preflightSummary, setPreflightSummary] = useState({ errors: [], warnings: [] });
+  const [isSavingProject, setIsSavingProject] = useState(false);
   const [showProjectTemplatePicker, setShowProjectTemplatePicker] = useState(false);
   const [projectTemplateSearch, setProjectTemplateSearch] = useState('');
   const [projectTemplateOptions, setProjectTemplateOptions] = useState([]);
   const [isLoadingProjectTemplates, setIsLoadingProjectTemplates] = useState(false);
+  const {
+    isOpen: isPreflightOpen,
+    onOpen: openPreflight,
+    onClose: closePreflight,
+  } = useDisclosure();
   const blankett31InputRef = useRef(null);
   const dispInputRef = useRef(null);
   const availableHtsmPhoneOptions = htsmPhoneOptions.filter((option) => option === htsmTelefon || option !== reservnr);
@@ -464,6 +785,9 @@ const SkapaProjekt = () => {
       label: getEntryDisplayLabel(entry),
     }))
     .filter((option) => option.label);
+  const blankett31EntryKeyMap = new Map(
+    blankett31Entries.map((entry, index) => [buildPlanJobEntryKey(entry, index), entry])
+  );
 
   const syncSummaryDatesFromEntries = (entries) => {
     if (!entries.length) {
@@ -600,9 +924,12 @@ const SkapaProjekt = () => {
     setBlankett31Meta({});
     setDispSettings(resetDispSettings);
     setFjtklBlocks([]);
+    setCustomDispPhoneLines([]);
     setBlankett31Files([]);
     setBlankett31Entries([defaultBlankett31Entry()]);
     setPlanJobs(normalizePlanJobs([], []));
+    setPrimaryDispEntryKeys([]);
+    setDispSectionGroups([]);
     setDispFiles([]);
     setAnteckningar([]);
 
@@ -748,6 +1075,22 @@ const SkapaProjekt = () => {
     ]);
   };
 
+  const addCustomDispPhoneLine = () => {
+    setCustomDispPhoneLines((current) => [...current, defaultCustomDispPhoneLine()]);
+  };
+
+  const updateCustomDispPhoneLine = (index, value) => {
+    setCustomDispPhoneLines((current) => current.map((line, lineIndex) => (
+      lineIndex === index
+        ? { ...line, value }
+        : line
+    )));
+  };
+
+  const removeCustomDispPhoneLine = (index) => {
+    setCustomDispPhoneLines((current) => current.filter((_, lineIndex) => lineIndex !== index));
+  };
+
   const updateFjtklBlock = (index, field, value) => {
     const updated = [...fjtklBlocks];
     const currentBlock = {
@@ -788,98 +1131,132 @@ const SkapaProjekt = () => {
     setFjtklBlocks(fjtklBlocks.filter((_, i) => i !== index));
   };
 
-  const addSection = () => {
-    const highestDisplayIndex = sections.reduce((maxValue, section) => {
-      const parsed = Number(section?.displayIndex);
-      return Number.isFinite(parsed) ? Math.max(maxValue, parsed) : maxValue;
-    }, 0);
+  const togglePrimaryDispEntryKey = (entryKey) => {
+    setPrimaryDispEntryKeys((current) => (
+      current.includes(entryKey)
+        ? current.filter((key) => key !== entryKey)
+        : [...current, entryKey]
+    ));
+  };
 
-    setSections((current) => normalizeSectionSortOrder([
+  const addDispSectionGroup = () => {
+    setPrimaryDispEntryKeys((current) => (
+      current.length ? current : buildDefaultDispEntrySelection(blankett31Entries, planJobs)
+    ));
+    setDispSectionGroups((current) => normalizeDispSectionGroups([
       ...current,
-      {
-        ...defaultSection(),
-        displayIndex: highestDisplayIndex + 1,
-      },
-    ]));
+      defaultDispSectionGroup(current.length),
+    ], blankett31Entries));
+  };
+
+  const updateDispSectionGroupField = (groupId, field, value) => {
+    setDispSectionGroups((current) => normalizeDispSectionGroups(current.map((group) => (
+      group.id === groupId ? { ...group, [field]: value } : group
+    )), blankett31Entries));
+  };
+
+  const toggleDispSectionGroupEntry = (groupId, entryKey) => {
+    setDispSectionGroups((current) => normalizeDispSectionGroups(current.map((group) => {
+      if (group.id !== groupId) {
+        return group;
+      }
+
+      const selectedEntryKeys = new Set(group.selectedEntryKeys || []);
+      if (selectedEntryKeys.has(entryKey)) {
+        selectedEntryKeys.delete(entryKey);
+      } else {
+        selectedEntryKeys.add(entryKey);
+      }
+
+      return {
+        ...group,
+        selectedEntryKeys: Array.from(selectedEntryKeys),
+      };
+    }), blankett31Entries));
+  };
+
+  const removeDispSectionGroup = (groupId) => {
+    setDispSectionGroups((current) => normalizeDispSectionGroups(
+      current.filter((group) => group.id !== groupId),
+      blankett31Entries
+    ));
+  };
+
+  const updateDispGroupSections = (groupId, updater) => {
+    setDispSectionGroups((current) => normalizeDispSectionGroups(current.map((group) => (
+      group.id === groupId
+        ? {
+            ...group,
+            sections: updater(Array.isArray(group.sections) ? group.sections : createDefaultSections()),
+          }
+        : group
+    )), blankett31Entries));
+  };
+
+  const addDispGroupSection = (groupId) => {
+    updateDispGroupSections(groupId, (current) => addSectionToList(current));
+  };
+
+  const insertDispGroupSectionAfter = (groupId, index) => {
+    updateDispGroupSections(groupId, (current) => insertSectionAfterInList(current, index));
+  };
+
+  const moveDispGroupSection = (groupId, index, direction) => {
+    updateDispGroupSections(groupId, (current) => moveSectionInList(current, index, direction));
+  };
+
+  const updateDispGroupSectionType = (groupId, index, type) => {
+    updateDispGroupSections(groupId, (current) => updateSectionTypeInList(current, index, type));
+  };
+
+  const updateDispGroupSectionNamingMode = (groupId, index, namingMode) => {
+    updateDispGroupSections(groupId, (current) => updateSectionNamingModeInList(current, index, namingMode));
+  };
+
+  const updateDispGroupSectionField = (groupId, index, field, value) => {
+    updateDispGroupSections(groupId, (current) => updateSectionFieldInList(current, index, field, value));
+  };
+
+  const removeDispGroupSection = (groupId, index) => {
+    updateDispGroupSections(groupId, (current) => removeSectionFromList(current, index));
+  };
+
+  const getOuterBoundariesForEntryKeys = (selectedEntryKeys = []) => {
+    const boundaries = selectedEntryKeys
+      .map((key) => blankett31EntryKeyMap.get(key))
+      .filter(Boolean)
+      .map((entry) => String(entry?.granspunkt || '').trim())
+      .filter(Boolean);
+
+    return boundaries.length ? boundaries.join(', ') : granspunktFritext;
+  };
+
+  const addSection = () => {
+    setSections((current) => addSectionToList(current));
   };
 
   const insertSectionAfter = (index) => {
-    const highestDisplayIndex = sections.reduce((maxValue, section) => {
-      const parsed = Number(section?.displayIndex);
-      return Number.isFinite(parsed) ? Math.max(maxValue, parsed) : maxValue;
-    }, 0);
-
-    setSections((current) => normalizeSectionSortOrder([
-      ...current.slice(0, index + 1),
-      {
-        ...defaultSection(),
-        displayIndex: highestDisplayIndex + 1,
-      },
-      ...current.slice(index + 1),
-    ]));
+    setSections((current) => insertSectionAfterInList(current, index));
   };
 
   const moveSection = (index, direction) => {
-    setSections((current) => {
-      const targetIndex = index + direction;
-      if (targetIndex < 0 || targetIndex >= current.length) {
-        return current;
-      }
-
-      const updated = [...current];
-      [updated[index], updated[targetIndex]] = [updated[targetIndex], updated[index]];
-      return normalizeSectionSortOrder(updated);
-    });
+    setSections((current) => moveSectionInList(current, index, direction));
   };
 
   const updateSectionType = (index, type) => {
-    const updated = [...sections];
-    updated[index].type = type;
-    setSections(normalizeSectionSortOrder(updated));
+    setSections((current) => updateSectionTypeInList(current, index, type));
   };
 
   const updateSectionNamingMode = (index, namingMode) => {
-    const updated = [...sections];
-    updated[index].namingMode = namingMode;
-    if (namingMode === 'NUMBERS' && !updated[index].displayIndex) {
-      updated[index].displayIndex = index + 1;
-    }
-    setSections(normalizeSectionSortOrder(updated));
+    setSections((current) => updateSectionNamingModeInList(current, index, namingMode));
   };
 
   const updateSectionField = (index, field, value) => {
-    setSections((current) => normalizeSectionSortOrder(current.map((section, sectionIndex) => {
-      if (sectionIndex !== index) {
-        return section;
-      }
-
-      const updatedSection = {
-        ...section,
-        [field]: value,
-      };
-
-      if (field === 'signal' || field === 'name') {
-        updatedSection.name = value;
-        updatedSection.signal = value;
-      }
-
-      if (field === 'displayIndex') {
-        updatedSection.displayIndex = value === '' ? null : Number(value);
-      }
-
-      if (field === 'granspunktStart' || field === 'granspunktSlut') {
-        updatedSection.granspunkter = [updatedSection.granspunktStart, updatedSection.granspunktSlut]
-          .filter(Boolean)
-          .join(' - ');
-      }
-
-      return updatedSection;
-    })));
+    setSections((current) => updateSectionFieldInList(current, index, field, value));
   };
 
   const removeSection = (index) => {
-    const updated = sections.filter((_, i) => i !== index);
-    setSections(normalizeSectionSortOrder(updated));
+    setSections((current) => removeSectionFromList(current, index));
   };
 
   const handleExpandDriftplatser = async () => {
@@ -1064,6 +1441,38 @@ const SkapaProjekt = () => {
     }
   };
 
+  const handlePopulateGroupSectionsFromSignals = async (groupId, selectedEntryKeys = []) => {
+    const token = JSON.parse(localStorage.getItem('user'))?.token;
+    if (!token) {
+      setSectionStatus('Du maste vara inloggad for att hamta signaler.');
+      return;
+    }
+
+    setIsResolvingSections(true);
+    setSectionStatus('Hamta signaler och bygger delomraden fran NJDB for vald delomradesruta...');
+
+    try {
+      const data = await resolveSectionsFromSignals(plats, getOuterBoundariesForEntryKeys(selectedEntryKeys));
+      const nextSections = Array.isArray(data?.sections) && data.sections.length
+        ? normalizeSectionSortOrder(data.sections.map((section, index) => ({
+            ...defaultSection(),
+            ...section,
+            displayIndex: section.displayIndex ?? index + 1,
+          })))
+        : createDefaultSections();
+
+      updateDispGroupSections(groupId, () => nextSections);
+      setSectionStatus(nextSections.length
+        ? 'Fyllde delomradesrutan med signaler och strackor.'
+        : 'Inga delomraden kunde skapas for den valda delomradesrutan.');
+    } catch (error) {
+      console.error('Fel vid hamtning av sektionssignaler for extra ruta:', error);
+      setSectionStatus(error.message || 'Kunde inte skapa delomraden for den valda delomradesrutan.');
+    } finally {
+      setIsResolvingSections(false);
+    }
+  };
+
   const applyBlankett31Data = (parsed) => {
     const parsedEntries = Array.isArray(parsed?.entries) && parsed.entries.length
       ? parsed.entries
@@ -1161,6 +1570,11 @@ const SkapaProjekt = () => {
         ? mergeBlankett31EntryPhones(combinedEntries, blankett31Entries, telefonnummer)
         : [defaultBlankett31Entry()];
       setBlankett31Entries(nextEntries);
+      setPrimaryDispEntryKeys((current) => {
+        const availableKeys = new Set(nextEntries.map((entry, index) => buildPlanJobEntryKey(entry, index)));
+        return current.filter((key) => availableKeys.has(key));
+      });
+      setDispSectionGroups((current) => normalizeDispSectionGroups(current, nextEntries));
       setBeteckningar(nextEntries.map((entry) => ({ value: entry.beteckning || '' })));
       setBlankett31Files((current) => {
         const merged = [...current, ...files];
@@ -1281,7 +1695,7 @@ const SkapaProjekt = () => {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  const handleCreateProject = async () => {
+  const saveProject = async () => {
     const token = JSON.parse(localStorage.getItem('user'))?.token;
     if (!token) {
       alert('Du är inte inloggad.');
@@ -1289,6 +1703,7 @@ const SkapaProjekt = () => {
     }
 
     try {
+      setIsSavingProject(true);
       const newProject = {
         name: projektNamn,
         startDate: startDate || '',
@@ -1322,9 +1737,32 @@ const SkapaProjekt = () => {
           avslutningstid,
           avslutningssignatur,
           fjtklBlocks,
+          customDispPhoneLines,
           blankett31Meta,
           dispSettings,
           blankett31Entries,
+          primaryDispSectionEntryKeys: primaryDispEntryKeys,
+          dispSectionGroups: dispSectionGroups.map((group, groupIndex) => ({
+            id: group.id,
+            title: group.title || `Delområdesruta ${groupIndex + 2}`,
+            selectedEntryKeys: group.selectedEntryKeys || [],
+            sections: (group.sections || []).map((sec) => ({
+              type: sec.type,
+              signal: sec.signal || sec.name || '',
+              namingMode: sec.namingMode || 'LETTERS',
+              displayIndex: sec.displayIndex ?? null,
+              customLabel: sec.customLabel || '',
+              sortOrder: sec.sortOrder ?? null,
+              granspunktStart: sec.granspunktStart || '',
+              granspunktSlut: sec.granspunktSlut || '',
+              granspunkter: sec.granspunkter || '',
+              spar: sec.spar || '',
+              highlightStart: Boolean(sec.highlightStart),
+              highlightEnd: Boolean(sec.highlightEnd),
+              highlightStartPart: sec.highlightStartPart || '',
+              highlightEndPart: sec.highlightEndPart || '',
+            })),
+          })),
           planJobs: normalizePlanJobs(planJobs, blankett31Entries).map((job, index) => ({
             id: job.id,
             name: job.name,
@@ -1386,11 +1824,37 @@ const SkapaProjekt = () => {
       const data = await response.json();
       console.log('✅ Projekt skapat med beteckningar:', data.beteckningar);
 
+      closePreflight();
       navigate('/htsmpanel');
     } catch (err) {
       console.error('Fel vid projekt-skapande:', err);
       alert('Något gick fel. Försök igen.');
+    } finally {
+      setIsSavingProject(false);
     }
+  };
+
+  const handleCreateProject = async () => {
+    const summary = buildProjectPreflightSummary({
+      projektNamn,
+      namn,
+      telefonnummer,
+      dispSettings,
+      sections,
+      blankett31Entries,
+      planJobs,
+      primaryDispEntryKeys,
+      dispSectionGroups,
+    });
+
+    setPreflightSummary(summary);
+
+    if (!summary.errors.length && !summary.warnings.length) {
+      await saveProject();
+      return;
+    }
+
+    openPreflight();
   };
 
   const handleDeleteProject = async () => {
@@ -1425,6 +1889,12 @@ const SkapaProjekt = () => {
 
   useEffect(() => {
     setPlanJobs((current) => normalizePlanJobs(current, blankett31Entries));
+  }, [blankett31Entries]);
+
+  useEffect(() => {
+    const validKeys = new Set(blankett31Entries.map((entry, index) => buildPlanJobEntryKey(entry, index)));
+    setPrimaryDispEntryKeys((current) => current.filter((key) => validKeys.has(key)));
+    setDispSectionGroups((current) => normalizeDispSectionGroups(current, blankett31Entries));
   }, [blankett31Entries]);
 
   useEffect(() => {
@@ -1483,6 +1953,12 @@ const SkapaProjekt = () => {
           ...defaultFjtklBlock(),
           ...block,
         })));
+        setCustomDispPhoneLines(
+          (project.formState?.customDispPhoneLines || []).map((line) => ({
+            ...defaultCustomDispPhoneLine(),
+            ...line,
+          }))
+        );
         setBlankett31Meta(project.formState?.blankett31Meta || {});
         setDispSettings({
           ...defaultDispSettings(),
@@ -1510,6 +1986,19 @@ const SkapaProjekt = () => {
             ? project.formState.blankett31Entries
             : [defaultBlankett31Entry()]
         ));
+        setPrimaryDispEntryKeys(
+          Array.isArray(project.formState?.primaryDispSectionEntryKeys)
+            ? project.formState.primaryDispSectionEntryKeys
+            : []
+        );
+        setDispSectionGroups(
+          normalizeDispSectionGroups(
+            project.formState?.dispSectionGroups || [],
+            (project.formState?.blankett31Entries || []).length
+              ? project.formState.blankett31Entries
+              : [defaultBlankett31Entry()]
+          )
+        );
         setBlankett31Files(project.formState?.blankett31Files || []);
         setDispFiles(project.formState?.dispFiles || []);
         setAnteckningar(project.anteckningar || []);
@@ -1543,6 +2032,195 @@ const SkapaProjekt = () => {
 
     fetchProject();
   }, [currentProjectId]);
+
+  const renderDispEntrySelection = (selectedEntryKeys = [], onToggle) => (
+    planJobEntryOptions.length ? (
+      <div className="grid gap-2 md:grid-cols-2">
+        {planJobEntryOptions.map((option) => (
+          <label
+            key={option.key}
+            className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700"
+          >
+            <input
+              type="checkbox"
+              checked={selectedEntryKeys.includes(option.key)}
+              onChange={() => onToggle(option.key)}
+              className="mt-0.5 h-4 w-4 accent-slate-900"
+            />
+            <span>{option.label}</span>
+          </label>
+        ))}
+      </div>
+    ) : (
+      <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
+        Ladda in eller skriv in Blankett 31-poster först, så kan du koppla dem till delområdesrutan här.
+      </div>
+    )
+  );
+
+  const renderSectionEditorCards = ({
+    sectionList = [],
+    onMove,
+    onInsertAfter,
+    onRemove,
+    onUpdateType,
+    onUpdateNamingMode,
+    onUpdateField,
+  }) => (
+    <div className="space-y-3">
+      {sectionList.map((sec, i) => (
+        <div key={`${sec.sortOrder ?? i}-${i}`} className="rounded-2xl border border-rose-400 bg-rose-200/70 px-5 py-4 shadow-sm shadow-rose-100/70">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="text-sm font-semibold text-slate-700">
+              {getSectionLabel(sec, i)}
+            </div>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => onMove(i, -1)}
+                disabled={i === 0}
+                className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Upp
+              </button>
+              <button
+                type="button"
+                onClick={() => onMove(i, 1)}
+                disabled={i === sectionList.length - 1}
+                className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Ner
+              </button>
+              <button
+                type="button"
+                onClick={() => onInsertAfter(i)}
+                className="rounded-full border border-slate-900 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-slate-900 hover:bg-slate-100"
+              >
+                Infoga efter
+              </button>
+              {i > 0 && (
+                <button
+                  type="button"
+                  onClick={() => onRemove(i)}
+                  className="text-xs font-semibold text-rose-600 hover:text-rose-700"
+                >
+                  Ta bort
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="grid gap-3 md:grid-cols-[140px_180px_120px_160px_1fr]">
+            <select
+              value={sec.type}
+              onChange={(e) => onUpdateType(i, e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-900 focus:outline-none"
+            >
+              <option value="Linje">Linje</option>
+              <option value="DP">DP</option>
+              <option value="Delområde">Delområde</option>
+            </select>
+            <select
+              value={sec.namingMode || 'LETTERS'}
+              onChange={(e) => onUpdateNamingMode(i, e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-900 focus:outline-none"
+            >
+              <option value="LETTERS">Bokstäver: A, B, C</option>
+              <option value="NUMBERS">Siffror: 1, 2, 3</option>
+            </select>
+            <input
+              type="number"
+              min="1"
+              value={sec.displayIndex ?? ''}
+              onChange={(e) => onUpdateField(i, 'displayIndex', e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-900 focus:outline-none"
+              placeholder="Nr"
+            />
+            <input
+              type="text"
+              value={sec.customLabel || ''}
+              onChange={(e) => onUpdateField(i, 'customLabel', e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-900 focus:outline-none"
+              placeholder="Egen etikett, ex 2B"
+            />
+            <input
+              type="text"
+              placeholder="Delområde / sträcka"
+              value={sec.signal || sec.name || ''}
+              onChange={(e) => onUpdateField(i, 'signal', e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm focus:border-slate-900 focus:outline-none"
+            />
+          </div>
+          <div className="mt-3 grid gap-3 md:grid-cols-3">
+            <input
+              type="text"
+              placeholder="Gränspunkt start"
+              value={sec.granspunktStart || ''}
+              onChange={(e) => onUpdateField(i, 'granspunktStart', e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm focus:border-slate-900 focus:outline-none"
+            />
+            <input
+              type="text"
+              placeholder="Gränspunkt slut"
+              value={sec.granspunktSlut || ''}
+              onChange={(e) => onUpdateField(i, 'granspunktSlut', e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm focus:border-slate-900 focus:outline-none"
+            />
+            <input
+              type="text"
+              placeholder="Spår"
+              value={sec.spar || ''}
+              onChange={(e) => onUpdateField(i, 'spar', e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm focus:border-slate-900 focus:outline-none"
+            />
+          </div>
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <div className="rounded-xl border border-rose-100 bg-rose-50/60 px-3 py-2">
+              <label className="flex items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={Boolean(sec.highlightStart)}
+                  onChange={(e) => onUpdateField(i, 'highlightStart', e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+                />
+                Rödmarkera startpunkt
+              </label>
+              <input
+                type="text"
+                placeholder="Endast röd del, ex 21"
+                value={sec.highlightStartPart || ''}
+                onChange={(e) => onUpdateField(i, 'highlightStartPart', e.target.value)}
+                className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
+              />
+            </div>
+            <div className="rounded-xl border border-rose-100 bg-rose-50/60 px-3 py-2">
+              <label className="flex items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={Boolean(sec.highlightEnd)}
+                  onChange={(e) => onUpdateField(i, 'highlightEnd', e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+                />
+                Rödmarkera slutpunkt
+              </label>
+              <input
+                type="text"
+                placeholder="Endast röd del, ex 22"
+                value={sec.highlightEndPart || ''}
+                onChange={(e) => onUpdateField(i, 'highlightEndPart', e.target.value)}
+                className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
+              />
+            </div>
+          </div>
+          <div className="mt-2 text-xs text-slate-500">
+            Etikett: {getSectionLabel(sec, i)}. Lämna "Egen etikett" tom för automatisk numrering eller bokstav.
+          </div>
+          <div className="mt-1 text-xs text-slate-500">
+            Gränspunkter: {sec.granspunkter || [sec.granspunktStart, sec.granspunktSlut].filter(Boolean).join(' - ') || 'Ej angivet'}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 text-black">
@@ -1977,6 +2655,13 @@ const SkapaProjekt = () => {
                   <div className="flex items-center gap-3">
                     <button
                       type="button"
+                      onClick={addCustomDispPhoneLine}
+                      className="rounded-full border border-slate-900 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-slate-900 hover:bg-white/80"
+                    >
+                      + Extra TKL-rad
+                    </button>
+                    <button
+                      type="button"
                       onClick={addFjtklBlock}
                       className="rounded-full border border-slate-900 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-slate-900 hover:bg-white/80"
                     >
@@ -2101,6 +2786,36 @@ const SkapaProjekt = () => {
                     </select>
                   </div>
                 </div>
+                {customDispPhoneLines.length > 0 && (
+                  <div className="mt-5 rounded-2xl border border-slate-200 bg-white/70 p-4">
+                    <div className="mb-3">
+                      <h4 className="text-sm font-semibold text-slate-900">Extra TKL-rader i kapitel 13</h4>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Skriv exakt den text som ska synas på dispen, till exempel <span className="font-semibold text-slate-700">Malmö Ätk 010-127 12 42</span>.
+                      </p>
+                    </div>
+                    <div className="space-y-3">
+                      {customDispPhoneLines.map((line, index) => (
+                        <div key={`custom-disp-phone-${index}`} className="flex flex-col gap-2 md:flex-row md:items-center">
+                          <input
+                            type="text"
+                            value={line.value || ''}
+                            onChange={(e) => updateCustomDispPhoneLine(index, e.target.value)}
+                            placeholder="Ex. Malmö Ätk 010-127 12 42"
+                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeCustomDispPhoneLine(index)}
+                            className="shrink-0 rounded-full border border-rose-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-widest text-rose-600 hover:bg-rose-50"
+                          >
+                            Ta bort
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               {blankett31Entries.length > 0 && (
                 <div className="mt-6 border-t border-slate-200 pt-6">
@@ -2470,7 +3185,7 @@ const SkapaProjekt = () => {
               <div className="mb-6 flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-semibold text-black">Delområden</h2>
-                  <p className="text-xs text-slate-500">Skapa DP/Linje och ange signaltext</p>
+                  <p className="text-xs text-slate-500">Skapa DP/Linje och ange signaltext. Lägg bara till fler delområdesrutor när olika Blankett 31-poster ska bli egna kapitel 1-rutor i dispen.</p>
                 </div>
                 <div className="flex flex-wrap items-center justify-end gap-2">
                   <button
@@ -2487,165 +3202,132 @@ const SkapaProjekt = () => {
                   >
                     Lägg till delområde
                   </button>
+                  <button
+                    type="button"
+                    onClick={addDispSectionGroup}
+                    className="rounded-full border border-rose-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-widest text-rose-700 hover:bg-rose-50"
+                  >
+                    Flera delområdesrutor
+                  </button>
                 </div>
               </div>
               {sectionStatus ? (
                 <p className="mb-4 text-xs font-medium text-slate-600">{sectionStatus}</p>
               ) : null}
 
-              <div className="space-y-3">
-                {sections.map((sec, i) => (
-                  <div key={i} className="rounded-2xl border border-rose-400 bg-rose-200/70 px-5 py-4 shadow-sm shadow-rose-100/70">
-                    <div className="mb-3 flex items-center justify-between">
-                      <div className="text-sm font-semibold text-slate-700">
-                        {getSectionLabel(sec, i)}
-                      </div>
-                      <div className="flex flex-wrap items-center justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => moveSection(i, -1)}
-                          disabled={i === 0}
-                          className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          Upp
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => moveSection(i, 1)}
-                          disabled={i === sections.length - 1}
-                          className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          Ner
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => insertSectionAfter(i)}
-                          className="rounded-full border border-slate-900 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-slate-900 hover:bg-slate-100"
-                        >
-                          Infoga efter
-                        </button>
-                        {i > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => removeSection(i)}
-                            className="text-xs font-semibold text-rose-600 hover:text-rose-700"
-                          >
-                            Ta bort
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                    <div className="grid gap-3 md:grid-cols-[140px_180px_120px_160px_1fr]">
-                      <select
-                        value={sec.type}
-                        onChange={(e) => updateSectionType(i, e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-900 focus:outline-none"
-                      >
-                        <option value="Linje">Linje</option>
-                        <option value="DP">DP</option>
-                        <option value="Delområde">Delområde</option>
-                      </select>
-                      <select
-                        value={sec.namingMode || 'LETTERS'}
-                        onChange={(e) => updateSectionNamingMode(i, e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-900 focus:outline-none"
-                      >
-                        <option value="LETTERS">Bokstäver: A, B, C</option>
-                        <option value="NUMBERS">Siffror: 1, 2, 3</option>
-                      </select>
-                      <input
-                        type="number"
-                        min="1"
-                        value={sec.displayIndex ?? ''}
-                        onChange={(e) => updateSectionField(i, 'displayIndex', e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-900 focus:outline-none"
-                        placeholder="Nr"
-                      />
-                      <input
-                        type="text"
-                        value={sec.customLabel || ''}
-                        onChange={(e) => updateSectionField(i, 'customLabel', e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-slate-900 focus:outline-none"
-                        placeholder="Egen etikett, ex 2B"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Delområde / sträcka"
-                        value={sec.signal || sec.name || ''}
-                        onChange={(e) => updateSectionField(i, 'signal', e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm focus:border-slate-900 focus:outline-none"
-                      />
-                    </div>
-                    <div className="mt-3 grid gap-3 md:grid-cols-3">
-                      <input
-                        type="text"
-                        placeholder="Gränspunkt start"
-                        value={sec.granspunktStart || ''}
-                        onChange={(e) => updateSectionField(i, 'granspunktStart', e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm focus:border-slate-900 focus:outline-none"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Gränspunkt slut"
-                        value={sec.granspunktSlut || ''}
-                        onChange={(e) => updateSectionField(i, 'granspunktSlut', e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm focus:border-slate-900 focus:outline-none"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Spår"
-                        value={sec.spar || ''}
-                        onChange={(e) => updateSectionField(i, 'spar', e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm focus:border-slate-900 focus:outline-none"
-                      />
-                    </div>
-                    <div className="mt-3 grid gap-3 md:grid-cols-2">
-                      <div className="rounded-xl border border-rose-100 bg-rose-50/60 px-3 py-2">
-                        <label className="flex items-center gap-2 text-sm text-slate-700">
-                          <input
-                            type="checkbox"
-                            checked={Boolean(sec.highlightStart)}
-                            onChange={(e) => updateSectionField(i, 'highlightStart', e.target.checked)}
-                            className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500"
-                          />
-                          Rödmarkera startpunkt
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="Endast röd del, ex 21"
-                          value={sec.highlightStartPart || ''}
-                          onChange={(e) => updateSectionField(i, 'highlightStartPart', e.target.value)}
-                          className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
-                        />
-                      </div>
-                      <div className="rounded-xl border border-rose-100 bg-rose-50/60 px-3 py-2">
-                        <label className="flex items-center gap-2 text-sm text-slate-700">
-                          <input
-                            type="checkbox"
-                            checked={Boolean(sec.highlightEnd)}
-                            onChange={(e) => updateSectionField(i, 'highlightEnd', e.target.checked)}
-                            className="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500"
-                          />
-                          Rödmarkera slutpunkt
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="Endast röd del, ex 22"
-                          value={sec.highlightEndPart || ''}
-                          onChange={(e) => updateSectionField(i, 'highlightEndPart', e.target.value)}
-                          className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
-                        />
-                      </div>
-                    </div>
-                    <div className="mt-2 text-xs text-slate-500">
-                      Etikett: {getSectionLabel(sec, i)}. Lämna "Egen etikett" tom för automatisk numrering eller bokstav.
-                    </div>
-                    <div className="mt-1 text-xs text-slate-500">
-                      Gränspunkter: {sec.granspunkter || [sec.granspunktStart, sec.granspunktSlut].filter(Boolean).join(' - ') || 'Ej angivet'}
-                    </div>
+              <div className="rounded-2xl border border-rose-300 bg-white/70 p-4 shadow-sm shadow-rose-100/50">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <h3 className="text-base font-semibold text-slate-900">Delområdesruta 1 i DISP</h3>
+                    <p className="mt-1 max-w-3xl text-xs leading-5 text-slate-600">
+                      Den vanliga rutan i dispen. Välj vilka Blankett 31-poster som ska styra tider, dagar och yttre gränspunkter för just den här rutan.
+                    </p>
                   </div>
-                ))}
+                  <div className="rounded-xl border border-rose-100 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+                    Vanligast: en enda delområdesruta för hela dispen.
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Blankett 31 som hör till ruta 1</p>
+                  {renderDispEntrySelection(primaryDispEntryKeys, togglePrimaryDispEntryKey)}
+                </div>
+                <div className="mt-4">
+                  {renderSectionEditorCards({
+                    sectionList: sections,
+                    onMove: moveSection,
+                    onInsertAfter: insertSectionAfter,
+                    onRemove: removeSection,
+                    onUpdateType: updateSectionType,
+                    onUpdateNamingMode: updateSectionNamingMode,
+                    onUpdateField: updateSectionField,
+                  })}
+                </div>
               </div>
+
+              {dispSectionGroups.length > 0 && (
+                <div className="mt-6 space-y-4">
+                  {dispSectionGroups.map((group, groupIndex) => {
+                    const boundaries = getOuterBoundariesForEntryKeys(group.selectedEntryKeys);
+                    return (
+                      <div
+                        key={group.id}
+                        className="rounded-2xl border border-rose-300 bg-white/70 p-4 shadow-sm shadow-rose-100/50"
+                      >
+                        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                          <div className="flex-1">
+                            <div className="flex flex-col gap-3 md:flex-row md:items-center">
+                              <div className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-rose-700">
+                                Extra disp-ruta {groupIndex + 2}
+                              </div>
+                              <input
+                                type="text"
+                                value={group.title || ''}
+                                onChange={(e) => updateDispSectionGroupField(group.id, 'title', e.target.value)}
+                                placeholder={`Delområdesruta ${groupIndex + 2}`}
+                                className="w-full max-w-sm rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 focus:border-slate-900 focus:outline-none"
+                              />
+                            </div>
+                            <p className="mt-2 max-w-3xl text-xs leading-5 text-slate-600">
+                              Använd en extra ruta när samma dispositionsarbetsplan ska innehålla ett separat jobb med andra dagar, tider eller yttre gränspunkter.
+                            </p>
+                            {boundaries ? (
+                              <p className="mt-2 text-xs text-slate-500">
+                                Yttre gränspunkter från valda Blankett 31: <span className="font-semibold text-slate-700">{boundaries}</span>
+                              </p>
+                            ) : null}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handlePopulateGroupSectionsFromSignals(group.id, group.selectedEntryKeys)}
+                              disabled={isResolvingSections || !group.selectedEntryKeys.length}
+                              className="rounded-full border border-slate-900 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-slate-900 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
+                            >
+                              Fyll från signaler
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => addDispGroupSection(group.id)}
+                              className="rounded-full border border-slate-900 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-widest text-slate-900 hover:bg-slate-100"
+                            >
+                              Lägg till delområde
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removeDispSectionGroup(group.id)}
+                              className="rounded-full border border-rose-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-widest text-rose-700 hover:bg-rose-50"
+                            >
+                              Ta bort ruta
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="mt-4">
+                          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                            Blankett 31 som hör till {group.title || `delområdesruta ${groupIndex + 2}`}
+                          </p>
+                          {renderDispEntrySelection(
+                            group.selectedEntryKeys || [],
+                            (entryKey) => toggleDispSectionGroupEntry(group.id, entryKey)
+                          )}
+                        </div>
+
+                        <div className="mt-4">
+                          {renderSectionEditorCards({
+                            sectionList: group.sections || [],
+                            onMove: (sectionIndex, direction) => moveDispGroupSection(group.id, sectionIndex, direction),
+                            onInsertAfter: (sectionIndex) => insertDispGroupSectionAfter(group.id, sectionIndex),
+                            onRemove: (sectionIndex) => removeDispGroupSection(group.id, sectionIndex),
+                            onUpdateType: (sectionIndex, value) => updateDispGroupSectionType(group.id, sectionIndex, value),
+                            onUpdateNamingMode: (sectionIndex, value) => updateDispGroupSectionNamingMode(group.id, sectionIndex, value),
+                            onUpdateField: (sectionIndex, field, value) => updateDispGroupSectionField(group.id, sectionIndex, field, value),
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </section>
           </main>
         </div>
@@ -2715,6 +3397,70 @@ const SkapaProjekt = () => {
           <option key={option} value={option} />
         ))}
       </datalist>
+
+      <Modal isOpen={isPreflightOpen} onClose={closePreflight} isCentered size="2xl">
+        <ModalOverlay bg="blackAlpha.500" />
+        <ModalContent borderRadius="2xl">
+          <ModalHeader>Projektkontroll före sparning</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            {!preflightSummary.errors.length && !preflightSummary.warnings.length ? (
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                Inga avvikelser hittades.
+              </div>
+            ) : null}
+
+            {preflightSummary.errors.length ? (
+              <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4">
+                <div className="text-sm font-semibold text-rose-800">Det här måste rättas först</div>
+                <ul className="mt-3 space-y-2 text-sm text-rose-700">
+                  {preflightSummary.errors.map((item) => (
+                    <li key={item} className="list-disc ml-5">
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            {preflightSummary.warnings.length ? (
+              <div className={`mt-4 rounded-2xl border px-4 py-4 ${preflightSummary.errors.length ? 'border-amber-200 bg-amber-50' : 'border-sky-200 bg-sky-50'}`}>
+                <div className={`text-sm font-semibold ${preflightSummary.errors.length ? 'text-amber-800' : 'text-sky-800'}`}>
+                  Kontrollera gärna detta innan du sparar
+                </div>
+                <ul className={`mt-3 space-y-2 text-sm ${preflightSummary.errors.length ? 'text-amber-700' : 'text-sky-700'}`}>
+                  {preflightSummary.warnings.map((item) => (
+                    <li key={item} className="list-disc ml-5">
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </ModalBody>
+          <ModalFooter>
+            <div className="flex w-full justify-end gap-3">
+              <button
+                type="button"
+                onClick={closePreflight}
+                className="rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Tillbaka
+              </button>
+              {!preflightSummary.errors.length && preflightSummary.warnings.length ? (
+                <button
+                  type="button"
+                  onClick={saveProject}
+                  disabled={isSavingProject}
+                  className="rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+                >
+                  {isSavingProject ? 'Sparar...' : 'Spara ändå'}
+                </button>
+              ) : null}
+            </div>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   );
 };
