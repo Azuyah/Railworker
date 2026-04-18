@@ -125,6 +125,15 @@ export default function Login() {
           </div>
         )}
 
+        {mode === 'TSM' && (
+          <button
+            onClick={() => navigate('/panel')}
+            className="mb-4 w-full rounded border border-slate-300 bg-slate-100 py-2 font-semibold text-slate-700 hover:bg-slate-200"
+          >
+            Öppna projekt utan inloggning
+          </button>
+        )}
+
         {mode === 'TSM' ? (
           <>
             <input
