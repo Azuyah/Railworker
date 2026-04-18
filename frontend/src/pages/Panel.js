@@ -854,7 +854,7 @@ export default function Panel() {
                         </Button>
                       ) : (
                         <Button
-                          onClick={() => navigate('/')}
+                          onClick={() => navigate('/tsm-login')}
                           className="fancy-button"
                           colorScheme="blue"
                           variant="outline"
