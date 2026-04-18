@@ -125,6 +125,76 @@ const Dashboard = () => {
     }
   };
 
+  const handleMailDisp = async (project) => {
+    let storedUser = null;
+    try {
+      storedUser = JSON.parse(localStorage.getItem('user') || 'null');
+    } catch (error) {
+      storedUser = null;
+    }
+
+    const token = storedUser?.token || localStorage.getItem('token');
+    if (!token || !project?.id) {
+      setLoadError('Logga in igen för att maila disp.');
+      return;
+    }
+
+    try {
+      setExportingProjectId(project.id);
+      const response = await fetch(apiUrl(`/api/projects/${project.id}/export-disp?ts=${Date.now()}`), {
+        cache: 'no-store',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Kunde inte skapa disp');
+      }
+
+      const blob = await response.blob();
+      const explicitFilename = response.headers.get('X-Export-Filename') || '';
+      const contentDisposition = response.headers.get('Content-Disposition') || '';
+      const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/i);
+      const fallbackFilename = `${project.name || 'dispositionsarbetsplan'}-${Date.now()}.pdf`;
+      const filename = explicitFilename || filenameMatch?.[1] || fallbackFilename;
+
+      const file = new File([blob], filename, { type: 'application/pdf' });
+      const shareData = {
+        files: [file],
+        title: `Disp ${project.name || ''}`.trim(),
+        text: `Disp för ${project.name || 'projektet'}`,
+      };
+
+      if (navigator.canShare && navigator.canShare(shareData) && navigator.share) {
+        await navigator.share(shareData);
+        return;
+      }
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      const subject = `Disp ${project.name || ''}`.trim();
+      const body = [
+        `Dispen för ${project.name || 'projektet'} är nu nedladdad.`,
+        '',
+        `Bifoga filen "${filename}" i mailet innan du skickar.`,
+      ].join('\n');
+      window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    } catch (error) {
+      console.error('Kunde inte maila dispositionsarbetsplan:', error);
+      setLoadError('Kunde inte förbereda disp för mail just nu.');
+    } finally {
+      setExportingProjectId(null);
+    }
+  };
+
   const handleVisibilityChange = async (project, nextVisibleToTsm) => {
     let storedUser = null;
     try {
@@ -334,7 +404,7 @@ const Dashboard = () => {
           )}
         </Box>
         <HStack spacing={2}>
-            <Button
+          <Button
             variant="outline"
             borderRadius="full"
             size="sm"
@@ -345,6 +415,18 @@ const Dashboard = () => {
             loadingText="Skapar disp"
           >
             Skapa disp
+          </Button>
+          <Button
+            variant="outline"
+            borderRadius="full"
+            size="sm"
+            borderColor={isProjectSent(project) ? 'orange.400' : 'blue.400'}
+            bg={isProjectSent(project) ? 'whiteAlpha.800' : 'white'}
+            onClick={() => handleMailDisp(project)}
+            isLoading={exportingProjectId === project.id}
+            loadingText="Förbereder"
+          >
+            Maila Disp
           </Button>
           <Button
             variant="outline"

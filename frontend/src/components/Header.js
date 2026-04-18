@@ -33,6 +33,7 @@ const Header = () => {
     user?.firstName && user?.lastName
       ? `${user.firstName} ${user.lastName}`
       : 'Okänd användare';
+  const isAuthenticated = Boolean(user?.role);
 
   return (
     <Box
@@ -58,25 +59,25 @@ const Header = () => {
         >
           <Flex align="center" gap={3} minW={0}>
             <Image
-              src="/railworkerlogo.svg"
-              alt="Railworker logo"
-              boxSize="34px"
-              filter="drop-shadow(0 0 6px rgba(255,255,255,0.3))"
+              src="/vallakra-railworker-logo.png"
+              alt="Vallåkra Railworker logo"
+              h="38px"
+              w="auto"
+              objectFit="contain"
               flexShrink={0}
             />
             <Heading
-              size="lg"
-              letterSpacing="widest"
-              textTransform="uppercase"
+              size="md"
+              letterSpacing="wide"
               fontWeight="extrabold"
               color="whiteAlpha.900"
               whiteSpace="nowrap"
             >
-              Railworker
+              Vallåkra Railworker
             </Heading>
           </Flex>
 
-          <SimpleGrid columns={3} spacing={3} flex="1" maxW="2xl" mx={8}>
+          <SimpleGrid columns={isAuthenticated ? 3 : 1} spacing={3} flex="1" maxW="2xl" mx={8}>
             <MotionButton
               bg="whiteAlpha.180"
               _hover={{ bg: 'whiteAlpha.260', boxShadow: '0 0 6px rgba(255,255,255,0.4)' }}
@@ -95,6 +96,58 @@ const Header = () => {
               Start
             </MotionButton>
 
+            {isAuthenticated ? (
+              <>
+                <MotionButton
+                  bg="whiteAlpha.180"
+                  _hover={{ bg: 'whiteAlpha.260', boxShadow: '0 0 6px rgba(255,255,255,0.4)' }}
+                  color="white"
+                  px={4}
+                  py={2}
+                  minH="40px"
+                  borderRadius="lg"
+                  fontWeight="medium"
+                  fontSize="md"
+                  transition="all 0.2s"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => navigate('/profil')}
+                >
+                  Min profil
+                </MotionButton>
+
+                <MotionButton
+                  bg="red.500"
+                  _hover={{ bg: 'red.600' }}
+                  color="white"
+                  px={4}
+                  py={2}
+                  minH="40px"
+                  borderRadius="lg"
+                  fontWeight="medium"
+                  fontSize="md"
+                  boxShadow="0 0 8px rgba(255, 0, 0, 0.35)"
+                  transition="all 0.2s"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={logout}
+                >
+                  Logga ut
+                </MotionButton>
+              </>
+            ) : null}
+          </SimpleGrid>
+
+          {isAuthenticated ? (
+            <Text
+              fontSize="sm"
+              color="whiteAlpha.800"
+              whiteSpace="nowrap"
+              flexShrink={0}
+            >
+              Inloggad som: <strong>{displayName}</strong>
+            </Text>
+          ) : (
             <MotionButton
               bg="whiteAlpha.180"
               _hover={{ bg: 'whiteAlpha.260', boxShadow: '0 0 6px rgba(255,255,255,0.4)' }}
@@ -108,39 +161,11 @@ const Header = () => {
               transition="all 0.2s"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
-              onClick={() => navigate('/profil')}
+              onClick={() => navigate('/')}
             >
-              Min profil
+              Logga in
             </MotionButton>
-
-            <MotionButton
-              bg="red.500"
-              _hover={{ bg: 'red.600' }}
-              color="white"
-              px={4}
-              py={2}
-              minH="40px"
-              borderRadius="lg"
-              fontWeight="medium"
-              fontSize="md"
-              boxShadow="0 0 8px rgba(255, 0, 0, 0.35)"
-              transition="all 0.2s"
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={logout}
-            >
-              Logga ut
-            </MotionButton>
-          </SimpleGrid>
-
-          <Text
-            fontSize="sm"
-            color="whiteAlpha.800"
-            whiteSpace="nowrap"
-            flexShrink={0}
-          >
-            Inloggad som: <strong>{displayName}</strong>
-          </Text>
+          )}
         </Flex>
 
         <Flex
@@ -151,26 +176,26 @@ const Header = () => {
         >
           <Flex align="center" gap={2} minW={0}>
             <Image
-              src="/railworkerlogo.svg"
-              alt="Railworker logo"
-              boxSize="30px"
-              filter="drop-shadow(0 0 6px rgba(255,255,255,0.3))"
+              src="/vallakra-railworker-logo.png"
+              alt="Vallåkra Railworker logo"
+              h="32px"
+              w="auto"
+              objectFit="contain"
               flexShrink={0}
             />
             <Heading
-              size="md"
-              letterSpacing="wide"
-              textTransform="uppercase"
+              size="sm"
+              letterSpacing="normal"
               fontWeight="extrabold"
               color="whiteAlpha.900"
               whiteSpace="nowrap"
             >
-              Railworker
+              Vallåkra Railworker
             </Heading>
           </Flex>
         </Flex>
 
-        <SimpleGrid columns={3} spacing={{ base: 2, md: 3 }} display={{ base: 'grid', md: 'none' }}>
+        <SimpleGrid columns={isAuthenticated ? 3 : 1} spacing={{ base: 2, md: 3 }} display={{ base: 'grid', md: 'none' }}>
           <MotionButton
             bg="whiteAlpha.200"
             _hover={{ bg: 'whiteAlpha.300', boxShadow: '0 0 6px rgba(255,255,255,0.4)' }}
@@ -188,51 +213,57 @@ const Header = () => {
             Start
           </MotionButton>
 
-          <MotionButton
-            bg="whiteAlpha.200"
-            _hover={{ bg: 'whiteAlpha.300', boxShadow: '0 0 6px rgba(255,255,255,0.4)' }}
-            color="white"
-            px={{ base: 2, md: 5 }}
-            py={{ base: 2, md: 2 }}
-            borderRadius="lg"
-            fontWeight="medium"
-            fontSize={{ base: 'sm', md: 'md' }}
-            transition="all 0.2s"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate('/profil')}
-          >
-            Min profil
-          </MotionButton>
+          {isAuthenticated ? (
+            <>
+              <MotionButton
+                bg="whiteAlpha.200"
+                _hover={{ bg: 'whiteAlpha.300', boxShadow: '0 0 6px rgba(255,255,255,0.4)' }}
+                color="white"
+                px={{ base: 2, md: 5 }}
+                py={{ base: 2, md: 2 }}
+                borderRadius="lg"
+                fontWeight="medium"
+                fontSize={{ base: 'sm', md: 'md' }}
+                transition="all 0.2s"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate('/profil')}
+              >
+                Min profil
+              </MotionButton>
 
-          <MotionButton
-            bg="red.500"
-            _hover={{ bg: 'red.600' }}
-            color="white"
-            px={{ base: 2, md: 5 }}
-            py={{ base: 2, md: 2 }}
-            borderRadius="lg"
-            fontWeight="medium"
-            fontSize={{ base: 'sm', md: 'md' }}
-            boxShadow="0 0 8px rgba(255, 0, 0, 0.4)"
-            transition="all 0.2s"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={logout}
-          >
-            Logga ut
-          </MotionButton>
+              <MotionButton
+                bg="red.500"
+                _hover={{ bg: 'red.600' }}
+                color="white"
+                px={{ base: 2, md: 5 }}
+                py={{ base: 2, md: 2 }}
+                borderRadius="lg"
+                fontWeight="medium"
+                fontSize={{ base: 'sm', md: 'md' }}
+                boxShadow="0 0 8px rgba(255, 0, 0, 0.4)"
+                transition="all 0.2s"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={logout}
+              >
+                Logga ut
+              </MotionButton>
+            </>
+          ) : null}
         </SimpleGrid>
 
-        <Text
-          fontSize="xs"
-          color="whiteAlpha.800"
-          textAlign="center"
-          display={{ base: 'block', md: 'none' }}
-          noOfLines={1}
-        >
-          Inloggad som: <strong>{displayName}</strong>
-        </Text>
+        {isAuthenticated ? (
+          <Text
+            fontSize="xs"
+            color="whiteAlpha.800"
+            textAlign="center"
+            display={{ base: 'block', md: 'none' }}
+            noOfLines={1}
+          >
+            Inloggad som: <strong>{displayName}</strong>
+          </Text>
+        ) : null}
       </Flex>
     </Box>
   );

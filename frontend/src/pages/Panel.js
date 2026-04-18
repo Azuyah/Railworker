@@ -579,23 +579,25 @@ export default function Panel() {
 
   const handleExportDisp = useCallback(async (project) => {
     try {
-      if (!token || !project?.id) {
-        toast({
-          title: 'Logga in igen för att ladda ner disp.',
-          status: 'error',
-          duration: 3000,
-          isClosable: true,
-        });
+      if (!project?.id) {
         return;
       }
 
       setExportingProjectId(project.id);
-      const response = await fetch(apiUrl(`/api/projects/${project.id}/export-disp?ts=${Date.now()}`), {
-        cache: 'no-store',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const endpoint = token
+        ? `/api/projects/${project.id}/export-disp?ts=${Date.now()}`
+        : `/api/public/projects/${project.id}/export-disp?ts=${Date.now()}`;
+      const response = await fetch(
+        apiUrl(endpoint),
+        token
+          ? {
+              cache: 'no-store',
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          : { cache: 'no-store' }
+      );
 
       if (!response.ok) {
         throw new Error('Kunde inte ladda ner disp');
@@ -631,12 +633,14 @@ export default function Panel() {
   const fetchAllProjects = useCallback(async () => {
     try {
       const response = await axios.get(
-        apiUrl('/api/projects'),
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        apiUrl(token ? '/api/projects' : '/api/public/projects'),
+        token
+          ? {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          : undefined
       );
 
       setProjects(response.data);
@@ -647,12 +651,8 @@ export default function Panel() {
   }, [token]);
 
   useEffect(() => {
-    if (!token) {
-      navigate('/');
-      return;
-    }
     fetchAllProjects();
-  }, [fetchAllProjects, navigate, token]);
+  }, [fetchAllProjects]);
 
   useEffect(() => {
     if (!token || user?.role !== 'TSM') {
@@ -805,19 +805,17 @@ export default function Panel() {
                       )}
                     </div>
                     <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:space-x-2 sm:gap-0">
-                      {user?.role === 'TSM' && (
-                        <Button
-                          onClick={() => handleExportDisp(project)}
-                          className="fancy-button"
-                          colorScheme="blue"
-                          isLoading={exportingProjectId === project.id}
-                          loadingText="Laddar"
-                          width={{ base: '100%', sm: 'auto' }}
-                        >
-                          Ladda ner disp
-                        </Button>
-                      )}
-                      {user?.role === 'TSM' && (
+                      <Button
+                        onClick={() => handleExportDisp(project)}
+                        className="fancy-button"
+                        colorScheme="blue"
+                        isLoading={exportingProjectId === project.id}
+                        loadingText="Laddar"
+                        width={{ base: '100%', sm: 'auto' }}
+                      >
+                        Ladda ner disp
+                      </Button>
+                      {user?.role === 'TSM' ? (
                         <Button
                           onClick={() => {
                             const planningStatus = getLatestNextPlanningStatus(project);
@@ -845,14 +843,24 @@ export default function Panel() {
                           colorScheme="blue"
                           isDisabled={!getProjectNextPlanDate(project)}
                           width={{ base: '100%', sm: 'auto' }}
+                          >
+                            {(() => {
+                              if (!getProjectNextPlanDate(project)) return 'Ingen planering';
+                              const planningStatus = getLatestNextPlanningStatus(project);
+                              return planningStatus.status === 'none'
+                                ? 'Förplanera'
+                                : 'Kontrollera status';
+                            })()}
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={() => navigate('/')}
+                          className="fancy-button"
+                          colorScheme="blue"
+                          variant="outline"
+                          width={{ base: '100%', sm: 'auto' }}
                         >
-                          {(() => {
-                            if (!getProjectNextPlanDate(project)) return 'Ingen planering';
-                            const planningStatus = getLatestNextPlanningStatus(project);
-                            return planningStatus.status === 'none'
-                              ? 'Förplanera'
-                              : 'Kontrollera status';
-                          })()}
+                          Logga in för förplanering
                         </Button>
                       )}
                     </div>

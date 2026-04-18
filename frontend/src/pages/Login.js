@@ -105,12 +105,25 @@ export default function Login() {
       </div>
 
       <div className="relative z-10 w-full max-w-sm rounded-xl bg-white bg-opacity-90 p-8 shadow-xl">
-        <h2 className="mb-2 text-center text-3xl font-bold">Railworker</h2>
+        <div className="mb-4 flex justify-center">
+          <img
+            src="/vallakra-railworker-logo.png"
+            alt="Vallåkra Railworker"
+            className="h-16 w-auto object-contain"
+          />
+        </div>
+        <h2 className="mb-2 text-center text-3xl font-bold">Vallåkra Railworker</h2>
         <p className="mb-6 text-center text-sm text-gray-600">
           {mode === 'TSM'
-            ? 'Logga in med ditt namn och telefonnummer.'
+            ? 'Logga in med ditt namn och telefonnummer för att förplanera.'
             : 'HTSM loggar in med e-post och lösenord.'}
         </p>
+
+        {mode === 'TSM' && (
+          <div className="mb-5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+            Du kan öppna TSM-sidan utan inloggning för att se projekt och ladda ner disp. Inloggning behövs först när du ska förplanera.
+          </div>
+        )}
 
         {mode === 'TSM' ? (
           <>

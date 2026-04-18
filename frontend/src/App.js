@@ -23,15 +23,7 @@ function AppRoutes() {
       <Route path="/" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
-      {/* Skyddade routes - inlogg krävs */}
-      <Route
-        path="/panel"
-        element={
-          <ProtectedRoute allowedRoles={['TSM']}>
-            <Panel />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/panel" element={<Panel />} />
       <Route
         path="/htsmpanel"
         element={

@@ -44,6 +44,26 @@ app.get('/api/telefonkatalog', (req, res) => {
   });
 });
 
+app.get('/api/public/projects', async (req, res) => {
+  try {
+    const projects = await prisma.project.findMany({
+      where: { visibleToTsm: true },
+      include: {
+        sections: true,
+        beteckningar: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    res.json(projects.map((project) => hydrateProjectSections(project)));
+  } catch (error) {
+    console.error('Kunde inte hämta publika projekt:', error);
+    res.status(500).json({ error: 'Kunde inte hämta projekt just nu' });
+  }
+});
+
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
   throw new Error('JWT_SECRET is not defined in your .env file');
@@ -1264,6 +1284,42 @@ app.get('/api/projects/:id/export-disp', authMiddleware, async (req, res) => {
     res.send(Buffer.from(buffer));
   } catch (error) {
     console.error('Fel vid export av dispositionsarbetsplan:', error);
+    res.status(500).json({ error: 'Kunde inte exportera dispositionsarbetsplan' });
+  }
+});
+
+app.get('/api/public/projects/:id/export-disp', async (req, res) => {
+  try {
+    const projectId = parseInt(req.params.id, 10);
+    if (Number.isNaN(projectId)) {
+      return res.status(400).json({ error: 'Ogiltigt projekt-ID' });
+    }
+
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      include: {
+        sections: true,
+        beteckningar: true,
+      },
+    });
+
+    if (!project || !project.visibleToTsm) {
+      return res.status(404).json({ error: 'Projekt hittades inte' });
+    }
+
+    const buffer = await createDispPdfBuffer(project);
+    const safeName = sanitizeDownloadFileBase(buildDispExportBaseName(project), 'dispositionsarbetsplan');
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+    res.setHeader('X-Export-Filename', `${safeName || 'dispositionsarbetsplan'}.pdf`);
+    res.setHeader('Content-Disposition', `attachment; filename=\"${safeName || 'dispositionsarbetsplan'}.pdf\"`);
+    res.send(Buffer.from(buffer));
+  } catch (error) {
+    console.error('Fel vid publik export av dispositionsarbetsplan:', error);
     res.status(500).json({ error: 'Kunde inte exportera dispositionsarbetsplan' });
   }
 });
