@@ -46,6 +46,8 @@ app.get('/api/telefonkatalog', (req, res) => {
 
 app.get('/api/public/projects', async (req, res) => {
   try {
+    await syncExpiredTsmVisibility();
+
     const projects = await prisma.project.findMany({
       where: { visibleToTsm: true },
       include: {
@@ -272,6 +274,14 @@ const getPlanEntryAnchor = (entry = {}) => {
   return Number.isNaN(parsed.getTime()) ? Number.POSITIVE_INFINITY : parsed.getTime();
 };
 
+const getPlanEntryEndAnchor = (entry = {}) => {
+  const date = normalizeDateForInput(entry.endDate || entry.startDate || '');
+  const time = String(entry.endTime || entry.startTime || '23:59').trim() || '23:59';
+  if (!date) return Number.NEGATIVE_INFINITY;
+  const parsed = new Date(`${date}T${time.length === 5 ? time : '23:59'}:00`);
+  return Number.isNaN(parsed.getTime()) ? Number.NEGATIVE_INFINITY : parsed.getTime();
+};
+
 const getNextPlanEntry = (project) => {
   const now = Date.now();
   const entries = buildPlanEntries(project)
@@ -363,6 +373,51 @@ const canAccessProject = (role = '', project = null) => {
     return Boolean(project.visibleToTsm);
   }
   return true;
+};
+
+const isProjectTsmVisibilityExpired = (project = {}) => {
+  if (!project?.visibleToTsm) {
+    return false;
+  }
+
+  const endAnchors = buildPlanEntries(project)
+    .map((entry) => getPlanEntryEndAnchor(entry))
+    .filter((anchor) => Number.isFinite(anchor) && anchor > Number.NEGATIVE_INFINITY);
+
+  if (!endAnchors.length) {
+    return false;
+  }
+
+  return Date.now() > Math.max(...endAnchors);
+};
+
+const syncExpiredTsmVisibility = async () => {
+  const candidates = await prisma.project.findMany({
+    where: { visibleToTsm: true },
+    select: {
+      id: true,
+      visibleToTsm: true,
+      startDate: true,
+      startTime: true,
+      endDate: true,
+      endTime: true,
+      formState: true,
+      beteckningar: true,
+    },
+  });
+
+  const expiredIds = candidates
+    .filter((project) => isProjectTsmVisibilityExpired(project))
+    .map((project) => project.id);
+
+  if (!expiredIds.length) {
+    return;
+  }
+
+  await prisma.project.updateMany({
+    where: { id: { in: expiredIds } },
+    data: { visibleToTsm: false },
+  });
 };
 
 app.post('/api/njdb/driftplatser/expand', authMiddleware, async (req, res) => {
@@ -725,6 +780,8 @@ app.post('/api/projects', authMiddleware, async (req, res) => {
 
 app.get('/api/projects', authMiddleware, async (req, res) => {
   try {
+    await syncExpiredTsmVisibility();
+
     const requesterRole = String(req.user?.role || '').toUpperCase();
 
     const projects = await prisma.project.findMany({
@@ -785,6 +842,8 @@ app.get('/api/projects', authMiddleware, async (req, res) => {
 
 app.get('/api/project/:id', authMiddleware, async (req, res) => {
   try {
+    await syncExpiredTsmVisibility();
+
     const projectId = parseInt(req.params.id, 10);
     if (isNaN(projectId)) {
       return res.status(400).json({ error: 'Ogiltigt projekt-ID' });
@@ -1290,6 +1349,8 @@ app.get('/api/projects/:id/export-disp', authMiddleware, async (req, res) => {
 
 app.get('/api/public/projects/:id/export-disp', async (req, res) => {
   try {
+    await syncExpiredTsmVisibility();
+
     const projectId = parseInt(req.params.id, 10);
     if (Number.isNaN(projectId)) {
       return res.status(400).json({ error: 'Ogiltigt projekt-ID' });
