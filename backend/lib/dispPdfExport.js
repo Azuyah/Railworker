@@ -14,7 +14,7 @@ const FONT_PATHS = {
   timesItalic: '/System/Library/Fonts/Supplemental/Times New Roman Italic.ttf',
   timesBoldItalic: '/System/Library/Fonts/Supplemental/Times New Roman Bold Italic.ttf',
 };
-const PDF_FONTS = {
+const CUSTOM_PDF_FONTS = {
   header: 'LegacyVerdana',
   headerBold: 'LegacyVerdanaBold',
   headerItalic: 'LegacyVerdanaItalic',
@@ -23,6 +23,16 @@ const PDF_FONTS = {
   bodyBold: 'LegacyTimesBold',
   bodyItalic: 'LegacyTimesItalic',
   bodyBoldItalic: 'LegacyTimesBoldItalic',
+};
+const PDF_FONTS = {
+  header: 'Helvetica',
+  headerBold: 'Helvetica-Bold',
+  headerItalic: 'Helvetica-Oblique',
+  headerBoldItalic: 'Helvetica-BoldOblique',
+  body: 'Times-Roman',
+  bodyBold: 'Times-Bold',
+  bodyItalic: 'Times-Italic',
+  bodyBoldItalic: 'Times-BoldItalic',
 };
 
 const SWEDISH_SHORT_DAYS = ['Sön', 'Mån', 'Tis', 'Ons', 'Tors', 'Fre', 'Lör'];
@@ -687,22 +697,34 @@ const createDocument = (title = 'Dispositionsarbetsplan') => {
   const buffers = [];
   doc.on('data', (chunk) => buffers.push(chunk));
 
-  const registerFontIfPresent = (fontName, fontPath) => {
+  Object.assign(PDF_FONTS, {
+    header: 'Helvetica',
+    headerBold: 'Helvetica-Bold',
+    headerItalic: 'Helvetica-Oblique',
+    headerBoldItalic: 'Helvetica-BoldOblique',
+    body: 'Times-Roman',
+    bodyBold: 'Times-Bold',
+    bodyItalic: 'Times-Italic',
+    bodyBoldItalic: 'Times-BoldItalic',
+  });
+
+  const registerFontIfPresent = (fontKey, fontName, fontPath) => {
     if (fs.existsSync(fontPath)) {
       doc.registerFont(fontName, fontPath);
+      PDF_FONTS[fontKey] = fontName;
       return true;
     }
     return false;
   };
 
-  registerFontIfPresent(PDF_FONTS.header, FONT_PATHS.verdana);
-  registerFontIfPresent(PDF_FONTS.headerBold, FONT_PATHS.verdanaBold);
-  registerFontIfPresent(PDF_FONTS.headerItalic, FONT_PATHS.verdanaItalic);
-  registerFontIfPresent(PDF_FONTS.headerBoldItalic, FONT_PATHS.verdanaBoldItalic);
-  registerFontIfPresent(PDF_FONTS.body, FONT_PATHS.times);
-  registerFontIfPresent(PDF_FONTS.bodyBold, FONT_PATHS.timesBold);
-  registerFontIfPresent(PDF_FONTS.bodyItalic, FONT_PATHS.timesItalic);
-  registerFontIfPresent(PDF_FONTS.bodyBoldItalic, FONT_PATHS.timesBoldItalic);
+  registerFontIfPresent('header', CUSTOM_PDF_FONTS.header, FONT_PATHS.verdana);
+  registerFontIfPresent('headerBold', CUSTOM_PDF_FONTS.headerBold, FONT_PATHS.verdanaBold);
+  registerFontIfPresent('headerItalic', CUSTOM_PDF_FONTS.headerItalic, FONT_PATHS.verdanaItalic);
+  registerFontIfPresent('headerBoldItalic', CUSTOM_PDF_FONTS.headerBoldItalic, FONT_PATHS.verdanaBoldItalic);
+  registerFontIfPresent('body', CUSTOM_PDF_FONTS.body, FONT_PATHS.times);
+  registerFontIfPresent('bodyBold', CUSTOM_PDF_FONTS.bodyBold, FONT_PATHS.timesBold);
+  registerFontIfPresent('bodyItalic', CUSTOM_PDF_FONTS.bodyItalic, FONT_PATHS.timesItalic);
+  registerFontIfPresent('bodyBoldItalic', CUSTOM_PDF_FONTS.bodyBoldItalic, FONT_PATHS.timesBoldItalic);
 
   return {
     doc,
