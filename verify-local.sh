@@ -65,6 +65,20 @@ if [ "$HTSM_COUNT" -lt 1 ]; then
 fi
 log "HTSM-projektlista fungerar ($HTSM_COUNT projekt)"
 
+FIRST_HTSM_ID="$(printf '%s' "$HTSM_PROJECTS_JSON" | python3 -c 'import json,sys; data=json.load(sys.stdin); print(data[0]["id"])')"
+
+PROJECT_CODE_SINGULAR="$(curl -s -o "$TMP_DIR/project-singular.json" -w "%{http_code}" \
+  "http://localhost:4000/api/project/$FIRST_HTSM_ID" \
+  -H "Authorization: Bearer $HTSM_TOKEN")"
+PROJECT_CODE_PLURAL="$(curl -s -o "$TMP_DIR/project-plural.json" -w "%{http_code}" \
+  "http://localhost:4000/api/projects/$FIRST_HTSM_ID" \
+  -H "Authorization: Bearer $HTSM_TOKEN")"
+if [ "$PROJECT_CODE_SINGULAR" != "200" ] || [ "$PROJECT_CODE_PLURAL" != "200" ]; then
+  echo "Project detail routes failed: singular=$PROJECT_CODE_SINGULAR plural=$PROJECT_CODE_PLURAL" >&2
+  exit 1
+fi
+log "Projektdetalj fungerar på både singular och plural route"
+
 DISP_CODE="$(curl -s -o "$TMP_DIR/public-disp.pdf" -w "%{http_code}" "http://localhost:4000/api/public/projects/$FIRST_PUBLIC_ID/export-disp")"
 if [ "$DISP_CODE" != "200" ]; then
   echo "Public disp export failed for project $FIRST_PUBLIC_ID (HTTP $DISP_CODE)" >&2

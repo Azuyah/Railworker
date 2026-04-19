@@ -840,7 +840,7 @@ app.get('/api/projects', authMiddleware, async (req, res) => {
   }
 });
 
-app.get('/api/project/:id', authMiddleware, async (req, res) => {
+const getProjectByIdHandler = async (req, res) => {
   try {
     await syncExpiredTsmVisibility();
 
@@ -892,9 +892,12 @@ const project = await prisma.project.findUnique({
     console.error('Fel vid hämtning av projekt:', error.message, error.stack);
     res.status(500).json({ error: 'Kunde inte hämta projekt' });
   }
-});
+};
 
-app.delete('/api/project/:id', async (req, res) => {
+app.get('/api/project/:id', authMiddleware, getProjectByIdHandler);
+app.get('/api/projects/:id', authMiddleware, getProjectByIdHandler);
+
+const deleteProjectByIdHandler = async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Ingen token angiven' });
@@ -914,7 +917,10 @@ app.delete('/api/project/:id', async (req, res) => {
     console.error('Fel vid borttagning:', error);
     res.status(500).json({ error: 'Kunde inte ta bort projekt' });
   }
-});
+};
+
+app.delete('/api/project/:id', deleteProjectByIdHandler);
+app.delete('/api/projects/:id', deleteProjectByIdHandler);
 
 app.put('/api/projects/:id', async (req, res) => {
   const authHeader = req.headers.authorization;
