@@ -612,7 +612,6 @@ const setSectionHeaders = (worksheet, sections, sectionColumns, layout) => {
         color: { argb: 'FF1F5EA8' },
         name: 'Calibri',
       };
-      applySectionPopupNote(worksheet.getCell(`${column}${locationRow}`), section, mappedSection.index);
     }
     setCell(worksheet, `${column}${boundaryRow}`, getSectionBoundaryText(section) || getSectionSignalAndTrack(section).signal || '');
     worksheet.getCell(`${column}${boundaryRow}`).font = {
@@ -624,9 +623,7 @@ const setSectionHeaders = (worksheet, sections, sectionColumns, layout) => {
     };
     applySectionPopupNote(worksheet.getCell(`${column}${boundaryRow}`), section, mappedSection.index);
     setCell(worksheet, `${column}${typeRow}`, isDp ? 'DP' : 'Linje');
-    applySectionPopupNote(worksheet.getCell(`${column}${typeRow}`), section, mappedSection.index);
     setCell(worksheet, `${column}${numberRow}`, getSectionDisplayIndex(section, mappedSection.index));
-    applySectionPopupNote(worksheet.getCell(`${column}${numberRow}`), section, mappedSection.index);
     worksheet.getCell(`${column}${numberRow}`).fill = isDp
       ? {
           type: 'pattern',
