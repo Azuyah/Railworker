@@ -11,7 +11,11 @@ const DRIFTPLATS_CODE_BY_NAME = new Map(
         .map((item) => [String(item.name).trim(), String(item.code).trim()])
     : []
 );
-const DRIFTPLATS_NAMES_BY_LENGTH = [...DRIFTPLATS_CODE_BY_NAME.keys()].sort((left, right) => right.length - left.length);
+const DRIFTPLATS_ALIAS_TO_CODE = new Map([
+  ...DRIFTPLATS_CODE_BY_NAME.entries(),
+  ['Landskrona Ö', 'Lkö'],
+]);
+const DRIFTPLATS_NAMES_BY_LENGTH = [...DRIFTPLATS_ALIAS_TO_CODE.keys()].sort((left, right) => right.length - left.length);
 
 const formatAnordningLabel = (item = '') => {
   const upper = String(item).toUpperCase();
@@ -66,10 +70,10 @@ const abbreviateBoundaryText = (value = '') => {
   }
 
   for (const name of DRIFTPLATS_NAMES_BY_LENGTH) {
-    const code = DRIFTPLATS_CODE_BY_NAME.get(name);
+    const code = DRIFTPLATS_ALIAS_TO_CODE.get(name);
     if (!code) continue;
 
-    const regex = new RegExp(`(^|[\\s\\-–,(/])(${escapeRegExp(name)})(?=(?:\\s+\\d|\\s*[\\-–,/)])|$)`, 'gu');
+    const regex = new RegExp(`(^|[\\s\\-–,(/])(${escapeRegExp(name)})(?=(?:\\s+\\S|\\s*[\\-–,/)])|$)`, 'gu');
     text = text.replace(regex, (_, prefix = '') => `${prefix}${code}`);
   }
 
