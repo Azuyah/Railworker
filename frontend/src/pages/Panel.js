@@ -632,15 +632,21 @@ export default function Panel() {
 
   const fetchAllProjects = useCallback(async () => {
     try {
+      const requestConfig = {
+        params: {
+          _ts: Date.now(),
+        },
+      };
+
+      if (token) {
+        requestConfig.headers = {
+          Authorization: `Bearer ${token}`,
+        };
+      }
+
       const response = await axios.get(
         apiUrl(token ? '/api/projects' : '/api/public/projects'),
-        token
-          ? {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          : undefined
+        requestConfig
       );
 
       setProjects(response.data);
@@ -655,10 +661,6 @@ export default function Panel() {
   }, [fetchAllProjects]);
 
   useEffect(() => {
-    if (!token || user?.role !== 'TSM') {
-      return undefined;
-    }
-
     const intervalId = window.setInterval(() => {
       fetchAllProjects();
     }, 15000);
@@ -681,7 +683,7 @@ export default function Panel() {
       window.removeEventListener('focus', refreshOnFocus);
       document.removeEventListener('visibilitychange', refreshOnVisibility);
     };
-  }, [fetchAllProjects, token, user?.role]);
+  }, [fetchAllProjects]);
 
   useEffect(() => {
     if (user?.role !== 'TSM') return;
