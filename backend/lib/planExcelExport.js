@@ -159,15 +159,16 @@ const getTemplateKind = (worksheet) => {
 };
 
 const getEntryFjtklValue = (project = {}, entry = {}) =>
-  [project.namn || '', entry?.telefonnummer || project.telefonnummer || '']
-    .filter(Boolean)
-    .join(' ');
+  String(entry?.telefonnummer || project.telefonnummer || '').trim();
 
 const getEntryBoundaryValue = (project = {}, entry = {}) =>
   abbreviateBoundaryText(String(entry?.granspunkt || project.granspunkter || ''))
     .trim()
     .replace(/\s*-\s*/g, '-')
     .replace(/\s*,\s*/g, ', ');
+
+const getHtsmPhoneValue = (projectFormState = {}) =>
+  String(projectFormState?.htsmTelefon || '').trim();
 
 const setTopInfoRows = (worksheet, project = {}, entries = []) => {
   const templateKind = getTemplateKind(worksheet);
@@ -975,6 +976,10 @@ const fillWorksheet = (worksheet, project, entriesForSheet, rows) => {
   setCell(worksheet, `E${layout.summaryRow}`, formatProjectPeriodFromEntries(sheetEntries, project));
   forceBlackFont(worksheet.getCell(`C${layout.summaryRow}`));
   forceBlackFont(worksheet.getCell(`E${layout.summaryRow}`));
+  if (layout.templateKind === 'updated-legacy-v2') {
+    setCell(worksheet, 'E6', getHtsmPhoneValue(projectFormState));
+    forceBlackFont(worksheet.getCell('E6'));
+  }
   const { sectionColumns, trailingColumns } = ensureWorksheetHasSectionCapacity(worksheet, sections, layout);
   setCell(worksheet, `G${layout.summaryRow}`, 'Tittibild:');
   previewLabelCell.alignment = {
