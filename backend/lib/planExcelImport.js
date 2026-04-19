@@ -157,6 +157,8 @@ const buildImportedRowIdentity = (row = {}) =>
 const importRowsFromWorksheet = (worksheet, project = {}, plan = {}) => {
   const sectionCount = Math.max(1, Array.isArray(project.sections) ? project.sections.length : 0);
   const baseSectionStart = 8;
+  const dataHeaderRow = normalizeText(getCellText(worksheet, 'C9')) === 'NR' ? 9 : 8;
+  const dataStartRow = dataHeaderRow + 1;
   const trailingBase = baseSectionStart + sectionCount;
   const sectionColumns = Array.from({ length: sectionCount }, (_, index) => getColumnLetter(baseSectionStart + index));
   const trailingColumns = {
@@ -170,7 +172,7 @@ const importRowsFromWorksheet = (worksheet, project = {}, plan = {}) => {
   const importedRows = [];
   let blankStreak = 0;
 
-  for (let rowNumber = 9; rowNumber <= Math.max(worksheet.rowCount, 120); rowNumber += 1) {
+  for (let rowNumber = dataStartRow; rowNumber <= Math.max(worksheet.rowCount, 120); rowNumber += 1) {
     const btkn = getCellText(worksheet, `D${rowNumber}`);
     const nameAndPhone = parseNameAndPhone(getCellText(worksheet, `E${rowNumber}`));
     const anordning = parseAnordningar(getCellText(worksheet, `F${rowNumber}`));

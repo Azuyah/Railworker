@@ -273,7 +273,7 @@ const Plan = () => {
   });
   const [activePlanEntryKey, setActivePlanEntryKey] = useState('');
   const [hoveredSectionInfo, setHoveredSectionInfo] = useState(null);
-  const [topPanelCollapsed, setTopPanelCollapsed] = useState(false);
+  const [topPanelCollapsed, setTopPanelCollapsed] = useState(true);
   const [columnWidths, setColumnWidths] = useState({
     btkn: 54,
     namn: 96,
@@ -2253,11 +2253,11 @@ if (loading || !project) {
   return (
 <Box
   minH="100vh"
-  bg="linear-gradient(180deg, #F4F7FB 0%, #E9EEF6 100%)"
+  bg="linear-gradient(180deg, #F1F5F9 0%, #E7EDF5 100%)"
   py={6}
   px={[2, 4]}
 >
-  <Box position="fixed" inset={0} bg="linear-gradient(180deg, #F4F7FB 0%, #E9EEF6 100%)" zIndex={0} />
+  <Box position="fixed" inset={0} bg="linear-gradient(180deg, #F1F5F9 0%, #E7EDF5 100%)" zIndex={0} />
   <Box position="relative" zIndex={1}>
       <Header />
       <Box maxW="1800px" mx="auto" mt={2} pt="52px">
@@ -2347,7 +2347,7 @@ if (loading || !project) {
   </ModalContent>
 </Modal>
 
-<Box mb={3}>
+<Box mb={3} position="sticky" top="72px" zIndex={4}>
   <style>
     {`
       @keyframes pendingPulse {
@@ -2357,50 +2357,107 @@ if (loading || !project) {
       }
     `}
   </style>
-  {topPanelCollapsed ? (
-    <Box
-      bg="rgba(255,255,255,0.94)"
-      border="1px solid #D5DEEA"
-      borderRadius="2xl"
-      px={4}
-      py={2}
-      boxShadow="0 12px 28px rgba(15, 23, 42, 0.06)"
-    >
-      <Flex align="center" justify="space-between" wrap="wrap" gap={2}>
-        <Box>
-          <Text fontSize="sm" fontWeight="800" color="gray.900">
-            {project.name}
-          </Text>
-          <Text fontSize="xs" color="gray.600" fontWeight="semibold">
-            {activePlanEntry?.startDate || '—'} {activePlanEntry?.beteckning ? `• ${activePlanEntry.beteckning}` : ''}
-          </Text>
-        </Box>
-        <HStack spacing={3} wrap="wrap">
-          <Text fontSize="xs" color="gray.700" fontWeight="semibold">
-            Nödnummer: {projectNodnummer || '—'}
-          </Text>
-          <Text fontSize="xs" color="gray.700" fontWeight="semibold">
-            Sluttid: {projectSluttid || '—'}
-          </Text>
-        </HStack>
-      </Flex>
-    </Box>
-  ) : (
-    <Box
-      bg="rgba(255,255,255,0.94)"
-      border="1px solid #D5DEEA"
-      borderRadius="2xl"
-      px={4}
-      py={3}
-      boxShadow="0 18px 45px rgba(15, 23, 42, 0.08)"
-      backdropFilter="blur(12px)"
-    >
-      {projectPlanEntries.length > 1 && (
-        <HStack spacing={2} wrap="wrap" mb={3}>
-          {projectPlanEntries.map((entry) => (
+  <Box
+    bg="rgba(255,255,255,0.96)"
+    border="1px solid #CBD5E1"
+    borderRadius="2xl"
+    px={4}
+    py={3}
+    boxShadow="0 16px 40px rgba(15, 23, 42, 0.08)"
+    backdropFilter="blur(10px)"
+  >
+    <Flex align="center" justify="space-between" wrap="wrap" gap={3}>
+      <Box minW="260px">
+        <Text fontSize="xs" color="gray.500" textTransform="uppercase" letterSpacing="0.16em" fontWeight="bold">
+          Förplaneringsplanka
+        </Text>
+        <Text fontSize="lg" fontWeight="900" color="gray.900" lineHeight="1.15">
+          {project.name}
+        </Text>
+        <Text fontSize="sm" color="gray.600" fontWeight="semibold">
+          {project.plats || 'Plats saknas'}
+          {activePlanEntry?.startDate ? ` • ${activePlanEntry.startDate}` : ''}
+          {activePlanEntry?.beteckning ? ` • ${activePlanEntry.beteckning}` : ''}
+        </Text>
+      </Box>
+
+      <HStack spacing={2} wrap="wrap">
+        <Button
+          colorScheme={pendingTsmRowsForActivePlan.length > 0 ? 'red' : 'gray'}
+          variant={pendingTsmRowsForActivePlan.length > 0 ? 'solid' : 'outline'}
+          borderRadius="xl"
+          size="sm"
+          onClick={onOpenPendingPlans}
+          animation={pendingTsmRowsForActivePlan.length > 0 ? 'pendingPulse 1.6s infinite' : undefined}
+        >
+          {pendingTsmRowsForActivePlan.length > 0
+            ? `${pendingTsmRowsForActivePlan.length} nya förplaneringar`
+            : 'Förplaneringar'}
+        </Button>
+        <Button
+          onClick={() => sparaProjekt()}
+          bg="green.600"
+          color="white"
+          borderRadius="xl"
+          _hover={{ bg: 'green.700' }}
+          boxShadow="sm"
+          size="sm"
+        >
+          Spara
+        </Button>
+        <Button
+          bg="blue.700"
+          color="white"
+          borderRadius="xl"
+          _hover={{ bg: 'blue.800' }}
+          onClick={exportPlanToExcel}
+          size="sm"
+        >
+          Exportera Excel
+        </Button>
+        <Button variant="outline" borderRadius="xl" borderColor="blue.200" bg="white" onClick={() => addRow()} size="sm">
+          + Rad
+        </Button>
+        <Menu>
+          <MenuButton
+            as={Button}
+            rightIcon={<ChevronDownIcon />}
+            variant="outline"
+            borderRadius="xl"
+            borderColor="blue.200"
+            bg="white"
+            size="sm"
+          >
+            Fler
+          </MenuButton>
+          <MenuList>
+            <MenuItem onClick={() => setIsProjectInfoOpen(true)}>Projektinformation</MenuItem>
+            <MenuItem onClick={() => setAnteckningarModalOpen(true)}>Anteckningar</MenuItem>
+            <MenuItem onClick={() => excelImportInputRef.current?.click()}>Importera Excel</MenuItem>
+            <MenuItem onClick={() => setArchivedModalOpen(true)}>Avslutade</MenuItem>
+            <MenuItem onClick={() => setHotkeysOpen(true)}>Kortkommandon</MenuItem>
+            <MenuItem onClick={() => setTopPanelCollapsed((prev) => !prev)}>
+              {topPanelCollapsed ? 'Visa mer info' : 'Dölj extra info'}
+            </MenuItem>
+          </MenuList>
+        </Menu>
+        <input
+          ref={excelImportInputRef}
+          type="file"
+          accept=".xlsx"
+          onChange={importPlanFromExcel}
+          style={{ display: 'none' }}
+        />
+      </HStack>
+    </Flex>
+
+    <Flex mt={3} align="center" justify="space-between" wrap="wrap" gap={3}>
+      <HStack spacing={2} wrap="wrap">
+        {projectPlanEntries.length > 1 &&
+          projectPlanEntries.map((entry) => (
             <Button
               key={entry.key}
-              size="sm"
+              size="xs"
               borderRadius="full"
               colorScheme={entry.key === activePlanEntry?.key ? 'blue' : 'gray'}
               variant={entry.key === activePlanEntry?.key ? 'solid' : 'outline'}
@@ -2409,158 +2466,85 @@ if (loading || !project) {
               {formatPlanEntryLabel(entry)}
             </Button>
           ))}
-        </HStack>
-      )}
-      <Flex align="center" justify="space-between" wrap="wrap" gap={2}>
-        <Box>
-          <Text fontSize="xs" color="blue.700" textTransform="uppercase" letterSpacing="0.18em" fontWeight="bold">
-            Projekt
-          </Text>
-          <Text fontSize="xl" fontWeight="900" color="gray.900">
-            {project.name}
-          </Text>
-          <Text fontSize="sm" color="gray.700" fontWeight="medium">
-            {project.plats}
-          </Text>
-          {activePlanEntry && (
-            <Text fontSize="sm" color="gray.600" fontWeight="semibold">
-              {activePlanEntry.startDate || '—'} {activePlanEntry.beteckning ? `• ${activePlanEntry.beteckning}` : ''}
-            </Text>
-          )}
-        </Box>
+      </HStack>
 
-        <HStack spacing={2} wrap="wrap">
+      <HStack spacing={2} wrap="wrap">
+        <Input
+          placeholder="Sök namn eller telefon..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          width="220px"
+          bg="white"
+          border="1px solid #CBD5E1"
+          borderRadius="full"
+          px={4}
+          py={2}
+          size="sm"
+          _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 2px rgba(49,130,206,0.18)' }}
+        />
+        <HStack spacing={1} bg="white" border="1px solid #CBD5E1" borderRadius="full" px={1} py={1}>
           <Button
-            colorScheme={pendingTsmRowsForActivePlan.length > 0 ? 'red' : 'gray'}
-            variant={pendingTsmRowsForActivePlan.length > 0 ? 'solid' : 'outline'}
+            size="xs"
+            variant="ghost"
             borderRadius="full"
-            size="sm"
-            onClick={onOpenPendingPlans}
-            animation={pendingTsmRowsForActivePlan.length > 0 ? 'pendingPulse 1.6s infinite' : undefined}
+            minW="28px"
+            onClick={() => setZoomLevel((z) => Math.max(0.8, Number((z - 0.1).toFixed(2))))}
           >
-            {pendingTsmRowsForActivePlan.length > 0
-              ? `${pendingTsmRowsForActivePlan.length} nya förplaneringar`
-              : 'Förplaneringar'}
+            -
           </Button>
-          <Button onClick={() => sparaProjekt()} bg="blue.700" color="white" borderRadius="full" _hover={{ bg: 'blue.800' }} boxShadow="sm" size="sm">
-            Spara
+          <Text fontSize="xs" fontWeight="bold" color="gray.700" minW="44px" textAlign="center">
+            {Math.round(zoomLevel * 100)}%
+          </Text>
+          <Button size="xs" variant="ghost" borderRadius="full" minW="30px" onClick={() => setZoomLevel(1)}>
+            100
           </Button>
-          <Button variant="outline" borderRadius="full" borderColor="blue.200" bg="white" onClick={() => addRow()} size="sm">
-            + Lägg till rad
-          </Button>
-          <Button variant="outline" borderRadius="full" borderColor="blue.200" bg="white" onClick={() => setAnteckningarModalOpen(true)} size="sm">
-            Anteckningar
-          </Button>
-          <Button variant="outline" borderRadius="full" borderColor="blue.200" bg="white" onClick={exportPlanToExcel} size="sm">
-            Exportera planka
-          </Button>
-          <input
-            ref={excelImportInputRef}
-            type="file"
-            accept=".xlsx"
-            onChange={importPlanFromExcel}
-            style={{ display: 'none' }}
-          />
           <Button
-            variant="outline"
+            size="xs"
+            variant="ghost"
             borderRadius="full"
-            borderColor="blue.200"
-            bg="white"
-            onClick={() => excelImportInputRef.current?.click()}
-            size="sm"
+            minW="28px"
+            onClick={() => setZoomLevel((z) => Math.min(1.4, Number((z + 0.1).toFixed(2))))}
           >
-            Importera Excel
+            +
           </Button>
-          <Button variant="outline" borderRadius="full" borderColor="blue.200" bg="white" onClick={() => setArchivedModalOpen(true)} size="sm">
-            Avslutade
-          </Button>
-        </HStack>
-
-        <HStack spacing={2} wrap="wrap">
-          <HStack spacing={1} bg="white" border="1px solid #CBD5E1" borderRadius="full" px={1} py={1}>
-            <Button
-              size="xs"
-              variant="ghost"
-              borderRadius="full"
-              minW="30px"
-              onClick={() => setZoomLevel((z) => Math.max(0.8, Number((z - 0.1).toFixed(2))))}
-            >
-              -
-            </Button>
-            <Text fontSize="xs" fontWeight="bold" color="gray.700" minW="44px" textAlign="center">
-              {Math.round(zoomLevel * 100)}%
-            </Text>
-            <Button
-              size="xs"
-              variant="ghost"
-              borderRadius="full"
-              minW="30px"
-              onClick={() => setZoomLevel(1)}
-            >
-              100
-            </Button>
-            <Button
-              size="xs"
-              variant="ghost"
-              borderRadius="full"
-              minW="30px"
-              onClick={() => setZoomLevel((z) => Math.min(1.4, Number((z + 0.1).toFixed(2))))}
-            >
-              +
-            </Button>
-          </HStack>
-
-          <Input
-            placeholder="Sök namn eller telefon..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            width="220px"
-            bg="white"
-            border="1px solid #CBD5E1"
-            borderRadius="full"
-            px={4}
-            py={2}
-            _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 2px rgba(49,130,206,0.18)' }}
-          />
-
-          <Button variant="outline" borderRadius="full" borderColor="blue.200" bg="white" onClick={() => setHotkeysOpen(true)} size="sm">
-            Kortkommandon
-          </Button>
-        </HStack>
-      </Flex>
-
-      <Divider my={3} borderColor="blue.100" />
-
-      <HStack spacing={4} wrap="wrap">
-        <HStack spacing={2} bg="blue.50" border="1px solid #BFDBFE" px={3} py={2} borderRadius="xl">
-          <Text fontSize="xs" color="blue.800" fontWeight="bold" textTransform="uppercase" letterSpacing="0.12em">Nödnummer</Text>
-          <Input
-            size="xs"
-            placeholder="Nödnummer"
-            value={projectNodnummer}
-            isReadOnly
-            bg="white"
-            border="1px solid #BFDBFE"
-            width="170px"
-          />
-        </HStack>
-
-        <HStack spacing={2} bg="orange.50" border="1px solid #FBD38D" px={3} py={2} borderRadius="xl">
-          <Text fontSize="xs" color="orange.800" fontWeight="bold" textTransform="uppercase" letterSpacing="0.12em">Sluttid</Text>
-          <Input
-            size="xs"
-            type="time"
-            placeholder="Tid"
-            value={projectSluttid}
-            isReadOnly
-            bg="white"
-            border="1px solid #FBD38D"
-            width="90px"
-          />
         </HStack>
       </HStack>
-    </Box>
-  )}
+    </Flex>
+
+    {!topPanelCollapsed && (
+      <>
+        <Divider my={3} borderColor="blue.100" />
+        <HStack spacing={4} wrap="wrap">
+          <HStack spacing={2} bg="blue.50" border="1px solid #BFDBFE" px={3} py={2} borderRadius="xl">
+            <Text fontSize="xs" color="blue.800" fontWeight="bold" textTransform="uppercase" letterSpacing="0.12em">Nödnummer</Text>
+            <Input
+              size="xs"
+              placeholder="Nödnummer"
+              value={projectNodnummer}
+              isReadOnly
+              bg="white"
+              border="1px solid #BFDBFE"
+              width="170px"
+            />
+          </HStack>
+
+          <HStack spacing={2} bg="orange.50" border="1px solid #FBD38D" px={3} py={2} borderRadius="xl">
+            <Text fontSize="xs" color="orange.800" fontWeight="bold" textTransform="uppercase" letterSpacing="0.12em">Sluttid</Text>
+            <Input
+              size="xs"
+              type="time"
+              placeholder="Tid"
+              value={projectSluttid}
+              isReadOnly
+              bg="white"
+              border="1px solid #FBD38D"
+              width="90px"
+            />
+          </HStack>
+        </HStack>
+      </>
+    )}
+  </Box>
 </Box>
 
   <Box overflowX="visible">
@@ -2573,7 +2557,7 @@ if (loading || !project) {
       border="2px solid #475569"
       overflowX="auto"
       overflowY="scroll"
-      maxH="calc(100vh - 170px)"
+      maxH="calc(100vh - 152px)"
       w="full" 
       minW="100%" 
       sx={{
