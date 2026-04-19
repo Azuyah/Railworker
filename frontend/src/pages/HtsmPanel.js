@@ -52,6 +52,23 @@ const clearLiveSyncToken = () => {
   }
 };
 
+const getLiveSyncStatus = (project) => {
+  const syncedAt = project?.formState?.liveSync?.syncedAt;
+  if (!syncedAt) {
+    return {
+      label: 'Endast lokalt',
+      colorScheme: 'gray',
+      helper: 'Projektet finns bara på den här datorn tills du publicerar det till live.',
+    };
+  }
+
+  return {
+    label: 'Publicerad live',
+    colorScheme: 'green',
+    helper: `Senast publicerad ${new Date(syncedAt).toLocaleString('sv-SE')}.`,
+  };
+};
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
@@ -488,6 +505,17 @@ const Dashboard = () => {
             <Text fontWeight="700" color="gray.900" fontSize="lg">
               {project.name}
             </Text>
+            {showLiveSync && (
+              <Badge
+                colorScheme={getLiveSyncStatus(project).colorScheme}
+                borderRadius="full"
+                px={3}
+                py={1}
+                textTransform="none"
+              >
+                {getLiveSyncStatus(project).label}
+              </Badge>
+            )}
             {isProjectSent(project) && (
               <Badge colorScheme="orange" borderRadius="full" px={3} py={1} textTransform="none">
                 Skickat
@@ -502,9 +530,9 @@ const Dashboard = () => {
           <Text fontSize="sm" color="gray.600" mt={2}>
             {project.formState?.dispSettings?.veckaOchDagar || 'Ingen vecka/dag-rad angiven ännu'}
           </Text>
-          {showLiveSync && project.formState?.liveSync?.syncedAt && (
-            <Text fontSize="xs" color="blue.700" mt={2} fontWeight="600">
-              Publicerad live {new Date(project.formState.liveSync.syncedAt).toLocaleString('sv-SE')}
+          {showLiveSync && (
+            <Text fontSize="xs" color="gray.700" mt={2} fontWeight="600">
+              {getLiveSyncStatus(project).helper}
             </Text>
           )}
           <HStack spacing={3} mt={3} wrap="wrap">
