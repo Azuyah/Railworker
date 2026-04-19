@@ -1,6 +1,6 @@
-const PROD_API_BASE_URL = 'https://railworker-production.up.railway.app';
+export const PROD_API_BASE_URL = 'https://railworker-production.up.railway.app';
 
-const isPrivateIpv4Host = (hostname = '') => {
+export const isPrivateIpv4Host = (hostname = '') => {
   if (/^10\./.test(hostname)) return true;
   if (/^192\.168\./.test(hostname)) return true;
   const match = hostname.match(/^172\.(\d{1,3})\./);
@@ -9,7 +9,7 @@ const isPrivateIpv4Host = (hostname = '') => {
   return secondOctet >= 16 && secondOctet <= 31;
 };
 
-const getLocalApiBaseUrl = () => {
+export const getLocalApiBaseUrl = () => {
   if (typeof window === 'undefined') {
     return null;
   }
@@ -33,6 +33,8 @@ export const API_BASE_URL =
   process.env.REACT_APP_API_BASE_URL ||
   getLocalApiBaseUrl() ||
   PROD_API_BASE_URL;
+
+export const isLocalAppHost = () => Boolean(getLocalApiBaseUrl());
 
 export const apiUrl = (path = '') => {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;

@@ -16,7 +16,41 @@ import {
   Stack,
 } from '@chakra-ui/react';
 import Header from '../components/Header';
-import { apiUrl } from '../lib/api';
+import { apiUrl, PROD_API_BASE_URL, isLocalAppHost } from '../lib/api';
+
+const getStoredUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem('user') || 'null');
+  } catch (error) {
+    return null;
+  }
+};
+
+const getLocalToken = () => getStoredUser()?.token || localStorage.getItem('token') || '';
+
+const getLiveSyncToken = () => {
+  try {
+    return localStorage.getItem('railworker.liveSyncToken') || '';
+  } catch (error) {
+    return '';
+  }
+};
+
+const saveLiveSyncToken = (token) => {
+  try {
+    localStorage.setItem('railworker.liveSyncToken', token);
+  } catch (error) {
+    // ignore storage issues
+  }
+};
+
+const clearLiveSyncToken = () => {
+  try {
+    localStorage.removeItem('railworker.liveSyncToken');
+  } catch (error) {
+    // ignore storage issues
+  }
+};
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -27,17 +61,81 @@ const Dashboard = () => {
   const [exportingProjectId, setExportingProjectId] = useState(null);
   const [updatingVisibilityId, setUpdatingVisibilityId] = useState(null);
   const [updatingSentStatusId, setUpdatingSentStatusId] = useState(null);
+  const [syncingProjectId, setSyncingProjectId] = useState(null);
   const [showSentProjects, setShowSentProjects] = useState(false);
   const toast = useToast();
-  const fetchUserAndProjects = useCallback(async () => {
-    let storedUser = null;
-    try {
-      storedUser = JSON.parse(localStorage.getItem('user') || 'null');
-    } catch (error) {
-      storedUser = null;
-    }
+  const showLiveSync = isLocalAppHost();
 
-    const token = storedUser?.token || localStorage.getItem('token');
+  const requestLiveSyncToken = () => {
+    const existing = getLiveSyncToken();
+    const token = window.prompt(
+      'Klistra in live-HTSM-tokenen från railworker.vercel.app så kan projektet publiceras till live.',
+      existing || ''
+    );
+    if (!token) {
+      return '';
+    }
+    const trimmed = token.trim();
+    if (trimmed) {
+      saveLiveSyncToken(trimmed);
+    }
+    return trimmed;
+  };
+
+  const toLivePayload = (project) => ({
+    name: project?.name || '',
+    startDate: project?.startDate || '',
+    startTime: project?.startTime || '',
+    endDate: project?.endDate || '',
+    endTime: project?.endTime || '',
+    plats: project?.plats || '',
+    namn: project?.namn || '',
+    telefonnummer: project?.telefonnummer || '',
+    granspunkter: project?.granspunkter || '',
+    formState: project?.formState || {},
+    visibleToTsm: Boolean(project?.visibleToTsm),
+    rows: project?.rows || null,
+    anteckningar: project?.anteckningar || [],
+    sections: Array.isArray(project?.sections)
+      ? project.sections.map((section) => ({
+          type: section?.type || 'Delområde',
+          name: section?.name || section?.signal || '',
+          signal: section?.signal || section?.name || '',
+          namingMode: section?.namingMode || 'NUMBERS',
+        }))
+      : [],
+    beteckningar: Array.isArray(project?.beteckningar)
+      ? project.beteckningar.map((item) => ({
+          label: item?.label || item?.value || '',
+          value: item?.value || item?.label || '',
+        }))
+      : [],
+  });
+
+  const persistLocalLiveSyncMeta = async (fullProject, liveProjectId) => {
+    const localToken = getLocalToken();
+    if (!localToken || !fullProject?.id) return;
+
+    const nextProject = {
+      ...fullProject,
+      formState: {
+        ...(fullProject.formState || {}),
+        liveSync: {
+          liveProjectId,
+          syncedAt: new Date().toISOString(),
+        },
+      },
+    };
+
+    await axios.put(apiUrl(`/api/projects/${fullProject.id}`), toLivePayload(nextProject), {
+      headers: {
+        Authorization: `Bearer ${localToken}`,
+      },
+    });
+  };
+
+  const fetchUserAndProjects = useCallback(async () => {
+    const token = getLocalToken();
     if (!token) {
       setLoading(false);
       setLoadError('Ingen aktiv inloggning hittades.');
@@ -77,14 +175,7 @@ const Dashboard = () => {
   }, [fetchUserAndProjects]);
 
   const handleExportDisp = async (project) => {
-    let storedUser = null;
-    try {
-      storedUser = JSON.parse(localStorage.getItem('user') || 'null');
-    } catch (error) {
-      storedUser = null;
-    }
-
-    const token = storedUser?.token || localStorage.getItem('token');
+    const token = getLocalToken();
     if (!token || !project?.id) {
       setLoadError('Logga in igen för att skapa disp.');
       return;
@@ -126,14 +217,7 @@ const Dashboard = () => {
   };
 
   const handleVisibilityChange = async (project, nextVisibleToTsm) => {
-    let storedUser = null;
-    try {
-      storedUser = JSON.parse(localStorage.getItem('user') || 'null');
-    } catch (error) {
-      storedUser = null;
-    }
-
-    const token = storedUser?.token || localStorage.getItem('token');
+    const token = getLocalToken();
     if (!token || !project?.id) {
       setLoadError('Logga in igen för att uppdatera projektsynlighet.');
       return;
@@ -186,14 +270,7 @@ const Dashboard = () => {
   };
 
   const handleSentStatusChange = async (project, nextSentStatus) => {
-    let storedUser = null;
-    try {
-      storedUser = JSON.parse(localStorage.getItem('user') || 'null');
-    } catch (error) {
-      storedUser = null;
-    }
-
-    const token = storedUser?.token || localStorage.getItem('token');
+    const token = getLocalToken();
     if (!token || !project?.id) {
       setLoadError('Logga in igen för att uppdatera skickat-status.');
       return;
@@ -253,6 +330,127 @@ const Dashboard = () => {
     }
   };
 
+  const handleSyncProjectToLive = async (project) => {
+    const localToken = getLocalToken();
+    if (!localToken || !project?.id) {
+      toast({
+        title: 'Ingen lokal inloggning hittades',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    const liveToken = getLiveSyncToken() || requestLiveSyncToken();
+    if (!liveToken) {
+      return;
+    }
+
+    try {
+      setSyncingProjectId(project.id);
+
+      const localProjectRes = await axios.get(apiUrl(`/api/project/${project.id}`), {
+        headers: {
+          Authorization: `Bearer ${localToken}`,
+        },
+      });
+      const fullProject = localProjectRes.data;
+      const payload = toLivePayload(fullProject);
+
+      const liveProjectsRes = await axios.get(`${PROD_API_BASE_URL}/api/projects`, {
+        headers: {
+          Authorization: `Bearer ${liveToken}`,
+        },
+      });
+
+      const liveProjects = Array.isArray(liveProjectsRes.data) ? liveProjectsRes.data : [];
+      const storedLiveProjectId = Number(fullProject?.formState?.liveSync?.liveProjectId);
+      const matchingLiveProject =
+        liveProjects.find((item) => Number(item.id) === storedLiveProjectId) ||
+        liveProjects.find((item) =>
+          String(item?.name || '').trim() === String(fullProject?.name || '').trim() &&
+          String(item?.startDate || '') === String(fullProject?.startDate || '') &&
+          String(item?.plats || '').trim() === String(fullProject?.plats || '').trim()
+        );
+
+      let liveProjectId = null;
+      if (matchingLiveProject?.id) {
+        await axios.put(`${PROD_API_BASE_URL}/api/projects/${matchingLiveProject.id}`, payload, {
+          headers: {
+            Authorization: `Bearer ${liveToken}`,
+          },
+        });
+        liveProjectId = matchingLiveProject.id;
+      } else {
+        const createRes = await axios.post(`${PROD_API_BASE_URL}/api/projects`, payload, {
+          headers: {
+            Authorization: `Bearer ${liveToken}`,
+          },
+        });
+        liveProjectId = createRes.data?.id || null;
+      }
+
+      if (liveProjectId && typeof payload.visibleToTsm === 'boolean') {
+        await axios.patch(
+          `${PROD_API_BASE_URL}/api/projects/${liveProjectId}/visibility`,
+          { visibleToTsm: payload.visibleToTsm },
+          {
+            headers: {
+              Authorization: `Bearer ${liveToken}`,
+            },
+          }
+        );
+      }
+
+      if (liveProjectId && typeof fullProject?.formState?.sentToManagement === 'boolean') {
+        await axios.patch(
+          `${PROD_API_BASE_URL}/api/projects/${liveProjectId}/sent-status`,
+          { sentToManagement: Boolean(fullProject.formState.sentToManagement) },
+          {
+            headers: {
+              Authorization: `Bearer ${liveToken}`,
+            },
+          }
+        );
+      }
+
+      if (liveProjectId) {
+        await persistLocalLiveSyncMeta(fullProject, liveProjectId);
+      }
+
+      await fetchUserAndProjects();
+
+      toast({
+        title: 'Projekt publicerat till live',
+        description: payload.visibleToTsm
+          ? 'Projektet finns nu i live och är redo för TSM om datumen fortfarande är aktuella.'
+          : 'Projektet finns nu i live. Slå på Visa för TSM när det ska bli synligt.',
+        status: 'success',
+        duration: 3500,
+        isClosable: true,
+      });
+    } catch (error) {
+      console.error('Kunde inte publicera projekt till live:', error);
+      const status = error?.response?.status;
+      if (status === 401 || status === 403) {
+        clearLiveSyncToken();
+      }
+      toast({
+        title: 'Kunde inte publicera till live',
+        description:
+          error?.response?.data?.error ||
+          error?.message ||
+          'Kontrollera live-tokenen och försök igen.',
+        status: 'error',
+        duration: 4500,
+        isClosable: true,
+      });
+    } finally {
+      setSyncingProjectId(null);
+    }
+  };
+
   const handleOpenProject = (project, destination) => {
     if (isProjectSent(project)) {
       const confirmed = window.confirm(
@@ -304,6 +502,11 @@ const Dashboard = () => {
           <Text fontSize="sm" color="gray.600" mt={2}>
             {project.formState?.dispSettings?.veckaOchDagar || 'Ingen vecka/dag-rad angiven ännu'}
           </Text>
+          {showLiveSync && project.formState?.liveSync?.syncedAt && (
+            <Text fontSize="xs" color="blue.700" mt={2} fontWeight="600">
+              Publicerad live {new Date(project.formState.liveSync.syncedAt).toLocaleString('sv-SE')}
+            </Text>
+          )}
           <HStack spacing={3} mt={3} wrap="wrap">
             <HStack spacing={2}>
               <Switch
@@ -337,6 +540,21 @@ const Dashboard = () => {
           )}
         </Box>
         <HStack spacing={2}>
+          {showLiveSync && (
+            <Button
+              variant="outline"
+              borderRadius="full"
+              size="sm"
+              borderColor="emerald.400"
+              bg="white"
+              color="emerald.700"
+              onClick={() => handleSyncProjectToLive(project)}
+              isLoading={syncingProjectId === project.id}
+              loadingText="Publicerar"
+            >
+              Publicera live
+            </Button>
+          )}
           <Button
             variant="outline"
             borderRadius="full"
@@ -405,6 +623,11 @@ const Dashboard = () => {
                   <Text fontSize="sm" color="gray.700" mt={2} maxW="520px">
                     Skapa nya projekt, håll koll på vad som är öppet för TSM och lägg undan sådant som redan skickats till arbetsledningen.
                   </Text>
+                  {showLiveSync && (
+                    <Text fontSize="xs" color="blue.700" mt={2} maxW="560px" fontWeight="600">
+                      Publicera projekt till live härifrån när de ska bli synliga för TSM på railworker.vercel.app.
+                    </Text>
+                  )}
                 </Box>
                 <Button
                   bg="blue.700"
