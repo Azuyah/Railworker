@@ -551,25 +551,8 @@ const applySectionPopupNote = (cell, section = {}, index = 0) => {
     return;
   }
 
-  cell.note = {
-    texts: lines.map((line, lineIndex) => ({
-      font: {
-        name: 'Calibri',
-        size: 11,
-        bold: lineIndex === 0,
-      },
-      text: `${line}${lineIndex === lines.length - 1 ? '' : '\n'}`,
-    })),
-    margins: {
-      insetmode: 'auto',
-      inset: [0.12, 0.12, 0.25, 0.25],
-    },
-    protection: {
-      locked: true,
-      lockText: false,
-    },
-    editAs: 'absolute',
-  };
+  // Keep the note plain and simple so Excel reliably preserves it.
+  cell.note = lines.join('\n');
 };
 
 const setSectionHeaders = (worksheet, sections, sectionColumns, layout) => {
@@ -644,6 +627,37 @@ const setSectionHeaders = (worksheet, sections, sectionColumns, layout) => {
   });
 
   return sectionColumnMap;
+};
+
+const stabilizeSectionLocationRow = (worksheet, sectionColumnMap, layout = {}) => {
+  const locationRow = layout?.locationRow;
+  if (!locationRow || !(sectionColumnMap instanceof Map)) {
+    return;
+  }
+
+  sectionColumnMap.forEach(({ section, index }, columnIndex) => {
+    const columnLetter = getColumnLetter(8 + columnIndex); // H = 8
+    const cell = worksheet.getCell(`${columnLetter}${locationRow}`);
+    const label = getSectionLocationLabel(section, index);
+
+    cell.value = label || '';
+    cell.alignment = {
+      ...(cell.alignment || {}),
+      horizontal: 'center',
+      vertical: 'middle',
+      wrapText: true,
+    };
+
+    if (label) {
+      cell.font = {
+        ...(cell.font || {}),
+        bold: true,
+        size: 12,
+        color: { argb: 'FF1F5EA8' },
+        name: 'Calibri',
+      };
+    }
+  });
 };
 
 const ensureWorksheetHasSectionCapacity = (worksheet, sections, layout = {}) => {
@@ -1094,6 +1108,7 @@ const fillWorksheet = (worksheet, project, entriesForSheet, rows) => {
   forceBlackFont(worksheet.getCell(`${trailingColumns.sluttid}${layout.sectionTypeRow}`));
 
   const sectionColumnMap = setSectionHeaders(worksheet, sections, sectionColumns, layout);
+  stabilizeSectionLocationRow(worksheet, sectionColumnMap, layout);
 
   const startRow = layout.dataStartRow;
   rows.forEach((row, index) => {

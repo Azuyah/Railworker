@@ -5,6 +5,7 @@
   "scripts": {
     "start:local": "./start-all.sh",
     "restart:local": "./start-all.sh",
+    "verify:local": "./verify-local.sh",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
