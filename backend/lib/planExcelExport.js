@@ -527,6 +527,51 @@ const getSectionLocationLabel = (section = {}, index = 0) => {
   return label;
 };
 
+const buildSectionPopupLines = (section = {}, index = 0) => {
+  const type = isDpSection(section, index) ? 'DP' : 'Linje';
+  const label = String(section.signal || section.name || '').trim();
+  const location = getSectionLocationLabel(section, index);
+  const boundary = String(section.granspunkter || [section.granspunktStart, section.granspunktSlut].filter(Boolean).join(' - ')).trim();
+  const spar = String(section.spar || '').trim();
+
+  return [
+    `${type} ${getSectionDisplayIndex(section, index)}`,
+    label ? `Signal/område: ${label}` : '',
+    location ? `Driftplats: ${location}` : '',
+    boundary ? `Gränspunkter: ${boundary}` : '',
+    spar ? `Spår: ${spar}` : '',
+  ].filter(Boolean);
+};
+
+const applySectionPopupNote = (cell, section = {}, index = 0) => {
+  if (!cell) return;
+  const lines = buildSectionPopupLines(section, index);
+  if (!lines.length) {
+    cell.note = undefined;
+    return;
+  }
+
+  cell.note = {
+    texts: lines.map((line, lineIndex) => ({
+      font: {
+        name: 'Calibri',
+        size: 11,
+        bold: lineIndex === 0,
+      },
+      text: `${line}${lineIndex === lines.length - 1 ? '' : '\n'}`,
+    })),
+    margins: {
+      insetmode: 'auto',
+      inset: [0.12, 0.12, 0.25, 0.25],
+    },
+    protection: {
+      locked: true,
+      lockText: false,
+    },
+    editAs: 'absolute',
+  };
+};
+
 const setSectionHeaders = (worksheet, sections, sectionColumns, layout) => {
   const sectionColumnMap = buildSectionColumnMap(sections, sectionColumns);
   const boundaryRow = layout?.sectionBoundaryRow || 6;
@@ -567,6 +612,7 @@ const setSectionHeaders = (worksheet, sections, sectionColumns, layout) => {
         color: { argb: 'FF1F5EA8' },
         name: 'Calibri',
       };
+      applySectionPopupNote(worksheet.getCell(`${column}${locationRow}`), section, mappedSection.index);
     }
     setCell(worksheet, `${column}${boundaryRow}`, getSectionBoundaryText(section) || getSectionSignalAndTrack(section).signal || '');
     worksheet.getCell(`${column}${boundaryRow}`).font = {
@@ -576,8 +622,11 @@ const setSectionHeaders = (worksheet, sections, sectionColumns, layout) => {
       name: 'Calibri',
       color: { argb: 'FF000000' },
     };
+    applySectionPopupNote(worksheet.getCell(`${column}${boundaryRow}`), section, mappedSection.index);
     setCell(worksheet, `${column}${typeRow}`, isDp ? 'DP' : 'Linje');
+    applySectionPopupNote(worksheet.getCell(`${column}${typeRow}`), section, mappedSection.index);
     setCell(worksheet, `${column}${numberRow}`, getSectionDisplayIndex(section, mappedSection.index));
+    applySectionPopupNote(worksheet.getCell(`${column}${numberRow}`), section, mappedSection.index);
     worksheet.getCell(`${column}${numberRow}`).fill = isDp
       ? {
           type: 'pattern',
