@@ -125,21 +125,27 @@ const Profil = () => {
   return (
     <Box minH="100vh" bg="gray.100">
       <Header />
-      <Flex pt="100px" px={6} maxW="6xl" mx="auto" gap={6} align="flex-start">
+      <Flex pt="120px" px={6} pb={12} maxW="6xl" mx="auto" gap={6} align="flex-start" direction={{ base: 'column', xl: 'row' }}>
 
         {/* Profilsektion */}
-        <Box flex={1} bg="white" p={8} rounded="md" shadow="md">
-          <Text fontSize="2xl" fontWeight="bold" mb={6}>Min profil</Text>
+        <Box flex={1} bg="white" p={8} rounded="2xl" shadow="lg" border="1px solid" borderColor="blue.100">
+          <Text fontSize="xs" textTransform="uppercase" letterSpacing="0.32em" color="blue.700" fontWeight="700">Profil</Text>
+          <Text fontSize="2xl" fontWeight="bold" mb={2} mt={2}>Min profil</Text>
+          <Text fontSize="sm" color="gray.600" mb={6}>
+            Håll dina uppgifter uppdaterade så att namn, signatur och kontaktvägar blir rätt i appen.
+          </Text>
 
           <VStack spacing={4} align="stretch">
             {profileFields.map(({ key, label, type }) => (
               <FormControl key={key}>
-                <FormLabel>{label}</FormLabel>
+                <FormLabel color="gray.800" fontWeight="600">{label}</FormLabel>
                 <Input
                   type={type}
                   value={localUser?.[key] || ''}
                   onChange={(e) => handleChange(key, e.target.value)}
                   isDisabled={!editing && key !== 'password'}
+                  borderRadius="xl"
+                  bg={!editing && key !== 'password' ? 'gray.50' : 'white'}
                 />
               </FormControl>
             ))}
@@ -160,16 +166,21 @@ const Profil = () => {
 
         {/* Anställda */}
         {!isTsm && (
-        <Box flex={1} bg="white" p={8} rounded="md" shadow="md">
-          <Text fontSize="2xl" fontWeight="bold" mb={6}>Mina anställda</Text>
+        <Box flex={1} bg="white" p={8} rounded="2xl" shadow="lg" border="1px solid" borderColor="emerald.100">
+          <Text fontSize="xs" textTransform="uppercase" letterSpacing="0.32em" color="emerald.700" fontWeight="700">Team</Text>
+          <Text fontSize="2xl" fontWeight="bold" mb={2} mt={2}>Mina anställda</Text>
+          <Text fontSize="sm" color="gray.600" mb={6}>
+            Lägg till och hantera de personer som ska finnas tillgängliga i ert arbetsflöde.
+          </Text>
 
           <FormControl mb={4}>
-            <FormLabel>Lägg till med e-postadress</FormLabel>
+            <FormLabel color="gray.800" fontWeight="600">Lägg till med e-postadress</FormLabel>
             <Flex>
               <Input
                 placeholder="E-postadress"
                 value={newEmployeeEmail}
                 onChange={(e) => setNewEmployeeEmail(e.target.value)}
+                borderRadius="xl"
               />
               <Button ml={2} colorScheme="blue" onClick={handleAddEmployee}>
                 Lägg till
@@ -186,7 +197,7 @@ const Profil = () => {
               employees.map(emp => (
 <Box
   borderWidth="1px"
-  borderRadius="md"
+  borderRadius="xl"
   p={4}
   mb={4}
   bg="gray.50"

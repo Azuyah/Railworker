@@ -287,7 +287,7 @@ const Dashboard = () => {
       <HStack justify="space-between" align="center" wrap="wrap" spacing={3}>
         <Box>
           <HStack spacing={3} align="center" wrap="wrap">
-            <Text fontWeight="700" color="gray.900">
+            <Text fontWeight="700" color="gray.900" fontSize="lg">
               {project.name}
             </Text>
             {isProjectSent(project) && (
@@ -297,10 +297,13 @@ const Dashboard = () => {
             )}
           </HStack>
           {project.plats && (
-            <Text fontSize="sm" color="gray.600">
+            <Text fontSize="sm" color="gray.600" mt={1}>
               {project.plats}
             </Text>
           )}
+          <Text fontSize="sm" color="gray.600" mt={2}>
+            {project.formState?.dispSettings?.veckaOchDagar || 'Ingen vecka/dag-rad angiven ännu'}
+          </Text>
           <HStack spacing={3} mt={3} wrap="wrap">
             <HStack spacing={2}>
               <Switch
@@ -324,12 +327,12 @@ const Dashboard = () => {
               isLoading={updatingSentStatusId === project.id}
               onClick={() => handleSentStatusChange(project, !isProjectSent(project))}
             >
-              {isProjectSent(project) ? 'Ta tillbaka till aktiv' : 'Markera som skickat'}
+              {isProjectSent(project) ? 'Ta tillbaka till aktiv lista' : 'Markera som skickat'}
             </Button>
           </HStack>
           {isProjectSent(project) && (
             <Text mt={2} fontSize="xs" color="orange.700">
-              Projektet är undanlagt från huvudlistan och varnar innan öppning.
+              Projektet är undanlagt från huvudlistan och varnar innan öppning så att du inte råkar ändra i ett aktivt utskick.
             </Text>
           )}
         </Box>
@@ -344,7 +347,7 @@ const Dashboard = () => {
             isLoading={exportingProjectId === project.id}
             loadingText="Skapar disp"
           >
-            Skapa disp
+            Ladda ner disp
           </Button>
           <Button
             variant="outline"
@@ -354,7 +357,7 @@ const Dashboard = () => {
             bg={isProjectSent(project) ? 'whiteAlpha.800' : 'white'}
             onClick={() => handleOpenProject(project, 'project')}
           >
-            Visa projekt
+            Öppna projekt
           </Button>
           <Button
             bg={isProjectSent(project) ? 'orange.500' : 'blue.700'}
@@ -364,7 +367,7 @@ const Dashboard = () => {
             _hover={{ bg: isProjectSent(project) ? 'orange.600' : 'blue.800' }}
             onClick={() => handleOpenProject(project, 'plan')}
           >
-            Visa planka
+            Öppna planka
           </Button>
         </HStack>
       </HStack>
@@ -400,7 +403,7 @@ const Dashboard = () => {
                     Hantera dina dispositionsplaner
                   </Text>
                   <Text fontSize="sm" color="gray.700" mt={2} maxW="520px">
-                    Skapa nya projekt, följ status och öppna planerna direkt. Allt samlat i en snabb vy.
+                    Skapa nya projekt, håll koll på vad som är öppet för TSM och lägg undan sådant som redan skickats till arbetsledningen.
                   </Text>
                 </Box>
                 <Button
@@ -412,7 +415,7 @@ const Dashboard = () => {
                   _hover={{ bg: 'blue.800' }}
                   onClick={() => navigate('/skapa-projekt')}
                 >
-                  + Skapa nytt projekt
+                  + Skapa projekt
                 </Button>
               </HStack>
             </Stack>
@@ -432,7 +435,7 @@ const Dashboard = () => {
                   Projekt
                 </Text>
                 <Text fontSize="xs" color="gray.700">
-                  Öppna ett projekt för att gå till dispositionsplanen.
+                  Öppna ett projekt för att arbeta vidare med disp, planka eller synlighet för TSM.
                 </Text>
               </Box>
               <Input
@@ -499,7 +502,7 @@ const Dashboard = () => {
                     color="gray.500"
                     bg="gray.50"
                   >
-                    Inga aktiva projekt matchar din sökning.
+                    Inga aktiva projekt matchar din sökning just nu.
                   </Box>
                 )}
 
@@ -534,10 +537,10 @@ const Dashboard = () => {
                           borderColor="gray.300"
                           borderRadius="xl"
                           p={5}
-                          textAlign="center"
-                          color="gray.500"
-                          bg="gray.50"
-                        >
+                        textAlign="center"
+                        color="gray.500"
+                        bg="gray.50"
+                      >
                           Inga skickade projekt matchar din sökning.
                         </Box>
                       )}

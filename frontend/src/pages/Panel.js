@@ -290,6 +290,7 @@ export default function Panel() {
     () => getNextPlanEntry(selectedProject),
     [selectedProject]
   );
+  const isGuestTsm = !token || user?.role !== 'TSM';
 
   const getUserPlansForProject = useCallback(
     (project) => {
@@ -778,96 +779,133 @@ export default function Panel() {
       <Header />
       <div className="pt-40 px-3 py-4 sm:px-6 sm:pt-32 sm:pb-6 max-w-7xl mx-auto">
         <div className="grid grid-cols-1 gap-6">
-          <div className="fancy-card p-6">
-            <div className="mb-4">
-              <h2 className="text-lg font-semibold">Tillgängliga projekt</h2>
-              <p className="text-sm text-gray-500 mt-1">
-                Förplanera direkt här. Dina aktiva projekt hålls kvar i bakgrunden tills vi bygger nästa mobilvy.
-              </p>
+          <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+            <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 via-white to-slate-50 px-6 py-6">
+              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.32em] text-blue-700">
+                    TSM
+                  </p>
+                  <h2 className="mt-2 text-2xl font-bold text-slate-950">Tillgängliga projekt</h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                    Här ser du alla projekt som är öppna för TSM. Du kan alltid ladda ner dispen direkt. För att skicka eller följa din förplanering loggar du in med namn och telefonnummer.
+                  </p>
+                </div>
+                <div className={`rounded-2xl border px-4 py-3 text-sm shadow-sm ${isGuestTsm ? 'border-amber-200 bg-amber-50 text-amber-900' : 'border-green-200 bg-green-50 text-green-900'}`}>
+                  <p className="font-semibold">
+                    {isGuestTsm ? 'Gästläge' : 'TSM inloggad'}
+                  </p>
+                  <p className="mt-1 leading-5">
+                    {isGuestTsm
+                      ? 'Du kan ladda ner disp nu och logga in när du vill förplanera.'
+                      : `Du är inloggad som ${namn || 'TSM'} och kan nu förplanera direkt.`}
+                  </p>
+                </div>
+              </div>
             </div>
+            <div className="p-6">
             {projects.length === 0 ? (
-              <p className="text-gray-500">Inga projekt hittades.</p>
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
+                <p className="text-base font-semibold text-slate-800">Inga projekt hittades.</p>
+                <p className="mt-2 text-sm text-slate-500">
+                  När HTSM öppnar projekt för TSM kommer de att visas här automatiskt.
+                </p>
+              </div>
             ) : (
               <ul className="space-y-4">
                 {projects.map((project) => (
                   <li
                     key={project.id}
-                    className="border rounded p-4 flex flex-col items-stretch gap-4 transition duration-200 hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
+                    className="rounded-2xl border border-slate-200 bg-gradient-to-r from-white via-white to-slate-50/70 p-4 transition duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md sm:p-5"
                   >
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-lg text-gray-800">
-                        {project.name}
-                      </h3>
-                      {getProjectPlanningSummary(project) && (
-                        <p className="text-sm text-gray-500 break-words">
-                          {getProjectPlanningSummary(project)}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:space-x-2 sm:gap-0">
-                      <Button
-                        onClick={() => handleExportDisp(project)}
-                        className="fancy-button"
-                        colorScheme="blue"
-                        isLoading={exportingProjectId === project.id}
-                        loadingText="Laddar"
-                        width={{ base: '100%', sm: 'auto' }}
-                      >
-                        Ladda ner disp
-                      </Button>
-                      {user?.role === 'TSM' ? (
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-lg font-semibold text-slate-900">
+                            {project.name}
+                          </h3>
+                          <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-blue-700">
+                            DISP öppen
+                          </span>
+                        </div>
+                        {getProjectPlanningSummary(project) && (
+                          <p className="mt-2 break-words text-sm font-medium text-slate-600">
+                            {getProjectPlanningSummary(project)}
+                          </p>
+                        )}
+                        {project.plats && (
+                          <p className="mt-1 break-words text-sm text-slate-500">
+                            {project.plats}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[240px]">
                         <Button
-                          onClick={() => {
-                            const planningStatus = getLatestNextPlanningStatus(project);
-                            if (planningStatus.status !== 'none') {
-                              setStatusProject(project);
-                              onStatusOpen();
-                              return;
-                            }
-
-                            if (isPlanningClosedForProject(project)) {
-                              toast({
-                                title: 'Webbförplanering är stängd',
-                                description: 'Förplanering på webben är stängd på grund av kort tid innan dispstart. Ring in och förplanera.',
-                                status: 'info',
-                                duration: 5000,
-                                isClosable: true,
-                              });
-                              return;
-                            }
-
-                            setSelectedProject(project);
-                            onOpen();
-                          }}
+                          onClick={() => handleExportDisp(project)}
                           className="fancy-button"
                           colorScheme="blue"
-                          isDisabled={!getProjectNextPlanDate(project)}
-                          width={{ base: '100%', sm: 'auto' }}
-                          >
-                            {(() => {
-                              if (!getProjectNextPlanDate(project)) return 'Ingen planering';
-                              const planningStatus = getLatestNextPlanningStatus(project);
-                              return planningStatus.status === 'none'
-                                ? 'Förplanera'
-                                : 'Kontrollera status';
-                            })()}
-                        </Button>
-                      ) : (
-                        <Button
-                          onClick={() => navigate('/tsm-login')}
-                          className="fancy-button"
-                          colorScheme="blue"
-                          variant="outline"
+                          isLoading={exportingProjectId === project.id}
+                          loadingText="Laddar disp"
                           width={{ base: '100%', sm: 'auto' }}
                         >
-                          Logga in för förplanering
+                          Ladda ner disp
                         </Button>
-                      )}
+                        {user?.role === 'TSM' ? (
+                          <Button
+                            onClick={() => {
+                              const planningStatus = getLatestNextPlanningStatus(project);
+                              if (planningStatus.status !== 'none') {
+                                setStatusProject(project);
+                                onStatusOpen();
+                                return;
+                              }
+
+                              if (isPlanningClosedForProject(project)) {
+                                toast({
+                                  title: 'Webbförplanering är stängd',
+                                  description: 'Det är mindre än en timme kvar till dispstart. Ring in din förplanering i stället.',
+                                  status: 'info',
+                                  duration: 5000,
+                                  isClosable: true,
+                                });
+                                return;
+                              }
+
+                              setSelectedProject(project);
+                              onOpen();
+                            }}
+                            className="fancy-button"
+                            colorScheme="blue"
+                            variant={getLatestNextPlanningStatus(project).status === 'none' ? 'solid' : 'outline'}
+                            isDisabled={!getProjectNextPlanDate(project)}
+                            width={{ base: '100%', sm: 'auto' }}
+                          >
+                            {(() => {
+                              if (!getProjectNextPlanDate(project)) return 'Ingen planering upplagd';
+                              const planningStatus = getLatestNextPlanningStatus(project);
+                              return planningStatus.status === 'none'
+                                ? 'Förplanera nästa jobb'
+                                : 'Kontrollera förplanering';
+                            })()}
+                          </Button>
+                        ) : (
+                          <Button
+                            onClick={() => navigate('/tsm-login')}
+                            className="fancy-button"
+                            colorScheme="blue"
+                            variant="outline"
+                            width={{ base: '100%', sm: 'auto' }}
+                          >
+                            Logga in för att förplanera
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </li>
                 ))}
               </ul>
             )}
+            </div>
           </div>
         </div>
       </div>
@@ -880,7 +918,7 @@ export default function Panel() {
           <ModalBody>
             <Stack spacing={6}>
               <FormControl>
-                <FormLabel>Du förplanerar för nästa planering</FormLabel>
+                <FormLabel>Nästa planering</FormLabel>
                 <Input
                   value={
                     nextPlanEntry
@@ -1009,7 +1047,7 @@ export default function Panel() {
                 <Textarea
                   value={anteckning}
                   onChange={e => setAnteckning(e.target.value)}
-                  placeholder="Skriv gärna vad ni ska göra och plats"
+                  placeholder="Beskriv kort vad ni ska göra och var arbetet ska ske"
                 />
               </FormControl>
             </Stack>
@@ -1022,7 +1060,7 @@ export default function Panel() {
     !begardDatum || !begard || anordning.length === 0 || selectedSectionIds.length === 0 || !nextPlanEntry || hasExistingNextPlanning(selectedProject) || !isPlanningWindowOpen(nextPlanEntry)
   }
 >
-  Skicka
+  Skicka förplanering
 </Button>
           </ModalFooter>
         </ModalContent>

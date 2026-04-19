@@ -179,7 +179,7 @@ const Header = () => {
               whileTap={{ scale: 0.97 }}
               onClick={() => navigate('/tsm-login')}
             >
-              Logga in
+              TSM-inloggning
             </MotionButton>
           )}
         </Flex>
