@@ -110,7 +110,7 @@ export default function TsmLogin() {
               </div>
             </div>
 
-            <h2 className="mb-6 text-center text-3xl font-bold text-red-700">Välkommen till Vallåkra Railworker</h2>
+            <h2 className="mb-6 text-center text-3xl font-bold text-white">Välkommen till Vallåkra Railworker</h2>
 
             {errorMessage ? (
               <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
@@ -156,14 +156,14 @@ export default function TsmLogin() {
 
             <button
               onClick={() => navigate('/panel')}
-              className="mt-4 w-full rounded-xl border border-red-500 bg-red-600 py-3 font-semibold text-white shadow-sm transition hover:bg-red-700"
+              className="mt-4 w-full rounded-xl border border-green-500 bg-green-600 py-3 font-semibold text-white shadow-sm transition hover:bg-green-700"
             >
               Till projekten utan login
             </button>
 
             <button
               onClick={() => navigate('/register')}
-              className="mt-4 w-full rounded-xl border border-green-500 bg-green-600 py-3 font-semibold text-white shadow-sm transition hover:bg-green-700"
+              className="mt-4 w-full rounded-xl border border-red-500 bg-red-600 py-3 font-semibold text-white shadow-sm transition hover:bg-red-700"
             >
               Registrera dig
             </button>

@@ -290,7 +290,6 @@ export default function Panel() {
     () => getNextPlanEntry(selectedProject),
     [selectedProject]
   );
-  const isGuestTsm = !token || user?.role !== 'TSM';
 
   const getUserPlansForProject = useCallback(
     (project) => {
@@ -781,7 +780,7 @@ export default function Panel() {
         <div className="grid grid-cols-1 gap-6">
           <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
             <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 via-white to-slate-50 px-6 py-6">
-              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div>
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.32em] text-blue-700">
                     TSM
@@ -789,16 +788,6 @@ export default function Panel() {
                   <h2 className="mt-2 text-2xl font-bold text-slate-950">Tillgängliga projekt</h2>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
                     Här ser du alla projekt som är öppna för TSM. Du kan alltid ladda ner dispen direkt. För att skicka eller följa din förplanering loggar du in med namn och telefonnummer.
-                  </p>
-                </div>
-                <div className={`rounded-2xl border px-4 py-3 text-sm shadow-sm ${isGuestTsm ? 'border-amber-200 bg-amber-50 text-amber-900' : 'border-green-200 bg-green-50 text-green-900'}`}>
-                  <p className="font-semibold">
-                    {isGuestTsm ? 'Gästläge' : 'TSM inloggad'}
-                  </p>
-                  <p className="mt-1 leading-5">
-                    {isGuestTsm
-                      ? 'Du kan ladda ner disp nu och logga in när du vill förplanera.'
-                      : `Du är inloggad som ${namn || 'TSM'} och kan nu förplanera direkt.`}
                   </p>
                 </div>
               </div>
