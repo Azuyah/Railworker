@@ -621,6 +621,12 @@ const setSectionHeaders = (worksheet, sections, sectionColumns, layout) => {
       name: 'Calibri',
       color: { argb: 'FF000000' },
     };
+    worksheet.getCell(`${column}${boundaryRow}`).alignment = {
+      ...(worksheet.getCell(`${column}${boundaryRow}`).alignment || {}),
+      horizontal: 'left',
+      vertical: 'middle',
+      wrapText: true,
+    };
     applySectionPopupNote(worksheet.getCell(`${column}${boundaryRow}`), section, mappedSection.index);
     setCell(worksheet, `${column}${typeRow}`, isDp ? 'DP' : 'Linje');
     setCell(worksheet, `${column}${numberRow}`, getSectionDisplayIndex(section, mappedSection.index));
