@@ -125,7 +125,7 @@ export default function TsmLogin() {
                 </label>
                 <input
                   type="text"
-                  placeholder="Ex. Mats Andersson"
+                  placeholder="Ex. Johan Nilsson"
                   value={tsmName}
                   onChange={(e) => setTsmName(e.target.value)}
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 shadow-sm outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
@@ -138,7 +138,7 @@ export default function TsmLogin() {
                 </label>
                 <input
                   type="text"
-                  placeholder="Ex. 0760-22 23 57"
+                  placeholder="Ex. 070-123 45 67"
                   value={tsmPhone}
                   onChange={(e) => setTsmPhone(e.target.value)}
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 shadow-sm outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"

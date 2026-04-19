@@ -16,12 +16,6 @@ const MotionButton = motion(Button);
 const Header = () => {
   const navigate = useNavigate();
 
-  const logout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    navigate('/');
-  };
-
   let user = {};
   try {
     user = JSON.parse(localStorage.getItem('user') || 'null') || {};
@@ -35,6 +29,11 @@ const Header = () => {
       : 'Okänd användare';
   const role = user?.role || '';
   const isAuthenticated = Boolean(user?.role);
+  const logout = () => {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    navigate(role === 'HTSM' ? '/htsm-login' : '/tsm-login');
+  };
   const handleStart = () => navigate(isAuthenticated ? '/dashboard' : '/panel');
   const showStartButton = role === 'HTSM';
   const desktopNavColumns = showStartButton ? (isAuthenticated ? 3 : 1) : (isAuthenticated ? 2 : 1);
