@@ -1,6 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
-import Login from './pages/Login';
 import HtsmLogin from './pages/HtsmLogin';
 import TsmLogin from './pages/TsmLogin';
 import Register from './pages/Register';
@@ -22,7 +21,7 @@ function AppRoutes() {
 
   return (
     <Routes location={location}>
-      <Route path="/" element={<Login />} />
+      <Route path="/" element={<TsmLogin />} />
       <Route path="/htsm-login" element={<HtsmLogin />} />
       <Route path="/tsm-login" element={<TsmLogin />} />
       <Route path="/register" element={<Register />} />
