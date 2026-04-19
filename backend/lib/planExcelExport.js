@@ -322,7 +322,7 @@ const compactTopEntryRows = (worksheet, entryCount = 0) => {
       sectionTypeRow: 8,
       sectionNumberRow: 9,
       dataStartRow: 10,
-      locationRow: null,
+      locationRow: 6,
       routeRow: 6,
       templateKind,
       isNewTemplate: false,
@@ -484,13 +484,47 @@ const isDpSection = (section = {}, index = 0) => {
   return index % 2 === 1;
 };
 
+const extractLocationNameFromBoundaryPart = (value = '') => {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  const match = raw.match(/^(.+?)(?=\s+\d|$)/);
+  return String(match?.[1] || raw).trim();
+};
+
 const getSectionLocationLabel = (section = {}, index = 0) => {
   const label = String(section.signal || section.name || '').trim();
-  if (!label) return '';
-  if (isDpSection(section, index)) {
+  if (!isDpSection(section, index)) {
+    return '';
+  }
+
+  if (label && !label.includes(' - ')) {
     return label;
   }
-  return '';
+
+  const explicitStart = extractLocationNameFromBoundaryPart(section.granspunktStart || '');
+  const explicitEnd = extractLocationNameFromBoundaryPart(section.granspunktSlut || '');
+  if (explicitStart && explicitEnd && explicitStart === explicitEnd) {
+    return explicitStart;
+  }
+  if (explicitStart) {
+    return explicitStart;
+  }
+  if (explicitEnd) {
+    return explicitEnd;
+  }
+
+  const boundaryText = String(section.granspunkter || '').trim();
+  if (boundaryText) {
+    const [startPart = '', endPart = ''] = boundaryText.split(/\s*-\s*/);
+    const startName = extractLocationNameFromBoundaryPart(startPart);
+    const endName = extractLocationNameFromBoundaryPart(endPart);
+    if (startName && endName && startName === endName) {
+      return startName;
+    }
+    return startName || endName || '';
+  }
+
+  return label;
 };
 
 const setSectionHeaders = (worksheet, sections, sectionColumns, layout) => {
@@ -638,7 +672,11 @@ const mergeSectionDetails = (project = {}) => {
   return sections.map((section, index) => ({
     ...section,
     ...(sectionDetails[index] || {}),
-    signal: section?.signal || section?.name || sectionDetails[index]?.signal || '',
+    signal:
+      sectionDetails[index]?.signal ||
+      section?.signal ||
+      section?.name ||
+      '',
   }));
 };
 
@@ -911,7 +949,7 @@ const reapplyTemplateMerges = (worksheet) => {
     : [];
 
   templateMerges.forEach((range) => {
-    if (range === 'G5:Z5') {
+    if (range === 'G5:Z5' || range === 'G6:Z6') {
       return;
     }
     try {
