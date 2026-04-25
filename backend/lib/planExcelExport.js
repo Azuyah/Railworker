@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const ExcelJS = require('exceljs');
 const njdbDriftplatser = require('../data/njdb-driftplatser.json');
+const { resolveBoundaryToken } = require('./boundaryRegistry');
 
 const TEMPLATE_PATH = path.join(__dirname, '..', 'assets', 'plan-template.xlsx');
 const DRIFTPLATS_CODE_BY_NAME = new Map(
@@ -55,8 +56,28 @@ const getSectionSignalAndTrack = (section = {}) => {
   };
 };
 
+const buildCanonicalBoundaryText = (section = {}, mode = 'short') => {
+  const startRaw = String(section.granspunktStart || '').trim();
+  const endRaw = String(section.granspunktSlut || '').trim();
+
+  if (!startRaw && !endRaw) {
+    return '';
+  }
+
+  const startResolved = startRaw ? resolveBoundaryToken(startRaw) : null;
+  const endResolved = endRaw ? resolveBoundaryToken(endRaw) : null;
+  const startValue = mode === 'long'
+    ? (startResolved?.canonicalLong || startRaw)
+    : (startResolved?.canonicalShort || startRaw);
+  const endValue = mode === 'long'
+    ? (endResolved?.canonicalLong || endRaw)
+    : (endResolved?.canonicalShort || endRaw);
+
+  return [startValue, endValue].filter(Boolean).join(' - ').trim();
+};
+
 const getSectionBoundaryText = (section = {}) =>
-  abbreviateBoundaryText(String(section.granspunkter || ''))
+  (buildCanonicalBoundaryText(section, 'short') || abbreviateBoundaryText(String(section.granspunkter || '')))
     .trim()
     .replace(/\s*-\s*/g, '-')
     .replace(/\s*,\s*/g, ', ');
@@ -511,6 +532,10 @@ const isDpSection = (section = {}, index = 0) => {
 const extractLocationNameFromBoundaryPart = (value = '') => {
   const raw = String(value || '').trim();
   if (!raw) return '';
+  const resolved = resolveBoundaryToken(raw);
+  if (resolved?.name) {
+    return resolved.name;
+  }
   const match = raw.match(/^(.+?)(?=\s+\d|$)/);
   return String(match?.[1] || raw).trim();
 };
@@ -714,7 +739,7 @@ const ensureWorksheetHasSectionCapacity = (worksheet, sections, layout = {}) => 
     (_, index) => getColumnLetter(baseSectionStart + index)
   );
   const trailingBase = baseSectionStart + sectionCount;
-  const templateTrailingBase = trailingStart;
+  const templateTrailingBase = trailingStart + Math.max(deltaSections, 0);
   const clearUntilColumn = Math.max(trailingStart + 4, trailingBase + 4);
   const neutralTemplateColumn = templateTrailingBase + 5;
 
@@ -1116,6 +1141,92 @@ const applyCompletedRowHighlighting = (worksheet, trailingColumns, layout = {}) 
   });
 };
 
+const applyTrailingHeaderVisualStyles = (worksheet, trailingColumns, layout = {}) => {
+  if (!worksheet || !trailingColumns) {
+    return;
+  }
+
+  const numberRow = layout?.sectionNumberRow || 9;
+  const boundaryRow = layout?.sectionBoundaryRow || 7;
+  const typeRow = layout?.sectionTypeRow || 8;
+  const mediumBorder = { style: 'medium', color: { indexed: 64 } };
+  const thinBorder = { style: 'thin', color: { indexed: 64 } };
+
+  [trailingColumns.start, trailingColumns.begard, trailingColumns.avslutat, trailingColumns.tsa]
+    .filter(Boolean)
+    .forEach((columnLetter) => {
+      const cell = worksheet.getCell(`${columnLetter}${numberRow}`);
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'none',
+      };
+      cell.font = {
+        ...(cell.font || {}),
+        bold: true,
+        size: 16,
+        name: 'Calibri',
+        color: { theme: 1 },
+      };
+      cell.alignment = {
+        ...(cell.alignment || {}),
+        horizontal: 'center',
+        vertical: 'middle',
+      };
+      cell.border = {
+        left: mediumBorder,
+        right: mediumBorder,
+        top: mediumBorder,
+        bottom: mediumBorder,
+      };
+    });
+
+  if (trailingColumns.anteckning) {
+    const notesCell = worksheet.getCell(`${trailingColumns.anteckning}${numberRow}`);
+    notesCell.fill = {
+      type: 'pattern',
+      pattern: 'none',
+    };
+    notesCell.font = {
+      ...(notesCell.font || {}),
+      bold: true,
+      size: 16,
+      name: 'Calibri',
+      color: { theme: 1 },
+    };
+    notesCell.alignment = {
+      ...(notesCell.alignment || {}),
+      horizontal: 'left',
+      vertical: 'middle',
+    };
+    notesCell.border = {
+      left: thinBorder,
+      right: thinBorder,
+      top: thinBorder,
+      bottom: thinBorder,
+    };
+  }
+
+  [trailingColumns.nodnummer, trailingColumns.sluttid]
+    .filter(Boolean)
+    .forEach((columnLetter, index) => {
+      const rowNumber = index === 0 ? boundaryRow : typeRow;
+      const cell = worksheet.getCell(`${columnLetter}${rowNumber}`);
+      cell.font = {
+        ...(cell.font || {}),
+        bold: true,
+        size: 12,
+        name: 'Calibri',
+        color: { argb: 'FFFF0000' },
+      };
+      cell.alignment = {
+        ...(cell.alignment || {}),
+        horizontal: 'center',
+        vertical: 'middle',
+        wrapText: true,
+      };
+    });
+};
+
 const fillWorksheet = async (worksheet, project, entriesForSheet, rows) => {
   const projectFormState = project.formState || {};
   const sections = Array.isArray(entriesForSheet?.sections)
@@ -1194,8 +1305,7 @@ const fillWorksheet = async (worksheet, project, entriesForSheet, rows) => {
   setCell(worksheet, `${trailingColumns.avslutat}${layout.sectionNumberRow}`, 'Avslutat');
   setCell(worksheet, `${trailingColumns.tsa}${layout.sectionNumberRow}`, 'TSA');
   setCell(worksheet, `${trailingColumns.anteckning}${layout.sectionNumberRow}`, 'Anteckningar');
-  forceBlackFont(worksheet.getCell(`${trailingColumns.nodnummer}${layout.sectionBoundaryRow}`));
-  forceBlackFont(worksheet.getCell(`${trailingColumns.sluttid}${layout.sectionTypeRow}`));
+  applyTrailingHeaderVisualStyles(worksheet, trailingColumns, layout);
 
   const sectionColumnMap = setSectionHeaders(worksheet, sections, sectionColumns, layout);
   stabilizeSectionLocationRow(worksheet, sectionColumnMap, layout);
