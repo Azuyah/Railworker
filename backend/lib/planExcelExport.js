@@ -381,6 +381,26 @@ const getColumnLetter = (columnNumber) => {
   return letters;
 };
 
+const getColumnNumber = (columnLetter = '') =>
+  String(columnLetter || '')
+    .toUpperCase()
+    .split('')
+    .reduce((total, char) => total * 26 + (char.charCodeAt(0) - 64), 0);
+
+const parseRangeBounds = (range = '') => {
+  const match = String(range).match(/^([A-Z]+)(\d+):([A-Z]+)(\d+)$/i);
+  if (!match) {
+    return null;
+  }
+
+  return {
+    startColumn: getColumnNumber(match[1]),
+    startRow: Number(match[2]),
+    endColumn: getColumnNumber(match[3]),
+    endRow: Number(match[4]),
+  };
+};
+
 const clearRangeValues = (worksheet, startColumnNumber, endColumnNumber, startRow, endRow) => {
   for (let columnNumber = startColumnNumber; columnNumber <= endColumnNumber; columnNumber += 1) {
     for (let rowNumber = startRow; rowNumber <= endRow; rowNumber += 1) {
@@ -1013,7 +1033,7 @@ const cloneWorksheetFromTemplate = (workbook, templateSource, sheetName) => {
   return clonedSheet;
 };
 
-const reapplyTemplateMerges = (worksheet) => {
+const reapplyTemplateMerges = (worksheet, activeContentEndColumn = null) => {
   const templateMerges = Array.isArray(worksheet?._railworkerTemplateMerges)
     ? worksheet._railworkerTemplateMerges
     : [];
@@ -1022,22 +1042,21 @@ const reapplyTemplateMerges = (worksheet) => {
     if (range === 'G5:Z5' || range === 'G6:Z6') {
       return;
     }
+    const bounds = parseRangeBounds(range);
+    if (
+      bounds &&
+      activeContentEndColumn &&
+      bounds.startRow <= 81 &&
+      bounds.endColumn >= activeContentEndColumn
+    ) {
+      return;
+    }
     try {
       worksheet.mergeCells(range);
     } catch (error) {
       // ignore ranges that are already merged or invalid after template adjustments
     }
   });
-};
-
-const unlockEditablePlanArea = (worksheet, startRow = 10, endRow = 482, startColumn = 4, endColumn = 26) => {
-  for (let row = startRow; row <= endRow; row += 1) {
-    for (let column = startColumn; column <= endColumn; column += 1) {
-      worksheet.getCell(row, column).protection = {
-        locked: false,
-      };
-    }
-  }
 };
 
 const applyPlanDropdownsAndProtection = async (worksheet, trailingColumns, layout = {}) => {
@@ -1060,24 +1079,6 @@ const applyPlanDropdownsAndProtection = async (worksheet, trailingColumns, layou
       formulae: ['"☐,☒"'],
     });
   }
-
-  unlockEditablePlanArea(worksheet, 10, 482, 4, 26);
-
-  await worksheet.protect('', {
-    selectLockedCells: true,
-    selectUnlockedCells: true,
-    formatCells: false,
-    formatColumns: false,
-    formatRows: false,
-    insertColumns: false,
-    insertRows: false,
-    insertHyperlinks: false,
-    deleteColumns: false,
-    deleteRows: false,
-    sort: false,
-    autoFilter: false,
-    pivotTables: false,
-  });
 };
 
 const applyCompletedRowHighlighting = (worksheet, trailingColumns, layout = {}) => {
@@ -1241,7 +1242,7 @@ const fillWorksheet = async (worksheet, project, entriesForSheet, rows) => {
     setCell(worksheet, `E${rowNumber}`, rows[rowNumber - startRow]?.namn ? worksheet.getCell(`E${rowNumber}`).value : '');
   }
 
-  reapplyTemplateMerges(worksheet);
+  reapplyTemplateMerges(worksheet, getColumnNumber(trailingColumns.anteckning));
   await applyPlanDropdownsAndProtection(worksheet, trailingColumns, layout);
 };
 
