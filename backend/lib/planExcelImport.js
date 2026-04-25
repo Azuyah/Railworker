@@ -126,7 +126,7 @@ const parseAnordningar = (value = '') =>
     .map((item) => ANORDNING_IMPORT_MAP[item] || item)
     .filter(Boolean);
 
-const isSelectedCell = (value = '') => ['X', 'x', '1'].includes(normalizeText(value));
+const isSelectedCell = (value = '') => ['X', 'x', '1', '☒', '☑', '✓'].includes(normalizeText(value));
 
 const isImportedRowEmpty = (row = {}) => {
   const hasSubstantiveContent = [

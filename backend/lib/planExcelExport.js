@@ -1030,7 +1030,92 @@ const reapplyTemplateMerges = (worksheet) => {
   });
 };
 
-const fillWorksheet = (worksheet, project, entriesForSheet, rows) => {
+const unlockEditablePlanArea = (worksheet, startRow = 10, endRow = 482, startColumn = 4, endColumn = 26) => {
+  for (let row = startRow; row <= endRow; row += 1) {
+    for (let column = startColumn; column <= endColumn; column += 1) {
+      worksheet.getCell(row, column).protection = {
+        locked: false,
+      };
+    }
+  }
+};
+
+const applyPlanDropdownsAndProtection = async (worksheet, trailingColumns, layout = {}) => {
+  worksheet.dataValidations.add('F10:F217', {
+    type: 'list',
+    allowBlank: true,
+    showInputMessage: true,
+    showErrorMessage: true,
+    formulae: ["'Kladd'!$D$4:$D$10"],
+  });
+
+  const tsaColumn = trailingColumns?.tsa;
+  const dataStartRow = layout?.dataStartRow || 10;
+  if (tsaColumn) {
+    worksheet.dataValidations.add(`${tsaColumn}${dataStartRow}:${tsaColumn}482`, {
+      type: 'list',
+      allowBlank: false,
+      showInputMessage: true,
+      showErrorMessage: true,
+      formulae: ['"☐,☒"'],
+    });
+  }
+
+  unlockEditablePlanArea(worksheet, 10, 482, 4, 26);
+
+  await worksheet.protect('', {
+    selectLockedCells: true,
+    selectUnlockedCells: true,
+    formatCells: false,
+    formatColumns: false,
+    formatRows: false,
+    insertColumns: false,
+    insertRows: false,
+    insertHyperlinks: false,
+    deleteColumns: false,
+    deleteRows: false,
+    sort: false,
+    autoFilter: false,
+    pivotTables: false,
+  });
+};
+
+const applyCompletedRowHighlighting = (worksheet, trailingColumns, layout = {}) => {
+  if (!worksheet || !trailingColumns?.avslutat) {
+    return;
+  }
+
+  const startRow = layout?.dataStartRow || 10;
+  const endRow = 482;
+  const startColumn = 'C';
+  const endColumn = trailingColumns.anteckning || trailingColumns.avslutat;
+  const avslutatColumn = trailingColumns.avslutat;
+
+  worksheet.conditionalFormattings = [];
+  worksheet.addConditionalFormatting({
+    ref: `${startColumn}${startRow}:${endColumn}${endRow}`,
+    rules: [
+      {
+        type: 'expression',
+        priority: 1,
+        formulae: [`LEN(TRIM($${avslutatColumn}${startRow}))>0`],
+        style: {
+          fill: {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFFF5C5C' },
+            bgColor: { argb: 'FFFF5C5C' },
+          },
+          font: {
+            color: { argb: 'FF000000' },
+          },
+        },
+      },
+    ],
+  });
+};
+
+const fillWorksheet = async (worksheet, project, entriesForSheet, rows) => {
   const projectFormState = project.formState || {};
   const sections = Array.isArray(entriesForSheet?.sections)
     ? entriesForSheet.sections
@@ -1113,6 +1198,7 @@ const fillWorksheet = (worksheet, project, entriesForSheet, rows) => {
 
   const sectionColumnMap = setSectionHeaders(worksheet, sections, sectionColumns, layout);
   stabilizeSectionLocationRow(worksheet, sectionColumnMap, layout);
+  applyCompletedRowHighlighting(worksheet, trailingColumns, layout);
 
   const startRow = layout.dataStartRow;
   rows.forEach((row, index) => {
@@ -1141,17 +1227,22 @@ const fillWorksheet = (worksheet, project, entriesForSheet, rows) => {
       worksheet,
       `${trailingColumns.tsa}${excelRow}`,
       row.tsa || (Array.isArray(row.anordning) && row.anordning.some((item) => String(item).toUpperCase() === 'TSA'))
-        ? 'X'
-        : ''
+        ? '☒'
+        : '☐'
     );
     setCell(worksheet, `${trailingColumns.anteckning}${excelRow}`, row.anteckning || '');
   });
+
+  for (let rowNumber = startRow + rows.length; rowNumber <= 482; rowNumber += 1) {
+    setCell(worksheet, `${trailingColumns.tsa}${rowNumber}`, '☐');
+  }
 
   for (let rowNumber = Math.max(layout.dataStartRow + 1, 11); rowNumber <= 27; rowNumber += 1) {
     setCell(worksheet, `E${rowNumber}`, rows[rowNumber - startRow]?.namn ? worksheet.getCell(`E${rowNumber}`).value : '');
   }
 
   reapplyTemplateMerges(worksheet);
+  await applyPlanDropdownsAndProtection(worksheet, trailingColumns, layout);
 };
 
 const createPlanWorkbookBuffer = async (project) => {
@@ -1174,15 +1265,15 @@ const createPlanWorkbookBuffer = async (project) => {
   );
   const createdPlanSheets = [];
 
-  worksheetPlans.forEach((plan, index) => {
+  for (const [index, plan] of worksheetPlans.entries()) {
     const fallbackName = plan.sheetName || sheetNameFromDate(plan.entries[0]?.startDate);
     const sheetName = ensureUniqueWorksheetName(fallbackName, usedSheetNames);
     const worksheet = cloneWorksheetFromTemplate(workbook, templateSheetModel, sheetName);
     worksheet.name = sheetName;
     const matchingRows = rows.filter((row) => rowMatchesEntries(row, plan.entries));
-    fillWorksheet(worksheet, project, plan, matchingRows);
+    await fillWorksheet(worksheet, project, plan, matchingRows);
     createdPlanSheets.push(worksheet);
-  });
+  }
 
   workbook.removeWorksheet(templateSheet.id);
   placePlanSheetsFirst(workbook, createdPlanSheets);
