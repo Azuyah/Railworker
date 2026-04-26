@@ -13,6 +13,8 @@ const { createPlanWorkbookBuffer } = require('./lib/planExcelExport');
 const { importPlanWorkbookBuffer } = require('./lib/planExcelImport');
 const { createDispPdfBuffer, getPublicDispName } = require('./lib/dispPdfExport');
 const { buildSignalSections, expandDriftplatsSequence } = require('./lib/njdbDriftplatsService');
+const { resolveBoundaryExpression, searchBoundaryRegistry } = require('./lib/boundaryRegistry');
+const { loadMalmoInfsiRegistry, findInfsiSignals, resolveInfsiSequence } = require('./lib/linjebokSignalRegistry');
 require('dotenv').config();
 
 const app = express();
@@ -42,6 +44,58 @@ app.get('/api/telefonkatalog', (req, res) => {
       'Content-Disposition': 'inline; filename="Telefonkatalog-2024-10-03.pdf"',
     },
   });
+});
+
+app.get('/api/granspunkter/catalog', authMiddleware, (req, res) => {
+  try {
+    const query = String(req.query?.q || '').trim();
+    const limit = Math.min(Math.max(Number(req.query?.limit || 25), 1), 100);
+    res.json({
+      query,
+      items: searchBoundaryRegistry(query, limit),
+    });
+  } catch (error) {
+    console.error('Fel vid hämtning av gränspunktskatalog:', error);
+    res.status(500).json({ error: 'Kunde inte hämta gränspunktskatalogen' });
+  }
+});
+
+app.post('/api/granspunkter/resolve', authMiddleware, (req, res) => {
+  try {
+    const value = String(req.body?.value || '').trim();
+    if (!value) {
+      return res.status(400).json({ error: 'Ange en gränspunkt eller gränspunktssträcka.' });
+    }
+
+    res.json(resolveBoundaryExpression(value));
+  } catch (error) {
+    console.error('Fel vid tolkning av gränspunkt:', error);
+    res.status(500).json({ error: 'Kunde inte tolka gränspunkten' });
+  }
+});
+
+app.get('/api/linjebok/malmo-infsi', authMiddleware, (req, res) => {
+  try {
+    const query = String(req.query?.q || '').trim();
+    const limit = Math.min(Math.max(Number(req.query?.limit || 25), 1), 100);
+    const payload = loadMalmoInfsiRegistry();
+    const sequence = query.includes(',') ? resolveInfsiSequence(query) : [];
+    const items = sequence.length
+      ? sequence.slice(0, limit)
+      : query
+        ? findInfsiSignals(query).slice(0, limit)
+        : payload.items.slice(0, limit);
+
+    res.json({
+      source: payload.source,
+      query,
+      count: items.length,
+      items,
+    });
+  } catch (error) {
+    console.error('Fel vid hämtning av linjebokssignaler:', error);
+    res.status(500).json({ error: 'Kunde inte hämta linjebokssignaler' });
+  }
 });
 
 app.get('/api/public/projects', async (req, res) => {
@@ -79,6 +133,13 @@ const normalizeFullName = (value = '') =>
     .trim()
     .replace(/\s+/g, ' ')
     .toLowerCase();
+
+const normalizeIncomingProjectSections = (sections = []) =>
+  (Array.isArray(sections) ? sections : []).map((sec) => ({
+    name: String(sec?.name || sec?.signal || '').trim(),
+    type: String(sec?.type || 'Delområde').trim() || 'Delområde',
+    namingMode: String(sec?.namingMode || 'LETTERS').trim() || 'LETTERS',
+  }));
 
 const buildAuthPayload = (user) => {
   const token = jwt.sign(
@@ -728,6 +789,7 @@ app.post('/api/projects', authMiddleware, async (req, res) => {
       sections = [],
       beteckningar = [],
     } = req.body;
+    const normalizedSections = normalizeIncomingProjectSections(sections);
 
     // 🔎 Mappa och validera beteckningar
     const filteredBeteckningar = Array.isArray(beteckningar)
@@ -758,10 +820,10 @@ app.post('/api/projects', authMiddleware, async (req, res) => {
         },
 
         sections: {
-          create: sections.map((sec) => ({
-            name: sec.signal || '',
+          create: normalizedSections.map((sec) => ({
+            name: sec.name || '',
             type: sec.type,
-            namingMode: sec.namingMode || 'LETTERS',
+            namingMode: sec.namingMode,
           })),
         },
       },
@@ -774,7 +836,7 @@ app.post('/api/projects', authMiddleware, async (req, res) => {
     res.status(201).json(hydrateProjectSections(project));
   } catch (error) {
     console.error('❌ Create project error:', error);
-    res.status(500).json({ error: 'Kunde inte skapa projekt' });
+    res.status(500).json({ error: error?.message ? `Kunde inte skapa projekt: ${error.message}` : 'Kunde inte skapa projekt' });
   }
 });
 
@@ -908,14 +970,32 @@ const deleteProjectByIdHandler = async (req, res) => {
     jwt.verify(token, JWT_SECRET); // Verifiering av token
 
     const projectId = parseInt(req.params.id, 10);
+    if (Number.isNaN(projectId)) {
+      return res.status(400).json({ error: 'Ogiltigt projekt-ID' });
+    }
 
-    await prisma.section.deleteMany({ where: { projectId } });
-    await prisma.project.delete({ where: { id: projectId } });
+    const existingProject = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { id: true },
+    });
+
+    if (!existingProject) {
+      return res.status(404).json({ error: 'Projektet hittades inte' });
+    }
+
+    await prisma.$transaction([
+      prisma.row.deleteMany({ where: { projectId } }),
+      prisma.beteckning.deleteMany({ where: { projectId } }),
+      prisma.section.deleteMany({ where: { projectId } }),
+      prisma.project.delete({ where: { id: projectId } }),
+    ]);
 
     res.json({ message: 'Projekt raderat' });
   } catch (error) {
     console.error('Fel vid borttagning:', error);
-    res.status(500).json({ error: 'Kunde inte ta bort projekt' });
+    res.status(500).json({
+      error: error?.message ? `Kunde inte ta bort projektet: ${error.message}` : 'Kunde inte ta bort projektet',
+    });
   }
 };
 
@@ -951,6 +1031,7 @@ app.put('/api/projects/:id', async (req, res) => {
       beteckningar = [],
       anteckningar = [],
     } = req.body;
+    const normalizedSections = normalizeIncomingProjectSections(sections);
 
     const projectId = parseInt(id);
     const filteredBeteckningar = Array.isArray(beteckningar)
@@ -1010,12 +1091,12 @@ app.put('/api/projects/:id', async (req, res) => {
 
     try {
       await prisma.section.deleteMany({ where: { projectId } });
-      if (sections.length > 0) {
+      if (normalizedSections.length > 0) {
         await prisma.section.createMany({
-          data: sections.map((s) => ({
-            name: s.name || s.signal || '',
+          data: normalizedSections.map((s) => ({
+            name: s.name || '',
             type: s.type,
-            namingMode: s.namingMode || 'LETTERS',
+            namingMode: s.namingMode,
             projectId,
           })),
         });
@@ -1036,7 +1117,7 @@ app.put('/api/projects/:id', async (req, res) => {
     res.json(hydrateProjectSections(result));
   } catch (error) {
     console.error('❌ Globalt fel:', error.message, error.stack);
-    res.status(500).json({ error: 'Kunde inte uppdatera projektet' });
+    res.status(500).json({ error: error?.message ? `Kunde inte uppdatera projektet: ${error.message}` : 'Kunde inte uppdatera projektet' });
   }
 });
 

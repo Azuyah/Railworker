@@ -37,6 +37,17 @@ const fjtklNameOptions = [
 const TELEFONKATALOG_URL = apiUrl('/api/telefonkatalog');
 const NJDB_URL = 'https://njdbwebb.trafikverket.se/map';
 const TRAFIKVERKET_BLANKETTER_URL = 'https://bransch.trafikverket.se/tjanster/publikationer-och-styrande-dokument/trafikverkets-styrande-dokument/blanketter-och-mallar-tillhorande-styrande-dokument/';
+const EDITING_PROJECT_SESSION_KEY = 'railworker.skapaProjekt.editingProjectId';
+
+const getStoredUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem('user') || 'null');
+  } catch (error) {
+    return null;
+  }
+};
+
+const getAuthToken = () => getStoredUser()?.token || localStorage.getItem('token') || '';
 
 const htsmPhoneOptions = [
   '010-149 01 64',
@@ -130,25 +141,23 @@ const mergeBlankett31EntryPhones = (entries = [], existingEntries = [], fallback
 const generatePlanJobId = () =>
   `job-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
-const buildSuggestedPlanJobName = (entries = [], index = 0) => {
-  const datedEntries = entries.filter((entry) => entry?.startDate);
-  if (datedEntries.length !== 1) {
-    return `Dag/Natt ${index + 1}`;
-  }
+const normalizePlanJobMode = (value = '') => {
+  const normalized = String(value || '').trim().toLowerCase();
+  return normalized === 'dag' ? 'Dag' : 'Natt';
+};
 
-  const entry = datedEntries[0];
-  const startDate = new Date(`${entry.startDate}T00:00:00`);
-  const dayLabel = Number.isNaN(startDate.getTime()) ? '' : swedishShortDays[startDate.getDay()];
-  const rawStartHour = Number(String(entry.startTime || '').split(':')[0]);
-  const spansNight = Boolean(
-    entry.startDate
-    && entry.endDate
-    && entry.endDate !== entry.startDate
-  );
-  void rawStartHour;
-  void spansNight;
-  void dayLabel;
-  return `Dag/Natt ${index + 1}`;
+const buildSuggestedPlanJobName = (mode = 'Natt', index = 0) =>
+  `${normalizePlanJobMode(mode)} ${index + 1}`;
+
+const inferPlanJobMode = (jobs = []) => {
+  const firstName = String(jobs?.[0]?.name || '').trim();
+  if (/^dag\b/i.test(firstName)) {
+    return 'Dag';
+  }
+  if (/^natt\b/i.test(firstName)) {
+    return 'Natt';
+  }
+  return 'Natt';
 };
 
 const compareBlankett31Entries = (left = {}, right = {}) => {
@@ -166,7 +175,7 @@ const sortPlanJobEntryKeys = (selectedEntryKeys = [], entries = []) => {
   });
 };
 
-const defaultPlanJob = (entries = [], index = 0) => {
+const defaultPlanJob = (entries = [], index = 0, mode = 'Natt') => {
   const selectedEntryKeys = sortPlanJobEntryKeys(
     entries.map((entry, entryIndex) => buildPlanJobEntryKey(entry, entryIndex)),
     entries
@@ -175,7 +184,7 @@ const defaultPlanJob = (entries = [], index = 0) => {
 
   return {
     id: generatePlanJobId(),
-    name: buildSuggestedPlanJobName(entries, index),
+    name: buildSuggestedPlanJobName(mode, index),
     selectedEntryKeys,
     primaryPlanEntryKey: primaryKey,
     primaryDispEntryKey: primaryKey,
@@ -183,14 +192,14 @@ const defaultPlanJob = (entries = [], index = 0) => {
   };
 };
 
-const normalizePlanJobs = (jobs = [], entries = []) => {
+const normalizePlanJobs = (jobs = [], entries = [], mode = 'Natt') => {
   const availableKeys = new Set(entries.map((entry, index) => buildPlanJobEntryKey(entry, index)));
   const meaningfulJobs = Array.isArray(jobs)
     ? jobs.filter((job) => job && (job.name || (job.selectedEntryKeys || []).length))
     : [];
 
   if (!meaningfulJobs.length) {
-    return [defaultPlanJob(entries, 0)];
+    return [defaultPlanJob(entries, 0, mode)];
   }
 
   return meaningfulJobs.map((job, index) => ({
@@ -201,7 +210,7 @@ const normalizePlanJobs = (jobs = [], entries = []) => {
       entries
     ),
     id: String(job.id || generatePlanJobId()),
-    name: String(job.name || buildSuggestedPlanJobName(entries, index)).trim(),
+    name: buildSuggestedPlanJobName(mode, index),
     primaryPlanEntryKey: String(job.primaryPlanEntryKey || ''),
     primaryDispEntryKey: String(job.primaryDispEntryKey || ''),
     sortOrder: index,
@@ -532,6 +541,7 @@ const buildProjectPreflightSummary = ({
   sections,
   blankett31Entries,
   planJobs,
+  planJobMode,
   primaryDispEntryKeys,
   dispSectionGroups,
 }) => {
@@ -542,7 +552,7 @@ const buildProjectPreflightSummary = ({
   const activeEntries = blankett31Entries.filter((entry) =>
     Object.values(entry || {}).some((value) => hasValue(value))
   );
-  const normalizedJobs = normalizePlanJobs(planJobs, activeEntries);
+  const normalizedJobs = normalizePlanJobs(planJobs, activeEntries, planJobMode);
 
   if (!hasValue(projektNamn)) {
     errors.push('Projektnamn saknas.');
@@ -735,7 +745,11 @@ const mergeSectionDetails = (sections = [], sectionDetails = [], fallbackAreaNam
 const SkapaProjekt = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const currentProjectId = location.state?.projectId ?? null;
+  const routeStateProjectId = location.state?.projectId ? String(location.state.projectId) : '';
+  const queryProjectId = new URLSearchParams(location.search).get('projectId')?.trim() || '';
+  const storedEditingProjectId = sessionStorage.getItem(EDITING_PROJECT_SESSION_KEY)?.trim() || '';
+  const currentProjectId = routeStateProjectId || queryProjectId || storedEditingProjectId || null;
+  const [isHydratingAuth, setIsHydratingAuth] = useState(true);
   const [isLoadingProject, setIsLoadingProject] = useState(false);
 
   const [startDate, setStartDate] = useState('');
@@ -769,7 +783,8 @@ const SkapaProjekt = () => {
   const [customDispPhoneLines, setCustomDispPhoneLines] = useState([]);
   const [blankett31Files, setBlankett31Files] = useState([]);
   const [blankett31Entries, setBlankett31Entries] = useState([defaultBlankett31Entry()]);
-  const [planJobs, setPlanJobs] = useState(() => normalizePlanJobs([], []));
+  const [planJobMode, setPlanJobMode] = useState('Natt');
+  const [planJobs, setPlanJobs] = useState(() => normalizePlanJobs([], [], 'Natt'));
   const [primaryDispEntryKeys, setPrimaryDispEntryKeys] = useState([]);
   const [dispSectionGroups, setDispSectionGroups] = useState([]);
   const [dispFiles, setDispFiles] = useState([]);
@@ -825,6 +840,171 @@ const SkapaProjekt = () => {
     ],
     [sections, dispSectionGroups]
   );
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const ensureHtsmSession = async () => {
+      const token = getAuthToken();
+      if (!token) {
+        window.location.assign('/htsm-login');
+        return;
+      }
+
+      const storedUser = getStoredUser();
+      if (storedUser?.role === 'HTSM') {
+        if (!isCancelled) {
+          setIsHydratingAuth(false);
+        }
+        return;
+      }
+
+      try {
+        const response = await fetch(apiUrl('/api/user'), {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Kunde inte återställa inloggningen.');
+        }
+
+        const data = await response.json();
+        if (String(data?.role || '').toUpperCase() !== 'HTSM') {
+          throw new Error('Fel roll för skapa projekt.');
+        }
+
+        const nextUser = {
+          token,
+          role: data.role,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          signature: data.signature,
+          email: data.email,
+          phone: data.phone,
+          company: data.company,
+        };
+
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(nextUser));
+
+        if (!isCancelled) {
+          setIsHydratingAuth(false);
+        }
+      } catch (error) {
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        window.location.assign('/htsm-login');
+      }
+    };
+
+    ensureHtsmSession();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  const buildProjectPayload = () => ({
+    name: projektNamn,
+    startDate: startDate || '',
+    startTime: startTime || '',
+    endDate: endDate || '',
+    endTime: endTime || '',
+    plats: plats || '',
+    granspunkter: granspunktFritext || '',
+    namn: namn || '',
+    telefonnummer: telefonnummer || '',
+    bandriftnummer: bandriftnummer || '',
+    eldriftnummer: eldriftnummer || '',
+    avstamt,
+    objekt,
+    uttagningstid,
+    signatur,
+    avslutaSkyddTid,
+    avslutningstid,
+    avslutningssignatur,
+    formState: {
+      nodnummer,
+      bandriftnummer,
+      eldriftnummer,
+      htsmTelefon,
+      reservnr,
+      avstamt,
+      objekt,
+      uttagningstid,
+      signatur,
+      avslutaSkyddTid,
+      avslutningstid,
+      avslutningssignatur,
+      fjtklBlocks,
+      customDispPhoneLines,
+      blankett31Meta,
+      dispSettings,
+      planJobMode,
+      blankett31Entries,
+      primaryDispSectionEntryKeys: primaryDispEntryKeys,
+      dispSectionGroups: dispSectionGroups.map((group, groupIndex) => ({
+        id: group.id,
+        title: group.title || `Delområdesruta ${groupIndex + 2}`,
+        selectedEntryKeys: group.selectedEntryKeys || [],
+        sections: (group.sections || []).map((sec) => ({
+          type: sec.type,
+          signal: sec.signal || sec.name || '',
+          namingMode: sec.namingMode || 'LETTERS',
+          displayIndex: sec.displayIndex ?? null,
+          customLabel: sec.customLabel || '',
+          sortOrder: sec.sortOrder ?? null,
+          granspunktStart: sec.granspunktStart || '',
+          granspunktSlut: sec.granspunktSlut || '',
+          granspunkter: sec.granspunkter || '',
+          spar: sec.spar || '',
+          highlightStart: Boolean(sec.highlightStart),
+          highlightEnd: Boolean(sec.highlightEnd),
+          highlightStartPart: sec.highlightStartPart || '',
+          highlightEndPart: sec.highlightEndPart || '',
+        })),
+      })),
+      planJobs: normalizePlanJobs(planJobs, blankett31Entries, planJobMode).map((job, index) => ({
+        id: job.id,
+        name: job.name,
+        selectedEntryKeys: job.selectedEntryKeys || [],
+        primaryPlanEntryKey: job.primaryPlanEntryKey || '',
+        primaryDispEntryKey: job.primaryDispEntryKey || '',
+        sortOrder: job.sortOrder ?? index,
+      })),
+      sectionDetails: sections.map((sec) => ({
+        signal: sec.signal || sec.name || '',
+        displayIndex: sec.displayIndex ?? null,
+        customLabel: sec.customLabel || '',
+        sortOrder: sec.sortOrder ?? null,
+        granspunktStart: sec.granspunktStart || '',
+        granspunktSlut: sec.granspunktSlut || '',
+        granspunkter: sec.granspunkter || '',
+        spar: sec.spar || '',
+        highlightStart: Boolean(sec.highlightStart),
+        highlightEnd: Boolean(sec.highlightEnd),
+        highlightStartPart: sec.highlightStartPart || '',
+        highlightEndPart: sec.highlightEndPart || '',
+      })),
+      blankett31Files: blankett31Files.map((file) => ({
+        name: file.name,
+        size: file.size,
+      })),
+      dispFiles: dispFiles.map((file) => ({
+        name: file.name,
+        size: file.size,
+      })),
+    },
+    beteckningar: beteckningar.map((b) => ({ value: b.value })),
+    sections: sections.map((sec) => ({
+      type: sec.type,
+      name: sec.name || sec.signal || '',
+      signal: sec.signal || sec.name || '',
+      namingMode: sec.namingMode || 'LETTERS',
+    })),
+  });
 
   const syncSummaryDatesFromEntries = (entries) => {
     if (!entries.length) {
@@ -964,7 +1144,8 @@ const SkapaProjekt = () => {
     setCustomDispPhoneLines([]);
     setBlankett31Files([]);
     setBlankett31Entries([defaultBlankett31Entry()]);
-    setPlanJobs(normalizePlanJobs([], []));
+    setPlanJobMode('Natt');
+    setPlanJobs(normalizePlanJobs([], [], 'Natt'));
     setPrimaryDispEntryKeys([]);
     setDispSectionGroups([]);
     setDispFiles([]);
@@ -988,7 +1169,7 @@ const SkapaProjekt = () => {
   };
 
   const loadProjectTemplateOptions = async () => {
-    const token = JSON.parse(localStorage.getItem('user'))?.token;
+    const token = getAuthToken();
     if (!token) {
       setDispStatus('Logga in för att välja disp från Railworker.');
       return;
@@ -1019,7 +1200,7 @@ const SkapaProjekt = () => {
   };
 
   const handleApplyProjectTemplate = async (projectId) => {
-    const token = JSON.parse(localStorage.getItem('user'))?.token;
+    const token = getAuthToken();
     if (!token) {
       setDispStatus('Logga in för att välja disp från Railworker.');
       return;
@@ -1050,8 +1231,8 @@ const SkapaProjekt = () => {
   const addPlanJob = () => {
     setPlanJobs((current) => normalizePlanJobs([
       ...current,
-      defaultPlanJob([], current.length),
-    ], blankett31Entries));
+      defaultPlanJob([], current.length, planJobMode),
+    ], blankett31Entries, planJobMode));
   };
 
   const updatePlanJobField = (index, field, value) => {
@@ -1059,7 +1240,7 @@ const SkapaProjekt = () => {
       jobIndex === index
         ? { ...job, [field]: value }
         : job
-    )), blankett31Entries));
+    )), blankett31Entries, planJobMode));
   };
 
   const togglePlanJobEntry = (jobIndex, entryKey) => {
@@ -1079,7 +1260,7 @@ const SkapaProjekt = () => {
         ...job,
         selectedEntryKeys: Array.from(selectedEntryKeys),
       };
-    }), blankett31Entries));
+    }), blankett31Entries, planJobMode));
   };
 
   const getPlanJobSelectedOptions = (job) =>
@@ -1094,14 +1275,15 @@ const SkapaProjekt = () => {
 
       const updated = [...current];
       [updated[index], updated[targetIndex]] = [updated[targetIndex], updated[index]];
-      return normalizePlanJobs(updated, blankett31Entries);
+      return normalizePlanJobs(updated, blankett31Entries, planJobMode);
     });
   };
 
   const removePlanJob = (index) => {
     setPlanJobs((current) => normalizePlanJobs(
       current.filter((_, jobIndex) => jobIndex !== index),
-      blankett31Entries
+      blankett31Entries,
+      planJobMode
     ));
   };
 
@@ -1297,7 +1479,7 @@ const SkapaProjekt = () => {
   };
 
   const handleExpandDriftplatser = async () => {
-    const token = JSON.parse(localStorage.getItem('user'))?.token;
+    const token = getAuthToken();
     if (!token) {
       setDriftplatsStatus('Du maste vara inloggad for att hamta driftplatser.');
       return;
@@ -1334,7 +1516,7 @@ const SkapaProjekt = () => {
   };
 
   const resolveExpandedDriftplatser = async (value) => {
-    const token = JSON.parse(localStorage.getItem('user'))?.token;
+    const token = getAuthToken();
     if (!token) {
       throw new Error('Du maste vara inloggad for att hamta driftplatser.');
     }
@@ -1357,7 +1539,7 @@ const SkapaProjekt = () => {
   };
 
   useEffect(() => {
-    const token = JSON.parse(localStorage.getItem('user'))?.token;
+    const token = getAuthToken();
     const uniqueBoundaries = [
       ...new Set(
         allSectionEditors
@@ -1548,8 +1730,28 @@ const SkapaProjekt = () => {
     [dismissedReminderIds, rawWorkspaceReminders]
   );
 
+  const quickOverview = useMemo(() => {
+    const activeSectionCount = allSectionEditors.reduce(
+      (total, group) => total + (group.sections || []).filter(sectionHasContent).length,
+      0
+    );
+
+    const activeEntryCount = blankett31Entries.filter((entry) =>
+      Object.values(entry || {}).some((value) => hasValue(value))
+    ).length;
+
+    const activeJobCount = planJobs.filter((job) => hasValue(job?.name) || (job?.selectedEntryKeys || []).length).length;
+
+    return {
+      entries: activeEntryCount,
+      jobs: activeJobCount,
+      sections: activeSectionCount,
+      reminders: liveWorkspaceReminders.length,
+    };
+  }, [allSectionEditors, blankett31Entries, liveWorkspaceReminders.length, planJobs]);
+
   const resolveSectionsFromSignals = async (value, outerBoundaries) => {
-    const token = JSON.parse(localStorage.getItem('user'))?.token;
+    const token = getAuthToken();
     if (!token) {
       throw new Error('Du maste vara inloggad for att hamta signaler.');
     }
@@ -1622,7 +1824,7 @@ const SkapaProjekt = () => {
   };
 
   const handlePopulateSectionsFromSignals = async () => {
-    const token = JSON.parse(localStorage.getItem('user'))?.token;
+    const token = getAuthToken();
     if (!token) {
       setSectionStatus('Du maste vara inloggad for att hamta signaler.');
       return;
@@ -1671,7 +1873,7 @@ const SkapaProjekt = () => {
   };
 
   const handlePopulateGroupSectionsFromSignals = async (groupId, selectedEntryKeys = []) => {
-    const token = JSON.parse(localStorage.getItem('user'))?.token;
+    const token = getAuthToken();
     if (!token) {
       setSectionStatus('Du maste vara inloggad for att hamta signaler.');
       return;
@@ -1752,7 +1954,7 @@ const SkapaProjekt = () => {
       return;
     }
 
-    const token = JSON.parse(localStorage.getItem('user'))?.token;
+    const token = getAuthToken();
     if (!token) {
       setBlankett31Status('Logga in för att tolka Blankett 31.');
       return;
@@ -1873,7 +2075,7 @@ const SkapaProjekt = () => {
       return;
     }
 
-    const token = JSON.parse(localStorage.getItem('user'))?.token;
+    const token = getAuthToken();
     if (!token) {
       setDispStatus('Logga in för att tolka Disp.');
       return;
@@ -1924,8 +2126,23 @@ const SkapaProjekt = () => {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
+  const handleReturnToPanel = () => {
+    window.location.assign('/htsmpanel');
+  };
+
+  const handleGoToProfile = () => {
+    window.location.assign('/profil');
+  };
+
+  const handleLogoutFromProjectPage = () => {
+    sessionStorage.removeItem(EDITING_PROJECT_SESSION_KEY);
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    window.location.assign('/htsm-login');
+  };
+
   const saveProject = async () => {
-    const token = JSON.parse(localStorage.getItem('user'))?.token;
+    const token = getAuthToken();
     if (!token) {
       alert('Du är inte inloggad.');
       return;
@@ -1933,104 +2150,7 @@ const SkapaProjekt = () => {
 
     try {
       setIsSavingProject(true);
-      const newProject = {
-        name: projektNamn,
-        startDate: startDate || '',
-        startTime: startTime || '',
-        endDate: endDate || '',
-        endTime: endTime || '',
-        plats: plats || '',
-        granspunkter: granspunktFritext || '',
-        namn: namn || '',
-        telefonnummer: telefonnummer || '',
-        bandriftnummer: bandriftnummer || '',
-        eldriftnummer: eldriftnummer || '',
-        avstamt,
-        objekt,
-        uttagningstid,
-        signatur,
-        avslutaSkyddTid,
-        avslutningstid,
-        avslutningssignatur,
-        formState: {
-          nodnummer,
-          bandriftnummer,
-          eldriftnummer,
-          htsmTelefon,
-          reservnr,
-          avstamt,
-          objekt,
-          uttagningstid,
-          signatur,
-          avslutaSkyddTid,
-          avslutningstid,
-          avslutningssignatur,
-          fjtklBlocks,
-          customDispPhoneLines,
-          blankett31Meta,
-          dispSettings,
-          blankett31Entries,
-          primaryDispSectionEntryKeys: primaryDispEntryKeys,
-          dispSectionGroups: dispSectionGroups.map((group, groupIndex) => ({
-            id: group.id,
-            title: group.title || `Delområdesruta ${groupIndex + 2}`,
-            selectedEntryKeys: group.selectedEntryKeys || [],
-            sections: (group.sections || []).map((sec) => ({
-              type: sec.type,
-              signal: sec.signal || sec.name || '',
-              namingMode: sec.namingMode || 'LETTERS',
-              displayIndex: sec.displayIndex ?? null,
-              customLabel: sec.customLabel || '',
-              sortOrder: sec.sortOrder ?? null,
-              granspunktStart: sec.granspunktStart || '',
-              granspunktSlut: sec.granspunktSlut || '',
-              granspunkter: sec.granspunkter || '',
-              spar: sec.spar || '',
-              highlightStart: Boolean(sec.highlightStart),
-              highlightEnd: Boolean(sec.highlightEnd),
-              highlightStartPart: sec.highlightStartPart || '',
-              highlightEndPart: sec.highlightEndPart || '',
-            })),
-          })),
-          planJobs: normalizePlanJobs(planJobs, blankett31Entries).map((job, index) => ({
-            id: job.id,
-            name: job.name,
-            selectedEntryKeys: job.selectedEntryKeys || [],
-            primaryPlanEntryKey: job.primaryPlanEntryKey || '',
-            primaryDispEntryKey: job.primaryDispEntryKey || '',
-            sortOrder: job.sortOrder ?? index,
-          })),
-          sectionDetails: sections.map((sec) => ({
-            signal: sec.signal || sec.name || '',
-            displayIndex: sec.displayIndex ?? null,
-            customLabel: sec.customLabel || '',
-            sortOrder: sec.sortOrder ?? null,
-            granspunktStart: sec.granspunktStart || '',
-            granspunktSlut: sec.granspunktSlut || '',
-            granspunkter: sec.granspunkter || '',
-            spar: sec.spar || '',
-            highlightStart: Boolean(sec.highlightStart),
-            highlightEnd: Boolean(sec.highlightEnd),
-            highlightStartPart: sec.highlightStartPart || '',
-            highlightEndPart: sec.highlightEndPart || '',
-          })),
-          blankett31Files: blankett31Files.map((file) => ({
-            name: file.name,
-            size: file.size,
-          })),
-          dispFiles: dispFiles.map((file) => ({
-            name: file.name,
-            size: file.size,
-          })),
-        },
-        beteckningar: beteckningar.map((b) => ({ value: b.value })),
-        sections: sections.map((sec) => ({
-          type: sec.type,
-          name: sec.name || sec.signal || '',
-          signal: sec.signal || sec.name || '',
-          namingMode: sec.namingMode || 'LETTERS',
-        })),
-      };
+      const newProject = buildProjectPayload();
 
       const isEditingProject = Boolean(currentProjectId);
       const response = await fetch(
@@ -2047,17 +2167,17 @@ const SkapaProjekt = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Kunde inte skapa projekt');
+        throw new Error(await getApiErrorMessage(response, 'Kunde inte spara projektet.'));
       }
 
       const data = await response.json();
       console.log('✅ Projekt skapat med beteckningar:', data.beteckningar);
-
+      sessionStorage.removeItem(EDITING_PROJECT_SESSION_KEY);
       closePreflight();
       navigate('/htsmpanel');
     } catch (err) {
       console.error('Fel vid projekt-skapande:', err);
-      alert('Något gick fel. Försök igen.');
+      alert(`Kunde inte spara projektet.\n\n${err?.message || 'Okänt fel'}`);
     } finally {
       setIsSavingProject(false);
     }
@@ -2072,6 +2192,7 @@ const SkapaProjekt = () => {
       sections,
       blankett31Entries,
       planJobs,
+      planJobMode,
       primaryDispEntryKeys,
       dispSectionGroups,
     });
@@ -2091,7 +2212,7 @@ const SkapaProjekt = () => {
       return;
     }
 
-    const token = JSON.parse(localStorage.getItem('user'))?.token;
+    const token = getAuthToken();
     if (!token) {
       alert('Du är inte inloggad.');
       return;
@@ -2106,19 +2227,20 @@ const SkapaProjekt = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Kunde inte ta bort projektet');
+        throw new Error(await getApiErrorMessage(response, 'Kunde inte ta bort projektet.'));
       }
 
+      sessionStorage.removeItem(EDITING_PROJECT_SESSION_KEY);
       navigate('/htsmpanel');
     } catch (error) {
       console.error('Fel vid borttagning av projekt:', error);
-      alert('Kunde inte ta bort projektet.');
+      alert(error?.message || 'Kunde inte ta bort projektet.');
     }
   };
 
   useEffect(() => {
-    setPlanJobs((current) => normalizePlanJobs(current, blankett31Entries));
-  }, [blankett31Entries]);
+    setPlanJobs((current) => normalizePlanJobs(current, blankett31Entries, planJobMode));
+  }, [blankett31Entries, planJobMode]);
 
   useEffect(() => {
     const validKeys = new Set(blankett31Entries.map((entry, index) => buildPlanJobEntryKey(entry, index)));
@@ -2128,10 +2250,31 @@ const SkapaProjekt = () => {
 
   useEffect(() => {
     if (!currentProjectId) {
+      sessionStorage.removeItem(EDITING_PROJECT_SESSION_KEY);
       return;
     }
 
-    const token = JSON.parse(localStorage.getItem('user'))?.token;
+    sessionStorage.setItem(EDITING_PROJECT_SESSION_KEY, String(currentProjectId));
+
+    if (queryProjectId === String(currentProjectId)) {
+      return;
+    }
+
+    navigate(`/skapa-projekt?projectId=${currentProjectId}`, {
+      replace: true,
+      state: {
+        ...(location.state || {}),
+        projectId: currentProjectId,
+      },
+    });
+  }, [currentProjectId, queryProjectId, navigate, location.state]);
+
+  useEffect(() => {
+    if (!currentProjectId) {
+      return;
+    }
+
+    const token = getAuthToken();
     if (!token) {
       return;
     }
@@ -2209,11 +2352,16 @@ const SkapaProjekt = () => {
               entry.avslutningssignatur || (index === entries.length - 1 ? project.formState?.avslutningssignatur || '' : ''),
           }))
         );
+        const loadedPlanJobMode = normalizePlanJobMode(
+          project.formState?.planJobMode || inferPlanJobMode(project.formState?.planJobs || [])
+        );
+        setPlanJobMode(loadedPlanJobMode);
         setPlanJobs(normalizePlanJobs(
           project.formState?.planJobs || [],
           (project.formState?.blankett31Entries || []).length
             ? project.formState.blankett31Entries
-            : [defaultBlankett31Entry()]
+            : [defaultBlankett31Entry()],
+          loadedPlanJobMode
         ));
         setPrimaryDispEntryKeys(
           Array.isArray(project.formState?.primaryDispSectionEntryKeys)
@@ -2298,10 +2446,15 @@ const SkapaProjekt = () => {
   }) => (
     <div className="space-y-3">
       {sectionList.map((sec, i) => (
-        <div key={`${sec.sortOrder ?? i}-${i}`} className="rounded-2xl border border-rose-400 bg-rose-200/70 px-5 py-4 shadow-sm shadow-rose-100/70">
-          <div className="mb-3 flex items-center justify-between">
-            <div className="text-sm font-semibold text-slate-700">
-              {getSectionLabel(sec, i)}
+        <div key={`${sec.sortOrder ?? i}-${i}`} className="rounded-3xl border border-yellow-300 bg-white/90 px-5 py-4 shadow-sm shadow-yellow-100/70 backdrop-blur">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-600">
+                {sec.type || 'Delområde'}
+              </div>
+              <div className="mt-1 text-sm font-semibold text-slate-800">
+                {getSectionLabel(sec, i)}
+              </div>
             </div>
             <div className="flex flex-wrap items-center justify-end gap-2">
               <button
@@ -2440,11 +2593,14 @@ const SkapaProjekt = () => {
               />
             </div>
           </div>
-          <div className="mt-2 text-xs text-slate-500">
-            Etikett: {getSectionLabel(sec, i)}. Lämna "Egen etikett" tom för automatisk numrering eller bokstav.
-          </div>
-          <div className="mt-1 text-xs text-slate-500">
-            Gränspunkter: {sec.granspunkter || [sec.granspunktStart, sec.granspunktSlut].filter(Boolean).join(' - ') || 'Ej angivet'}
+          <div className="mt-3 rounded-2xl border border-yellow-200 bg-yellow-50/80 px-3 py-2">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">Översikt</div>
+            <div className="mt-2 text-xs text-slate-600">
+              Etikett: <span className="font-semibold text-slate-800">{getSectionLabel(sec, i)}</span>. Lämna "Egen etikett" tom för automatisk numrering eller bokstav.
+            </div>
+            <div className="mt-1 text-xs text-slate-600">
+              Gränspunkter: <span className="font-semibold text-slate-800">{sec.granspunkter || [sec.granspunktStart, sec.granspunktSlut].filter(Boolean).join(' - ') || 'Ej angivet'}</span>
+            </div>
           </div>
         </div>
       ))}
@@ -2453,6 +2609,15 @@ const SkapaProjekt = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 text-black">
+      {isHydratingAuth ? (
+        <div className="flex min-h-screen items-center justify-center bg-slate-50">
+          <div className="rounded-2xl border border-slate-200 bg-white px-6 py-5 text-sm font-semibold text-slate-700 shadow-sm">
+            Återställer HTSM-inloggning...
+          </div>
+        </div>
+      ) : null}
+      {!isHydratingAuth ? (
+        <>
       <div className="pointer-events-none fixed inset-0">
         <div className="absolute -top-32 right-0 h-80 w-80 rounded-full bg-amber-200/40 blur-3xl" />
         <div className="absolute bottom-0 left-0 h-80 w-80 rounded-full bg-sky-200/40 blur-3xl" />
@@ -2460,7 +2625,7 @@ const SkapaProjekt = () => {
 
       <Header />
 
-      <div className="relative z-10 mx-auto max-w-[1400px] px-6 pb-16 pt-24">
+      <div className="relative z-0 mx-auto max-w-[1480px] px-6 pb-16 pt-24">
         <div className="mb-8 flex flex-col gap-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
@@ -2471,6 +2636,29 @@ const SkapaProjekt = () => {
               <p className="mt-2 text-sm text-slate-600">
                 Samla allt på en plats – från FJTKL till delområden. Du kan alltid justera senare.
               </p>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleReturnToPanel}
+                  className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Till panelen
+                </button>
+                <button
+                  type="button"
+                  onClick={handleGoToProfile}
+                  className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Min profil
+                </button>
+                <button
+                  type="button"
+                  onClick={handleLogoutFromProjectPage}
+                  className="rounded-full border border-rose-300 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                >
+                  Logga ut
+                </button>
+              </div>
             </div>
             <button
               onClick={handleCreateProject}
@@ -2480,9 +2668,31 @@ const SkapaProjekt = () => {
               {currentProjectId ? 'Spara projekt' : 'Skapa projekt'}
             </button>
           </div>
+          <div className="grid gap-3 md:grid-cols-4">
+            <div className="rounded-2xl border border-blue-300 bg-blue-100 px-4 py-3 shadow-sm shadow-blue-200/70">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-700">Blankett 31</div>
+              <div className="mt-2 text-2xl font-bold text-blue-950">{quickOverview.entries}</div>
+              <div className="text-xs font-medium text-blue-800/80">aktiva poster</div>
+            </div>
+            <div className="rounded-2xl border border-emerald-300 bg-emerald-100 px-4 py-3 shadow-sm shadow-emerald-200/70">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-700">Jobb</div>
+              <div className="mt-2 text-2xl font-bold text-emerald-950">{quickOverview.jobs}</div>
+              <div className="text-xs font-medium text-emerald-800/80">plankjobb kopplade</div>
+            </div>
+            <div className="rounded-2xl border border-yellow-300 bg-yellow-100 px-4 py-3 shadow-sm shadow-yellow-200/70">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-700">Delområden</div>
+              <div className="mt-2 text-2xl font-bold text-amber-950">{quickOverview.sections}</div>
+              <div className="text-xs font-medium text-amber-800/80">aktiva rutor</div>
+            </div>
+            <div className="rounded-2xl border border-amber-300 bg-amber-100 px-4 py-3 shadow-sm shadow-amber-200/70">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-700">Påminnelser</div>
+              <div className={`mt-2 text-2xl font-bold ${quickOverview.reminders ? 'text-amber-700' : 'text-emerald-700'}`}>{quickOverview.reminders}</div>
+              <div className={`text-xs font-medium ${quickOverview.reminders ? 'text-amber-800/80' : 'text-emerald-800/80'}`}>{quickOverview.reminders ? 'arbetskontroller att titta på' : 'lugnt läge just nu'}</div>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[260px_1fr]">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[290px_1fr]">
           <aside className="space-y-6 lg:sticky lg:top-24">
             <div className="rounded-3xl border border-slate-700 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-4 text-white shadow-xl shadow-slate-900/15">
               <div>
@@ -2625,25 +2835,25 @@ const SkapaProjekt = () => {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Arbetsordning</p>
-              <ol className="mt-3 space-y-2 text-sm text-slate-600">
-                <li className="rounded-xl bg-slate-50 px-3 py-2"><span className="font-semibold text-slate-900">1.</span> Bygg från Blankett 31 eller tidigare disp.</li>
-                <li className="rounded-xl bg-slate-50 px-3 py-2"><span className="font-semibold text-slate-900">2.</span> Kontrollera FJTKL, jobb och telefonnummer.</li>
-                <li className="rounded-xl bg-slate-50 px-3 py-2"><span className="font-semibold text-slate-900">3.</span> Finjustera delområden innan du sparar projektet.</li>
+            <div className="rounded-3xl border border-blue-200 bg-blue-50 p-4 shadow-sm shadow-blue-100/70 backdrop-blur">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-blue-700">Arbetsordning</p>
+              <ol className="mt-3 space-y-2 text-sm text-blue-950">
+                <li className="rounded-xl border border-blue-100 bg-white/90 px-3 py-2"><span className="font-semibold text-blue-800">1.</span> Bygg från Blankett 31 eller tidigare disp.</li>
+                <li className="rounded-xl border border-blue-100 bg-white/90 px-3 py-2"><span className="font-semibold text-blue-800">2.</span> Kontrollera FJTKL, jobb och telefonnummer.</li>
+                <li className="rounded-xl border border-blue-100 bg-white/90 px-3 py-2"><span className="font-semibold text-blue-800">3.</span> Finjustera delområden innan du sparar projektet.</li>
               </ol>
             </div>
 
-            <div className="rounded-2xl border border-amber-200 bg-white p-4 shadow-sm">
+            <div className="rounded-3xl border border-amber-300 bg-amber-50 p-4 shadow-sm shadow-amber-100/70 backdrop-blur">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-600">Arbetskontroll</p>
-                  <p className="mt-2 text-sm font-semibold text-slate-900">Små rimlighetskontroller medan du jobbar</p>
-                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-700">Arbetskontroll</p>
+                  <p className="mt-2 text-sm font-semibold text-amber-950">Små rimlighetskontroller medan du jobbar</p>
+                  <p className="mt-1 text-xs font-medium leading-5 text-amber-900/70">
                     Diskreta påminnelser om något ser ovanligt ut. Du kan klicka bort dem och fortsätta.
                   </p>
                 </div>
-                <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                <span className="rounded-full border border-amber-300 bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
                   {liveWorkspaceReminders.length}
                 </span>
               </div>
@@ -2654,11 +2864,11 @@ const SkapaProjekt = () => {
                       key={reminder.id}
                       className={`flex items-start justify-between gap-3 rounded-xl border px-3 py-3 text-sm ${
                         reminder.level === 'warning'
-                          ? 'border-amber-200 bg-amber-50 text-amber-800'
-                          : 'border-sky-200 bg-sky-50 text-sky-800'
+                          ? 'border-amber-200 bg-white/95 text-amber-900'
+                          : 'border-sky-300 bg-sky-100/85 text-sky-900'
                       }`}
                     >
-                      <span className="leading-5">{reminder.message}</span>
+                      <span className="leading-5 font-medium">{reminder.message}</span>
                       <button
                         type="button"
                         onClick={() => setDismissedReminderIds((current) => [...current, reminder.id])}
@@ -2669,7 +2879,7 @@ const SkapaProjekt = () => {
                     </div>
                   ))
                 ) : (
-                  <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-emerald-800">
+                  <div className="rounded-xl border border-emerald-300 bg-emerald-100/90 px-3 py-3 text-sm font-medium text-emerald-900">
                     Inget som sticker ut just nu.
                   </div>
                 )}
@@ -2679,11 +2889,11 @@ const SkapaProjekt = () => {
           </aside>
 
           <main className="space-y-6">
-            <section className="rounded-2xl border border-blue-400 bg-gradient-to-br from-blue-100 via-white to-blue-200/80 p-6 shadow-sm shadow-blue-100/60">
+            <section className="rounded-3xl border border-blue-400 bg-blue-200 p-6 shadow-sm shadow-blue-200/70">
               <div className="mb-6 flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-semibold text-black">Projektöversikt</h2>
-                  <p className="text-xs text-slate-500">Namngivning och tidsram</p>
+                  <p className="text-xs font-medium text-blue-900/65">Namngivning och tidsram</p>
                 </div>
                 <span className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
                   01
@@ -2872,9 +3082,9 @@ const SkapaProjekt = () => {
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <div className="rounded-2xl border border-indigo-400 bg-indigo-200/70 p-4 shadow-sm shadow-indigo-100/70">
-                      <p className="text-sm font-semibold text-slate-900">Kapitel 1 i dispen</p>
-                      <p className="mt-1 text-xs text-slate-500">
+                    <div className="rounded-3xl border border-indigo-400 bg-indigo-100 p-4 shadow-sm shadow-indigo-200/70">
+                      <p className="text-sm font-semibold text-indigo-950">Kapitel 1 i dispen</p>
+                      <p className="mt-1 text-xs font-medium text-indigo-900/65">
                         Styr hur rutan med tider och delområden ska visas i den färdiga dispositionsarbetsplanen.
                       </p>
                       <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -3058,10 +3268,10 @@ const SkapaProjekt = () => {
                   </div>
                 </div>
                 {customDispPhoneLines.length > 0 && (
-                  <div className="mt-5 rounded-2xl border border-slate-200 bg-white/70 p-4">
+                  <div className="mt-5 rounded-3xl border border-blue-200 bg-blue-50 p-4 shadow-sm shadow-blue-100/60">
                     <div className="mb-3">
-                      <h4 className="text-sm font-semibold text-slate-900">Extra TKL-rader i kapitel 13</h4>
-                      <p className="mt-1 text-xs text-slate-500">
+                      <h4 className="text-sm font-semibold text-blue-950">Extra TKL-rader i kapitel 13</h4>
+                      <p className="mt-1 text-xs font-medium text-blue-900/65">
                         Skriv exakt den text som ska synas på dispen, till exempel <span className="font-semibold text-slate-700">Malmö Ätk 010-127 12 42</span>.
                       </p>
                     </div>
@@ -3099,9 +3309,9 @@ const SkapaProjekt = () => {
                   </div>
                   <div className="space-y-3">
                     {blankett31Entries.map((entry, index) => (
-                      <div key={`${entry.beteckning || 'post'}-${index}`} className="rounded-2xl border border-amber-400 bg-amber-200/75 p-4 shadow-sm shadow-amber-100/80">
+                      <div key={`${entry.beteckning || 'post'}-${index}`} className="rounded-3xl border border-amber-400 bg-amber-100 p-4 shadow-sm shadow-amber-200/80">
                         <div className="mb-3 flex items-center justify-between gap-3">
-                          <div className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+                          <div className="text-xs font-semibold uppercase tracking-widest text-amber-700">
                             Post {index + 1}
                           </div>
                           <button
@@ -3194,6 +3404,29 @@ const SkapaProjekt = () => {
                     <p className="text-xs text-slate-500">
                       Varje jobb blir senare en egen planka och Excel-flik. Ett jobb kan ha en eller flera Blankett 31.
                     </p>
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                      <label className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-widest text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={planJobMode === 'Dag'}
+                          onChange={() => setPlanJobMode('Dag')}
+                          className="h-4 w-4 accent-slate-900"
+                        />
+                        Dag
+                      </label>
+                      <label className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-widest text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={planJobMode === 'Natt'}
+                          onChange={() => setPlanJobMode('Natt')}
+                          className="h-4 w-4 accent-slate-900"
+                        />
+                        Natt
+                      </label>
+                      <span className="text-xs font-medium text-slate-500">
+                        Valet styr alla jobb i projektet, till exempel {planJobMode} 1, {planJobMode} 2 och {planJobMode} 3.
+                      </span>
+                    </div>
                   </div>
                   <button
                     type="button"
@@ -3205,7 +3438,7 @@ const SkapaProjekt = () => {
                 </div>
                 <div className="space-y-3">
                   {planJobs.map((job, index) => (
-                    <div key={job.id || index} className="rounded-2xl border border-emerald-400 bg-emerald-200/75 p-4 shadow-sm shadow-emerald-100/80">
+                    <div key={job.id || index} className="rounded-3xl border border-emerald-400 bg-emerald-100 p-4 shadow-sm shadow-emerald-200/80">
                       {(() => {
                         const selectedOptions = getPlanJobSelectedOptions(job);
                         return (
@@ -3245,15 +3478,11 @@ const SkapaProjekt = () => {
                       <div className="grid gap-3 lg:grid-cols-[280px_1fr]">
                         <div>
                           <label className="mb-1 block text-sm font-semibold text-slate-700">Fliknamn</label>
-                          <input
-                            type="text"
-                            value={job.name || ''}
-                            onChange={(e) => updatePlanJobField(index, 'name', e.target.value)}
-                            placeholder="Ex. Dag/Natt 1 eller HBG"
-                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-slate-900 focus:outline-none"
-                          />
+                          <div className="flex min-h-[50px] items-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900">
+                            {job.name || buildSuggestedPlanJobName(planJobMode, index)}
+                          </div>
                           <p className="mt-2 text-xs text-slate-500">
-                            Namnet används senare som plansida och Excel-flik.
+                            Namnet styrs automatiskt av projektets val för dag eller natt och används senare som plansida och Excel-flik.
                           </p>
                           <div className="mt-4 space-y-3">
                             <div>
@@ -3345,7 +3574,7 @@ const SkapaProjekt = () => {
 
             {fjtklBlocks.map((block, index) => (
               <section key={index}>
-                <div className="rounded-2xl border border-sky-400 bg-gradient-to-br from-sky-100 via-white to-sky-200/80 p-6 shadow-sm shadow-sky-100/60">
+                <div className="rounded-3xl border border-sky-400 bg-sky-200 p-6 shadow-sm shadow-sky-200/70">
                   <div className="mb-6 flex items-center justify-between">
                     <div>
                       <h2 className="text-lg font-semibold text-black">FJTKL</h2>
@@ -3452,11 +3681,11 @@ const SkapaProjekt = () => {
               </section>
             ))}
 
-            <section className="rounded-2xl border border-rose-400 bg-gradient-to-br from-rose-100 via-white to-rose-200/70 p-6 shadow-sm shadow-rose-100/60">
+            <section className="rounded-3xl border border-yellow-300 bg-yellow-100 p-6 shadow-sm shadow-yellow-200/70">
               <div className="mb-6 flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-semibold text-black">Delområden</h2>
-                  <p className="text-xs text-slate-500">Skapa DP/Linje och ange signaltext. Lägg bara till fler delområdesrutor när olika Blankett 31-poster ska bli egna kapitel 1-rutor i dispen.</p>
+                  <p className="text-xs font-medium text-amber-900/70">Skapa DP/Linje och ange signaltext. Lägg bara till fler delområdesrutor när olika Blankett 31-poster ska bli egna kapitel 1-rutor i dispen.</p>
                 </div>
                 <div className="flex flex-wrap items-center justify-end gap-2">
                   <button
@@ -3486,7 +3715,7 @@ const SkapaProjekt = () => {
                 <p className="mb-4 text-xs font-medium text-slate-600">{sectionStatus}</p>
               ) : null}
 
-              <div className="rounded-2xl border border-rose-300 bg-white/70 p-4 shadow-sm shadow-rose-100/50">
+              <div className="rounded-3xl border border-yellow-300 bg-white/85 p-4 shadow-sm shadow-yellow-100/60">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div>
                     <h3 className="text-base font-semibold text-slate-900">Delområdesruta 1 i DISP</h3>
@@ -3522,7 +3751,7 @@ const SkapaProjekt = () => {
                     return (
                       <div
                         key={group.id}
-                        className="rounded-2xl border border-rose-300 bg-white/70 p-4 shadow-sm shadow-rose-100/50"
+                        className="rounded-3xl border border-yellow-300 bg-white/85 p-4 shadow-sm shadow-yellow-100/60"
                       >
                         <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
                           <div className="flex-1">
@@ -3710,7 +3939,30 @@ const SkapaProjekt = () => {
             ) : null}
           </ModalBody>
           <ModalFooter>
-            <div className="flex w-full justify-end gap-3">
+            <div className="flex w-full flex-wrap justify-between gap-3">
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={handleReturnToPanel}
+                  className="rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Till panelen
+                </button>
+                <button
+                  type="button"
+                  onClick={handleGoToProfile}
+                  className="rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Min profil
+                </button>
+                <button
+                  type="button"
+                  onClick={handleLogoutFromProjectPage}
+                  className="rounded-full border border-rose-300 bg-rose-50 px-5 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100"
+                >
+                  Logga ut
+                </button>
+              </div>
               <button
                 type="button"
                 onClick={closePreflight}
@@ -3718,12 +3970,16 @@ const SkapaProjekt = () => {
               >
                 Tillbaka
               </button>
-              {!preflightSummary.errors.length && preflightSummary.warnings.length ? (
+              {(preflightSummary.errors.length || preflightSummary.warnings.length) ? (
                 <button
                   type="button"
                   onClick={saveProject}
                   disabled={isSavingProject}
-                  className="rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+                  className={`rounded-full px-5 py-2 text-sm font-semibold text-white disabled:opacity-60 ${
+                    preflightSummary.errors.length
+                      ? 'bg-rose-600 hover:bg-rose-700'
+                      : 'bg-slate-900 hover:bg-slate-800'
+                  }`}
                 >
                   {isSavingProject ? 'Sparar...' : 'Spara ändå'}
                 </button>
@@ -3732,6 +3988,8 @@ const SkapaProjekt = () => {
           </ModalFooter>
         </ModalContent>
       </Modal>
+        </>
+      ) : null}
     </div>
   );
 };
