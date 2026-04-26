@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Modal,
@@ -489,6 +489,31 @@ const normalizeSectionAreaName = (value = '') =>
 
 const hasValue = (value) => String(value || '').trim().length > 0;
 
+const normalizePhoneLookup = (value = '') =>
+  String(value || '').replace(/[^\d]/g, '');
+
+const getBoundaryCheckEndpointNames = (resolved) => {
+  const groups = Array.isArray(resolved?.groups) ? resolved.groups : [];
+  if (!groups.length) {
+    return { startName: '', endName: '' };
+  }
+
+  const firstToken = groups[0]?.tokens?.[0] || null;
+  const lastGroup = groups[groups.length - 1] || null;
+  const lastTokens = Array.isArray(lastGroup?.tokens) ? lastGroup.tokens : [];
+  const lastToken = lastTokens[lastTokens.length - 1] || null;
+
+  return {
+    startName: String(firstToken?.name || '').trim(),
+    endName: String(lastToken?.name || '').trim(),
+  };
+};
+
+const getSectionRealtimeLabel = (section = {}, index = 0, groupTitle = '') => {
+  const base = getSectionLabel(section, index);
+  return groupTitle ? `${groupTitle} - ${base}` : base;
+};
+
 const sectionHasContent = (section = {}) =>
   [
     section?.signal,
@@ -758,6 +783,8 @@ const SkapaProjekt = () => {
   const [driftplatsStatus, setDriftplatsStatus] = useState('');
   const [isResolvingSections, setIsResolvingSections] = useState(false);
   const [sectionStatus, setSectionStatus] = useState('');
+  const [liveBoundaryChecks, setLiveBoundaryChecks] = useState({});
+  const [dismissedReminderIds, setDismissedReminderIds] = useState([]);
   const [preflightSummary, setPreflightSummary] = useState({ errors: [], warnings: [] });
   const [isSavingProject, setIsSavingProject] = useState(false);
   const [showProjectTemplatePicker, setShowProjectTemplatePicker] = useState(false);
@@ -787,6 +814,16 @@ const SkapaProjekt = () => {
     .filter((option) => option.label);
   const blankett31EntryKeyMap = new Map(
     blankett31Entries.map((entry, index) => [buildPlanJobEntryKey(entry, index), entry])
+  );
+  const allSectionEditors = useMemo(
+    () => [
+      { title: 'Delområdesruta 1', sections },
+      ...dispSectionGroups.map((group, groupIndex) => ({
+        title: group.title || `Delområdesruta ${groupIndex + 2}`,
+        sections: Array.isArray(group.sections) ? group.sections : [],
+      })),
+    ],
+    [sections, dispSectionGroups]
   );
 
   const syncSummaryDatesFromEntries = (entries) => {
@@ -1318,6 +1355,198 @@ const SkapaProjekt = () => {
 
     return response.json();
   };
+
+  useEffect(() => {
+    const token = JSON.parse(localStorage.getItem('user'))?.token;
+    const uniqueBoundaries = [
+      ...new Set(
+        allSectionEditors
+          .flatMap((group) => (group.sections || []).flatMap((section) => [
+            String(section?.granspunktStart || '').trim(),
+            String(section?.granspunktSlut || '').trim(),
+          ]))
+          .filter(Boolean)
+      ),
+    ];
+
+    if (!token || !uniqueBoundaries.length) {
+      setLiveBoundaryChecks({});
+      return;
+    }
+
+    let cancelled = false;
+
+    const run = async () => {
+      const nextChecks = {};
+
+      await Promise.all(uniqueBoundaries.map(async (value) => {
+        try {
+          const response = await fetch(apiUrl('/api/granspunkter/resolve'), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ value }),
+          });
+
+          if (!response.ok) {
+            nextChecks[value] = { error: true };
+            return;
+          }
+
+          nextChecks[value] = await response.json();
+        } catch (error) {
+          nextChecks[value] = { error: true };
+        }
+      }));
+
+      if (!cancelled) {
+        setLiveBoundaryChecks(nextChecks);
+      }
+    };
+
+    run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [allSectionEditors]);
+
+  const rawWorkspaceReminders = useMemo(() => {
+    const reminderItems = [];
+    const knownPhoneSet = new Set(
+      [
+        ...availableBlankett31PhoneOptions,
+        ...fjtklPhoneOptions,
+        ...emergencyPhoneOptions,
+        ...bandriftPhoneOptions,
+        ...eldriftPhoneOptions,
+      ]
+        .map(normalizePhoneLookup)
+        .filter(Boolean)
+    );
+
+    allSectionEditors.forEach((group) => {
+      (group.sections || []).forEach((section, index) => {
+        if (!sectionHasContent(section)) {
+          return;
+        }
+
+        const label = getSectionRealtimeLabel(section, index, group.title);
+        const signal = String(section?.signal || section?.name || '').trim();
+        const sectionType = String(section?.type || '').trim();
+        const startBoundary = String(section?.granspunktStart || '').trim();
+        const endBoundary = String(section?.granspunktSlut || '').trim();
+        const track = String(section?.spar || '').trim();
+        const startCheck = liveBoundaryChecks[startBoundary];
+        const endCheck = liveBoundaryChecks[endBoundary];
+        const startNames = getBoundaryCheckEndpointNames(startCheck);
+        const endNames = getBoundaryCheckEndpointNames(endCheck);
+
+        if (signal && sectionType === 'DP' && signal.includes(' - ')) {
+          reminderItems.push({
+            id: `${group.title}-${index}-dp-line-shape`,
+            level: 'warning',
+            message: `${label}: signaltexten ser ut som en sträcka. Ska den här raden vara Linje i stället för DP?`,
+          });
+        }
+
+        if (signal && sectionType === 'Linje' && !signal.includes(' - ')) {
+          reminderItems.push({
+            id: `${group.title}-${index}-line-dp-shape`,
+            level: 'info',
+            message: `${label}: signaltexten ser ut som en enskild driftplats. Kontrollera om den här raden verkligen ska vara Linje.`,
+          });
+        }
+
+        if (startBoundary && endBoundary && startBoundary.toLowerCase() === endBoundary.toLowerCase()) {
+          reminderItems.push({
+            id: `${group.title}-${index}-same-boundary`,
+            level: 'warning',
+            message: `${label}: start- och slutgränspunkt är samma. Är det rimligt för just den här rutan?`,
+          });
+        }
+
+        if (startBoundary && startCheck && !startCheck?.flatTokens?.some((token) => token?.code)) {
+          reminderItems.push({
+            id: `${group.title}-${index}-unknown-start`,
+            level: 'warning',
+            message: `${label}: "${startBoundary}" känns inte igen i driftplatsregistret. Kontrollera stavning eller kod.`,
+          });
+        }
+
+        if (endBoundary && endCheck && !endCheck?.flatTokens?.some((token) => token?.code)) {
+          reminderItems.push({
+            id: `${group.title}-${index}-unknown-end`,
+            level: 'warning',
+            message: `${label}: "${endBoundary}" känns inte igen i driftplatsregistret. Kontrollera stavning eller kod.`,
+          });
+        }
+
+        if (sectionType === 'DP' && startNames.startName && endNames.endName && startNames.startName !== endNames.endName) {
+          reminderItems.push({
+            id: `${group.title}-${index}-dp-different-stations`,
+            level: 'info',
+            message: `${label}: DP-rutan spänner mellan ${startNames.startName} och ${endNames.endName}. Kontrollera att det verkligen ska vara en DP-ruta.`,
+          });
+        }
+
+        if (sectionType === 'Linje' && startNames.startName && endNames.endName && startNames.startName === endNames.endName) {
+          reminderItems.push({
+            id: `${group.title}-${index}-line-same-station`,
+            level: 'info',
+            message: `${label}: linjerutan börjar och slutar i ${startNames.startName}. Kontrollera om det i stället ska vara en DP-ruta.`,
+          });
+        }
+
+        if (signal && !track) {
+          reminderItems.push({
+            id: `${group.title}-${index}-missing-track`,
+            level: 'info',
+            message: `${label}: spår saknas fortfarande. Lägg gärna in det nu medan delområdet är färskt.`,
+          });
+        }
+      });
+    });
+
+    if (telefonnummer && !knownPhoneSet.has(normalizePhoneLookup(telefonnummer))) {
+      reminderItems.push({
+        id: 'project-phone-not-known',
+        level: 'info',
+        message: `FJTKL-telefonen ${telefonnummer} finns inte i kända katalognummer. Kontrollera att rätt nummer används.`,
+      });
+    }
+
+    blankett31Entries.forEach((entry, index) => {
+      const phone = String(entry?.telefonnummer || '').trim();
+      if (phone && !knownPhoneSet.has(normalizePhoneLookup(phone))) {
+        reminderItems.push({
+          id: `entry-phone-${index}`,
+          level: 'info',
+          message: `${entry.beteckning || `Blankett 31-post ${index + 1}`}: telefonnumret ${phone} känns inte igen i katalogen. Kontrollera att det är rätt TKL/FJTKL.`,
+        });
+      }
+    });
+
+    return reminderItems;
+  }, [
+    allSectionEditors,
+    availableBlankett31PhoneOptions,
+    blankett31Entries,
+    liveBoundaryChecks,
+    telefonnummer,
+  ]);
+
+  useEffect(() => {
+    const currentIds = new Set(rawWorkspaceReminders.map((item) => item.id));
+    setDismissedReminderIds((current) => current.filter((id) => currentIds.has(id)));
+  }, [rawWorkspaceReminders]);
+
+  const liveWorkspaceReminders = useMemo(
+    () => rawWorkspaceReminders.filter((item) => !dismissedReminderIds.includes(item.id)),
+    [dismissedReminderIds, rawWorkspaceReminders]
+  );
 
   const resolveSectionsFromSignals = async (value, outerBoundaries) => {
     const token = JSON.parse(localStorage.getItem('user'))?.token;
@@ -2403,6 +2632,48 @@ const SkapaProjekt = () => {
                 <li className="rounded-xl bg-slate-50 px-3 py-2"><span className="font-semibold text-slate-900">2.</span> Kontrollera FJTKL, jobb och telefonnummer.</li>
                 <li className="rounded-xl bg-slate-50 px-3 py-2"><span className="font-semibold text-slate-900">3.</span> Finjustera delområden innan du sparar projektet.</li>
               </ol>
+            </div>
+
+            <div className="rounded-2xl border border-amber-200 bg-white p-4 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-600">Arbetskontroll</p>
+                  <p className="mt-2 text-sm font-semibold text-slate-900">Små rimlighetskontroller medan du jobbar</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                    Diskreta påminnelser om något ser ovanligt ut. Du kan klicka bort dem och fortsätta.
+                  </p>
+                </div>
+                <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                  {liveWorkspaceReminders.length}
+                </span>
+              </div>
+              <div className="mt-4 space-y-2">
+                {liveWorkspaceReminders.length ? (
+                  liveWorkspaceReminders.map((reminder) => (
+                    <div
+                      key={reminder.id}
+                      className={`flex items-start justify-between gap-3 rounded-xl border px-3 py-3 text-sm ${
+                        reminder.level === 'warning'
+                          ? 'border-amber-200 bg-amber-50 text-amber-800'
+                          : 'border-sky-200 bg-sky-50 text-sky-800'
+                      }`}
+                    >
+                      <span className="leading-5">{reminder.message}</span>
+                      <button
+                        type="button"
+                        onClick={() => setDismissedReminderIds((current) => [...current, reminder.id])}
+                        className="shrink-0 rounded-full border border-current/20 px-2 py-1 text-[11px] font-semibold uppercase tracking-widest hover:bg-white/70"
+                      >
+                        Dölj
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-sm text-emerald-800">
+                    Inget som sticker ut just nu.
+                  </div>
+                )}
+              </div>
             </div>
 
           </aside>
