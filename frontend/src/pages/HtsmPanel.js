@@ -16,7 +16,7 @@ import {
   Stack,
 } from '@chakra-ui/react';
 import Header from '../components/Header';
-import { apiUrl, PROD_API_BASE_URL, isLocalAppHost } from '../lib/api';
+import { apiUrl, isLocalAppHost } from '../lib/api';
 
 const getStoredUser = () => {
   try {
@@ -382,63 +382,14 @@ const toLivePayload = (project) => ({
       const fullProject = localProjectRes.data;
       const payload = toLivePayload(fullProject);
 
-      const liveProjectsRes = await axios.get(`${PROD_API_BASE_URL}/api/projects`, {
+      const publishRes = await axios.post(apiUrl(`/api/live-sync/projects/${project.id}/publish`), {
+        liveToken,
+      }, {
         headers: {
-          Authorization: `Bearer ${liveToken}`,
+          Authorization: `Bearer ${localToken}`,
         },
       });
-
-      const liveProjects = Array.isArray(liveProjectsRes.data) ? liveProjectsRes.data : [];
-      const storedLiveProjectId = Number(fullProject?.formState?.liveSync?.liveProjectId);
-      const matchingLiveProject =
-        liveProjects.find((item) => Number(item.id) === storedLiveProjectId) ||
-        liveProjects.find((item) => Number(item?.formState?.liveSync?.localProjectId) === Number(fullProject?.id)) ||
-        liveProjects.find((item) =>
-          String(item?.name || '').trim() === String(fullProject?.name || '').trim() &&
-          String(item?.startDate || '') === String(fullProject?.startDate || '') &&
-          String(item?.plats || '').trim() === String(fullProject?.plats || '').trim()
-        );
-
-      let liveProjectId = null;
-      if (matchingLiveProject?.id) {
-        await axios.put(`${PROD_API_BASE_URL}/api/projects/${matchingLiveProject.id}`, payload, {
-          headers: {
-            Authorization: `Bearer ${liveToken}`,
-          },
-        });
-        liveProjectId = matchingLiveProject.id;
-      } else {
-        const createRes = await axios.post(`${PROD_API_BASE_URL}/api/projects`, payload, {
-          headers: {
-            Authorization: `Bearer ${liveToken}`,
-          },
-        });
-        liveProjectId = createRes.data?.id || null;
-      }
-
-      if (liveProjectId && typeof payload.visibleToTsm === 'boolean') {
-        await axios.patch(
-          `${PROD_API_BASE_URL}/api/projects/${liveProjectId}/visibility`,
-          { visibleToTsm: payload.visibleToTsm },
-          {
-            headers: {
-              Authorization: `Bearer ${liveToken}`,
-            },
-          }
-        );
-      }
-
-      if (liveProjectId && typeof fullProject?.formState?.sentToManagement === 'boolean') {
-        await axios.patch(
-          `${PROD_API_BASE_URL}/api/projects/${liveProjectId}/sent-status`,
-          { sentToManagement: Boolean(fullProject.formState.sentToManagement) },
-          {
-            headers: {
-              Authorization: `Bearer ${liveToken}`,
-            },
-          }
-        );
-      }
+      const liveProjectId = publishRes.data?.liveProjectId || null;
 
       if (liveProjectId) {
         await persistLocalLiveSyncMeta(fullProject, liveProjectId);

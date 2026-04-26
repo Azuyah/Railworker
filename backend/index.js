@@ -20,6 +20,8 @@ require('dotenv').config();
 const app = express();
 const prisma = new PrismaClient();
 const TELEFONKATALOG_PATH = '/Users/matsmalleandersson/Desktop/Disp Arbetsmall/Telefonkatalog 2024-10-03.pdf';
+const LIVE_SYNC_API_BASE_URL = process.env.LIVE_SYNC_API_BASE_URL || 'https://railworker-production.up.railway.app';
+const LIVE_SYNC_TIMEOUT_MS = Number(process.env.LIVE_SYNC_TIMEOUT_MS || 12000);
 
 const corsOptions = {
   origin: true,
@@ -234,6 +236,86 @@ const hydrateProjectSections = (project = null) => {
     ...project,
     sections,
   };
+};
+
+const buildLiveSyncPayload = (project = {}) => ({
+  name: project?.name || '',
+  startDate: project?.startDate || '',
+  startTime: project?.startTime || '',
+  endDate: project?.endDate || '',
+  endTime: project?.endTime || '',
+  plats: project?.plats || '',
+  namn: project?.namn || '',
+  telefonnummer: project?.telefonnummer || '',
+  granspunkter: project?.granspunkter || '',
+  formState: {
+    ...(project?.formState || {}),
+    liveSync: {
+      ...(project?.formState?.liveSync || {}),
+      localProjectId: project?.id || null,
+    },
+  },
+  visibleToTsm: Boolean(project?.visibleToTsm),
+  rows: project?.rows || null,
+  anteckningar: project?.anteckningar || [],
+  sections: Array.isArray(project?.sections)
+    ? project.sections.map((section) => ({
+        type: section?.type || 'Delområde',
+        name: section?.name || section?.signal || '',
+        signal: section?.signal || section?.name || '',
+        namingMode: section?.namingMode || 'NUMBERS',
+      }))
+    : [],
+  beteckningar: Array.isArray(project?.beteckningar)
+    ? project.beteckningar.map((item) => ({
+        label: item?.label || item?.value || '',
+        value: item?.value || item?.label || '',
+      }))
+    : [],
+});
+
+const fetchLiveSyncJson = async (path, token, options = {}) => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), LIVE_SYNC_TIMEOUT_MS);
+  let response;
+
+  try {
+    response = await fetch(`${LIVE_SYNC_API_BASE_URL}${path}`, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        ...(options.headers || {}),
+      },
+    });
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      const timeoutError = new Error('Live-systemet svarade inte i tid. Försök igen om en liten stund.');
+      timeoutError.status = 504;
+      throw timeoutError;
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  let data = null;
+  try {
+    data = await response.json();
+  } catch (error) {
+    data = null;
+  }
+
+  if (!response.ok) {
+    const message = data?.error || `Live-anrop misslyckades (${response.status})`;
+    const err = new Error(message);
+    err.status = response.status;
+    err.payload = data;
+    throw err;
+  }
+
+  return data;
 };
 
 const isLineSection = (section = {}) => {
@@ -958,6 +1040,96 @@ const project = await prisma.project.findUnique({
 
 app.get('/api/project/:id', authMiddleware, getProjectByIdHandler);
 app.get('/api/projects/:id', authMiddleware, getProjectByIdHandler);
+
+app.post('/api/live-sync/projects/:id/publish', authMiddleware, async (req, res) => {
+  try {
+    const projectId = parseInt(req.params.id, 10);
+    if (Number.isNaN(projectId)) {
+      return res.status(400).json({ error: 'Ogiltigt projekt-ID' });
+    }
+
+    const liveToken = String(req.body?.liveToken || '').trim();
+    if (!liveToken) {
+      return res.status(400).json({ error: 'Live-token saknas' });
+    }
+
+    const localProject = await prisma.project.findUnique({
+      where: { id: projectId },
+      include: {
+        sections: true,
+        beteckningar: true,
+      },
+    });
+
+    if (!localProject) {
+      return res.status(404).json({ error: 'Projektet hittades inte' });
+    }
+
+    if (!canAccessProject(req.user?.role, localProject)) {
+      return res.status(403).json({ error: 'Du har inte behörighet att publicera detta projekt' });
+    }
+
+    const hydratedProject = hydrateProjectSections(localProject);
+    const payload = buildLiveSyncPayload(hydratedProject);
+    const liveProjects = await fetchLiveSyncJson('/api/projects', liveToken, { method: 'GET' });
+    const liveProjectList = Array.isArray(liveProjects) ? liveProjects : [];
+    const storedLiveProjectId = Number(hydratedProject?.formState?.liveSync?.liveProjectId);
+
+    const matchingLiveProject =
+      liveProjectList.find((item) => Number(item.id) === storedLiveProjectId) ||
+      liveProjectList.find((item) => Number(item?.formState?.liveSync?.localProjectId) === Number(hydratedProject?.id)) ||
+      liveProjectList.find((item) =>
+        String(item?.name || '').trim() === String(hydratedProject?.name || '').trim() &&
+        String(item?.startDate || '') === String(hydratedProject?.startDate || '') &&
+        String(item?.plats || '').trim() === String(hydratedProject?.plats || '').trim()
+      );
+
+    let liveProjectId = null;
+    if (matchingLiveProject?.id) {
+      await fetchLiveSyncJson(`/api/projects/${matchingLiveProject.id}`, liveToken, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+      liveProjectId = matchingLiveProject.id;
+    } else {
+      const createResult = await fetchLiveSyncJson('/api/projects', liveToken, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      liveProjectId = createResult?.id || null;
+    }
+
+    if (liveProjectId && typeof payload.visibleToTsm === 'boolean') {
+      await fetchLiveSyncJson(`/api/projects/${liveProjectId}/visibility`, liveToken, {
+        method: 'PATCH',
+        body: JSON.stringify({ visibleToTsm: payload.visibleToTsm }),
+      });
+    }
+
+    if (liveProjectId && typeof hydratedProject?.formState?.sentToManagement === 'boolean') {
+      await fetchLiveSyncJson(`/api/projects/${liveProjectId}/sent-status`, liveToken, {
+        method: 'PATCH',
+        body: JSON.stringify({ sentToManagement: Boolean(hydratedProject.formState.sentToManagement) }),
+      });
+    }
+
+    res.json({
+      message: 'Projekt publicerat till live',
+      liveProjectId,
+      visibleToTsm: payload.visibleToTsm,
+    });
+  } catch (error) {
+    console.error('Fel vid live-publicering:', error);
+    const status = Number(error?.status);
+    if (status === 401 || status === 403) {
+      return res.status(status).json({ error: 'Live-tokenen är ogiltig eller saknar behörighet.' });
+    }
+
+    res.status(500).json({
+      error: error?.message || 'Kunde inte publicera projektet till live',
+    });
+  }
+});
 
 const deleteProjectByIdHandler = async (req, res) => {
   const authHeader = req.headers.authorization;
