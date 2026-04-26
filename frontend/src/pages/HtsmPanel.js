@@ -68,7 +68,6 @@ const getLiveSyncStatus = (project) => {
     helper: `Senast publicerad ${new Date(syncedAt).toLocaleString('sv-SE')}.`,
   };
 };
-const EDITING_PROJECT_SESSION_KEY = 'railworker.skapaProjekt.editingProjectId';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -100,41 +99,35 @@ const Dashboard = () => {
     return trimmed;
   };
 
-const toLivePayload = (project) => ({
-  name: project?.name || '',
-  startDate: project?.startDate || '',
-  startTime: project?.startTime || '',
-  endDate: project?.endDate || '',
-  endTime: project?.endTime || '',
-  plats: project?.plats || '',
-  namn: project?.namn || '',
-  telefonnummer: project?.telefonnummer || '',
-  granspunkter: project?.granspunkter || '',
-  formState: {
-    ...(project?.formState || {}),
-    liveSync: {
-      ...(project?.formState?.liveSync || {}),
-      localProjectId: project?.id || null,
-    },
-  },
-  visibleToTsm: Boolean(project?.visibleToTsm),
-  rows: project?.rows || null,
-  anteckningar: project?.anteckningar || [],
-  sections: Array.isArray(project?.sections)
-    ? project.sections.map((section) => ({
-        type: section?.type || 'Delområde',
-        name: section?.name || section?.signal || '',
-        signal: section?.signal || section?.name || '',
-        namingMode: section?.namingMode || 'NUMBERS',
-      }))
-    : [],
-  beteckningar: Array.isArray(project?.beteckningar)
-    ? project.beteckningar.map((item) => ({
-        label: item?.label || item?.value || '',
-        value: item?.value || item?.label || '',
-      }))
-    : [],
-});
+  const toLivePayload = (project) => ({
+    name: project?.name || '',
+    startDate: project?.startDate || '',
+    startTime: project?.startTime || '',
+    endDate: project?.endDate || '',
+    endTime: project?.endTime || '',
+    plats: project?.plats || '',
+    namn: project?.namn || '',
+    telefonnummer: project?.telefonnummer || '',
+    granspunkter: project?.granspunkter || '',
+    formState: project?.formState || {},
+    visibleToTsm: Boolean(project?.visibleToTsm),
+    rows: project?.rows || null,
+    anteckningar: project?.anteckningar || [],
+    sections: Array.isArray(project?.sections)
+      ? project.sections.map((section) => ({
+          type: section?.type || 'Delområde',
+          name: section?.name || section?.signal || '',
+          signal: section?.signal || section?.name || '',
+          namingMode: section?.namingMode || 'NUMBERS',
+        }))
+      : [],
+    beteckningar: Array.isArray(project?.beteckningar)
+      ? project.beteckningar.map((item) => ({
+          label: item?.label || item?.value || '',
+          value: item?.value || item?.label || '',
+        }))
+      : [],
+  });
 
   const persistLocalLiveSyncMeta = async (fullProject, liveProjectId) => {
     const localToken = getLocalToken();
@@ -392,7 +385,6 @@ const toLivePayload = (project) => ({
       const storedLiveProjectId = Number(fullProject?.formState?.liveSync?.liveProjectId);
       const matchingLiveProject =
         liveProjects.find((item) => Number(item.id) === storedLiveProjectId) ||
-        liveProjects.find((item) => Number(item?.formState?.liveSync?.localProjectId) === Number(fullProject?.id)) ||
         liveProjects.find((item) =>
           String(item?.name || '').trim() === String(fullProject?.name || '').trim() &&
           String(item?.startDate || '') === String(fullProject?.startDate || '') &&
@@ -487,8 +479,7 @@ const toLivePayload = (project) => ({
     }
 
     if (destination === 'project') {
-      sessionStorage.setItem(EDITING_PROJECT_SESSION_KEY, String(project.id));
-      navigate(`/skapa-projekt?projectId=${project.id}`, { state: { projectId: project.id } });
+      navigate('/skapa-projekt', { state: { projectId: project.id } });
       return;
     }
 
@@ -673,10 +664,7 @@ const toLivePayload = (project) => ({
                   borderRadius="full"
                   px={8}
                   _hover={{ bg: 'blue.800' }}
-                  onClick={() => {
-                    sessionStorage.removeItem(EDITING_PROJECT_SESSION_KEY);
-                    navigate('/skapa-projekt');
-                  }}
+                  onClick={() => navigate('/skapa-projekt')}
                 >
                   + Skapa projekt
                 </Button>
