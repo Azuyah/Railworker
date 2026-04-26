@@ -1,4 +1,4 @@
-// backend/index.js - server entrypoint
+// backend/index.js
 const express = require('express');
 const bcrypt = require('bcrypt');
 const authMiddleware = require('./middleware/auth');
