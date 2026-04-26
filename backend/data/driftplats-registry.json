@@ -1,0 +1,4575 @@
+{
+  "count": 914,
+  "items": [
+    {
+      "code": "Abb",
+      "name": "Abborrträsk",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ak",
+      "name": "Abisko östra",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Agb",
+      "name": "Agnesberg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ay",
+      "name": "Alby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ahm",
+      "name": "Aleholm",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Agg",
+      "name": "Algutsgården",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "A",
+      "name": "Alingsås",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Alä",
+      "name": "Almnäs",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Av",
+      "name": "Alvesta",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Alh",
+      "name": "Alvhem",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Aä",
+      "name": "Alväng",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Anö",
+      "name": "Anundsjö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Apt",
+      "name": "Aptas",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Arb",
+      "name": "Arboga",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ab",
+      "name": "Arbrå",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Arn",
+      "name": "Arlanda",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Amk",
+      "name": "Arnemark",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ara",
+      "name": "Arnäsvall",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ajr",
+      "name": "Arvidsjaur",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ar",
+      "name": "Arvika",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ap",
+      "name": "Aspeå",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Atp",
+      "name": "Attarp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Avky",
+      "name": "Avesta Krylbo",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ax",
+      "name": "Axmarby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Baö",
+      "name": "Backsjön",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bt",
+      "name": "Baggetorp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bry",
+      "name": "Bankeryd",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bkb",
+      "name": "Barkarby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bva",
+      "name": "Barva",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bst",
+      "name": "Bastuträsk",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bef",
+      "name": "Bengtsfors",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bsb",
+      "name": "Bensjöbacken",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bg",
+      "name": "Berga",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bfs",
+      "name": "Bergfors",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bib",
+      "name": "Billeberga",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bih",
+      "name": "Billesholm",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bfo",
+      "name": "Billingsfors",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bia",
+      "name": "Birsta",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Btp",
+      "name": "Biskopstorp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bsg",
+      "name": "Bispgården",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bjh",
+      "name": "Bjurhem",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Brå",
+      "name": "Bjurå",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bjuv",
+      "name": "Bjuv",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bsä",
+      "name": "Bjärka-Säby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bjm",
+      "name": "Bjärnum",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bja",
+      "name": "Bjästa",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Böo",
+      "name": "Björbo",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bln",
+      "name": "Björkliden",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bj",
+      "name": "Björna",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bjb",
+      "name": "Björneborg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bjn",
+      "name": "Björnkulla",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "B",
+      "name": "Björnlunda",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bjö",
+      "name": "Björnsjö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bjf",
+      "name": "Bjørnfjell",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bma",
+      "name": "Blomstermåla",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bld",
+      "name": "Blädinge",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Boda",
+      "name": "Boda",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bdn",
+      "name": "Boden",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Bds",
+      "name": "Bodens södra",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bön",
+      "name": "Bodsjön",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bof",
+      "name": "Bofors",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bhs",
+      "name": "Bohus",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bn",
+      "name": "Bollnäs",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bom",
+      "name": "Bomansberget",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bor",
+      "name": "Bor",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Boa",
+      "name": "Borgstena",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Blg",
+      "name": "Borlänge",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Bs",
+      "name": "Borås",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Bx",
+      "name": "Boxholm",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Btb",
+      "name": "Brattby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Brh",
+      "name": "Brattheden",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Brs",
+      "name": "Brattsbacka",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ben",
+      "name": "Bredviken",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bra",
+      "name": "Brista",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bro",
+      "name": "Bro",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Bdo",
+      "name": "Broddbo",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bml",
+      "name": "Bromölla",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bet",
+      "name": "Bruksberget",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bf",
+      "name": "Brunflo",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bna",
+      "name": "Brunna",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bgs",
+      "name": "Bryngenäs",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bä",
+      "name": "Bräcke",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bhb",
+      "name": "Bräkne-Hoby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bp",
+      "name": "Brännarp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Brg",
+      "name": "Brännberg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bre",
+      "name": "Bränninge",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Brd",
+      "name": "Brännland",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Brl",
+      "name": "Brålanda",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "By",
+      "name": "Byvalla",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bäb",
+      "name": "Bäckebron",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bäf",
+      "name": "Bäckefors",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bgv",
+      "name": "Bälgviken",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bål",
+      "name": "Bålsta",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bmo",
+      "name": "Båramo",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Bån",
+      "name": "Båstad norra",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Cg",
+      "name": "Charlottenberg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Cph",
+      "name": "Copenhagen Airport",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Dn",
+      "name": "Dagarn",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Dgö",
+      "name": "Daglösen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Dj",
+      "name": "Dala-Järna",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Dgn",
+      "name": "Dalgränsen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Dld",
+      "name": "Dals Långed",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Dat",
+      "name": "Dammstorp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Dbn",
+      "name": "Degerbäcken",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Dg",
+      "name": "Degerfors",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Dgm",
+      "name": "Degermyr",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "D",
+      "name": "Degerön",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Dl",
+      "name": "Dingle",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Dt",
+      "name": "Dingtuna",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Diö",
+      "name": "Diö norra",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Dk",
+      "name": "Dockmyr",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Dta",
+      "name": "Dorotea",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Döe",
+      "name": "Drömme",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Duo",
+      "name": "Duvbo",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Du",
+      "name": "Duved",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Dns",
+      "name": "Dynäs",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Dy",
+      "name": "Dysjön",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Dån",
+      "name": "Dånviken",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Döl",
+      "name": "Döljebro",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ed",
+      "name": "Ed",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "En",
+      "name": "Edane",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "El",
+      "name": "Edsvalla",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Eby",
+      "name": "Ekeby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Eko",
+      "name": "Ekolsund",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ek",
+      "name": "Eksjö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Etk",
+      "name": "Ekträsk",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ea",
+      "name": "Eldsberga",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Em",
+      "name": "Emmaboda",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ens",
+      "name": "Enafors",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Era",
+      "name": "Eneryda",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ep",
+      "name": "Enköping",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ebg",
+      "name": "Enstaberga",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ei",
+      "name": "Erikslund",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Erk",
+      "name": "Erikstad",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Er",
+      "name": "Ervalla",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Et",
+      "name": "Eskilstuna central",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "E",
+      "name": "Eslöv",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Köp",
+      "name": "f.d. Köpingebro",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fgc",
+      "name": "Fagersta central",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fal",
+      "name": "Falerum",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fabp",
+      "name": "Falkenberg personstation",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fabg",
+      "name": "Falkenbergs godsstation",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "F",
+      "name": "Falköpings central",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Fln",
+      "name": "Falun central",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fas",
+      "name": "Farsta strand",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Feb",
+      "name": "Fellingsbro",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fil",
+      "name": "Fillan",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fin",
+      "name": "Finja",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fa",
+      "name": "Finnerödja",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ffs",
+      "name": "Finnforsfallet",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fi",
+      "name": "Fiskeby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fki",
+      "name": "Fjälkinge",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fjå",
+      "name": "Fjällåsen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Flb",
+      "name": "Flemingsberg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fle",
+      "name": "Flen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fsö",
+      "name": "Flens övre",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fls",
+      "name": "Flisby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fby",
+      "name": "Floby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fd",
+      "name": "Floda",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fl",
+      "name": "Flädie",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fok",
+      "name": "Folkesta",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fs",
+      "name": "Fors",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fb",
+      "name": "Forsbacka",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fm",
+      "name": "Forserum",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fod",
+      "name": "Forsheda",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fhm",
+      "name": "Forshem",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fsm",
+      "name": "Forsmo",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Få",
+      "name": "Frillesås",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Frd",
+      "name": "Frinnaryd",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fra",
+      "name": "Fristad",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fdf",
+      "name": "Frändefors",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ft",
+      "name": "Fränsta",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fnö",
+      "name": "Frånö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fv",
+      "name": "Frövi",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Feö",
+      "name": "Fågelsjö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fgl",
+      "name": "Fågelsta",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fkr",
+      "name": "Fåker",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Fgö",
+      "name": "Fångsjöbacken",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gnf",
+      "name": "Gagnef",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gmp",
+      "name": "Gamlarp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gal",
+      "name": "Gamleby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gst",
+      "name": "Gammelstad",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gan",
+      "name": "Gantofta",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gau",
+      "name": "Garnudden",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gså",
+      "name": "Garsås",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gsn",
+      "name": "Gastsjön",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gdl",
+      "name": "Geijersdal",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gm",
+      "name": "Gemla",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gnd",
+      "name": "Genevad",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gtå",
+      "name": "Getå",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gia",
+      "name": "Gideåbacka",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gim",
+      "name": "Gimonäs",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gi",
+      "name": "Gistad",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Glk",
+      "name": "Glommersträsk",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gnp",
+      "name": "Gnarp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gn",
+      "name": "Gnesta",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gnö",
+      "name": "Gnosjö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ge",
+      "name": "Gottne",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ga",
+      "name": "Graninge",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Grs",
+      "name": "Gransjö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gad",
+      "name": "Granstanda",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Grd",
+      "name": "Grevaryd",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gib",
+      "name": "Grillby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gt",
+      "name": "Grimstorp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gp",
+      "name": "Gripenberg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ghd",
+      "name": "Grohed",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gms",
+      "name": "Grums",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gru",
+      "name": "Grundbro",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gg",
+      "name": "Grängesberg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gäg",
+      "name": "Gräsberg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gop",
+      "name": "Grästorp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gnå",
+      "name": "Grönåsen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Grö",
+      "name": "Grötingen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Glt",
+      "name": "Gullträsk",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gui",
+      "name": "Gussi",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gtf",
+      "name": "Gustafs",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gy",
+      "name": "Gäddmyr",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gv",
+      "name": "Gällivare",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Gö",
+      "name": "Gällö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gss",
+      "name": "Gärsnäs",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gä",
+      "name": "Gävle",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Gån",
+      "name": "Gålnäs",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gdö",
+      "name": "Gårdsjö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gön",
+      "name": "Gårdsjön",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gen",
+      "name": "Gåsträsken",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Gåp",
+      "name": "Gåvetorp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "G",
+      "name": "Göteborg",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Ho",
+      "name": "Habo",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hg",
+      "name": "Hagaström",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hge",
+      "name": "Hagge",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Has",
+      "name": "Hallandsås",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "H",
+      "name": "Hallsberg",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Hh",
+      "name": "Hallstahammar",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hd",
+      "name": "Halmstad",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Hfj",
+      "name": "Hamrångefjärden",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hnd",
+      "name": "Handen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hp",
+      "name": "Haparanda södra",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Han",
+      "name": "Harasjön",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Håg",
+      "name": "Harmånger",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hrt",
+      "name": "Harrträsk",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Har",
+      "name": "Harrå",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hs",
+      "name": "Hasselfors",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hlp",
+      "name": "Hasslarp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "He",
+      "name": "Heberg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hdm",
+      "name": "Hedemora",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ht",
+      "name": "Hednoret",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hel",
+      "name": "Helenelund",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hlm",
+      "name": "Helgum",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hb",
+      "name": "Helsingborg",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Hfa",
+      "name": "Hemfosa",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hnn",
+      "name": "Hennan",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hlt",
+      "name": "Herrhult",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hr",
+      "name": "Herrljunga",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Het",
+      "name": "Hestra",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hil",
+      "name": "Hillared",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hly",
+      "name": "Hilleby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hto",
+      "name": "Hillerstorp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hås",
+      "name": "Hindås",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hno",
+      "name": "Hinsnoret",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hj",
+      "name": "Hjulsbro",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hvd",
+      "name": "Hjältevad",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hfr",
+      "name": "Hofors",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hfs",
+      "name": "Holmfors",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hmö",
+      "name": "Holmsjö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hod",
+      "name": "Holmsund",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hdn",
+      "name": "Holmsveden",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hoå",
+      "name": "Holmån",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hl",
+      "name": "Horndal",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hre",
+      "name": "Horred",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Htg",
+      "name": "Hoting",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hova",
+      "name": "Hova",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hvp",
+      "name": "Hovmantorp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hsa",
+      "name": "Hovsta",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hu",
+      "name": "Huddinge",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hkl",
+      "name": "Hudiksvall",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hf",
+      "name": "Hultsfred",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Huö",
+      "name": "Hundsjön",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hka",
+      "name": "Huskvarna",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hsy",
+      "name": "Hussjöby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Humn",
+      "name": "Husums norra",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hyl",
+      "name": "Hyllstofta",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hän",
+      "name": "Häggsjön",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hgv",
+      "name": "Häggvik",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hlf",
+      "name": "Hällefors",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hnä",
+      "name": "Hälleforsnäs",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hnl",
+      "name": "Hällenyland",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hls",
+      "name": "Hällnäs",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hnb",
+      "name": "Hälsingenybo",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Häb",
+      "name": "Hämrasviken",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Häd",
+      "name": "Härad",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hsd",
+      "name": "Härnösands central",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Häy",
+      "name": "Härryda",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hm",
+      "name": "Hässleholm",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hä",
+      "name": "Hästbo",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hv",
+      "name": "Hästveda",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Håp",
+      "name": "Håkantorp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Håb",
+      "name": "Hålbergsliden",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hål",
+      "name": "Hållsta",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Håk",
+      "name": "Håmojåkk",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hå",
+      "name": "Håsjö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hbd",
+      "name": "Högboda",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hbä",
+      "name": "Högbränna",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hög",
+      "name": "Högbysjön",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hön",
+      "name": "Högdalen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hgö",
+      "name": "Högsjö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hma",
+      "name": "Hökmora",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hlö",
+      "name": "Hölö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hrl",
+      "name": "Hörle",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hsö",
+      "name": "Hörnsjö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hös",
+      "name": "Hössjön",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Hö",
+      "name": "Höör",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Id",
+      "name": "Iggesund",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "In",
+      "name": "Insjön",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ist",
+      "name": "Isätra",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Jkb",
+      "name": "Jakobsberg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Jho",
+      "name": "Jakobshyttan",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Jbg",
+      "name": "Johannisberg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Jk",
+      "name": "Jokkmokk",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "J",
+      "name": "Jonsered östra",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Jbo",
+      "name": "Jordbro",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ju",
+      "name": "Jularbo",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Jå",
+      "name": "Juån",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Jbk",
+      "name": "Jädersbruk",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Js",
+      "name": "Jämtlands Sikås",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Jb",
+      "name": "Järbo",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Jlo",
+      "name": "Järlebo",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Jla",
+      "name": "Järlåsa",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Jn",
+      "name": "Järna",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Jnt",
+      "name": "Järneträsk",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Jpn",
+      "name": "Järpen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Jps",
+      "name": "Järpås",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Jr",
+      "name": "Järvsö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Jö",
+      "name": "Jönköpings central",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Jögb",
+      "name": "Jönköpings godsbangård",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Jår",
+      "name": "Jönåker",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Jrn",
+      "name": "Jörn",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kpe",
+      "name": "Kaisepakte",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Klx",
+      "name": "Kalix östra",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kx",
+      "name": "Kalixfors",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Khä",
+      "name": "Kallhäll",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kac",
+      "name": "Kalmar",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Kbn",
+      "name": "Karbenning",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ksg",
+      "name": "Karlsberg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kh",
+      "name": "Karlshamn",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ck",
+      "name": "Karlskrona",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Ks",
+      "name": "Karlstad",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Krb",
+      "name": "Karsbäcken",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ksö",
+      "name": "Karsjö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kri",
+      "name": "Karungi",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "K",
+      "name": "Katrineholms central",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ka",
+      "name": "Kattarp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kaä",
+      "name": "Kattisträsk",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Keb",
+      "name": "Kejsarbäcken",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kei",
+      "name": "Keräsjoki",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kil",
+      "name": "Kil",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kls",
+      "name": "Kilafors",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Km",
+      "name": "Kilsmo",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Klv",
+      "name": "Kilvo",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kms",
+      "name": "Kimstad",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kra",
+      "name": "Kiruna",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Kia",
+      "name": "Kirunavaara",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kisa",
+      "name": "Kisa",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kju",
+      "name": "Kjula",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Khy",
+      "name": "Klenshyttan",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kvh",
+      "name": "Klevshult",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kud",
+      "name": "Klingerud",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kl",
+      "name": "Klippan",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Klbn",
+      "name": "Klockarbäcken",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kn",
+      "name": "Knivsta",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kde",
+      "name": "Kode",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kbä",
+      "name": "Kolbäck",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Klr",
+      "name": "Koler",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kfn",
+      "name": "Kolforsen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Koe",
+      "name": "Kolke",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kon",
+      "name": "Kolmården",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kpg",
+      "name": "Kopparberg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kå",
+      "name": "Kopparåsen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ko",
+      "name": "Kornsjö gränsen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Koä",
+      "name": "Korsnäs",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ktä",
+      "name": "Korsträsk",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Koj",
+      "name": "Kosjärv",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kva",
+      "name": "Koskivaara",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Krf",
+      "name": "Kramfors",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Krn",
+      "name": "Krampen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Krl",
+      "name": "Kringlan",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Cr",
+      "name": "Kristianstad",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Khn",
+      "name": "Kristinehamn",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kv",
+      "name": "Krokvik",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kla",
+      "name": "Kumla",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kb",
+      "name": "Kungsbacka",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kgd",
+      "name": "Kungsgården",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kän",
+      "name": "Kungsängen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kör",
+      "name": "Kungsör",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ksu",
+      "name": "Kvicksund",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kvi",
+      "name": "Kvidinge",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kln",
+      "name": "Kälarne",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Käe",
+      "name": "Källene",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kä",
+      "name": "Källeryd",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Käv",
+      "name": "Kälvattnet",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Käb",
+      "name": "Kärreberga",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kär",
+      "name": "Kärrgruvan",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kg",
+      "name": "Kävlinge",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kåb",
+      "name": "Kåbdalis",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kd",
+      "name": "Kågeröd",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Krd",
+      "name": "Kållered",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Köa",
+      "name": "Könsa",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kp",
+      "name": "Köping",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Kpm",
+      "name": "Köpmannebro",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lrg",
+      "name": "Laduberg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Laov",
+      "name": "Laholm västra",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lkä",
+      "name": "Lakaträsk",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lrd",
+      "name": "Landeryd",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lkö",
+      "name": "Landskrona Östra",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lab",
+      "name": "Lappberg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lå",
+      "name": "Laxå",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lgd",
+      "name": "Ledsgård",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lek",
+      "name": "Lekarekulle",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lsd",
+      "name": "Leksand",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lea",
+      "name": "Leksboda",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lmm",
+      "name": "Lemmeströ",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lr",
+      "name": "Lerum",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lo",
+      "name": "Lessebo",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lkp",
+      "name": "Lidköping",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ldl",
+      "name": "Lidlund",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lns",
+      "name": "Lidnäs",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lme",
+      "name": "Limmared",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lin",
+      "name": "Linaälv",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lln",
+      "name": "Linddalen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lkn",
+      "name": "Lindekullen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ld",
+      "name": "Lindesberg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ldo",
+      "name": "Lindome",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lgm",
+      "name": "Linghem",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lp",
+      "name": "Linköpings central",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lit",
+      "name": "Lit",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lju",
+      "name": "Ljung",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lj",
+      "name": "Ljungskile",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ls",
+      "name": "Ljusdal",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lså",
+      "name": "Ljuså",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lma",
+      "name": "Lomma",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lms",
+      "name": "Lomselenäs",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lsn",
+      "name": "Losesjön",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ltr",
+      "name": "Loster",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lot",
+      "name": "Lottefors",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Luä",
+      "name": "Lubboträsk",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "La",
+      "name": "Ludvika",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Le",
+      "name": "Luleå",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lu",
+      "name": "Lund c",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lub",
+      "name": "Lundby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Luå",
+      "name": "Lustån",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ly",
+      "name": "Lycksele",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lyd",
+      "name": "Lyrestad",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lyv",
+      "name": "Lysvik",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lg",
+      "name": "Läggesta",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lre",
+      "name": "Lästringe",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lsl",
+      "name": "Långsele",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lsj",
+      "name": "Långsjön",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ltk",
+      "name": "Långträsk",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lnv",
+      "name": "Långvattnet",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lmn",
+      "name": "Långviksmon",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lmo",
+      "name": "Löcknamon",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Lö",
+      "name": "Lörstrand",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Maj",
+      "name": "Maj",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mby",
+      "name": "Malmby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mbä",
+      "name": "Malmbäck",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Msj",
+      "name": "Malmsjö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "M",
+      "name": "Malmö",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Mlg",
+      "name": "Malung",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mt",
+      "name": "Mantorp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mia",
+      "name": "Maria",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mnd",
+      "name": "Mariannelund",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mst",
+      "name": "Mariestad",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mrd",
+      "name": "Markaryd",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mrm",
+      "name": "Marma",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Me",
+      "name": "Marmaverken",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Msn",
+      "name": "Medskogsheden",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Msl",
+      "name": "Mellansel",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Msö",
+      "name": "Mellansjö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mlb",
+      "name": "Mellby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ml",
+      "name": "Mellerud",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mlö",
+      "name": "Mellösa",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mtn",
+      "name": "Mertainen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mlf",
+      "name": "Meselefors",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "My",
+      "name": "Mjölby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mog",
+      "name": "Mo grindar",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mb",
+      "name": "Mobodarne",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mfj",
+      "name": "Mockfjärd",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mo",
+      "name": "Moheda",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mh",
+      "name": "Moholm",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mra",
+      "name": "Mora",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Mdl",
+      "name": "Moradal",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Må",
+      "name": "Morgongåva",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mjv",
+      "name": "Morjärv",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mrs",
+      "name": "Morshyttan",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mos",
+      "name": "Moskosel",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mud",
+      "name": "Mosselund",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ms",
+      "name": "Mosås",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mot",
+      "name": "Motala central",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mu",
+      "name": "Mullsjö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mkl",
+      "name": "Munkedal",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Morp",
+      "name": "Munktorp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mk",
+      "name": "Murjek",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Myra",
+      "name": "Myra",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Myn",
+      "name": "Myrbacken",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mhn",
+      "name": "Myrheden",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mr",
+      "name": "Märsta",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Måp",
+      "name": "Månsarp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mö",
+      "name": "Mölnbo",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mdn",
+      "name": "Mölndals nedre",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mdö",
+      "name": "Mölndals övre",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Myk",
+      "name": "Mölnlycke",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mss",
+      "name": "Mönsterås",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mör",
+      "name": "Mörarp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Möa",
+      "name": "Mörlunda",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mru",
+      "name": "Mörrum",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Mi",
+      "name": "Mörsil",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Möl",
+      "name": "Mörtsal",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Nta",
+      "name": "Nacksta",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ntv",
+      "name": "Nattavaara",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Nsö",
+      "name": "Nedansjö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Nl",
+      "name": "Nelhammar",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Nml",
+      "name": "Niemisel",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Njb",
+      "name": "Njurundabommen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Nly",
+      "name": "Nolby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Nbg",
+      "name": "Norberg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Nog",
+      "name": "Nordmaling",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sby",
+      "name": "Norra Sunderbyn",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Nvl",
+      "name": "Norra Valbo",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Nrs",
+      "name": "Norrfors",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ng",
+      "name": "Norrhög",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Nr",
+      "name": "Norrköpings central",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Noe",
+      "name": "Norrmjöle",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Non",
+      "name": "Norrsjön",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ndv",
+      "name": "Norsesund västra",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Nvn",
+      "name": "Notviken",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Nrt",
+      "name": "Nuortikon",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Nyb",
+      "name": "Nybro",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Nsj",
+      "name": "Nyckelsjön",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Nyf",
+      "name": "Nyfors",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ny",
+      "name": "Nyhem",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Nka",
+      "name": "Nykroppa",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Nkv",
+      "name": "Nykvarn",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Nks",
+      "name": "Nyköping södra",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Nk",
+      "name": "Nyköpings central",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Nyh",
+      "name": "Nynäshamn",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Nä",
+      "name": "Nälden",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Nb",
+      "name": "Näsberg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "N",
+      "name": "Nässjö central",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Nät",
+      "name": "Nättraby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Nkt",
+      "name": "Näverkärret",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ob",
+      "name": "Ockelbo",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Of",
+      "name": "Olofström",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Omb",
+      "name": "Ombenning",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ope",
+      "name": "Ope",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Orn",
+      "name": "Ornäs",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Os",
+      "name": "Orrskog",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ors",
+      "name": "Orsa",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "O",
+      "name": "Osby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Oh",
+      "name": "Oskarshamn",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Om",
+      "name": "Oskarström",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Osl",
+      "name": "Oslättfors",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Osö",
+      "name": "Ovansjö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Oxd",
+      "name": "Oxelösund",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Oxm",
+      "name": "Oxmyran",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Phm",
+      "name": "Peberholm",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Pt",
+      "name": "Perstorp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Pl",
+      "name": "Pilgrimstad",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ptå",
+      "name": "Piteå",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Pii",
+      "name": "Pitkäjärvi",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Pc",
+      "name": "Polcirkeln",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Pj",
+      "name": "Porjus",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Påa",
+      "name": "Påarp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "På",
+      "name": "Pålsboda",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Pö",
+      "name": "Pålsjö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ru",
+      "name": "Ragunda",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ras",
+      "name": "Ralingsås",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rsö",
+      "name": "Ramsjö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rt",
+      "name": "Ransta",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rut",
+      "name": "Rautas",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rft",
+      "name": "Reftele",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rmtp",
+      "name": "Regumatorp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rke",
+      "name": "Rekarne",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rsn",
+      "name": "Rensjön",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rbä",
+      "name": "Repbäcken",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ran",
+      "name": "Rian",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rf",
+      "name": "Rimforsa",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rps",
+      "name": "Ripats",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rob",
+      "name": "Roback",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rb",
+      "name": "Ronneby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rs",
+      "name": "Rosersberg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ry",
+      "name": "Rosshyttan",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ros",
+      "name": "Rossön",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "R",
+      "name": "Rotebro",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rts",
+      "name": "Rottneros",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ruk",
+      "name": "Rundvik",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rym",
+      "name": "Rydaholm",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rdg",
+      "name": "Rydsgård",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ryg",
+      "name": "Ryggen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rye",
+      "name": "Rynge",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ryr",
+      "name": "Ryr",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ryb",
+      "name": "Ryssjöbrink",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rlå",
+      "name": "Rällså",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rmh",
+      "name": "Rämshyttan",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rv",
+      "name": "Rättvik",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rd",
+      "name": "Rävlanda",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Råg",
+      "name": "Rågsveden",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rås",
+      "name": "Råskogen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rsi",
+      "name": "Råtsi",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rö",
+      "name": "Rödberg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rjn",
+      "name": "Röjan",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rk",
+      "name": "Rörvik",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Rbo",
+      "name": "Röstbo",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sl",
+      "name": "Sala",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sas",
+      "name": "Salsta",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sbe",
+      "name": "Saluböle",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sam",
+      "name": "Samnan",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sae",
+      "name": "Sandared",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sak",
+      "name": "Sandbäck",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sm",
+      "name": "Sandhem",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sdm",
+      "name": "Sandmon",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Stä",
+      "name": "Sandträsk",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Snv",
+      "name": "Sandviken",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ssä",
+      "name": "Segersäng",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sgm",
+      "name": "Segmon",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Slnä",
+      "name": "Sellnäs",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Slj",
+      "name": "Selsjön",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Stk",
+      "name": "Sikträsk",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sii",
+      "name": "Silinge",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Små",
+      "name": "Simeå",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Smt",
+      "name": "Simonstorp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Si",
+      "name": "Simrishamn",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sngå",
+      "name": "Singsån",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ssa",
+      "name": "Sjösa",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Saö",
+      "name": "Skabersjö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Srr",
+      "name": "Skattkärr",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Skby",
+      "name": "Skavstaby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Skv",
+      "name": "Skebokvarn",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ske",
+      "name": "Skee",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Söv",
+      "name": "Skelleftehamns övre",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Skl",
+      "name": "Skellefteå",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "See",
+      "name": "Skene",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Syd",
+      "name": "Skillingaryd",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Skb",
+      "name": "Skinnskatteberg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Skrp",
+      "name": "Skogstorp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Skg",
+      "name": "Skogås",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sop",
+      "name": "Skorped",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sru",
+      "name": "Skruv",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Srp",
+      "name": "Skurup",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sur",
+      "name": "Skutskär",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Svö",
+      "name": "Skytts Vemmerlöv",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Skbl",
+      "name": "Skälebol",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Skn",
+      "name": "Skänninge",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Säp",
+      "name": "Skärpan",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Skä",
+      "name": "Skästra",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Skr",
+      "name": "Skåre",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sde",
+      "name": "Sköldinge",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sk",
+      "name": "Skövde central",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sgä",
+      "name": "Slagnäs",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sle",
+      "name": "Slätte",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Smj",
+      "name": "Smedjebacken",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sdr",
+      "name": "Smålandsstenar",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Snb",
+      "name": "Snickarbo",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Snt",
+      "name": "Snyten",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Slbk",
+      "name": "Solbacka",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Stå",
+      "name": "Sollefteå",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sol",
+      "name": "Sollentuna",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Slm",
+      "name": "Solum",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Smn",
+      "name": "Sommen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Srs",
+      "name": "Sorsele",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sba",
+      "name": "Spannarboda",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sp",
+      "name": "Sparreholm",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Spj",
+      "name": "Spjutsbygd",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Spk",
+      "name": "Sprängsviken",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Spå",
+      "name": "Spånga",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Stv",
+      "name": "Stavre",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sen",
+      "name": "Stavreviken",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sten",
+      "name": "Stegsskogen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sg",
+      "name": "Stehag",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sbk",
+      "name": "Stenbacken",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sn",
+      "name": "Stenkullen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Skm",
+      "name": "Stenkumla",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ss",
+      "name": "Stenstorp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Set",
+      "name": "Stensundberget",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Snu",
+      "name": "Stenungsund",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sån",
+      "name": "Stenåsen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sh",
+      "name": "Stjärnhov",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sy",
+      "name": "Stockaryd",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Cst",
+      "name": "Stockholm",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Spn",
+      "name": "Stolpstugan",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sth",
+      "name": "Stora Höga",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sau",
+      "name": "Stora Tuna",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sbi",
+      "name": "Storblåliden",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Soa",
+      "name": "Stordalen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sfn",
+      "name": "Storflon",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sf",
+      "name": "Storfors",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Str",
+      "name": "Storlien",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Som",
+      "name": "Stormyran",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sts",
+      "name": "Storsund",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sto",
+      "name": "Storträsk",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sum",
+      "name": "Storuman",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sv",
+      "name": "Storvik",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Srv",
+      "name": "Storvreta",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sr",
+      "name": "Storå",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sgs",
+      "name": "Strängnäs",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Stö",
+      "name": "Strångsjö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ssh",
+      "name": "Strömsholm",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Smd",
+      "name": "Strömstad",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Srt",
+      "name": "Strömtorp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Stl",
+      "name": "Ställdalen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sie",
+      "name": "Stävie",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sök",
+      "name": "Stöcke",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Std",
+      "name": "Stöde",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sus",
+      "name": "Sunderbyns sjukhus",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Suc",
+      "name": "Sundsvalls central",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sun",
+      "name": "Sunne",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Säu",
+      "name": "Sunnäsbruk",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Shr",
+      "name": "Surahammar",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sal",
+      "name": "Svalöv",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sik",
+      "name": "Svartvik",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Svå",
+      "name": "Svartå",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sea",
+      "name": "Svedala",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Svj",
+      "name": "Svedje",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "S",
+      "name": "Sveg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Svg",
+      "name": "Svenshögen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Svk",
+      "name": "Svenstavik",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Säy",
+      "name": "Säby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sfl",
+      "name": "Säffle",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Slg",
+      "name": "Sällinge",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "St",
+      "name": "Säter",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Svt",
+      "name": "Sävast",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sän",
+      "name": "Sävastklinten",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sve",
+      "name": "Säve",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sbä",
+      "name": "Sågbäcken",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Södy",
+      "name": "Söderby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sre",
+      "name": "Söderbärke",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Shv",
+      "name": "Söderhamns västra",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Söd",
+      "name": "Södertälje hamn",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Söö",
+      "name": "Södertälje syd övre",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sög",
+      "name": "Sölvesborg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Sårs",
+      "name": "Söråkers södra",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tl",
+      "name": "Tallåsen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tnu",
+      "name": "Tanum",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tp",
+      "name": "Teckomatorp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Th",
+      "name": "Tenhult",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tip",
+      "name": "Tierp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tb",
+      "name": "Tillberga",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Trå",
+      "name": "Timrå",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tjä",
+      "name": "Tjärnvik",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tö",
+      "name": "Tjörnarp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tbo",
+      "name": "Tobo",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tet",
+      "name": "Tolikberget",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tli",
+      "name": "Tomelilla",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tbn",
+      "name": "Torbacken",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Teo",
+      "name": "Torebo",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tot",
+      "name": "Toresta",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tnk",
+      "name": "Torneträsk",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Thl",
+      "name": "Tornhill",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "To",
+      "name": "Torpshammar",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Toy",
+      "name": "Torsby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tså",
+      "name": "Torsåker",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ttu",
+      "name": "Tortuna",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tou",
+      "name": "Torup",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tns",
+      "name": "Tranås",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Thö",
+      "name": "Trehörningsjö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tre",
+      "name": "Trekanten",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Trg",
+      "name": "Trelleborg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Thn",
+      "name": "Trollhättan",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Thm",
+      "name": "Träskholm",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tåv",
+      "name": "Trångsviken",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tdj",
+      "name": "Trödje",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tu",
+      "name": "Tumba",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ts",
+      "name": "Tungelsta",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tun",
+      "name": "Tunneby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tvb",
+      "name": "Tväråbäck",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tvä",
+      "name": "Tvärålund",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tye",
+      "name": "Tyllered",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ty",
+      "name": "Tyringe",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tba",
+      "name": "Tystberga",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tlg",
+      "name": "Tällberg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tgp",
+      "name": "Tågarp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Tsg",
+      "name": "Tågsjöberg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "T",
+      "name": "Töreboda",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Töe",
+      "name": "Tösse",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Töv",
+      "name": "Töva",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Uv",
+      "name": "Uddevalla central",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Uf",
+      "name": "Ulriksfors",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Uly",
+      "name": "Ulvshyttan",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Utp",
+      "name": "Ulvstorp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Uå",
+      "name": "Umeå",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Un",
+      "name": "Undersåker",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Upv",
+      "name": "Upplands Väsby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "U",
+      "name": "Uppsala",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Up",
+      "name": "Uppåkra",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Uts",
+      "name": "Utsikten",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vgd",
+      "name": "Vaggeryd",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vhd",
+      "name": "Vagnhärad",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vl",
+      "name": "Vallsta",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vv",
+      "name": "Vallvik",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Våk",
+      "name": "Vallåkra",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vsg",
+      "name": "Valskog",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vo",
+      "name": "Vansbro",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vaa",
+      "name": "Vara",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vb",
+      "name": "Varberg",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Vag",
+      "name": "Vargön",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vpm",
+      "name": "Varpemossen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vf",
+      "name": "Vartofta",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vj",
+      "name": "Vassijaure",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vm",
+      "name": "Vattjom",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vdi",
+      "name": "Veddige",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vdv",
+      "name": "Vedevåg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ved",
+      "name": "Vedum",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vh",
+      "name": "Vegeholm",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vru",
+      "name": "Vekerum",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Veas",
+      "name": "Velanda södra",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vta",
+      "name": "Vetlanda",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Via",
+      "name": "Via",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vsd",
+      "name": "Vikingstad",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vhy",
+      "name": "Vikmanshyttan",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vma",
+      "name": "Vilhelmina",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vlb",
+      "name": "Vilhelmsborg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vmu",
+      "name": "Villersmuren",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vib",
+      "name": "Vimmerby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vim",
+      "name": "Vimnarp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vdn",
+      "name": "Vindeln",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vr",
+      "name": "Vingåker",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vöv",
+      "name": "Vinslöv",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vsö",
+      "name": "Viresjö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vso",
+      "name": "Virsbo",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vfo",
+      "name": "Viskafors",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Visk",
+      "name": "Viskan",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vs",
+      "name": "Vislanda",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vfa",
+      "name": "Vissefjärda",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vtv",
+      "name": "Vitvattnet",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vjm",
+      "name": "Vojmån",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vre",
+      "name": "Vrena",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vt",
+      "name": "Vretstorp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vsk",
+      "name": "Vuonoskogen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Väv",
+      "name": "Välevattnet",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vg",
+      "name": "Vänersborg central",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vns",
+      "name": "Vännäs",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Vä",
+      "name": "Väring",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vdb",
+      "name": "Värmlands Bro",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "V",
+      "name": "Värnamo",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Vrö",
+      "name": "Värö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ve",
+      "name": "Väse",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Väy",
+      "name": "Västeraspby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vhe",
+      "name": "Västerhaninge",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vk",
+      "name": "Västervik",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vå",
+      "name": "Västerås",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Vån",
+      "name": "Västerås norra",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vid",
+      "name": "Västra Ingelstad",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vto",
+      "name": "Västra Torup",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Väd",
+      "name": "Vätteryd",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Vö",
+      "name": "Växjö",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Vgå",
+      "name": "Vårgårda",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Y",
+      "name": "Ystad",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Yb",
+      "name": "Ytterby",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Yl",
+      "name": "Ytterhogdal",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Yö",
+      "name": "Yttersjön",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Äl",
+      "name": "Älgarås",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Äh",
+      "name": "Älmhult",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Älo",
+      "name": "Älvho",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Äy",
+      "name": "Älvsbyn",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Än",
+      "name": "Älvängen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Äng",
+      "name": "Äng",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ä",
+      "name": "Ängelholm",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Äbg",
+      "name": "Ängelsberg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Änö",
+      "name": "Ängersjö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ätk",
+      "name": "Ättekulla",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Åby",
+      "name": "Åby",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Åd",
+      "name": "Ådalsliden",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Åba",
+      "name": "Ålberga",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ålg",
+      "name": "Ålsäng",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Åt",
+      "name": "Åmotfors",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Åm",
+      "name": "Åmsele",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Åmy",
+      "name": "Åmyran",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ål",
+      "name": "Åmål",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Åg",
+      "name": "Ånge",
+      "kind": "Driftplats som innehåller driftplatsdelar"
+    },
+    {
+      "code": "Åmn",
+      "name": "Ångsågsmossen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ånm",
+      "name": "Ånimskog",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ånn",
+      "name": "Ånn",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Åre",
+      "name": "Åre",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Åkg",
+      "name": "Årskogen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ård",
+      "name": "Åryd",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Åsal",
+      "name": "Åsarna central",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Å",
+      "name": "Åsbro",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Åa",
+      "name": "Åseda",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Åb",
+      "name": "Åsensbruk",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Åh",
+      "name": "Åshammar",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Åp",
+      "name": "Åstorp",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Åst",
+      "name": "Åsträsk",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Åvg",
+      "name": "Åtvidaberg",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Öda",
+      "name": "Ödåkra",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Öa",
+      "name": "Ökna",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Öl",
+      "name": "Ölme",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Öna",
+      "name": "Önaskogen",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Önd",
+      "name": "Önnestad",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Öbn",
+      "name": "Örabäcken",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Öh",
+      "name": "Örbyhus",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ör",
+      "name": "Örebro central",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Öä",
+      "name": "Öreälv",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ökn",
+      "name": "Örnsköldsvik norra",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ök",
+      "name": "Örnsköldsviks central",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Örs",
+      "name": "Örsjö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ö",
+      "name": "Örtofta",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Öso",
+      "name": "Ösmo",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Öv",
+      "name": "Östavall",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Öal",
+      "name": "Österalnö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ös",
+      "name": "Östersunds central",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Öte",
+      "name": "Östertälje",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Öså",
+      "name": "Österås",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Ög",
+      "name": "Östra Grevie",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Övm",
+      "name": "Överum",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Övö",
+      "name": "Övsjö",
+      "kind": "Driftplats"
+    },
+    {
+      "code": "Öx",
+      "name": "Öxnered",
+      "kind": "Driftplats"
+    }
+  ]
+}
