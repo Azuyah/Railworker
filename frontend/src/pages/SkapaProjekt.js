@@ -744,6 +744,7 @@ const SkapaProjekt = () => {
   const [customDispPhoneLines, setCustomDispPhoneLines] = useState([]);
   const [blankett31Files, setBlankett31Files] = useState([]);
   const [blankett31Entries, setBlankett31Entries] = useState([defaultBlankett31Entry()]);
+  const [separatePlanTabsByDispBox, setSeparatePlanTabsByDispBox] = useState(false);
   const [planJobs, setPlanJobs] = useState(() => normalizePlanJobs([], []));
   const [primaryDispEntryKeys, setPrimaryDispEntryKeys] = useState([]);
   const [dispSectionGroups, setDispSectionGroups] = useState([]);
@@ -1741,6 +1742,7 @@ const SkapaProjekt = () => {
           blankett31Meta,
           dispSettings,
           blankett31Entries,
+          separatePlanTabsByDispBox: Boolean(separatePlanTabsByDispBox),
           primaryDispSectionEntryKeys: primaryDispEntryKeys,
           dispSectionGroups: dispSectionGroups.map((group, groupIndex) => ({
             id: group.id,
@@ -1845,6 +1847,7 @@ const SkapaProjekt = () => {
       planJobs,
       primaryDispEntryKeys,
       dispSectionGroups,
+      separatePlanTabsByDispBox,
     });
 
     setPreflightSummary(summary);
@@ -1986,6 +1989,7 @@ const SkapaProjekt = () => {
             ? project.formState.blankett31Entries
             : [defaultBlankett31Entry()]
         ));
+        setSeparatePlanTabsByDispBox(Boolean(project.formState?.separatePlanTabsByDispBox));
         setPrimaryDispEntryKeys(
           Array.isArray(project.formState?.primaryDispSectionEntryKeys)
             ? project.formState.primaryDispSectionEntryKeys
@@ -2932,6 +2936,20 @@ const SkapaProjekt = () => {
                     Nytt jobb
                   </button>
                 </div>
+                <label className="mb-4 flex items-start gap-3 rounded-2xl border border-emerald-300 bg-white px-4 py-3 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={separatePlanTabsByDispBox}
+                    onChange={(e) => setSeparatePlanTabsByDispBox(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 accent-slate-900"
+                  />
+                  <span>
+                    <span className="block font-semibold text-slate-900">Separera delområdesrutor till egna flikar</span>
+                    <span className="mt-1 block text-xs text-slate-500">
+                      Låt varje delområdesruta bli en egen Excel-flik när tider och gränspunkter skiljer sig. Lämna av om allt ska samlas som vanligt.
+                    </span>
+                  </span>
+                </label>
                 <div className="space-y-3">
                   {planJobs.map((job, index) => (
                     <div key={job.id || index} className="rounded-2xl border border-emerald-400 bg-emerald-200/75 p-4 shadow-sm shadow-emerald-100/80">

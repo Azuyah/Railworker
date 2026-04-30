@@ -860,6 +860,22 @@ const resolveJobSectionContext = (job = {}, contexts = []) => {
   return contexts[0] || { sections: [] };
 };
 
+const resolveContextEntries = (context = {}, entryMap = new Map()) => {
+  const selectedKeys = Array.isArray(context?.selectedEntryKeys) ? context.selectedEntryKeys.filter(Boolean) : [];
+  return sortEntries(selectedKeys.map((key) => entryMap.get(key)).filter(Boolean));
+};
+
+const inferWorksheetSequencePrefix = (jobs = []) => {
+  const firstJobName = String(jobs?.[0]?.name || '').trim();
+  if (/^dag\b/i.test(firstJobName)) {
+    return 'Dag';
+  }
+  if (/^natt\b/i.test(firstJobName)) {
+    return 'Natt';
+  }
+  return 'Plan';
+};
+
 const getProjectEntries = (project) => {
   const entries = Array.isArray(project.formState?.blankett31Entries)
     ? project.formState.blankett31Entries.filter((entry) => entry?.beteckning)
@@ -916,9 +932,33 @@ const buildWorksheetPlans = (project) => {
   const entries = getProjectEntries(project);
   const entryMap = new Map(entries.map((entry, index) => [buildPlanJobEntryKey(entry, index), entry]));
   const dispSectionContexts = buildDispSectionContexts(project, entries);
+  const separatePlanTabsByDispBox = Boolean(project.formState?.separatePlanTabsByDispBox);
   const storedJobs = Array.isArray(project.formState?.planJobs)
     ? project.formState.planJobs.filter((job) => job && (job.name || Array.isArray(job.selectedEntryKeys)))
     : [];
+
+  if (separatePlanTabsByDispBox && dispSectionContexts.length) {
+    const sequencePrefix = inferWorksheetSequencePrefix(storedJobs);
+    return dispSectionContexts.map((context, index) => {
+      const resolvedEntries = resolveContextEntries(context, entryMap);
+      const matchingJob = storedJobs.find((job) => {
+        const jobContext = resolveJobSectionContext(job, dispSectionContexts);
+        return String(jobContext?.id || '') === String(context?.id || '');
+      });
+      const contextTitle = String(context?.title || '').trim();
+      const hasDefaultContextTitle = /^Delområdesruta\s+\d+$/i.test(contextTitle);
+
+      return {
+        sheetName: String(matchingJob?.name || '').trim() ||
+          (hasDefaultContextTitle ? `${sequencePrefix} ${index + 1}` : contextTitle) ||
+          `${sequencePrefix} ${index + 1}`,
+        entries: resolvedEntries,
+        sections: Array.isArray(context?.sections) && context.sections.length
+          ? context.sections
+          : (dispSectionContexts[0]?.sections || mergeSectionDetails(project)),
+      };
+    });
+  }
 
   if (!storedJobs.length) {
     return entries.map((entry, index) => ({
