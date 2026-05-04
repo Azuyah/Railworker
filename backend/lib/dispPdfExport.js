@@ -35,6 +35,30 @@ const PDF_FONTS = {
   bodyBoldItalic: 'Times-BoldItalic',
 };
 
+const DRIFTPLATS_REGISTRY_PATH = path.join(__dirname, '..', 'data', 'njdb-driftplatser.json');
+let driftplatsCodeNameMap = null;
+
+const getDriftplatsCodeNameMap = () => {
+  if (driftplatsCodeNameMap) {
+    return driftplatsCodeNameMap;
+  }
+
+  try {
+    const raw = fs.readFileSync(DRIFTPLATS_REGISTRY_PATH, 'utf8');
+    const parsed = JSON.parse(raw);
+    const items = Array.isArray(parsed?.items) ? parsed.items : [];
+    driftplatsCodeNameMap = new Map(
+      items
+        .filter((item) => item?.code && item?.name)
+        .map((item) => [String(item.code).trim(), String(item.name).trim()])
+    );
+  } catch (error) {
+    driftplatsCodeNameMap = new Map();
+  }
+
+  return driftplatsCodeNameMap;
+};
+
 const SWEDISH_SHORT_DAYS = ['Sön', 'Mån', 'Tis', 'Ons', 'Tors', 'Fre', 'Lör'];
 const cleanText = (value = '') =>
   String(value || '')
@@ -355,8 +379,21 @@ const buildDispSettings = (project = {}, entries = []) => {
   };
 };
 
-const formatLegacyBoundaryText = (value = '') =>
-  cleanText(value)
+const formatLegacyBoundaryText = (value = '') => {
+  const registry = getDriftplatsCodeNameMap();
+  const codePattern = [...registry.keys()]
+    .sort((left, right) => right.length - left.length)
+    .map((code) => code.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .join('|');
+
+  const expanded = codePattern
+    ? cleanText(value).replace(
+        new RegExp(`\\b(${codePattern})\\b(?=\\s*[A-Za-z0-9])`, 'g'),
+        (match, code) => registry.get(code) || match
+      )
+    : cleanText(value);
+
+  return expanded
     .replace(/\s*-\s*/g, ' – ')
     .replace(/\bHb\b/g, 'HB')
     .replace(/\bTp\b/g, 'TP')
@@ -364,6 +401,7 @@ const formatLegacyBoundaryText = (value = '') =>
     .replace(/\bGan\b/g, 'Gan')
     .replace(/\bVåk\b/g, 'Våk')
     .replace(/\bTgp\b/g, 'Tgp');
+};
 
 const extractPrimaryPhone = (value = '') => {
   const match = cleanText(value).match(/010[- ]?\s*\d{3}\s*\d{2}\s*\d{2}/);
@@ -1209,16 +1247,16 @@ const drawLegacyBoundarySegment = (doc, text, x, y, maxWidth, highlightTokens = 
 const getLegacyEntryColumns = (showBeteckning = true) => (
   showBeteckning
     ? {
-        beteckning: { x: 6, width: 82 },
-        start: { x: 116 },
+        beteckning: { x: 6, width: 72 },
+        start: { x: 94 },
         startDay: { x: 116, width: 52 },
-        startDate: { x: 166, width: 88 },
-        startTime: { x: 258, width: 40 },
-        end: { x: 274, width: 154 },
-        endDash: { x: 306, width: 12 },
-        endDay: { x: 322, width: 30 },
-        endDate: { x: 354, width: 82 },
-        endTime: { x: 442, width: 40 },
+        startDate: { x: 158, width: 80 },
+        startTime: { x: 240, width: 28 },
+        end: { x: 226, width: 178 },
+        endDash: { x: 272, width: 8 },
+        endDay: { x: 286, width: 30 },
+        endDate: { x: 320, width: 62 },
+        endTime: { x: 390, width: 30 },
       }
     : {
         beteckning: { x: 0, width: 0 },
@@ -1251,7 +1289,7 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
   const totalHeight = headerHeight + rows.reduce((sum, row) => sum + (row.rowHeight || rowHeight), 0) + 12;
   const bottom = top + totalHeight;
   const headerFontSize = 12.8;
-  const rowFontSize = 12;
+  const rowFontSize = entryColumns.beteckning.width > 0 ? 11 : 12;
   const hasCompactSummary = mode === 'full' && entryColumns.beteckning.width === 0 && rows.some((row) => row.kind === 'entry' && row.isCompactSummary);
   const compactStartHeaderX = left + 112;
   const compactDayX = compactStartHeaderX;
@@ -1268,6 +1306,46 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
   const compactEndHeaderX = compactEndDayX;
   const sectionHeaderOffsetY = 8;
   const underlineWidth = (text) => doc.widthOfString(text);
+  const drawEntryTimeline = (row, startX, y, availableWidth) => {
+    const parts = [
+      row.dayLabel,
+      row.startDateLabel,
+      row.startTimeLabel,
+      '–',
+      row.endDayLabel,
+      row.endDateLabel,
+      row.endTimeLabel,
+    ];
+    const partWidths = parts.map((part) => doc.widthOfString(part));
+    const defaultGaps = [12, 16, 20, 20, 12, 16];
+    const minimumGaps = [8, 10, 14, 14, 8, 10];
+    const totalTextWidth = partWidths.reduce((sum, width) => sum + width, 0);
+    const totalDefaultGap = defaultGaps.reduce((sum, gap) => sum + gap, 0);
+    const overflow = totalTextWidth + totalDefaultGap - availableWidth;
+    const gaps = [...defaultGaps];
+
+    if (overflow > 0) {
+      let remainingOverflow = overflow;
+      const shrinkOrder = [2, 3, 1, 5, 0, 4];
+      shrinkOrder.forEach((index) => {
+        if (remainingOverflow <= 0) return;
+        const maxShrink = gaps[index] - minimumGaps[index];
+        if (maxShrink <= 0) return;
+        const appliedShrink = Math.min(maxShrink, remainingOverflow);
+        gaps[index] -= appliedShrink;
+        remainingOverflow -= appliedShrink;
+      });
+    }
+
+    let cursorX = startX;
+    parts.forEach((part, index) => {
+      doc.text(part, cursorX, y, { lineBreak: false });
+      cursorX += partWidths[index];
+      if (index < gaps.length) {
+        cursorX += gaps[index];
+      }
+    });
+  };
   let sectionRowIndex = 0;
 
   doc.save();
@@ -1324,27 +1402,12 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
     if (row.kind === 'entry') {
       doc.font(PDF_FONTS.bodyBold).fontSize(rowFontSize).fillColor('#000000');
       if (row.isCompactSummary && entryColumns.beteckning.width === 0) {
-        doc.text(row.dayLabel, compactDayX, y, {
-          width: compactDayWidth,
-          lineBreak: false,
-        });
-        doc.text(row.startTimeLabel, compactTimeX, y, {
-          width: compactTimeWidth,
-          lineBreak: false,
-        });
-        doc.text('—', compactDashX, y, {
-          width: compactDashWidth,
-          align: 'center',
-          lineBreak: false,
-        });
-        doc.text(row.endDayLabel, compactEndDayX, y, {
-          width: compactEndDayWidth,
-          lineBreak: false,
-        });
-        doc.text(row.endTimeLabel, compactEndTimeX, y, {
-          width: compactEndTimeWidth,
-          lineBreak: false,
-        });
+        drawEntryTimeline(
+          row,
+          compactDayX,
+          y,
+          (compactEndTimeX + compactEndTimeWidth) - compactDayX
+        );
       } else {
         if (entryColumns.beteckning.width > 0) {
           doc.text(row.beteckning, left + entryColumns.beteckning.x, y, {
@@ -1352,35 +1415,9 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
             lineBreak: false,
           });
         }
-        doc.text(row.dayLabel, left + entryColumns.start.x, y, {
-          width: entryColumns.startDay.width,
-          lineBreak: false,
-        });
-        doc.font(PDF_FONTS.bodyBold).fontSize(rowFontSize).text(row.startDateLabel, left + entryColumns.startDate.x, y, {
-          width: entryColumns.startDate.width,
-          lineBreak: false,
-        });
-        doc.text(row.startTimeLabel, left + entryColumns.startTime.x, y, {
-          width: entryColumns.startTime.width,
-          lineBreak: false,
-        });
-        doc.text('–', left + entryColumns.endDash.x, y, {
-          width: entryColumns.endDash.width,
-          align: 'center',
-          lineBreak: false,
-        });
-        doc.text(row.endDayLabel, left + entryColumns.endDay.x, y, {
-          width: entryColumns.endDay.width,
-          lineBreak: false,
-        });
-        doc.text(row.endDateLabel, left + entryColumns.endDate.x, y, {
-          width: entryColumns.endDate.width,
-          lineBreak: false,
-        });
-        doc.text(row.endTimeLabel, left + entryColumns.endTime.x, y, {
-          width: entryColumns.endTime.width,
-          lineBreak: false,
-        });
+        const timelineStartX = left + (entryColumns.beteckning.width > 0 ? 104 : 18);
+        const timelineEndX = left + width - 22;
+        drawEntryTimeline(row, timelineStartX, y, timelineEndX - timelineStartX);
       }
     } else if (row.kind === 'spacer') {
       doc.font(PDF_FONTS.bodyBold).fontSize(12.2).fillColor('#000000');
@@ -1486,7 +1523,7 @@ const addEntriesAndSectionsPageForGroup = (
   const firstPageNumber = doc.bufferedPageRange().count;
   drawLegacyHeader(doc, dispSettings, totalPages, firstPageNumber);
   const pageWidth = doc.page.width;
-  const tableLeft = 74;
+  const tableLeft = 68;
   const tableWidth = pageWidth - 2 * tableLeft;
   const headerHeight = 31;
   const noteText = 'Yttre gränspunkter som ej får passeras utan medgivande från TKL är rödmarkerade.';
