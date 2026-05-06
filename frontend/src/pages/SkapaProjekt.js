@@ -409,6 +409,7 @@ const defaultDispSettings = () => ({
   forplaneraCa: '1 tim innan start',
   rodmarkeradeGranspunkter: '',
   visaBeteckningarKapitel1: true,
+  visaFullaGranspunkterKapitel1: true,
   komprimeraLikaTiderKapitel1: true,
 });
 
@@ -3226,6 +3227,38 @@ const SkapaProjekt = () => {
                     className="rounded-full border border-rose-300 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-widest text-rose-700 hover:bg-rose-50"
                   >
                     Flera delområdesrutor
+                  </button>
+                </div>
+              </div>
+              <div className="mb-4 flex flex-col gap-2 rounded-2xl border border-rose-200 bg-white/80 px-4 py-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-rose-700">Text i DISP-rutor</p>
+                  <p className="mt-1 text-xs text-slate-600">
+                    Välj om gränspunkter ska skrivas med fulla driftplatsnamn eller bara signalbeteckningar i alla delområdesrutor.
+                  </p>
+                </div>
+                <div className="inline-flex rounded-full border border-rose-200 bg-rose-50 p-1">
+                  <button
+                    type="button"
+                    onClick={() => setDispSettings((prev) => ({ ...prev, visaFullaGranspunkterKapitel1: true }))}
+                    className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-widest transition ${
+                      dispSettings.visaFullaGranspunkterKapitel1 !== false
+                        ? 'bg-rose-600 text-white shadow-sm'
+                        : 'text-rose-700 hover:bg-white'
+                    }`}
+                  >
+                    Fulla namn
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDispSettings((prev) => ({ ...prev, visaFullaGranspunkterKapitel1: false }))}
+                    className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-widest transition ${
+                      dispSettings.visaFullaGranspunkterKapitel1 === false
+                        ? 'bg-rose-600 text-white shadow-sm'
+                        : 'text-rose-700 hover:bg-white'
+                    }`}
+                  >
+                    Signalbeteckningar
                   </button>
                 </div>
               </div>

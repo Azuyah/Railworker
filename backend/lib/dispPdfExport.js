@@ -37,6 +37,7 @@ const PDF_FONTS = {
 
 const DRIFTPLATS_REGISTRY_PATH = path.join(__dirname, '..', 'data', 'njdb-driftplatser.json');
 let driftplatsCodeNameMap = null;
+let driftplatsNameCodeMap = null;
 
 const getDriftplatsCodeNameMap = () => {
   if (driftplatsCodeNameMap) {
@@ -57,6 +58,21 @@ const getDriftplatsCodeNameMap = () => {
   }
 
   return driftplatsCodeNameMap;
+};
+
+const getDriftplatsNameCodeMap = () => {
+  if (driftplatsNameCodeMap) {
+    return driftplatsNameCodeMap;
+  }
+
+  const codeNameMap = getDriftplatsCodeNameMap();
+  driftplatsNameCodeMap = new Map(
+    [...codeNameMap.entries()]
+      .filter(([code, name]) => code && name)
+      .map(([code, name]) => [String(name).trim(), String(code).trim()])
+  );
+
+  return driftplatsNameCodeMap;
 };
 
 const SWEDISH_SHORT_DAYS = ['Sön', 'Mån', 'Tis', 'Ons', 'Tors', 'Fre', 'Lör'];
@@ -375,25 +391,86 @@ const buildDispSettings = (project = {}, entries = []) => {
     forplaneraCa: cleanText(settings.forplaneraCa || '1 tim innan start'),
     rodmarkeradeGranspunkter: cleanText(settings.rodmarkeradeGranspunkter || settings.highlightedBoundaries || ''),
     visaBeteckningarKapitel1: settings.visaBeteckningarKapitel1 !== false,
+    visaFullaGranspunkterKapitel1: settings.visaFullaGranspunkterKapitel1 !== false,
     komprimeraLikaTiderKapitel1: settings.komprimeraLikaTiderKapitel1 !== false,
   };
 };
 
-const formatLegacyBoundaryText = (value = '') => {
+const escapeRegExp = (value = '') => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const normalizeLegacyBoundaryCodeSpacing = (value = '') => {
+  let text = cleanText(value);
+  const codePattern = [...getDriftplatsCodeNameMap().keys()]
+    .sort((left, right) => right.length - left.length)
+    .map((code) => escapeRegExp(code))
+    .join('|');
+
+  if (codePattern) {
+    text = text.replace(
+      new RegExp(`(^|[\\s\\-–,(/])(${codePattern})\\s*([A-Za-z0-9]+)`, 'gu'),
+      (_, prefix = '', code = '', suffix = '') => `${prefix}${code} ${suffix}`
+    );
+  }
+
+  return text;
+};
+
+const normalizeLegacyBoundaryNameSpacing = (value = '') => {
+  let text = cleanText(value);
+  const names = [...getDriftplatsNameCodeMap().keys()].sort((left, right) => right.length - left.length);
+
+  names.forEach((name) => {
+    text = text.replace(
+      new RegExp(`(${escapeRegExp(name)})\\s*([A-Za-z0-9]+)`, 'gu'),
+      (_, placeName = '', suffix = '') => `${placeName} ${suffix}`
+    );
+  });
+
+  return text;
+};
+
+const expandLegacyBoundaryText = (value = '') => {
   const registry = getDriftplatsCodeNameMap();
+  const normalized = normalizeLegacyBoundaryCodeSpacing(value);
   const codePattern = [...registry.keys()]
     .sort((left, right) => right.length - left.length)
-    .map((code) => code.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .map((code) => escapeRegExp(code))
     .join('|');
 
   const expanded = codePattern
-    ? cleanText(value).replace(
-        new RegExp(`\\b(${codePattern})\\b(?=\\s*[A-Za-z0-9])`, 'g'),
-        (match, code) => registry.get(code) || match
+    ? normalized.replace(
+        new RegExp(`(^|[\\s\\-–,(/])(${codePattern})(?=\\s+[A-Za-z0-9])`, 'gu'),
+        (_, prefix = '', code = '') => `${prefix}${registry.get(code) || code}`
       )
-    : cleanText(value);
+    : normalized;
 
-  return expanded
+  return normalizeLegacyBoundaryNameSpacing(expanded);
+};
+
+const abbreviateLegacyBoundaryText = (value = '') => {
+  const registry = getDriftplatsNameCodeMap();
+  let text = cleanText(value);
+  const names = [...registry.keys()].sort((left, right) => right.length - left.length);
+
+  names.forEach((name) => {
+    const code = registry.get(name);
+    if (!code) return;
+
+    const regex = new RegExp(
+      `(^|[\\s\\-–,(/])(${escapeRegExp(name)})(?=(?:\\s*[A-Za-z0-9]+|\\s*[\\-–,/)])|$)`,
+      'gu'
+    );
+    text = text.replace(regex, (_, prefix = '') => `${prefix}${code}`);
+  });
+
+  return normalizeLegacyBoundaryCodeSpacing(text);
+};
+
+const formatLegacyBoundaryText = (value = '', options = {}) => {
+  const { expandNames = true } = options;
+  const normalized = expandNames ? expandLegacyBoundaryText(value) : abbreviateLegacyBoundaryText(value);
+
+  return normalized
     .replace(/\s*-\s*/g, ' – ')
     .replace(/\bHb\b/g, 'HB')
     .replace(/\bTp\b/g, 'TP')
@@ -920,7 +997,9 @@ const estimateChapterOnePageCountForGroup = (doc, entries, sections, dispSetting
   const sectionRows = sections.map((section) => ({
     kind: 'section',
     label: cleanText(section.customLabel || section.displayIndex || '') ? `${cleanText(section.customLabel || section.displayIndex || '')}.` : '',
-    granspunkter: formatLegacyBoundaryText(section.granspunkter),
+    granspunkter: formatLegacyBoundaryText(section.granspunkter, {
+      expandNames: dispSettings?.visaFullaGranspunkterKapitel1 !== false,
+    }),
     spar: section.spar || '—',
   }));
   const firstPageRows = [...entryRows, { kind: 'spacer' }, ...sectionRows];
@@ -1547,7 +1626,9 @@ const addEntriesAndSectionsPageForGroup = (
   const sectionRows = sections.map((section) => ({
     kind: 'section',
     label: cleanText(section.customLabel || section.displayIndex || '') ? `${cleanText(section.customLabel || section.displayIndex || '')}.` : '',
-    granspunkter: formatLegacyBoundaryText(section.granspunkter),
+    granspunkter: formatLegacyBoundaryText(section.granspunkter, {
+      expandNames: dispSettings?.visaFullaGranspunkterKapitel1 !== false,
+    }),
     spar: section.spar || '—',
     highlightStart: Boolean(section.highlightStart),
     highlightEnd: Boolean(section.highlightEnd),
