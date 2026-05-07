@@ -474,6 +474,152 @@ const defaultDispSettings = () => ({
   komprimeraLikaTiderKapitel1: true,
 });
 
+const buildSuggestedDispFileName = ({
+  banNamn = '',
+  veckaOchDagar = '',
+  banobjektVnr = '',
+} = {}) =>
+  ['Disp', String(banNamn || '').trim(), String(veckaOchDagar || '').trim(), String(banobjektVnr || '').trim()]
+    .filter(Boolean)
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const extractOrderedPlaceNamesFromSections = (sections = []) => {
+  const orderedNames = [];
+
+  sections.forEach((section) => {
+    const rawName = normalizeSectionAreaName(section?.name || section?.signal || '');
+    if (!rawName) {
+      return;
+    }
+
+    rawName
+      .split(/\s+[–-]\s+/)
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .forEach((part) => {
+        if (!orderedNames.includes(part)) {
+          orderedNames.push(part);
+        }
+      });
+  });
+
+  return orderedNames;
+};
+
+const buildRouteTitleFromPlaces = (placeNames = []) => {
+  const uniquePlaces = placeNames.filter(Boolean);
+  if (!uniquePlaces.length) {
+    return '';
+  }
+  if (uniquePlaces.length === 1) {
+    return uniquePlaces[0];
+  }
+  return `${uniquePlaces[0]} - ${uniquePlaces[uniquePlaces.length - 1]}`;
+};
+
+const looksLikeFilenameStyleProject = (value = '') =>
+  /\bV\d+\b/i.test(String(value || '')) || /\b\d{4,}(?:-\d+)?\b/.test(String(value || ''));
+
+const looksLikeCodeOnlyLabel = (value = '') => {
+  const normalized = String(value || '')
+    .replace(/[–-]/g, ' ')
+    .replace(/,/g, ' ')
+    .trim();
+
+  if (!normalized) {
+    return false;
+  }
+
+  const tokens = normalized
+    .split(/\s+/)
+    .map((token) => token.replace(/[^A-Za-zÅÄÖåäö0-9/]/g, ''))
+    .filter(Boolean);
+
+  if (!tokens.length) {
+    return false;
+  }
+
+  const alphaTokens = tokens.filter((token) => /[A-Za-zÅÄÖåäö]/.test(token));
+  if (!alphaTokens.length) {
+    return false;
+  }
+
+  return alphaTokens.every((token) => {
+    const lettersOnly = token.replace(/[^A-Za-zÅÄÖåäö]/g, '');
+    return lettersOnly && lettersOnly.length <= 4;
+  });
+};
+
+const getTemplateOverviewFields = (template = {}) => {
+  const templateDispSettings = template?.dispSettings || {};
+  const overview = template?.overview || {};
+  const sectionPlaceNames = extractOrderedPlaceNamesFromSections(template?.sections || []);
+  const derivedRouteTitle = buildRouteTitleFromPlaces(sectionPlaceNames);
+  const derivedPlacesList = sectionPlaceNames.join(', ');
+
+  const rawProjectName = String(
+    template?.projectName ||
+    templateDispSettings.rubrik ||
+    overview.stracka ||
+    ''
+  ).trim();
+  const rawPlats = String(
+    template?.plats ||
+    overview.berordaDriftplatser ||
+    ''
+  ).trim();
+  const rawRubrik = String(
+    templateDispSettings.rubrik ||
+    overview.stracka ||
+    template?.projectName ||
+    ''
+  ).trim();
+
+  const shouldUseDerivedTitle =
+    Boolean(derivedRouteTitle) &&
+    (!rawProjectName || looksLikeFilenameStyleProject(rawProjectName) || looksLikeCodeOnlyLabel(rawProjectName));
+  const shouldUseDerivedRubrik =
+    Boolean(derivedRouteTitle) &&
+    (!rawRubrik || looksLikeFilenameStyleProject(rawRubrik) || looksLikeCodeOnlyLabel(rawRubrik));
+  const shouldUseDerivedPlaces =
+    Boolean(derivedPlacesList) &&
+    (!rawPlats || looksLikeCodeOnlyLabel(rawPlats));
+
+  return {
+    projectName: shouldUseDerivedTitle ? derivedRouteTitle : rawProjectName,
+    plats: shouldUseDerivedPlaces ? derivedPlacesList : rawPlats,
+    rubrik: shouldUseDerivedRubrik ? derivedRouteTitle : rawRubrik,
+    banNamn: String(
+      templateDispSettings.banNamn ||
+      overview.banName ||
+      ''
+    ).trim(),
+    veckaOchDagar: String(
+      templateDispSettings.veckaOchDagar ||
+      overview.weekLine ||
+      ''
+    ).trim(),
+    banobjektVnr: String(
+      templateDispSettings.banobjektVnr ||
+      overview.banobjektVnr ||
+      ''
+    ).trim(),
+    forplaneraCa: String(
+      templateDispSettings.forplaneraCa ||
+      overview.forplaneraCa ||
+      ''
+    ).trim(),
+    rodmarkeradeGranspunkter: String(
+      templateDispSettings.rodmarkeradeGranspunkter ||
+      overview.outerGranspunkter ||
+      ''
+    ).trim(),
+    publiktDispnamn: String(templateDispSettings.publiktDispnamn || '').trim(),
+  };
+};
+
 const shouldReplaceDistrictDefault = (currentValue = '', previousDefault = '', nextDefault = '') => {
   const current = String(currentValue || '').trim();
   if (!nextDefault) {
@@ -1444,6 +1590,10 @@ const SkapaProjekt = () => {
     setBlankett31Meta(parsedMeta);
     const defaultHighlightedBoundaries = getDefaultHighlightedBoundaries(nextEntries);
 
+    if (!hasValue(projektNamn) && hasValue(parsedMeta.projectLabel)) {
+      setProjektNamn(parsedMeta.projectLabel);
+    }
+
     setDispSettings((current) => ({
       ...current,
       rubrik: current.rubrik || parsedMeta.projectLabel || '',
@@ -1596,6 +1746,20 @@ const SkapaProjekt = () => {
   const applySuggestionTemplate = (template = {}, sourceType = '') => {
     applyDispData(template);
 
+    const templateOverview = getTemplateOverviewFields(template);
+    const templateEndpoints = parseDriftplatsEndpoints(templateOverview.plats);
+    const defaultSettings = defaultDispSettings();
+
+    if (templateOverview.projectName) {
+      setProjektNamn(templateOverview.projectName);
+    }
+
+    if (templateOverview.plats) {
+      setPlats(templateOverview.plats);
+      setFromDriftplats(templateEndpoints.from);
+      setToDriftplats(templateEndpoints.to);
+    }
+
     if (template?.namn) {
       setNamn(template.namn);
     }
@@ -1620,17 +1784,41 @@ const SkapaProjekt = () => {
     if (Array.isArray(template?.customDispPhoneLines) && template.customDispPhoneLines.length) {
       setCustomDispPhoneLines(template.customDispPhoneLines);
     }
-    if (template?.dispSettings && Object.keys(template.dispSettings).length) {
-      setDispSettings((current) => ({
+
+    setDispSettings((current) => {
+      const nextRubrik = templateOverview.rubrik || current.rubrik;
+      const nextBanNamn = templateOverview.banNamn || current.banNamn;
+      const nextVeckaOchDagar = current.veckaOchDagar || templateOverview.veckaOchDagar;
+      const nextBanobjektVnr = current.banobjektVnr || templateOverview.banobjektVnr;
+      const nextForplaneraCa =
+        current.forplaneraCa && current.forplaneraCa !== defaultSettings.forplaneraCa
+          ? current.forplaneraCa
+          : templateOverview.forplaneraCa || current.forplaneraCa;
+      const nextRodmarkeradeGranspunkter =
+        templateOverview.rodmarkeradeGranspunkter || current.rodmarkeradeGranspunkter;
+      const nextPubliktDispnamn = buildSuggestedDispFileName({
+        banNamn: nextBanNamn,
+        veckaOchDagar: nextVeckaOchDagar,
+        banobjektVnr: nextBanobjektVnr,
+      }) || templateOverview.publiktDispnamn || current.publiktDispnamn;
+
+      return {
         ...current,
-        ...template.dispSettings,
-      }));
-    }
+        ...(template?.dispSettings || {}),
+        rubrik: nextRubrik,
+        banNamn: nextBanNamn,
+        veckaOchDagar: nextVeckaOchDagar,
+        banobjektVnr: nextBanobjektVnr,
+        forplaneraCa: nextForplaneraCa,
+        rodmarkeradeGranspunkter: nextRodmarkeradeGranspunkter,
+        publiktDispnamn: nextPubliktDispnamn,
+      };
+    });
 
     setDispStatus(
       sourceType === 'archive'
-        ? 'Tidigare disp använd som mall. Kontrollera signaler, spår och telefonfält mot den nya Blankett 31.'
-        : 'Tidigare projekt användes som mall. Kontrollera signaler, spår och telefonfält mot den nya Blankett 31.'
+        ? 'Tidigare disp använd som mall. Struktur, signaler, spår och toppfält är förifyllda. Kontrollera nu den nya Blankett 31 mot mallen.'
+        : 'Tidigare projekt användes som mall. Struktur, signaler, spår och toppfält är förifyllda. Kontrollera nu den nya Blankett 31 mot mallen.'
     );
   };
 
