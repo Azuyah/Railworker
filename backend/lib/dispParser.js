@@ -922,10 +922,10 @@ const cleanBoundaryToken = (value = '') =>
 const isSignalPointToken = (value = '') => /\d/.test(cleanBoundaryToken(value));
 const extractSignalTokens = (value = '') =>
   cleanBoundaryToken(value)
-    .match(/[A-Za-zÅÄÖåäö]{1,4}\d+(?:,\s*(?:[A-Za-zÅÄÖåäö]{1,4}\d+|\d+))*/g) || [];
+    .match(/[A-Za-zÅÄÖåäö]{1,4}\d+(?:\/\d+)?(?:,\s*(?:[A-Za-zÅÄÖåäö]{1,4}\d+(?:\/\d+)?|\d+(?:\/\d+)?))*/g) || [];
 
 const DISP_SECTION_POINT_TOKEN_PATTERN =
-  '[A-Za-z\\u00C5\\u00C4\\u00D6\\u00E5\\u00E4\\u00F6]{1,4}\\s*\\d+(?:,\\s*(?:[A-Za-z\\u00C5\\u00C4\\u00D6\\u00E5\\u00E4\\u00F6]{1,4}\\s*\\d+|\\d+))*';
+  '[A-Za-z\\u00C5\\u00C4\\u00D6\\u00E5\\u00E4\\u00F6]{1,4}\\s*\\d+(?:\\/\\d+)?(?:,\\s*(?:[A-Za-z\\u00C5\\u00C4\\u00D6\\u00E5\\u00E4\\u00F6]{1,4}\\s*\\d+(?:\\/\\d+)?|\\d+(?:\\/\\d+)?))*';
 const DISP_SECTION_BOUNDARY_RANGE_REGEX = new RegExp(
   `(${DISP_SECTION_POINT_TOKEN_PATTERN})\\s+-\\s+(${DISP_SECTION_POINT_TOKEN_PATTERN})$`,
   'i'
@@ -1340,6 +1340,97 @@ const parseCompactDispSectionBlock = (lines = []) => {
   };
 };
 
+const parseLegacyDispSectionBlock = (lines = []) => {
+  const normalizedLines = lines
+    .map((line) => normalizeSectionRowText(line))
+    .filter(Boolean);
+
+  if (!normalizedLines.length) {
+    return null;
+  }
+
+  const firstLine = normalizedLines[0];
+  const headerMatch = firstLine.match(/^Delomr(?:\u00E5de|ade)\s+(\d+)\s+(.+)$/i);
+  if (!headerMatch) {
+    return null;
+  }
+
+  const displayIndex = Number(headerMatch[1] || 0);
+  if (!displayIndex) {
+    return null;
+  }
+
+  let namePart = normalizeSectionName(headerMatch[2] || '');
+  let granspunkter = '';
+  let spar = '';
+
+  const extractTrackValue = (value = '') => {
+    const normalized = normalizeSectionRowText(value);
+    const explicit = normalized.match(/^Sp(?:\u00E5|a)r\s+(.+)$/i);
+    if (explicit?.[1]) {
+      return sanitizeSectionValue(explicit[1], { allowTrackNumbers: true });
+    }
+    if (/^[A-Za-zÅÄÖåäö0-9,\s/]+$/.test(normalized)) {
+      return sanitizeSectionValue(normalized, { allowTrackNumbers: true });
+    }
+    return '';
+  };
+
+  const extractBoundaryFromText = (value = '') => {
+    const normalized = normalizeSectionRowText(value);
+    const boundaryMatch = normalized.match(DISP_SECTION_BOUNDARY_RANGE_REGEX);
+    if (!boundaryMatch) {
+      return '';
+    }
+    return `${cleanBoundaryToken(boundaryMatch[1] || '')} - ${cleanBoundaryToken(boundaryMatch[2] || '')}`;
+  };
+
+  const firstLineBoundary = extractBoundaryFromText(headerMatch[2] || '');
+  if (firstLineBoundary) {
+    granspunkter = firstLineBoundary;
+    namePart = normalizeSectionName(
+      normalizeSectionRowText(headerMatch[2] || '').slice(0, normalizeSectionRowText(headerMatch[2] || '').indexOf(firstLineBoundary))
+    ) || namePart;
+  }
+
+  for (const line of normalizedLines.slice(1)) {
+    if (!granspunkter) {
+      const boundaryValue = extractBoundaryFromText(line);
+      if (boundaryValue) {
+        granspunkter = boundaryValue;
+        continue;
+      }
+    }
+
+    if (!spar) {
+      const trackValue = extractTrackValue(line);
+      if (trackValue) {
+        spar = trackValue;
+        continue;
+      }
+    }
+
+    if (!namePart) {
+      namePart = normalizeSectionName(line) || namePart;
+    }
+  }
+
+  if (!granspunkter) {
+    return null;
+  }
+
+  return {
+    ...buildDispSection({
+      displayIndex,
+      signal: granspunkter,
+      granspunkter,
+      spar,
+    }),
+    displayIndex,
+    name: namePart,
+  };
+};
+
 const groupLinesByApproximateRow = (lines = [], tolerance = 0.012) => {
   const groups = [];
 
@@ -1601,6 +1692,13 @@ const extractDispSectionsFromText = (pages = []) =>
         const wrappedInlineSection = parseInlineDispSectionText(blockText);
         if (wrappedInlineSection) {
           sections.push(wrappedInlineSection);
+          continue;
+        }
+
+        const legacyBlockSection = parseLegacyDispSectionBlock(blockLines);
+        if (legacyBlockSection) {
+          sections.push(legacyBlockSection);
+          index += blockLines.length - 1;
           continue;
         }
 

@@ -52,6 +52,67 @@ const readFileAsDataUrl = (file) =>
     reader.readAsDataURL(file);
   });
 
+const createStoredPdfFile = ({ name = '', size = 0, fileData = '' } = {}) => ({
+  name: String(name || '').trim(),
+  size: Number(size) || 0,
+  fileData: String(fileData || ''),
+});
+
+const openStoredPdfFile = (file = {}) => {
+  if (!file?.fileData) {
+    return false;
+  }
+
+  const newWindow = window.open(file.fileData, '_blank', 'noopener,noreferrer');
+  if (!newWindow) {
+    return false;
+  }
+
+  return true;
+};
+
+const hasStoredPdfContent = (file = {}) => Boolean(String(file?.fileData || '').trim());
+
+const openArchivePdfFile = async ({ filePath = '', token = '' } = {}) => {
+  if (!filePath || !token) {
+    return false;
+  }
+
+  const response = await fetch(apiUrl('/api/blankett31-registry/open-archive-file'), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ filePath }),
+  });
+
+  if (!response.ok) {
+    throw new Error(await getApiErrorMessage(response, 'Kunde inte öppna arkivfilen.'));
+  }
+
+  const blob = await response.blob();
+  const objectUrl = window.URL.createObjectURL(blob);
+  const newWindow = window.open(objectUrl, '_blank', 'noopener,noreferrer');
+  if (!newWindow) {
+    window.URL.revokeObjectURL(objectUrl);
+    throw new Error('Webbläsaren blockerade öppningen av PDF-filen.');
+  }
+
+  window.setTimeout(() => window.URL.revokeObjectURL(objectUrl), 60_000);
+  return true;
+};
+
+const pickBestBlankett31Suggestion = (suggestions = []) =>
+  [...suggestions]
+    .sort((left, right) => {
+      const scoreDelta = Number(right.score || 0) - Number(left.score || 0);
+      if (scoreDelta !== 0) return scoreDelta;
+      const rightDate = `${right.referenceStartDate || '0000-00-00'}|${right.referenceEndDate || '0000-00-00'}`;
+      const leftDate = `${left.referenceStartDate || '0000-00-00'}|${left.referenceEndDate || '0000-00-00'}`;
+      return rightDate.localeCompare(leftDate, 'sv');
+    })[0] || null;
+
 const getApiErrorMessage = async (response, fallbackMessage) => {
   try {
     const data = await response.json();
@@ -754,7 +815,10 @@ const SkapaProjekt = () => {
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [isParsingBlankett31, setIsParsingBlankett31] = useState(false);
   const [blankett31Status, setBlankett31Status] = useState('');
-  const [isParsingDisp, setIsParsingDisp] = useState(false);
+  const [blankett31Suggestions, setBlankett31Suggestions] = useState([]);
+  const [openingArchiveSuggestionKey, setOpeningArchiveSuggestionKey] = useState('');
+  const [applyingSuggestionKey, setApplyingSuggestionKey] = useState('');
+  const [, setIsParsingDisp] = useState(false);
   const [dispStatus, setDispStatus] = useState('');
   const [isResolvingDriftplatser, setIsResolvingDriftplatser] = useState(false);
   const [driftplatsStatus, setDriftplatsStatus] = useState('');
@@ -762,10 +826,6 @@ const SkapaProjekt = () => {
   const [sectionStatus, setSectionStatus] = useState('');
   const [preflightSummary, setPreflightSummary] = useState({ errors: [], warnings: [] });
   const [isSavingProject, setIsSavingProject] = useState(false);
-  const [showProjectTemplatePicker, setShowProjectTemplatePicker] = useState(false);
-  const [projectTemplateSearch, setProjectTemplateSearch] = useState('');
-  const [projectTemplateOptions, setProjectTemplateOptions] = useState([]);
-  const [isLoadingProjectTemplates, setIsLoadingProjectTemplates] = useState(false);
   const {
     isOpen: isPreflightOpen,
     onOpen: openPreflight,
@@ -787,6 +847,7 @@ const SkapaProjekt = () => {
       label: getEntryDisplayLabel(entry),
     }))
     .filter((option) => option.label);
+  const token = JSON.parse(localStorage.getItem('user'))?.token;
   const blankett31EntryKeyMap = new Map(
     blankett31Entries.map((entry, index) => [buildPlanJobEntryKey(entry, index), entry])
   );
@@ -888,128 +949,6 @@ const SkapaProjekt = () => {
       syncProtectionFieldsFromEntries(nextEntries);
       return nextEntries;
     });
-  };
-
-  const applyProjectTemplate = (project) => {
-    if (!project) {
-      return;
-    }
-
-    const templatePlats = project.plats || '';
-    const { from, to } = parseDriftplatsEndpoints(templatePlats);
-    const resetDispSettings = defaultDispSettings();
-
-    setProjektNamn(project.name || '');
-    setPlats(templatePlats);
-    setFromDriftplats(from);
-    setToDriftplats(to);
-    setTelefonnummer(project.telefonnummer || '');
-    setGranspunktFritext(project.granspunkter || '');
-    setStartDate('');
-    setStartTime('');
-    setEndDate('');
-    setEndTime('');
-    setNamn('');
-    setNodnummer('');
-    setBandriftnummer('');
-    setEldriftnummer('');
-    setHtsmTelefon('');
-    setReservnr('');
-    setAvstamt(false);
-    setObjekt('');
-    setUttagningstid('');
-    setSignatur('');
-    setAvslutaSkyddTid('');
-    setAvslutningstid('');
-    setAvslutningssignatur('');
-    setBeteckningar([{ value: '' }]);
-    setBlankett31Meta({});
-    setDispSettings(resetDispSettings);
-    setFjtklBlocks([]);
-    setCustomDispPhoneLines([]);
-    setBlankett31Files([]);
-    setBlankett31Entries([defaultBlankett31Entry()]);
-    setPlanJobs(normalizePlanJobs([], []));
-    setPrimaryDispEntryKeys([]);
-    setDispSectionGroups([]);
-    setDispFiles([]);
-    setAnteckningar([]);
-
-    const sourceSections = project.sections?.length
-      ? mergeSectionDetails(
-          project.sections.map((sec) => ({
-            ...defaultSection(),
-            ...sec,
-            signal: sec.name || sec.signal || '',
-          })),
-          project.formState?.sectionDetails || [],
-          (project.sections?.length || 0) === 1 ? normalizeSectionAreaName(project.plats || '') : ''
-        )
-      : createDefaultSections();
-
-    setSections(sourceSections);
-    setDispStatus('Projektet är nu förifyllt från en befintlig Railworker-disp. Ladda Blankett 31 för tider och beteckningar.');
-    setShowProjectTemplatePicker(false);
-  };
-
-  const loadProjectTemplateOptions = async () => {
-    const token = JSON.parse(localStorage.getItem('user'))?.token;
-    if (!token) {
-      setDispStatus('Logga in för att välja disp från Railworker.');
-      return;
-    }
-
-    setIsLoadingProjectTemplates(true);
-    try {
-      const response = await fetch(apiUrl('/api/projects'), {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(await getApiErrorMessage(response, 'Kunde inte hämta projekt från Railworker.'));
-      }
-
-      const data = await response.json();
-      const options = Array.isArray(data) ? data.filter((project) => project.id !== currentProjectId) : [];
-      setProjectTemplateOptions(options);
-      setShowProjectTemplatePicker(true);
-    } catch (error) {
-      console.error('Fel vid hämtning av projektmallar:', error);
-      setDispStatus(error?.message || 'Kunde inte hämta projekt från Railworker.');
-    } finally {
-      setIsLoadingProjectTemplates(false);
-    }
-  };
-
-  const handleApplyProjectTemplate = async (projectId) => {
-    const token = JSON.parse(localStorage.getItem('user'))?.token;
-    if (!token) {
-      setDispStatus('Logga in för att välja disp från Railworker.');
-      return;
-    }
-
-    try {
-      setIsLoadingProjectTemplates(true);
-      const response = await fetch(apiUrl(`/api/project/${projectId}`), {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(await getApiErrorMessage(response, 'Kunde inte läsa projektet från Railworker.'));
-      }
-
-      const project = await response.json();
-      applyProjectTemplate(project);
-    } catch (error) {
-      console.error('Fel vid val av projektmall:', error);
-      setDispStatus(error?.message || 'Kunde inte använda projektet som utgångsmaterial.');
-    } finally {
-      setIsLoadingProjectTemplates(false);
-    }
   };
 
   const addPlanJob = () => {
@@ -1522,12 +1461,14 @@ const SkapaProjekt = () => {
 
     if (!files.length) {
       setBlankett31Status('');
+      setBlankett31Suggestions([]);
       return;
     }
 
     const token = JSON.parse(localStorage.getItem('user'))?.token;
     if (!token) {
       setBlankett31Status('Logga in för att tolka Blankett 31.');
+      setBlankett31Suggestions([]);
       return;
     }
 
@@ -1537,9 +1478,16 @@ const SkapaProjekt = () => {
     try {
       const parsedFileEntries = [];
       let parsedMeta = null;
+      const uploadedFiles = [];
+      let parsedSuggestions = [];
 
       for (const file of files) {
         const fileData = await readFileAsDataUrl(file);
+        uploadedFiles.push(createStoredPdfFile({
+          name: file.name,
+          size: file.size,
+          fileData,
+        }));
         const response = await fetch(apiUrl('/api/pdf/blankett31/parse'), {
           method: 'POST',
           headers: {
@@ -1558,6 +1506,7 @@ const SkapaProjekt = () => {
 
         const data = await response.json();
         parsedFileEntries.push(...applyBlankett31Data(data.parsed));
+        parsedSuggestions = [...parsedSuggestions, ...(Array.isArray(data?.suggestions) ? data.suggestions : [])];
         if (!parsedMeta && data?.parsed?.meta) {
           parsedMeta = data.parsed.meta;
         }
@@ -1579,7 +1528,7 @@ const SkapaProjekt = () => {
       setDispSectionGroups((current) => normalizeDispSectionGroups(current, nextEntries));
       setBeteckningar(nextEntries.map((entry) => ({ value: entry.beteckning || '' })));
       setBlankett31Files((current) => {
-        const merged = [...current, ...files];
+        const merged = [...current, ...uploadedFiles].map((file) => ({ ...file }));
         return merged.filter(
           (file, index, array) =>
             index === array.findIndex((candidate) => candidate.name === file.name && candidate.size === file.size)
@@ -1596,6 +1545,14 @@ const SkapaProjekt = () => {
       }
       syncSummaryDatesFromEntries(nextEntries);
       syncProtectionFieldsFromEntries(nextEntries);
+      const dedupedSuggestions = parsedSuggestions.filter((item, index, collection) =>
+        index === collection.findIndex((candidate) =>
+          (candidate.suggestionKey || `${candidate.projectId || 'archive'}-${candidate.candidateId}`) ===
+          (item.suggestionKey || `${item.projectId || 'archive'}-${item.candidateId}`)
+        )
+      );
+      const bestSuggestion = pickBestBlankett31Suggestion(dedupedSuggestions);
+      setBlankett31Suggestions(bestSuggestion ? [bestSuggestion] : []);
       setBlankett31Status(
         files.length > 1
           ? `${files.length} Blankett 31 tolkades och lades till i projektet.`
@@ -1604,6 +1561,7 @@ const SkapaProjekt = () => {
     } catch (error) {
       console.error('Fel vid tolkning av Blankett 31:', error);
       setBlankett31Status('Blankett 31 kunde inte tolkas automatiskt.');
+      setBlankett31Suggestions([]);
     } finally {
       setIsParsingBlankett31(false);
     }
@@ -1633,6 +1591,47 @@ const SkapaProjekt = () => {
         )
       );
     }
+  };
+
+  const applySuggestionTemplate = (template = {}, sourceType = '') => {
+    applyDispData(template);
+
+    if (template?.namn) {
+      setNamn(template.namn);
+    }
+    if (template?.nodnummer) {
+      setNodnummer(template.nodnummer);
+    }
+    if (template?.bandriftnummer) {
+      setBandriftnummer(template.bandriftnummer);
+    }
+    if (template?.eldriftnummer) {
+      setEldriftnummer(template.eldriftnummer);
+    }
+    if (template?.htsmTelefon) {
+      setHtsmTelefon(template.htsmTelefon);
+    }
+    if (template?.reservnr) {
+      setReservnr(template.reservnr);
+    }
+    if (Array.isArray(template?.fjtklBlocks) && template.fjtklBlocks.length) {
+      setFjtklBlocks(template.fjtklBlocks);
+    }
+    if (Array.isArray(template?.customDispPhoneLines) && template.customDispPhoneLines.length) {
+      setCustomDispPhoneLines(template.customDispPhoneLines);
+    }
+    if (template?.dispSettings && Object.keys(template.dispSettings).length) {
+      setDispSettings((current) => ({
+        ...current,
+        ...template.dispSettings,
+      }));
+    }
+
+    setDispStatus(
+      sourceType === 'archive'
+        ? 'Tidigare disp använd som mall. Kontrollera signaler, spår och telefonfält mot den nya Blankett 31.'
+        : 'Tidigare projekt användes som mall. Kontrollera signaler, spår och telefonfält mot den nya Blankett 31.'
+    );
   };
 
   const handleDispUpload = async (event) => {
@@ -1677,6 +1676,18 @@ const SkapaProjekt = () => {
 
       const data = await response.json();
       applyDispData(data.parsed);
+      setDispFiles((current) => {
+        const uploadedFile = createStoredPdfFile({
+          name: firstFile.name,
+          size: firstFile.size,
+          fileData,
+        });
+        const merged = [...current, uploadedFile];
+        return merged.filter(
+          (file, index, array) =>
+            index === array.findIndex((candidate) => candidate.name === file.name && candidate.size === file.size)
+        );
+      });
 
       if (data.parsed?.match?.matches) {
         setDispStatus('Disp inläst som utgångsmaterial. Ladda nu Blankett 31 för tider och beteckningar.');
@@ -1791,10 +1802,12 @@ const SkapaProjekt = () => {
           blankett31Files: blankett31Files.map((file) => ({
             name: file.name,
             size: file.size,
+            fileData: file.fileData || '',
           })),
           dispFiles: dispFiles.map((file) => ({
             name: file.name,
             size: file.size,
+            fileData: file.fileData || '',
           })),
         },
         beteckningar: beteckningar.map((b) => ({ value: b.value })),
@@ -1821,7 +1834,12 @@ const SkapaProjekt = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Kunde inte skapa projekt');
+        throw new Error(
+          await getApiErrorMessage(
+            response,
+            isEditingProject ? 'Kunde inte uppdatera projektet' : 'Kunde inte skapa projektet'
+          )
+        );
       }
 
       const data = await response.json();
@@ -1831,7 +1849,7 @@ const SkapaProjekt = () => {
       navigate('/htsmpanel');
     } catch (err) {
       console.error('Fel vid projekt-skapande:', err);
-      alert('Något gick fel. Försök igen.');
+      alert(err?.message || 'Något gick fel. Försök igen.');
     } finally {
       setIsSavingProject(false);
     }
@@ -2004,8 +2022,17 @@ const SkapaProjekt = () => {
               : [defaultBlankett31Entry()]
           )
         );
-        setBlankett31Files(project.formState?.blankett31Files || []);
-        setDispFiles(project.formState?.dispFiles || []);
+        setBlankett31Files(
+          Array.isArray(project.formState?.blankett31Files)
+            ? project.formState.blankett31Files.map((file) => createStoredPdfFile(file))
+            : []
+        );
+        setBlankett31Suggestions([]);
+        setDispFiles(
+          Array.isArray(project.formState?.dispFiles)
+            ? project.formState.dispFiles.map((file) => createStoredPdfFile(file))
+            : []
+        );
         setAnteckningar(project.anteckningar || []);
         setBeteckningar(
           (project.formState?.blankett31Entries || []).length
@@ -2265,7 +2292,7 @@ const SkapaProjekt = () => {
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-300">Import & utgångspunkt</p>
                 <h2 className="mt-2 text-lg font-semibold">Bygg projektet smart</h2>
                 <p className="mt-1.5 text-xs leading-5 text-slate-300">
-                  Börja med Blankett 31, återanvänd en gammal Railworker-disp eller läs in en PDF när du behöver ett snabbt utgångsläge.
+                  Börja med Blankett 31 och låt Railworker föreslå tidigare underlag när det finns en säker träff.
                 </p>
                 <input
                   ref={blankett31InputRef}
@@ -2296,80 +2323,203 @@ const SkapaProjekt = () => {
                     {blankett31Status}
                   </div>
                 )}
+                {blankett31Suggestions.length > 0 && (
+                  <div className="mt-3 rounded-2xl border border-emerald-300/25 bg-emerald-500/10 p-3 text-xs text-emerald-50">
+                    <p className="font-semibold uppercase tracking-[0.2em] text-emerald-200">Liknande tidigare underlag</p>
+                    <p className="mt-1 text-[11px] text-emerald-100/75">
+                      Förslagen är stöd, inte facit. Kontrollera alltid signaler, spår och tider innan du utgår från en äldre disp.
+                    </p>
+                    <div className="mt-2 space-y-2">
+                      {blankett31Suggestions.map((suggestion) => (
+                        <div key={suggestion.suggestionKey || `${suggestion.projectId || 'archive'}-${suggestion.candidateId}`} className="rounded-xl bg-black/10 px-3 py-2">
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="font-semibold text-white">{suggestion.projectName || 'Tidigare projekt'}</span>
+                          </div>
+                          <p className="mt-1 text-[11px] text-emerald-100/90">
+                            {suggestion.projectPlats || 'Plats saknas'} • {suggestion.normalizedGranspunkt}
+                          </p>
+                          {suggestion.matchType ? (
+                            <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-200">
+                              {suggestion.matchType}
+                            </p>
+                          ) : null}
+                          {suggestion.matchSummary ? (
+                            <p className="mt-1 text-[10px] text-emerald-100/80">
+                              {suggestion.matchSummary}
+                            </p>
+                          ) : null}
+                          {suggestion.sourceType === 'archive' && suggestion.archiveDispPath ? (
+                            <p className="mt-1 text-[10px] text-emerald-100/75">
+                              Arkivdisp hittad i: {suggestion.archiveDispPath.split('/').slice(-3).join(' / ')}
+                            </p>
+                          ) : null}
+                          {suggestion.reviewNote ? (
+                            <p className="mt-1 text-[10px] font-medium text-amber-100/95">
+                              {suggestion.reviewNote}
+                            </p>
+                          ) : null}
+                          {(suggestion.projectId || suggestion.archiveDispPath) ? (
+                            <div className="mt-2">
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  try {
+                                    const key = suggestion.suggestionKey || `${suggestion.projectId || 'archive'}-${suggestion.candidateId}`;
+                                    setApplyingSuggestionKey(key);
+                                    const response = await fetch(apiUrl('/api/blankett31-registry/use-suggestion'), {
+                                      method: 'POST',
+                                      headers: {
+                                        'Content-Type': 'application/json',
+                                        Authorization: `Bearer ${token}`,
+                                      },
+                                      body: JSON.stringify({
+                                        projectId: suggestion.projectId || null,
+                                        archiveDispPath: suggestion.archiveDispPath || '',
+                                      }),
+                                    });
+
+                                    if (!response.ok) {
+                                      throw new Error(await getApiErrorMessage(response, 'Kunde inte använda den gamla dispen som mall.'));
+                                    }
+
+                                    const data = await response.json();
+                                    applySuggestionTemplate(data.template, data.sourceType);
+                                  } catch (error) {
+                                    window.alert(error.message || 'Kunde inte använda den gamla dispen som mall.');
+                                  } finally {
+                                    setApplyingSuggestionKey('');
+                                  }
+                                }}
+                                className="rounded-full border border-amber-200/35 bg-amber-100/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-50 transition hover:bg-amber-100/15"
+                              >
+                                {applyingSuggestionKey === (suggestion.suggestionKey || `${suggestion.projectId || 'archive'}-${suggestion.candidateId}`) ? 'Använder…' : 'Använd denna'}
+                              </button>
+                            </div>
+                          ) : null}
+                          {(suggestion.archiveDispPath || suggestion.archiveBlankettPath) ? (
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {suggestion.archiveDispPath ? (
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    try {
+                                      setOpeningArchiveSuggestionKey(`${suggestion.suggestionKey}:disp`);
+                                      await openArchivePdfFile({
+                                        filePath: suggestion.archiveDispPath,
+                                        token,
+                                      });
+                                    } catch (error) {
+                                      window.alert(error.message || 'Kunde inte öppna arkivdispen.');
+                                    } finally {
+                                      setOpeningArchiveSuggestionKey('');
+                                    }
+                                  }}
+                                  className="rounded-full border border-emerald-200/35 bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-white/15"
+                                >
+                                  {openingArchiveSuggestionKey === `${suggestion.suggestionKey}:disp` ? 'Öppnar…' : 'Öppna disp'}
+                                </button>
+                              ) : null}
+                              {suggestion.archiveBlankettPath ? (
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    try {
+                                      setOpeningArchiveSuggestionKey(`${suggestion.suggestionKey}:31`);
+                                      await openArchivePdfFile({
+                                        filePath: suggestion.archiveBlankettPath,
+                                        token,
+                                      });
+                                    } catch (error) {
+                                      window.alert(error.message || 'Kunde inte öppna Blankett 31-filen.');
+                                    } finally {
+                                      setOpeningArchiveSuggestionKey('');
+                                    }
+                                  }}
+                                  className="rounded-full border border-white/20 bg-black/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-50 transition hover:bg-black/20"
+                                >
+                                  {openingArchiveSuggestionKey === `${suggestion.suggestionKey}:31` ? 'Öppnar…' : 'Öppna 31'}
+                                </button>
+                              ) : null}
+                            </div>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {blankett31Files.length > 0 && (
                   <div className="mt-3 space-y-2 text-xs text-slate-100">
                     {blankett31Files.map((file) => (
-                      <div key={`${file.name}-${file.size}`} className="rounded-xl bg-white/10 px-3 py-2">
-                        {file.name}
+                      <div key={`${file.name}-${file.size}`} className="flex items-center justify-between gap-3 rounded-xl bg-white/10 px-3 py-2">
+                        <div className="min-w-0">
+                          <span className="block truncate">{file.name}</span>
+                          {!hasStoredPdfContent(file) ? (
+                            <span className="mt-1 block text-[10px] text-amber-200">
+                              Äldre fil. Ladda in den igen en gång för att kunna öppna den härifrån.
+                            </span>
+                          ) : null}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (hasStoredPdfContent(file)) {
+                              openStoredPdfFile(file);
+                              return;
+                            }
+
+                            setBlankett31Status('Välj samma Blankett 31 igen, så sparas den för öppning nästa gång.');
+                            blankett31InputRef.current?.click();
+                          }}
+                          className={`shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-widest transition ${
+                            hasStoredPdfContent(file)
+                              ? 'border-white/25 bg-white/10 text-white hover:bg-white/20'
+                              : 'border-amber-300/40 bg-amber-400/10 text-amber-100 hover:bg-amber-400/20'
+                          }`}
+                        >
+                          {hasStoredPdfContent(file) ? 'Öppna' : 'Ladda in igen'}
+                        </button>
                       </div>
                     ))}
-                  </div>
-                )}
-                <button
-                  type="button"
-                  onClick={loadProjectTemplateOptions}
-                  disabled={isLoadingProjectTemplates}
-                  className="mt-3 w-full rounded-2xl border border-emerald-300/50 bg-emerald-500/20 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-500/30"
-                >
-                  {isLoadingProjectTemplates ? 'Hämtar projekt...' : 'Utgå ifrån Railworker-disp'}
-                </button>
-                {showProjectTemplatePicker && (
-                  <div className="mt-3 rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur">
-                    <input
-                      type="text"
-                      value={projectTemplateSearch}
-                      onChange={(e) => setProjectTemplateSearch(e.target.value)}
-                      placeholder="Sök projekt"
-                      className="mb-3 w-full rounded-xl border border-white/15 bg-white px-3 py-2 text-sm text-slate-700"
-                    />
-                    <div className="max-h-64 space-y-2 overflow-y-auto">
-                      {projectTemplateOptions
-                        .filter((project) => (
-                          !projectTemplateSearch.trim()
-                            || String(project.name || '').toLowerCase().includes(projectTemplateSearch.trim().toLowerCase())
-                            || String(project.plats || '').toLowerCase().includes(projectTemplateSearch.trim().toLowerCase())
-                        ))
-                        .map((project) => (
-                          <button
-                            key={project.id}
-                            type="button"
-                            onClick={() => handleApplyProjectTemplate(project.id)}
-                            className="w-full rounded-xl border border-white/15 bg-white px-3 py-2 text-left hover:border-slate-300 hover:bg-slate-50"
-                          >
-                            <div className="text-sm font-semibold text-slate-900">{project.name || 'Namnlöst projekt'}</div>
-                            <div className="mt-1 text-xs text-slate-500">{project.plats || 'Plats saknas'}</div>
-                          </button>
-                        ))}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowProjectTemplatePicker(false)}
-                      className="mt-3 w-full rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-sm text-white hover:bg-white/15"
-                    >
-                      Stäng
-                    </button>
-                  </div>
-                )}
-                <button
-                  type="button"
-                  onClick={() => dispInputRef.current?.click()}
-                  disabled={isParsingDisp}
-                  className="mt-3 w-full rounded-2xl border border-white/20 bg-transparent px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
-                >
-                  {isParsingDisp ? 'Läser in PDF-disp...' : 'Läs in PDF-disp'}
-                </button>
-                {dispStatus && (
-                  <div className="mt-3 rounded-xl bg-white/10 px-3 py-2 text-[11px] text-slate-100">
-                    {dispStatus}
                   </div>
                 )}
                 {dispFiles.length > 0 && (
                   <div className="mt-3 space-y-2 text-xs text-slate-100">
                     {dispFiles.map((file) => (
-                      <div key={`${file.name}-${file.size}`} className="rounded-xl bg-white/10 px-3 py-2">
-                        {file.name}
+                      <div key={`${file.name}-${file.size}`} className="flex items-center justify-between gap-3 rounded-xl bg-white/10 px-3 py-2">
+                        <div className="min-w-0">
+                          <span className="block truncate">{file.name}</span>
+                          {!hasStoredPdfContent(file) ? (
+                            <span className="mt-1 block text-[10px] text-amber-200">
+                              Äldre fil. Läs in den igen en gång för att kunna öppna den härifrån.
+                            </span>
+                          ) : null}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (hasStoredPdfContent(file)) {
+                              openStoredPdfFile(file);
+                              return;
+                            }
+
+                            setDispStatus('Välj samma DISP igen, så sparas den för öppning nästa gång.');
+                            dispInputRef.current?.click();
+                          }}
+                          className={`shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-widest transition ${
+                            hasStoredPdfContent(file)
+                              ? 'border-white/25 bg-white/10 text-white hover:bg-white/20'
+                              : 'border-amber-300/40 bg-amber-400/10 text-amber-100 hover:bg-amber-400/20'
+                          }`}
+                        >
+                          {hasStoredPdfContent(file) ? 'Öppna' : 'Läs in igen'}
+                        </button>
                       </div>
                     ))}
+                  </div>
+                )}
+                {dispStatus && (
+                  <div className="mt-3 rounded-xl bg-white/10 px-3 py-2 text-[11px] text-slate-100">
+                    {dispStatus}
                   </div>
                 )}
                 <div className="mt-4 rounded-2xl border border-white/15 bg-white/5 p-3">

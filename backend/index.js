@@ -8,6 +8,13 @@ const path = require('path');
 const fs = require('fs');
 const { PrismaClient } = require('./generated/prisma/client');
 const { parseBlankett31Pdf } = require('./lib/blankett31Parser');
+const {
+  bootstrapBlankett31RegistryFromProjects,
+  buildBlankett31ArchiveInventory,
+  importBlankett31Archive,
+  suggestBlankett31Matches,
+  syncProjectBlankett31Registry,
+} = require('./lib/blankett31Registry');
 const { parseDispPdf } = require('./lib/dispParser');
 const { createPlanWorkbookBuffer } = require('./lib/planExcelExport');
 const { importPlanWorkbookBuffer } = require('./lib/planExcelImport');
@@ -18,6 +25,7 @@ require('dotenv').config();
 const app = express();
 const prisma = new PrismaClient();
 const TELEFONKATALOG_PATH = '/Users/matsmalleandersson/Desktop/Disp Arbetsmall/Telefonkatalog 2024-10-03.pdf';
+const BLANKETT31_ARCHIVE_ROOT = '/Users/matsmalleandersson/Desktop/Disper';
 
 const corsOptions = {
   origin: true,
@@ -73,6 +81,14 @@ if (!JWT_SECRET) {
 
 const normalizePhoneNumber = (value = '') =>
   String(value || '').replace(/[^\d+]/g, '').trim();
+
+const sanitizeAsciiFilename = (value = '') =>
+  String(value || 'dokument.pdf')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\x20-\x7E]/g, '')
+    .replace(/["\\]/g, '')
+    .trim() || 'dokument.pdf';
 
 const normalizeFullName = (value = '') =>
   String(value || '')
@@ -348,10 +364,8 @@ const getRowSortTimestamp = (row = {}) => {
 };
 
 const sanitizeDownloadFileBase = (value = '', fallback = 'fil') => {
-  const normalized = String(value || '')
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[<>:"/\\|?*\u0000-\u001F]/g, '')
+  const normalized = sanitizeAsciiFilename(String(value || ''))
+    .replace(/[<>:\/\\|?*\u0000-\u001F]/g, '')
     .trim()
     .replace(/\s+/g, ' ');
 
@@ -771,6 +785,8 @@ app.post('/api/projects', authMiddleware, async (req, res) => {
       },
     });
 
+    await syncProjectBlankett31Registry(prisma, project);
+
     res.status(201).json(hydrateProjectSections(project));
   } catch (error) {
     console.error('❌ Create project error:', error);
@@ -909,6 +925,7 @@ const deleteProjectByIdHandler = async (req, res) => {
 
     const projectId = parseInt(req.params.id, 10);
 
+    await prisma.blankett31Registry.deleteMany({ where: { projectId } });
     await prisma.section.deleteMany({ where: { projectId } });
     await prisma.project.delete({ where: { id: projectId } });
 
@@ -1029,8 +1046,10 @@ app.put('/api/projects/:id', async (req, res) => {
       include: {
         sections: true,
         beteckningar: true,
+        formState: true,
       },
     });
+    await syncProjectBlankett31Registry(prisma, result);
     console.log('📌 Anteckningar mottaget från frontend:', anteckningar);
 
     res.json(hydrateProjectSections(result));
@@ -1168,11 +1187,13 @@ app.post('/api/pdf/blankett31/parse', authMiddleware, async (req, res) => {
   try {
     const pdfBuffer = decodeUploadedPdf(fileData, fileName);
     const parsed = await parseBlankett31Pdf(pdfBuffer);
+    const suggestions = await suggestBlankett31Matches(prisma, parsed, { limit: 5 });
     const { rawText, ...fields } = parsed;
 
     res.json({
       fileName: path.basename(fileName),
       parsed: fields,
+      suggestions,
     });
   } catch (error) {
     console.error('Fel vid tolkning av Blankett 31:', error);
@@ -1180,6 +1201,170 @@ app.post('/api/pdf/blankett31/parse', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: error.message });
     }
     res.status(500).json({ error: 'Kunde inte tolka Blankett 31' });
+  }
+});
+
+app.post('/api/blankett31-registry/bootstrap', authMiddleware, async (req, res) => {
+  try {
+    const requesterRole = String(req.user?.role || '').toUpperCase();
+    if (requesterRole !== 'HTSM') {
+      return res.status(403).json({ error: 'Endast HTSM kan bygga Blankett 31-registret' });
+    }
+
+    const result = await bootstrapBlankett31RegistryFromProjects(prisma);
+    res.json(result);
+  } catch (error) {
+    console.error('Fel vid bootstrap av Blankett 31-register:', error);
+    res.status(500).json({ error: 'Kunde inte bygga Blankett 31-registret' });
+  }
+});
+
+app.post('/api/blankett31-registry/import-archive', authMiddleware, async (req, res) => {
+  try {
+    const requesterRole = String(req.user?.role || '').toUpperCase();
+    if (requesterRole !== 'HTSM') {
+      return res.status(403).json({ error: 'Endast HTSM kan importera historiskt Blankett 31-register' });
+    }
+
+    const rootPath = String(req.body?.rootPath || '').trim();
+    if (!rootPath) {
+      return res.status(400).json({ error: 'Sökväg till arkivmappen saknas' });
+    }
+
+    const result = await importBlankett31Archive(prisma, rootPath);
+    res.json(result);
+  } catch (error) {
+    console.error('Fel vid import av historiskt Blankett 31-register:', error);
+    res.status(500).json({ error: 'Kunde inte importera historiskt Blankett 31-register' });
+  }
+});
+
+app.post('/api/blankett31-registry/inventory', authMiddleware, async (req, res) => {
+  try {
+    const requesterRole = String(req.user?.role || '').toUpperCase();
+    if (requesterRole !== 'HTSM') {
+      return res.status(403).json({ error: 'Endast HTSM kan läsa inventeringen' });
+    }
+
+    const rootPath = String(req.body?.rootPath || '').trim();
+    if (!rootPath) {
+      return res.status(400).json({ error: 'Sökväg till arkivmappen saknas' });
+    }
+
+    const inventory = await buildBlankett31ArchiveInventory(rootPath);
+    res.json(inventory);
+  } catch (error) {
+    console.error('Fel vid inventering av historiskt Blankett 31-register:', error);
+    res.status(500).json({ error: 'Kunde inte läsa historiskt Blankett 31-register' });
+  }
+});
+
+app.post('/api/blankett31-registry/open-archive-file', authMiddleware, async (req, res) => {
+  try {
+    const requesterRole = String(req.user?.role || '').toUpperCase();
+    if (requesterRole !== 'HTSM') {
+      return res.status(403).json({ error: 'Endast HTSM kan öppna arkivfiler härifrån' });
+    }
+
+    const requestedPath = String(req.body?.filePath || '').trim();
+    if (!requestedPath) {
+      return res.status(400).json({ error: 'Sökväg till arkivfil saknas' });
+    }
+
+    const resolvedPath = path.resolve(requestedPath);
+    const allowedRoot = path.resolve(BLANKETT31_ARCHIVE_ROOT);
+
+    if (!resolvedPath.startsWith(allowedRoot + path.sep) && resolvedPath !== allowedRoot) {
+      return res.status(403).json({ error: 'Filen ligger utanför tillåtet arkivområde' });
+    }
+
+    if (!fs.existsSync(resolvedPath)) {
+      return res.status(404).json({ error: 'Arkivfilen kunde inte hittas' });
+    }
+
+    if (path.extname(resolvedPath).toLowerCase() !== '.pdf') {
+      return res.status(400).json({ error: 'Endast PDF-filer kan öppnas härifrån' });
+    }
+
+    return res.sendFile(resolvedPath, {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `inline; filename="${sanitizeAsciiFilename(path.basename(resolvedPath))}"`,
+      },
+    });
+  } catch (error) {
+    console.error('Fel vid öppning av arkivfil:', error);
+    res.status(500).json({ error: 'Kunde inte öppna arkivfilen' });
+  }
+});
+
+app.post('/api/blankett31-registry/use-suggestion', authMiddleware, async (req, res) => {
+  try {
+    const requesterRole = String(req.user?.role || '').toUpperCase();
+    if (requesterRole !== 'HTSM') {
+      return res.status(403).json({ error: 'Endast HTSM kan använda tidigare underlag härifrån' });
+    }
+
+    const projectId = Number(req.body?.projectId);
+    const archiveDispPath = String(req.body?.archiveDispPath || '').trim();
+
+    if (Number.isFinite(projectId) && projectId > 0) {
+      const project = await prisma.project.findUnique({
+        where: { id: projectId },
+        include: {
+          sections: true,
+          beteckningar: true,
+        },
+      });
+
+      if (!project) {
+        return res.status(404).json({ error: 'Projektet som mallen pekar på kunde inte hittas' });
+      }
+
+      const hydrated = hydrateProjectSections(project);
+      return res.json({
+        sourceType: 'project',
+        template: {
+          projectName: hydrated.name || '',
+          plats: hydrated.plats || '',
+          namn: hydrated.namn || '',
+          telefonnummer: hydrated.telefonnummer || '',
+          nodnummer: hydrated.formState?.nodnummer || '',
+          bandriftnummer: hydrated.formState?.bandriftnummer || '',
+          eldriftnummer: hydrated.formState?.eldriftnummer || '',
+          htsmTelefon: hydrated.formState?.htsmTelefon || '',
+          reservnr: hydrated.formState?.reservnr || '',
+          sections: Array.isArray(hydrated.sections) ? hydrated.sections : [],
+          dispSettings: hydrated.formState?.dispSettings || {},
+          fjtklBlocks: Array.isArray(hydrated.formState?.fjtklBlocks) ? hydrated.formState.fjtklBlocks : [],
+          customDispPhoneLines: Array.isArray(hydrated.formState?.customDispPhoneLines) ? hydrated.formState.customDispPhoneLines : [],
+        },
+      });
+    }
+
+    if (archiveDispPath) {
+      const resolvedPath = path.resolve(archiveDispPath);
+      const allowedRoot = path.resolve(BLANKETT31_ARCHIVE_ROOT);
+
+      if (!resolvedPath.startsWith(allowedRoot + path.sep) && resolvedPath !== allowedRoot) {
+        return res.status(403).json({ error: 'Arkivdispen ligger utanför tillåtet område' });
+      }
+
+      if (!fs.existsSync(resolvedPath)) {
+        return res.status(404).json({ error: 'Arkivdispen kunde inte hittas' });
+      }
+
+      const parsed = await parseDispPdf(fs.readFileSync(resolvedPath), []);
+      return res.json({
+        sourceType: 'archive',
+        template: parsed,
+      });
+    }
+
+    return res.status(400).json({ error: 'Ingen giltig mall träffades att använda' });
+  } catch (error) {
+    console.error('Fel vid användning av tidigare Blankett 31-underlag:', error);
+    res.status(500).json({ error: 'Kunde inte använda tidigare underlag som mall' });
   }
 });
 

@@ -52,6 +52,7 @@ model Project {
   rows          Json?
   anteckningar Json?
   tsmRows            Row[]
+  blankett31RegistryEntries Blankett31Registry[]
 }
 model Section {
   id        Int      @id @default(autoincrement())
@@ -106,4 +107,31 @@ model Row {
   anteckning String?
 
   createdAt    DateTime  @default(now())
+}
+
+model Blankett31Registry {
+  id                  Int       @id @default(autoincrement())
+  registryKey         String    @unique
+  sourceFileName      String?
+  projectId           Int?
+  project             Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  projectName         String?
+  projectPlats        String?
+  beteckning          String?
+  planeringsId        String?
+  rawGranspunkt       String?
+  normalizedGranspunkt String
+  boundarySignature   String
+  boundaryStart       String?
+  boundaryEnd         String?
+  boundaryStartCode   String?
+  boundaryEndCode     String?
+  driftplatsCodes     String[]
+  entries             Json?
+  meta                Json?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([projectId])
+  @@index([boundarySignature])
 }
