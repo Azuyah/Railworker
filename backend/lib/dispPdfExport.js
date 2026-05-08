@@ -1100,7 +1100,12 @@ const addCoverPage = (doc, project, dispSettings) => {
   const routeLine = cleanText(project.plats || '');
   const displayRouteLine = routeLine && !/[.!?]$/.test(routeLine) ? `${routeLine}.` : routeLine;
   const weekLine = formatLegacyWeekLine(dispSettings.veckaOchDagar || '');
-  const boundary = formatLegacyBoundaryText(project.granspunkter || '');
+  const coverBoundarySource = cleanText(
+    dispSettings.rodmarkeradeGranspunkter ||
+    project.granspunkter ||
+    ''
+  );
+  const boundary = formatLegacyBoundaryText(coverBoundarySource, { expandNames: false });
 
   const coverRoute = buildLegacyCoverRoute(project, dispSettings);
 
@@ -1327,27 +1332,27 @@ const getLegacyEntryColumns = (showBeteckning = true) => (
   showBeteckning
     ? {
         beteckning: { x: 6, width: 72 },
-        start: { x: 94 },
-        startDay: { x: 116, width: 52 },
-        startDate: { x: 158, width: 80 },
-        startTime: { x: 240, width: 28 },
-        end: { x: 226, width: 178 },
-        endDash: { x: 272, width: 8 },
-        endDay: { x: 286, width: 30 },
-        endDate: { x: 320, width: 62 },
-        endTime: { x: 390, width: 30 },
+        start: { x: 92 },
+        startDay: { x: 104, width: 30 },
+        startDate: { x: 140, width: 62 },
+        startTime: { x: 208, width: 28 },
+        end: { x: 252, width: 170 },
+        endDash: { x: 244, width: 8 },
+        endDay: { x: 262, width: 30 },
+        endDate: { x: 304, width: 62 },
+        endTime: { x: 376, width: 34 },
       }
     : {
         beteckning: { x: 0, width: 0 },
         start: { x: 12 },
-        startDay: { x: 18, width: 52 },
-        startDate: { x: 76, width: 88 },
-        startTime: { x: 168, width: 38 },
-        end: { x: 214, width: 156 },
-        endDash: { x: 206, width: 8 },
-        endDay: { x: 224, width: 32 },
-        endDate: { x: 262, width: 82 },
-        endTime: { x: 350, width: 34 },
+        startDay: { x: 16, width: 32 },
+        startDate: { x: 56, width: 68 },
+        startTime: { x: 132, width: 30 },
+        end: { x: 188, width: 198 },
+        endDash: { x: 174, width: 10 },
+        endDay: { x: 192, width: 34 },
+        endDate: { x: 238, width: 70 },
+        endTime: { x: 330, width: 44 },
       }
 );
 
@@ -1425,6 +1430,27 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
       }
     });
   };
+  const drawFixedEntryTimeline = (row, y) => {
+    const drawCell = (text, column, align = 'left') => {
+      if (!column || !text) {
+        return;
+      }
+
+      doc.text(text, left + column.x, y, {
+        width: column.width,
+        align,
+        lineBreak: false,
+      });
+    };
+
+    drawCell(row.dayLabel, entryColumns.startDay, 'left');
+    drawCell(row.startDateLabel, entryColumns.startDate, 'left');
+    drawCell(row.startTimeLabel, entryColumns.startTime, 'right');
+    drawCell('–', entryColumns.endDash, 'center');
+    drawCell(row.endDayLabel, entryColumns.endDay, 'left');
+    drawCell(row.endDateLabel, entryColumns.endDate, 'left');
+    drawCell(row.endTimeLabel, entryColumns.endTime, 'right');
+  };
   let sectionRowIndex = 0;
 
   doc.save();
@@ -1451,8 +1477,8 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
       if (entryColumns.beteckning.width > 0) {
         doc.text('Beteckning', left + entryColumns.beteckning.x, entryHeaderY, { lineBreak: false });
       }
-      const startHeaderX = left + entryColumns.start.x;
-      const endHeaderX = left + entryColumns.end.x;
+      const startHeaderX = left + entryColumns.startDay.x;
+      const endHeaderX = left + entryColumns.endDay.x;
       doc.text('Startdag och tid', startHeaderX, entryHeaderY, { lineBreak: false });
       doc.text('Slutdag och tid', endHeaderX, entryHeaderY, { lineBreak: false });
       const entryUnderlineY = entryHeaderY + 13;
@@ -1494,9 +1520,7 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
             lineBreak: false,
           });
         }
-        const timelineStartX = left + (entryColumns.beteckning.width > 0 ? 104 : 18);
-        const timelineEndX = left + width - 22;
-        drawEntryTimeline(row, timelineStartX, y, timelineEndX - timelineStartX);
+        drawFixedEntryTimeline(row, y);
       }
     } else if (row.kind === 'spacer') {
       doc.font(PDF_FONTS.bodyBold).fontSize(12.2).fillColor('#000000');
