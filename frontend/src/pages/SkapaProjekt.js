@@ -58,23 +58,68 @@ const createStoredPdfFile = ({ name = '', size = 0, fileData = '' } = {}) => ({
   fileData: String(fileData || ''),
 });
 
-const openStoredPdfFile = (file = {}) => {
+const openPdfInAvailableTarget = (url = '', previewWindow = null) => {
+  if (!url) {
+    return false;
+  }
+
+  if (previewWindow) {
+    try {
+      previewWindow.location.replace(url);
+      return true;
+    } catch (error) {
+      if (!previewWindow.closed) {
+        previewWindow.close();
+      }
+    }
+  }
+
+  try {
+    window.location.assign(url);
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
+
+const openStoredPdfFile = (file = {}, previewWindow = null) => {
   if (!file?.fileData) {
+    if (previewWindow && !previewWindow.closed) {
+      previewWindow.close();
+    }
     return false;
   }
 
-  const newWindow = window.open(file.fileData, '_blank', 'noopener,noreferrer');
-  if (!newWindow) {
-    return false;
-  }
-
-  return true;
+  return openPdfInAvailableTarget(file.fileData, previewWindow);
 };
 
 const hasStoredPdfContent = (file = {}) => Boolean(String(file?.fileData || '').trim());
 
-const openArchivePdfFile = async ({ filePath = '', token = '' } = {}) => {
+const openPendingPdfWindow = () => {
+  const previewWindow = window.open('', '_blank', 'noopener,noreferrer');
+  if (!previewWindow) {
+    return null;
+  }
+
+  try {
+    previewWindow.document.title = 'Öppnar PDF…';
+    previewWindow.document.body.innerHTML = `
+      <div style="font-family: Arial, sans-serif; padding: 24px; color: #0f172a;">
+        <p style="margin: 0; font-size: 14px;">Öppnar PDF…</p>
+      </div>
+    `;
+  } catch (error) {
+    // Ignore cross-browser write failures and use the window as-is.
+  }
+
+  return previewWindow;
+};
+
+const openArchivePdfFile = async ({ filePath = '', token = '', previewWindow = null } = {}) => {
   if (!filePath || !token) {
+    if (previewWindow && !previewWindow.closed) {
+      previewWindow.close();
+    }
     return false;
   }
 
@@ -88,13 +133,15 @@ const openArchivePdfFile = async ({ filePath = '', token = '' } = {}) => {
   });
 
   if (!response.ok) {
+    if (previewWindow && !previewWindow.closed) {
+      previewWindow.close();
+    }
     throw new Error(await getApiErrorMessage(response, 'Kunde inte öppna arkivfilen.'));
   }
 
   const blob = await response.blob();
   const objectUrl = window.URL.createObjectURL(blob);
-  const newWindow = window.open(objectUrl, '_blank', 'noopener,noreferrer');
-  if (!newWindow) {
+  if (!openPdfInAvailableTarget(objectUrl, previewWindow)) {
     window.URL.revokeObjectURL(objectUrl);
     throw new Error('Webbläsaren blockerade öppningen av PDF-filen.');
   }
@@ -465,6 +512,7 @@ const defaultDispSettings = () => ({
   rubrik: '',
   banNamn: '',
   veckaOchDagar: '',
+  giltigTillagg: '',
   versionsnummer: '1/MA11',
   banobjektVnr: '',
   forplaneraCa: '1 tim innan start',
@@ -880,6 +928,113 @@ const parseDriftplatsEndpoints = (value = '') => {
   };
 };
 
+const normalizeBoundaryCode = (value = '') =>
+  String(value || '')
+    .replace(/[–—]/g, '-')
+    .replace(/\s+/g, '')
+    .trim();
+
+const extractBoundaryCodeFamily = (value = '') => {
+  const normalized = normalizeBoundaryCode(value);
+  if (!normalized) {
+    return '';
+  }
+
+  const match = normalized.match(/^([A-Za-zÅÄÖåäö]+)(?=\d)/);
+  return match?.[1] || '';
+};
+
+const splitBoundaryEndpointTokens = (value = '') =>
+  String(value || '')
+    .split(/\s*,\s*/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+const extractBoundaryEndpoints = (value = '') => {
+  const parts = String(value || '')
+    .replace(/[–—]/g, '-')
+    .split(/\s+-\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  return {
+    start: parts[0] || '',
+    end: parts.slice(1).join(' - ') || '',
+  };
+};
+
+const analyzeBoundaryAttention = (entries = [], sectionLists = []) => {
+  const allBoundaries = entries
+    .map((entry) => String(entry?.granspunkt || '').trim())
+    .filter(Boolean);
+
+  const combinedSections = sectionLists
+    .flat()
+    .filter((section) => section && sectionHasContent(section));
+
+  if (!allBoundaries.length) {
+    return { key: '', checks: [] };
+  }
+
+  let hasSameFamilyBoundary = false;
+  let hasDriftplatsdelToken = false;
+
+  allBoundaries.forEach((boundary) => {
+    const { start, end } = extractBoundaryEndpoints(boundary);
+    const startTokens = splitBoundaryEndpointTokens(start);
+    const endTokens = splitBoundaryEndpointTokens(end);
+
+    if ([...startTokens, ...endTokens].some((token) => /\d+\/\d+/.test(normalizeBoundaryCode(token)))) {
+      hasDriftplatsdelToken = true;
+    }
+
+    const startFamilies = [...new Set(startTokens.map(extractBoundaryCodeFamily).filter(Boolean))];
+    const endFamilies = [...new Set(endTokens.map(extractBoundaryCodeFamily).filter(Boolean))];
+
+    if (startFamilies.length && endFamilies.length && startFamilies.some((family) => endFamilies.includes(family))) {
+      hasSameFamilyBoundary = true;
+    }
+  });
+
+  const suspiciousLayout = hasDriftplatsdelToken || hasSameFamilyBoundary;
+  if (!suspiciousLayout) {
+    return { key: '', checks: [] };
+  }
+
+  const hasSingleTrackESection = combinedSections.some((section) => {
+    const normalizedTrack = String(section?.spar || '')
+      .replace(/^sp[aå]r\s*/i, '')
+      .trim()
+      .toUpperCase();
+    return normalizedTrack === 'E';
+  });
+
+  const checks = [
+    {
+      code: 'track',
+      title: 'Kontrollera spårangivelse',
+      text: hasSingleTrackESection
+        ? 'Den här Blankett 31 ser ut att gälla driftplatsdelar eller ett avvikande driftplatsläge. Undvik E här och ange riktiga spårnummer eller lokal spårbeteckning.'
+        : 'Den här Blankett 31 ser ut att gälla driftplatsdelar eller ett avvikande driftplatsläge. Kontrollera att spårfältet anges med riktiga spårnummer eller lokal spårbeteckning.',
+    },
+    {
+      code: 'dp-line',
+      title: 'Kontrollera DP/Linje',
+      text: 'Gränspunkterna ser inte ut som ett vanligt driftplats - linje - driftplats-fall. Kontrollera om delområdet ska vara DP eller Linje innan du sparar projektet.',
+    },
+  ];
+
+  return {
+    key: JSON.stringify({
+      boundaries: allBoundaries,
+      sameFamily: hasSameFamilyBoundary,
+      driftplatsdel: hasDriftplatsdelToken,
+      trackE: hasSingleTrackESection,
+    }),
+    checks,
+  };
+};
+
 const mergeSectionDetails = (sections = [], sectionDetails = [], fallbackAreaName = '') =>
   normalizeSectionSortOrder(sections.map((section, index) => {
     const details = sectionDetails[index] || {};
@@ -962,6 +1117,8 @@ const SkapaProjekt = () => {
   const [isParsingBlankett31, setIsParsingBlankett31] = useState(false);
   const [blankett31Status, setBlankett31Status] = useState('');
   const [blankett31Suggestions, setBlankett31Suggestions] = useState([]);
+  const [blankett31Attention, setBlankett31Attention] = useState({ key: '', checks: [] });
+  const [dismissedBlankett31AttentionKey, setDismissedBlankett31AttentionKey] = useState('');
   const [openingArchiveSuggestionKey, setOpeningArchiveSuggestionKey] = useState('');
   const [applyingSuggestionKey, setApplyingSuggestionKey] = useState('');
   const [, setIsParsingDisp] = useState(false);
@@ -2108,6 +2265,18 @@ const SkapaProjekt = () => {
   }, [blankett31Entries]);
 
   useEffect(() => {
+    const nextAttention = analyzeBoundaryAttention(
+      blankett31Entries,
+      [sections, ...dispSectionGroups.map((group) => group?.sections || [])]
+    );
+
+    setBlankett31Attention(nextAttention);
+    if (nextAttention.key !== dismissedBlankett31AttentionKey) {
+      setDismissedBlankett31AttentionKey('');
+    }
+  }, [blankett31Entries, sections, dispSectionGroups, dismissedBlankett31AttentionKey]);
+
+  useEffect(() => {
     if (!currentProjectId) {
       return;
     }
@@ -2590,11 +2759,13 @@ const SkapaProjekt = () => {
                                 <button
                                   type="button"
                                   onClick={async () => {
+                                    const previewWindow = openPendingPdfWindow();
                                     try {
                                       setOpeningArchiveSuggestionKey(`${suggestion.suggestionKey}:disp`);
                                       await openArchivePdfFile({
                                         filePath: suggestion.archiveDispPath,
                                         token,
+                                        previewWindow,
                                       });
                                     } catch (error) {
                                       window.alert(error.message || 'Kunde inte öppna arkivdispen.');
@@ -2611,11 +2782,13 @@ const SkapaProjekt = () => {
                                 <button
                                   type="button"
                                   onClick={async () => {
+                                    const previewWindow = openPendingPdfWindow();
                                     try {
                                       setOpeningArchiveSuggestionKey(`${suggestion.suggestionKey}:31`);
                                       await openArchivePdfFile({
                                         filePath: suggestion.archiveBlankettPath,
                                         token,
+                                        previewWindow,
                                       });
                                     } catch (error) {
                                       window.alert(error.message || 'Kunde inte öppna Blankett 31-filen.');
@@ -2630,6 +2803,33 @@ const SkapaProjekt = () => {
                               ) : null}
                             </div>
                           ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {blankett31Attention.checks.length > 0 && dismissedBlankett31AttentionKey !== blankett31Attention.key && (
+                  <div className="mt-3 rounded-2xl border border-amber-300/35 bg-amber-400/10 p-3 text-xs text-amber-50">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold uppercase tracking-[0.2em] text-amber-200">Kontrollera extra noga</p>
+                        <p className="mt-1 text-[11px] text-amber-100/85">
+                          Den här Blankett 31 ser ut att avvika från ett vanligt driftplats - linje - driftplats-läge.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setDismissedBlankett31AttentionKey(blankett31Attention.key)}
+                        className="shrink-0 rounded-full border border-amber-200/35 bg-black/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-100 transition hover:bg-black/20"
+                      >
+                        Dölj
+                      </button>
+                    </div>
+                    <div className="mt-3 space-y-2">
+                      {blankett31Attention.checks.map((check) => (
+                        <div key={check.code} className="rounded-xl bg-black/10 px-3 py-2">
+                          <p className="font-semibold text-amber-50">{check.title}</p>
+                          <p className="mt-1 text-[11px] leading-5 text-amber-100/85">{check.text}</p>
                         </div>
                       ))}
                     </div>
@@ -2651,7 +2851,10 @@ const SkapaProjekt = () => {
                           type="button"
                           onClick={() => {
                             if (hasStoredPdfContent(file)) {
-                              openStoredPdfFile(file);
+                              const previewWindow = openPendingPdfWindow();
+                              if (!openStoredPdfFile(file, previewWindow)) {
+                                window.alert('Webbläsaren blockerade öppningen av PDF-filen.');
+                              }
                               return;
                             }
 
@@ -2686,7 +2889,10 @@ const SkapaProjekt = () => {
                           type="button"
                           onClick={() => {
                             if (hasStoredPdfContent(file)) {
-                              openStoredPdfFile(file);
+                              const previewWindow = openPendingPdfWindow();
+                              if (!openStoredPdfFile(file, previewWindow)) {
+                                window.alert('Webbläsaren blockerade öppningen av PDF-filen.');
+                              }
                               return;
                             }
 
@@ -2922,6 +3128,19 @@ const SkapaProjekt = () => {
                       placeholder="Ex. 17096-1"
                       className="min-h-[56px] w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 focus:border-slate-900 focus:outline-none"
                     />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-semibold text-slate-900">Giltig tillägg</label>
+                    <input
+                      type="text"
+                      value={dispSettings.giltigTillagg || ''}
+                      onChange={(e) => setDispSettings((current) => ({ ...current, giltigTillagg: e.target.value }))}
+                      placeholder="Valfritt tillägg till Giltig i sidhuvudet"
+                      className="min-h-[56px] w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 focus:border-slate-900 focus:outline-none"
+                    />
+                    <p className="mt-1 text-xs text-slate-500">
+                      Lägg bara till text här om Giltig-raden behöver kompletteras. Standardvärdet fylls fortfarande i automatiskt.
+                    </p>
                   </div>
                   <div>
                     <label className="mb-1 block text-sm font-semibold text-slate-900">Förplanera ca</label>

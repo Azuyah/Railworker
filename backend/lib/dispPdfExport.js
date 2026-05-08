@@ -383,6 +383,7 @@ const buildDispSettings = (project = {}, entries = []) => {
     rubrik: cleanText(settings.rubrik || settings.projectLabel || meta.projectLabel || project.name),
     banNamn: cleanText(settings.banNamn || settings.banName),
     veckaOchDagar: weekLabel || [derivedWeek, derivedDayRange].filter(Boolean).join(' '),
+    giltigTillagg: cleanText(settings.giltigTillagg || settings.validityExtra || ''),
     versionsnummer: cleanText(settings.versionsnummer || LEGACY_VERSION_NUMBER),
     banobjektVnr: cleanText(
       settings.banobjektVnr ||
@@ -865,7 +866,8 @@ const drawLegacyHeader = (doc, dispSettings, totalPages, pageNumber) => {
   const left = doc.page.margins.left;
   const right = doc.page.width - doc.page.margins.right;
   const title = `Dispositionsarbetsplan ${cleanText(dispSettings.banNamn || '')}`.trim();
-  const validity = extractValidityLabel(dispSettings.veckaOchDagar || '');
+  const validityBase = extractValidityLabel(dispSettings.veckaOchDagar || '');
+  const validityExtra = cleanText(dispSettings.giltigTillagg || '');
 
   doc.save();
   doc.fillColor('#000000').font(PDF_FONTS.header).fontSize(8).text(title, left, 28, {
@@ -887,10 +889,17 @@ const drawLegacyHeader = (doc, dispSettings, totalPages, pageNumber) => {
   doc.text('Versionsnummer', left + 92, labelY, { lineBreak: false });
   doc.text('Antal sidor', left + 204, labelY, { lineBreak: false });
 
-  doc.text(validity, left, valueY, { lineBreak: false });
+  doc.text(validityBase, left, valueY, { lineBreak: false });
+  if (validityExtra) {
+    doc.font(PDF_FONTS.header).fontSize(7.5).text(validityExtra, left, valueY + 9, {
+      width: 88,
+      lineBreak: false,
+    });
+    doc.font(PDF_FONTS.header).fontSize(8);
+  }
   doc.text(cleanText(dispSettings.versionsnummer || LEGACY_VERSION_NUMBER), left + 92, valueY, { lineBreak: false });
   doc.text(String(totalPages), left + 204, valueY, { lineBreak: false });
-  doc.text('Vallåkra Rail AB', left, 74, { lineBreak: false });
+  doc.text('Vallåkra Rail AB', left, validityExtra ? 82 : 74, { lineBreak: false });
   doc.restore();
 };
 
