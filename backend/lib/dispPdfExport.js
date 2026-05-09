@@ -38,6 +38,9 @@ const PDF_FONTS = {
 const DRIFTPLATS_REGISTRY_PATH = path.join(__dirname, '..', 'data', 'njdb-driftplatser.json');
 let driftplatsCodeNameMap = null;
 let driftplatsNameCodeMap = null;
+const LEGACY_DISPLAY_CODE_NAME_OVERRIDES = {
+  Blb: 'Billeberga',
+};
 
 const getDriftplatsCodeNameMap = () => {
   if (driftplatsCodeNameMap) {
@@ -53,8 +56,18 @@ const getDriftplatsCodeNameMap = () => {
         .filter((item) => item?.code && item?.name)
         .map((item) => [String(item.code).trim(), String(item.name).trim()])
     );
+    Object.entries(LEGACY_DISPLAY_CODE_NAME_OVERRIDES).forEach(([code, name]) => {
+      if (code && name) {
+        driftplatsCodeNameMap.set(String(code).trim(), String(name).trim());
+      }
+    });
   } catch (error) {
     driftplatsCodeNameMap = new Map();
+    Object.entries(LEGACY_DISPLAY_CODE_NAME_OVERRIDES).forEach(([code, name]) => {
+      if (code && name) {
+        driftplatsCodeNameMap.set(String(code).trim(), String(name).trim());
+      }
+    });
   }
 
   return driftplatsCodeNameMap;
@@ -177,9 +190,26 @@ const buildSections = (project = {}) => {
   const sectionDetails = Array.isArray(project.formState?.sectionDetails)
     ? project.formState.sectionDetails
     : [];
+  const sortByStoredOrder = (items = [], getOrder) =>
+    items
+      .map((item, index) => {
+        const parsedOrder = Number(getOrder(item));
+        return {
+          item,
+          index,
+          order: Number.isFinite(parsedOrder) ? parsedOrder : index,
+        };
+      })
+      .sort((left, right) => (
+        left.order - right.order
+        || left.index - right.index
+      ))
+      .map(({ item }) => item);
+  const orderedSections = sortByStoredOrder(sections, (section) => section?.sortOrder);
+  const orderedDetails = sortByStoredOrder(sectionDetails, (details) => details?.sortOrder);
   const baseSections = sections.length
-    ? sections
-    : sectionDetails.map((details = {}, index) => ({
+    ? orderedSections
+    : orderedDetails.map((details = {}, index) => ({
         name: details.signal || details.customLabel || `Delområde ${index + 1}`,
         displayIndex: details.displayIndex ?? index + 1,
         customLabel: details.customLabel || '',
@@ -193,7 +223,7 @@ const buildSections = (project = {}) => {
 
   return baseSections
     .map((section, index) => {
-      const details = sectionDetails[index] || {};
+      const details = orderedDetails[index] || {};
       const parsedDisplayIndex = Number(details.displayIndex ?? section?.displayIndex ?? index + 1);
       const displayIndex = Number.isFinite(parsedDisplayIndex) && parsedDisplayIndex > 0
         ? parsedDisplayIndex
@@ -350,13 +380,6 @@ const buildLegacyCoverRoute = (project = {}, dispSettings = {}) => {
     .split(',')
     .map((part) => cleanText(part))
     .filter(Boolean);
-
-  const looksAbbreviated =
-    /^[A-Za-zÅÄÖåäö]{1,6}\s*-\s*[A-Za-zÅÄÖåäö]{1,6}$/.test(explicit) ||
-    explicit.length <= 12;
-  if (parts.length >= 2 && (looksAbbreviated || !explicit)) {
-    return `${parts[0]} - ${parts[parts.length - 1]}`;
-  }
 
   return explicit || [parts[0], parts[parts.length - 1]].filter(Boolean).join(' - ');
 };
@@ -701,21 +724,15 @@ const shouldHighlightBoundaryText = (text = '', highlightTokens = []) => {
     .map((part) => cleanText(part))
     .filter(Boolean);
   const normalizedParts = textParts.map(normalizeBoundaryToken);
-  const numericParts = textParts.map(getBoundaryNumericCore).filter(Boolean);
 
   return highlightTokens.some((token) => {
     const normalizedToken = normalizeBoundaryToken(token);
-    const numericToken = getBoundaryNumericCore(token);
 
     if (normalizedToken && (normalizedToken === normalizedText || normalizedText.includes(normalizedToken))) {
       return true;
     }
 
     if (normalizedToken && normalizedParts.some((part) => part === normalizedToken || part.includes(normalizedToken))) {
-      return true;
-    }
-
-    if (numericToken && numericParts.some((part) => part === numericToken)) {
       return true;
     }
 
