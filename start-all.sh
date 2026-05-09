@@ -35,11 +35,14 @@ echo "🔧 Startar Railworker lokalt..."
 if [ -s "$HOME/.nvm/nvm.sh" ]; then
   export NVM_DIR="$HOME/.nvm"
   . "$NVM_DIR/nvm.sh"
-  nvm use "$(cat "$BACKEND_DIR/.nvmrc")" >/dev/null
+  NODE_VERSION="$(cat "$BACKEND_DIR/.nvmrc")"
+  nvm use "$NODE_VERSION" >/dev/null
 else
   echo "❌ nvm hittades inte. Installera Node 22 och försök igen."
   exit 1
 fi
+
+echo "🧠 Node: $(node -v)"
 
 kill_port_if_busy 4000
 kill_port_if_busy 3000
