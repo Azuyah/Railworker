@@ -383,6 +383,22 @@ const normalizeSectionSortOrder = (items = []) =>
     sortOrder: index,
   }));
 
+const sortSectionLikeStoredOrder = (items = [], getOrder) =>
+  items
+    .map((item, index) => {
+      const parsedOrder = Number(getOrder(item));
+      return {
+        item,
+        index,
+        order: Number.isFinite(parsedOrder) ? parsedOrder : index,
+      };
+    })
+    .sort((left, right) => (
+      left.order - right.order
+      || left.index - right.index
+    ))
+    .map(({ item }) => item);
+
 const generateDispSectionGroupId = () =>
   `disp-group-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -958,7 +974,7 @@ const splitBoundaryEndpointTokens = (value = '') =>
 const extractBoundaryEndpoints = (value = '') => {
   const parts = String(value || '')
     .replace(/[–—]/g, '-')
-    .split(/\s+-\s+/)
+    .split(/\s*-\s*/)
     .map((part) => part.trim())
     .filter(Boolean);
 
@@ -967,6 +983,40 @@ const extractBoundaryEndpoints = (value = '') => {
     end: parts.slice(1).join(' - ') || '',
   };
 };
+
+const MALMO_ADJACENT_DRIFTPLATS_PAIRS = [
+  {
+    codes: ['Åp', 'Käb'],
+    source: 'Malmö linjebok',
+    note: 'Åstorp och Kärreberga behandlas som intilliggande driftplatser.',
+    sourceRef: {
+      label: 'Malmö linjebok, se D331 Hässleholm till Helsingborg',
+      url: 'https://bransch.trafikverket.se/for-dig-i-branschen/jarnvag/Underlag-till-linjebok/Malmos-linjebok/',
+    },
+  },
+  {
+    codes: ['Åp', 'Tp'],
+    source: 'Malmö linjebok',
+    note: 'Åstorp och Teckomatorp gränsar till varandra utan mellanliggande linje.',
+    sourceRef: {
+      label: 'Malmö linjebok, se D221 Teckomatorp-Åstorp',
+      url: 'https://bransch.trafikverket.se/for-dig-i-branschen/jarnvag/Underlag-till-linjebok/Malmos-linjebok/',
+    },
+  },
+];
+
+const normalizeBoundaryCodePairKey = (left = '', right = '') =>
+  [String(left || '').trim(), String(right || '').trim()]
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b, 'sv'))
+    .join('|');
+
+const MALMO_ADJACENT_DRIFTPLATS_MAP = new Map(
+  MALMO_ADJACENT_DRIFTPLATS_PAIRS.map((pair) => [
+    normalizeBoundaryCodePairKey(pair.codes[0], pair.codes[1]),
+    pair,
+  ])
+);
 
 const analyzeBoundaryAttention = (entries = [], sectionLists = []) => {
   const allBoundaries = entries
@@ -983,6 +1033,7 @@ const analyzeBoundaryAttention = (entries = [], sectionLists = []) => {
 
   let hasSameFamilyBoundary = false;
   let hasDriftplatsdelToken = false;
+  let adjacentPairMatch = null;
 
   allBoundaries.forEach((boundary) => {
     const { start, end } = extractBoundaryEndpoints(boundary);
@@ -999,9 +1050,26 @@ const analyzeBoundaryAttention = (entries = [], sectionLists = []) => {
     if (startFamilies.length && endFamilies.length && startFamilies.some((family) => endFamilies.includes(family))) {
       hasSameFamilyBoundary = true;
     }
+
+    if (!adjacentPairMatch) {
+      for (const startFamily of startFamilies) {
+        for (const endFamily of endFamilies) {
+          const pair = MALMO_ADJACENT_DRIFTPLATS_MAP.get(
+            normalizeBoundaryCodePairKey(startFamily, endFamily)
+          );
+          if (pair) {
+            adjacentPairMatch = pair;
+            break;
+          }
+        }
+        if (adjacentPairMatch) {
+          break;
+        }
+      }
+    }
   });
 
-  const suspiciousLayout = hasDriftplatsdelToken || hasSameFamilyBoundary;
+  const suspiciousLayout = hasDriftplatsdelToken || hasSameFamilyBoundary || Boolean(adjacentPairMatch);
   if (!suspiciousLayout) {
     return { key: '', checks: [] };
   }
@@ -1018,14 +1086,20 @@ const analyzeBoundaryAttention = (entries = [], sectionLists = []) => {
     {
       code: 'track',
       title: 'Kontrollera spårangivelse',
-      text: hasSingleTrackESection
-        ? 'Den här Blankett 31 ser ut att gälla driftplatsdelar eller ett avvikande driftplatsläge. Undvik E här och ange riktiga spårnummer eller lokal spårbeteckning.'
-        : 'Den här Blankett 31 ser ut att gälla driftplatsdelar eller ett avvikande driftplatsläge. Kontrollera att spårfältet anges med riktiga spårnummer eller lokal spårbeteckning.',
+      text: adjacentPairMatch
+        ? hasSingleTrackESection
+          ? `${adjacentPairMatch.note} Undvik E här och ange riktiga spårnummer eller lokal spårbeteckning.`
+          : `${adjacentPairMatch.note} Kontrollera att spårfältet anges med riktiga spårnummer eller lokal spårbeteckning.`
+        : hasSingleTrackESection
+          ? 'Den här Blankett 31 ser ut att gälla driftplatsdelar eller ett avvikande driftplatsläge. Undvik E här och ange riktiga spårnummer eller lokal spårbeteckning.'
+          : 'Den här Blankett 31 ser ut att gälla driftplatsdelar eller ett avvikande driftplatsläge. Kontrollera att spårfältet anges med riktiga spårnummer eller lokal spårbeteckning.',
     },
     {
       code: 'dp-line',
       title: 'Kontrollera DP/Linje',
-      text: 'Gränspunkterna ser inte ut som ett vanligt driftplats - linje - driftplats-fall. Kontrollera om delområdet ska vara DP eller Linje innan du sparar projektet.',
+      text: adjacentPairMatch
+        ? `Gränspunkterna matchar ett känt avvikande par i ${adjacentPairMatch.source}. Kontrollera om delområdet ska vara DP eller Linje innan du sparar projektet.`
+        : 'Gränspunkterna ser inte ut som ett vanligt driftplats - linje - driftplats-fall. Kontrollera om delområdet ska vara DP eller Linje innan du sparar projektet.',
     },
   ];
 
@@ -1034,15 +1108,20 @@ const analyzeBoundaryAttention = (entries = [], sectionLists = []) => {
       boundaries: allBoundaries,
       sameFamily: hasSameFamilyBoundary,
       driftplatsdel: hasDriftplatsdelToken,
+      adjacentPair: adjacentPairMatch?.codes || '',
       trackE: hasSingleTrackESection,
     }),
     checks,
+    sourceRef: adjacentPairMatch?.sourceRef || null,
   };
 };
 
-const mergeSectionDetails = (sections = [], sectionDetails = [], fallbackAreaName = '') =>
-  normalizeSectionSortOrder(sections.map((section, index) => {
-    const details = sectionDetails[index] || {};
+const mergeSectionDetails = (sections = [], sectionDetails = [], fallbackAreaName = '') => {
+  const orderedSections = sortSectionLikeStoredOrder(sections, (section) => section?.sortOrder);
+  const orderedDetails = sortSectionLikeStoredOrder(sectionDetails, (detail) => detail?.sortOrder);
+
+  return normalizeSectionSortOrder(orderedSections.map((section, index) => {
+    const details = orderedDetails[index] || {};
     const granspunktStart = sanitizeSectionText(details.granspunktStart || '');
     const granspunktSlut = sanitizeSectionText(details.granspunktSlut || '');
     const granspunkter = sanitizeSectionText(
@@ -1074,6 +1153,7 @@ const mergeSectionDetails = (sections = [], sectionDetails = [], fallbackAreaNam
       highlightEndPart: String(details.highlightEndPart || '').trim(),
     };
   }).sort((left, right) => (left.sortOrder ?? 0) - (right.sortOrder ?? 0)));
+};
 
 const SkapaProjekt = () => {
   const navigate = useNavigate();
@@ -1122,7 +1202,7 @@ const SkapaProjekt = () => {
   const [isParsingBlankett31, setIsParsingBlankett31] = useState(false);
   const [blankett31Status, setBlankett31Status] = useState('');
   const [blankett31Suggestions, setBlankett31Suggestions] = useState([]);
-  const [blankett31Attention, setBlankett31Attention] = useState({ key: '', checks: [] });
+  const [blankett31Attention, setBlankett31Attention] = useState({ key: '', checks: [], sourceRef: null });
   const [dismissedBlankett31AttentionKey, setDismissedBlankett31AttentionKey] = useState('');
   const [openingArchiveSuggestionKey, setOpeningArchiveSuggestionKey] = useState('');
   const [applyingSuggestionKey, setApplyingSuggestionKey] = useState('');
@@ -2838,6 +2918,21 @@ const SkapaProjekt = () => {
                         </div>
                       ))}
                     </div>
+                    {blankett31Attention.sourceRef?.url ? (
+                      <div className="mt-3 rounded-xl border border-amber-200/20 bg-black/10 px-3 py-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-200">Källa</p>
+                        <p className="mt-1 text-[11px] leading-5 text-amber-100/85">
+                          {blankett31Attention.sourceRef.label}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => openExternalResource(blankett31Attention.sourceRef.url)}
+                          className="mt-2 rounded-full border border-amber-200/35 bg-black/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-100 transition hover:bg-black/20"
+                        >
+                          Öppna källa i linjeboken
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
                 )}
                 {blankett31Files.length > 0 && (

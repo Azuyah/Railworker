@@ -164,13 +164,32 @@ const hydrateProjectSections = (project = null) => {
     return project;
   }
 
+  const sortByStoredOrder = (items = [], getOrder) =>
+    items
+      .map((item, index) => {
+        const parsedOrder = Number(getOrder(item));
+        return {
+          item,
+          index,
+          order: Number.isFinite(parsedOrder) ? parsedOrder : index,
+        };
+      })
+      .sort((left, right) => (
+        left.order - right.order
+        || left.index - right.index
+      ))
+      .map(({ item }) => item);
+
   const sectionDetails = Array.isArray(project.formState?.sectionDetails)
     ? project.formState.sectionDetails
     : [];
+  const orderedSections = sortByStoredOrder(project.sections, (section) => section?.sortOrder);
+  const orderedDetails = sortByStoredOrder(sectionDetails, (details) => details?.sortOrder);
+  const mergedLength = Math.max(orderedSections.length, orderedDetails.length);
 
-  const sections = project.sections
-    .map((section, index) => {
-      const details = sectionDetails[index] || {};
+  const sections = Array.from({ length: mergedLength }, (_, index) => {
+      const section = orderedSections[index] || {};
+      const details = orderedDetails[index] || {};
       const sortOrder = Number(details.sortOrder);
       const displayIndex = Number(details.displayIndex);
 
@@ -189,6 +208,41 @@ const hydrateProjectSections = (project = null) => {
     ...project,
     sections,
   };
+};
+
+const getProjectSectionTemplateData = (project = null) => {
+  const hydrated = hydrateProjectSections(project);
+  if (!hydrated || !Array.isArray(hydrated.sections)) {
+    return [];
+  }
+
+  const sectionDetails = Array.isArray(hydrated.formState?.sectionDetails)
+    ? hydrated.formState.sectionDetails
+    : [];
+
+  const sortByStoredOrder = (items = [], getOrder) =>
+    items
+      .map((item, index) => {
+        const parsedOrder = Number(getOrder(item));
+        return {
+          item,
+          index,
+          order: Number.isFinite(parsedOrder) ? parsedOrder : index,
+        };
+      })
+      .sort((left, right) => (
+        left.order - right.order
+        || left.index - right.index
+      ))
+      .map(({ item }) => item);
+
+  const orderedSections = sortByStoredOrder(hydrated.sections, (section) => section?.sortOrder);
+  const orderedDetails = sortByStoredOrder(sectionDetails, (details) => details?.sortOrder);
+
+  return orderedSections.map((section, index) => ({
+    ...section,
+    ...(orderedDetails[index] || {}),
+  }));
 };
 
 const isLineSection = (section = {}) => {
@@ -1046,7 +1100,6 @@ app.put('/api/projects/:id', async (req, res) => {
       include: {
         sections: true,
         beteckningar: true,
-        formState: true,
       },
     });
     await syncProjectBlankett31Registry(prisma, result);
@@ -1334,7 +1387,7 @@ app.post('/api/blankett31-registry/use-suggestion', authMiddleware, async (req, 
           eldriftnummer: hydrated.formState?.eldriftnummer || '',
           htsmTelefon: hydrated.formState?.htsmTelefon || '',
           reservnr: hydrated.formState?.reservnr || '',
-          sections: Array.isArray(hydrated.sections) ? hydrated.sections : [],
+          sections: getProjectSectionTemplateData(project),
           dispSettings: hydrated.formState?.dispSettings || {},
           fjtklBlocks: Array.isArray(hydrated.formState?.fjtklBlocks) ? hydrated.formState.fjtklBlocks : [],
           customDispPhoneLines: Array.isArray(hydrated.formState?.customDispPhoneLines) ? hydrated.formState.customDispPhoneLines : [],
