@@ -1181,15 +1181,26 @@ const fillWorksheet = (worksheet, project, entriesForSheet, rows) => {
       worksheet,
       `${trailingColumns.tsa}${excelRow}`,
       row.tsa || (Array.isArray(row.anordning) && row.anordning.some((item) => String(item).toUpperCase() === 'TSA'))
-        ? 'X'
-        : ''
+        ? '☒'
+        : '☐'
     );
     setCell(worksheet, `${trailingColumns.anteckning}${excelRow}`, row.anteckning || '');
   });
 
+  const tsaLastRow = Math.max(startRow, worksheet.rowCount || startRow);
+  for (let rowNumber = startRow; rowNumber <= tsaLastRow; rowNumber += 1) {
+    const tsaCell = worksheet.getCell(`${trailingColumns.tsa}${rowNumber}`);
+    if (!String(tsaCell.value || '').trim()) {
+      setCell(worksheet, `${trailingColumns.tsa}${rowNumber}`, '☐');
+    }
+  }
+
   for (let rowNumber = Math.max(layout.dataStartRow + 1, 11); rowNumber <= 27; rowNumber += 1) {
     setCell(worksheet, `E${rowNumber}`, rows[rowNumber - startRow]?.namn ? worksheet.getCell(`E${rowNumber}`).value : '');
   }
+
+  applyTsaSelector(worksheet, trailingColumns, layout);
+  applyCompletionHighlightRule(worksheet, trailingColumns, layout);
 
   reapplyTemplateMerges(worksheet);
 };
@@ -1228,6 +1239,78 @@ const createPlanWorkbookBuffer = async (project) => {
   placePlanSheetsFirst(workbook, createdPlanSheets);
 
   return workbook.xlsx.writeBuffer();
+};
+
+const applyCompletionHighlightRule = (worksheet, trailingColumns, layout) => {
+  if (!worksheet || !trailingColumns?.avslutat || !trailingColumns?.anteckning || !layout?.dataStartRow) {
+    return;
+  }
+
+  const firstDataRow = Number(layout.dataStartRow);
+  const lastDataRow = Math.max(firstDataRow, worksheet.rowCount || firstDataRow);
+  const range = `C${firstDataRow}:${trailingColumns.anteckning}${lastDataRow}`;
+  const avslutatColumn = trailingColumns.avslutat;
+
+  if (Array.isArray(worksheet.conditionalFormattings)) {
+    worksheet.conditionalFormattings = worksheet.conditionalFormattings.filter((entry) => {
+      const ref = String(entry?.ref || '');
+      const formulas = Array.isArray(entry?.rules)
+        ? entry.rules.flatMap((rule) => Array.isArray(rule?.formulae) ? rule.formulae : [])
+        : [];
+      const normalizedFormulas = formulas.map((formula) => String(formula || '').replace(/\s+/g, ''));
+      const looksLikeCompletionRule = normalizedFormulas.some((formula) =>
+        formula.includes('<>""') || formula.startsWith('LEN(TRIM($')
+      );
+
+      return !(ref.startsWith(`C${firstDataRow}:`) && looksLikeCompletionRule);
+    });
+  }
+
+  worksheet.addConditionalFormatting({
+    ref: range,
+    rules: [
+      {
+        type: 'expression',
+        priority: 1,
+        formulae: [`$${avslutatColumn}${firstDataRow}<>""`],
+        style: {
+          fill: {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFE46C6C' },
+            bgColor: { argb: 'FFE46C6C' },
+          },
+          font: {
+            color: { argb: 'FF000000' },
+          },
+        },
+      },
+    ],
+  });
+};
+
+const applyTsaSelector = (worksheet, trailingColumns, layout) => {
+  if (!worksheet || !trailingColumns?.tsa || !layout?.dataStartRow) {
+    return;
+  }
+
+  const firstDataRow = Number(layout.dataStartRow);
+  const lastDataRow = Math.max(firstDataRow, worksheet.rowCount || firstDataRow);
+
+  for (let rowNumber = firstDataRow; rowNumber <= lastDataRow; rowNumber += 1) {
+    const cell = worksheet.getCell(`${trailingColumns.tsa}${rowNumber}`);
+    cell.dataValidation = {
+      type: 'list',
+      allowBlank: false,
+      formulae: ['"☐,☒"'],
+      showErrorMessage: true,
+    };
+    cell.alignment = {
+      ...(cell.alignment || {}),
+      horizontal: 'center',
+      vertical: 'middle',
+    };
+  }
 };
 
 module.exports = {

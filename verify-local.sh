@@ -97,6 +97,14 @@ fi
 log "HTSM-projektlista fungerar ($HTSM_COUNT projekt)"
 
 FIRST_HTSM_ID="$(printf '%s' "$HTSM_PROJECTS_JSON" | python3 -c 'import json,sys; data=json.load(sys.stdin); print(data[0]["id"])')"
+KNOWN_PLAN_ID="67"
+PLAN_PROJECT_ID="$KNOWN_PLAN_ID"
+PLAN_PROJECT_CODE="$(curl -s -o "$TMP_DIR/plan-project.json" -w "%{http_code}" \
+  "http://localhost:4000/api/projects/$PLAN_PROJECT_ID" \
+  -H "Authorization: Bearer $HTSM_TOKEN")"
+if [ "$PLAN_PROJECT_CODE" != "200" ]; then
+  PLAN_PROJECT_ID="$FIRST_HTSM_ID"
+fi
 KNOWN_SAVE_ID="50"
 SAVE_PROJECT_ID="$KNOWN_SAVE_ID"
 SAVE_PROJECT_CODE="$(curl -s -o "$TMP_DIR/save-project.json" -w "%{http_code}" \
@@ -168,6 +176,44 @@ if missing:
 print("Excel workbook verified")
 PY
 log "Excel-export fungerar"
+
+PLAN_EXCEL_CODE="$(curl -s -o "$TMP_DIR/plan-project.xlsx" -w "%{http_code}" \
+  "http://localhost:4000/api/projects/$PLAN_PROJECT_ID/export-excel" \
+  -H "Authorization: Bearer $HTSM_TOKEN")"
+expect_http_code "$PLAN_EXCEL_CODE" "200" "Plan project Excel export"
+
+python3 - <<PY
+from zipfile import ZipFile
+from pathlib import Path
+import json
+import re
+
+path = Path("$TMP_DIR/plan-project.xlsx")
+if path.stat().st_size < 10000:
+    raise SystemExit("Plan Excel export looks too small")
+
+with ZipFile(path) as zf:
+    sheet = zf.read("xl/worksheets/sheet1.xml").decode("utf-8", "replace")
+
+blocks = re.findall(r'<conditionalFormatting sqref=\"([^\"]+)\">(.*?)</conditionalFormatting>', sheet, re.S)
+if len(blocks) != 1:
+    raise SystemExit(f"Expected exactly one completion highlight rule, found {len(blocks)}")
+
+ref, body = blocks[0]
+formulas = re.findall(r'<formula>([^<]+)</formula>', body)
+if len(formulas) != 1:
+    raise SystemExit(f"Expected exactly one completion formula, found {len(formulas)}")
+
+formula = formulas[0]
+if "&lt;&gt;&quot;&quot;" not in formula and '<>""' not in formula:
+    raise SystemExit(f"Unexpected completion formula: {formula}")
+
+if "\$X10&lt;&gt;&quot;&quot;" in formula or "\$X10<>\"\"" in formula:
+    raise SystemExit("Legacy fixed-column completion rule is still present")
+
+print(json.dumps({"ref": ref, "formula": formula}, ensure_ascii=False))
+PY
+log "Excel-rödmarkering för Avslutat följer flytande kolumn"
 
 BLANKETT_SAMPLE_PATH="$(find "$HOME/Desktop/Disper" -type f -name '*205832.pdf' -print -quit 2>/dev/null || true)"
 if [ -z "$BLANKETT_SAMPLE_PATH" ]; then
