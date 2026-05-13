@@ -572,6 +572,9 @@ const describeRegistryMatch = (item = {}) => {
   };
 };
 
+const isExactBoundaryMatch = (candidate = {}, current = {}) =>
+  cleanText(candidate.boundarySignature) && candidate.boundarySignature === current.boundarySignature;
+
 const suggestBlankett31Matches = async (prisma, parsed = {}, options = {}) => {
   const limit = Number(options.limit || 5);
   const currentRows = buildRegistryRowsFromParsed({ parsed });
@@ -587,6 +590,7 @@ const suggestBlankett31Matches = async (prisma, parsed = {}, options = {}) => {
 
   currentRows.forEach((currentRow) => {
     candidates.forEach((candidate) => {
+      if (!isExactBoundaryMatch(candidate, currentRow)) return;
       const { score, overlap } = scoreRegistryMatch(candidate, currentRow);
       if (score <= 0) return;
       suggestions.push({

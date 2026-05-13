@@ -39,6 +39,16 @@ const formatAnordningLabel = (item = '') => {
   }
 };
 
+const ANORDNING_VALIDATION_VALUES = [
+  'A-Skydd',
+  'L-Skydd',
+  'S-Skydd',
+  'E-Skydd',
+  'Spärrfärd',
+  'Växling',
+  'Tågvarning',
+];
+
 const getSectionSignalAndTrack = (section = {}) => {
   const raw = String(section.signal || section.name || '').trim();
   const trackMatch = raw.match(/(Spår\s+.+)$/i);
@@ -565,6 +575,12 @@ const setSectionHeaders = (worksheet, sections, sectionColumns, layout) => {
   const typeRow = layout?.sectionTypeRow || 7;
   const numberRow = layout?.sectionNumberRow || 8;
   const locationRow = layout?.locationRow;
+  const sectionSignalFill = {
+    type: 'pattern',
+    pattern: 'solid',
+    fgColor: { argb: 'FFF4CCCC' },
+    bgColor: { argb: 'FFF4CCCC' },
+  };
 
   sectionColumns.forEach((column, columnIndex) => {
     const mappedSection = sectionColumnMap.get(columnIndex);
@@ -614,6 +630,7 @@ const setSectionHeaders = (worksheet, sections, sectionColumns, layout) => {
       vertical: 'middle',
       wrapText: true,
     };
+    worksheet.getCell(`${column}${boundaryRow}`).fill = sectionSignalFill;
     applySectionPopupNote(worksheet.getCell(`${column}${boundaryRow}`), section, mappedSection.index);
     setCell(worksheet, `${column}${typeRow}`, isDp ? 'DP' : 'Linje');
     setCell(worksheet, `${column}${numberRow}`, getSectionDisplayIndex(section, mappedSection.index));
@@ -1199,6 +1216,7 @@ const fillWorksheet = (worksheet, project, entriesForSheet, rows) => {
     setCell(worksheet, `E${rowNumber}`, rows[rowNumber - startRow]?.namn ? worksheet.getCell(`E${rowNumber}`).value : '');
   }
 
+  applyAnordningSelector(worksheet, layout);
   applyTsaSelector(worksheet, trailingColumns, layout);
   applyCompletionHighlightRule(worksheet, trailingColumns, layout);
 
@@ -1309,6 +1327,26 @@ const applyTsaSelector = (worksheet, trailingColumns, layout) => {
       ...(cell.alignment || {}),
       horizontal: 'center',
       vertical: 'middle',
+    };
+  }
+};
+
+const applyAnordningSelector = (worksheet, layout) => {
+  if (!worksheet || !layout?.dataStartRow) {
+    return;
+  }
+
+  const firstDataRow = Number(layout.dataStartRow);
+  const lastDataRow = Math.max(firstDataRow, worksheet.rowCount || firstDataRow);
+  const validationFormula = `"${ANORDNING_VALIDATION_VALUES.join(',')}"`;
+
+  for (let rowNumber = firstDataRow; rowNumber <= lastDataRow; rowNumber += 1) {
+    const cell = worksheet.getCell(`F${rowNumber}`);
+    cell.dataValidation = {
+      type: 'list',
+      allowBlank: true,
+      formulae: [validationFormula],
+      showErrorMessage: true,
     };
   }
 };
