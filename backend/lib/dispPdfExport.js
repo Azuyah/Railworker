@@ -1,6 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
+const {
+  getDispDisplayNameForOfficialName,
+  getDispDisplayNameForCode,
+  applyDispDisplayNames,
+} = require('./driftplatsDisplayNames');
 
 const LEGACY_LOGO_PATH = path.join(__dirname, '..', 'assets', 'vallakra-logo-cropped.png');
 const LEGACY_VERSION_NUMBER = '1/MA11';
@@ -79,11 +84,18 @@ const getDriftplatsNameCodeMap = () => {
   }
 
   const codeNameMap = getDriftplatsCodeNameMap();
-  driftplatsNameCodeMap = new Map(
-    [...codeNameMap.entries()]
-      .filter(([code, name]) => code && name)
-      .map(([code, name]) => [String(name).trim(), String(code).trim()])
-  );
+  driftplatsNameCodeMap = new Map();
+  [...codeNameMap.entries()]
+    .filter(([code, name]) => code && name)
+    .forEach(([code, name]) => {
+      const cleanedCode = String(code).trim();
+      const officialName = String(name).trim();
+      const displayName = getDispDisplayNameForOfficialName(officialName);
+      driftplatsNameCodeMap.set(officialName, cleanedCode);
+      if (displayName) {
+        driftplatsNameCodeMap.set(displayName, cleanedCode);
+      }
+    });
 
   return driftplatsNameCodeMap;
 };
@@ -218,7 +230,7 @@ const buildSections = (project = {}) => {
   const fallbackBoundary = sanitizeSectionText(project.granspunkter || '');
   const singleSectionFallbackName =
     baseSections.length === 1
-      ? normalizeSectionAreaName(project.plats || project.formState?.dispSettings?.banNamn || '')
+      ? applyDispDisplayNames(normalizeSectionAreaName(project.plats || project.formState?.dispSettings?.banNamn || ''))
       : '';
 
   return baseSections
@@ -237,7 +249,9 @@ const buildSections = (project = {}) => {
         details.granspunkter || [granspunktStart, granspunktSlut].filter(Boolean).join(' - ')
       );
       const granspunkter = computedBoundary || fallbackBoundary;
-      const areaName = normalizeSectionAreaName(section?.name || details.signal || singleSectionFallbackName);
+      const areaName = applyDispDisplayNames(
+        normalizeSectionAreaName(section?.name || details.signal || singleSectionFallbackName)
+      );
 
       return {
         displayIndex,
@@ -375,10 +389,10 @@ const formatLegacyWeekLine = (value = '') =>
     .replace(/Fre,\s*Lör/gi, 'Fre-Lör');
 
 const buildLegacyCoverRoute = (project = {}, dispSettings = {}) => {
-  const explicit = cleanText(dispSettings.rubrik || project.name || '');
+  const explicit = applyDispDisplayNames(cleanText(dispSettings.rubrik || project.name || ''));
   const parts = cleanText(project.plats || '')
     .split(',')
-    .map((part) => cleanText(part))
+    .map((part) => applyDispDisplayNames(cleanText(part)))
     .filter(Boolean);
 
   return explicit || [parts[0], parts[parts.length - 1]].filter(Boolean).join(' - ');
@@ -412,7 +426,7 @@ const buildDispSettings = (project = {}, entries = []) => {
       settings.banobjektVnr ||
         (meta.banarbetsobjektsId ? `${meta.banarbetsobjektsId}-1` : '')
     ),
-    forplaneraCa: cleanText(settings.forplaneraCa || '1 tim innan start'),
+    forplaneraCa: cleanText(settings.forplaneraCa || 'ca 1 tim innan start'),
     rodmarkeradeGranspunkter: cleanText(settings.rodmarkeradeGranspunkter || settings.highlightedBoundaries || ''),
     visaBeteckningarKapitel1: settings.visaBeteckningarKapitel1 !== false,
     visaFullaGranspunkterKapitel1: settings.visaFullaGranspunkterKapitel1 !== false,
@@ -422,73 +436,130 @@ const buildDispSettings = (project = {}, entries = []) => {
 
 const escapeRegExp = (value = '') => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-const normalizeLegacyBoundaryCodeSpacing = (value = '') => {
-  let text = cleanText(value);
-  const codePattern = [...getDriftplatsCodeNameMap().keys()]
-    .sort((left, right) => right.length - left.length)
-    .map((code) => escapeRegExp(code))
-    .join('|');
+const getOrderedLegacyBoundaryCodes = () =>
+  [...getDriftplatsCodeNameMap().keys()].sort((left, right) => right.length - left.length);
 
-  if (codePattern) {
-    text = text.replace(
-      new RegExp(`(^|[\\s\\-–,(/])(${codePattern})\\s*([A-Za-z0-9]+)`, 'gu'),
-      (_, prefix = '', code = '', suffix = '') => `${prefix}${code} ${suffix}`
-    );
+const getOrderedLegacyBoundaryNames = () =>
+  [...getDriftplatsNameCodeMap().keys()].sort((left, right) => right.length - left.length);
+
+const normalizeBoundarySuffixToken = (value = '') =>
+  cleanText(value)
+    .replace(/\s+/g, '')
+    .replace(/[–—]/g, '-');
+
+const isInheritedBoundaryShorthand = (token = '', currentPrefix = null) => {
+  const compact = normalizeBoundarySuffixToken(token);
+  if (!currentPrefix || !compact) return false;
+  return /^\d[\dA-Za-z/]*$/u.test(compact) || /^[A-Za-z]\d[\dA-Za-z/]*$/u.test(compact);
+};
+
+const splitLegacyBoundarySides = (value = '') =>
+  cleanText(value)
+    .split(/\s*[–-]\s*/)
+    .map((part) => cleanText(part))
+    .filter(Boolean);
+
+const matchKnownBoundaryPrefix = (token = '') => {
+  const cleaned = cleanText(token);
+  if (!cleaned) return null;
+
+  const lowered = cleaned.toLowerCase();
+
+  for (const code of getOrderedLegacyBoundaryCodes()) {
+    const lowerCode = code.toLowerCase();
+    if (!lowered.startsWith(lowerCode)) continue;
+
+    const remainder = cleanText(cleaned.slice(code.length));
+    if (remainder && code.length === 1 && /^[A-Za-zÅÄÖåäö]\d/u.test(remainder)) {
+      continue;
+    }
+    if (!remainder) {
+      return {
+        code,
+        officialName: getDriftplatsCodeNameMap().get(code) || code,
+        displayName: getDispDisplayNameForCode(code, getDriftplatsCodeNameMap().get(code) || code),
+        suffix: '',
+      };
+    }
+
+    return {
+      code,
+      officialName: getDriftplatsCodeNameMap().get(code) || code,
+      displayName: getDispDisplayNameForCode(code, getDriftplatsCodeNameMap().get(code) || code),
+      suffix: normalizeBoundarySuffixToken(remainder),
+    };
   }
 
-  return text;
+  for (const name of getOrderedLegacyBoundaryNames()) {
+    const lowerName = name.toLowerCase();
+    if (!lowered.startsWith(lowerName)) continue;
+
+    const code = getDriftplatsNameCodeMap().get(name) || '';
+    const remainder = cleanText(cleaned.slice(name.length));
+    if (!remainder) {
+      return {
+        code,
+        officialName: name,
+        displayName: getDispDisplayNameForOfficialName(name),
+        suffix: '',
+      };
+    }
+
+    return {
+      code,
+      officialName: name,
+      displayName: getDispDisplayNameForOfficialName(name),
+      suffix: normalizeBoundarySuffixToken(remainder),
+    };
+  }
+
+  const genericMatch = cleaned.match(/^([A-Za-zÅÄÖåäö]{2,6})\s*([A-Za-z]?\d[\dA-Za-z/]*)$/u);
+  if (!genericMatch) return null;
+
+  return {
+    code: genericMatch[1],
+    officialName: genericMatch[1],
+    displayName: genericMatch[1],
+    suffix: normalizeBoundarySuffixToken(genericMatch[2]),
+  };
 };
 
-const normalizeLegacyBoundaryNameSpacing = (value = '') => {
-  let text = cleanText(value);
-  const names = [...getDriftplatsNameCodeMap().keys()].sort((left, right) => right.length - left.length);
+const formatLegacyBoundarySide = (value = '', options = {}) => {
+  const { expandNames = true } = options;
+  const parts = cleanText(value)
+    .split(/\s*,\s*/)
+    .map((part) => cleanText(part))
+    .filter(Boolean);
 
-  names.forEach((name) => {
-    text = text.replace(
-      new RegExp(`(${escapeRegExp(name)})\\s*([A-Za-z0-9]+)`, 'gu'),
-      (_, placeName = '', suffix = '') => `${placeName} ${suffix}`
-    );
-  });
+  let currentPrefix = null;
 
-  return text;
+  return parts
+    .map((part) => {
+      const explicit = isInheritedBoundaryShorthand(part, currentPrefix) ? null : matchKnownBoundaryPrefix(part);
+      if (explicit) {
+        currentPrefix = explicit;
+        const prefixText = expandNames ? explicit.displayName : explicit.code;
+        return explicit.suffix ? `${prefixText} ${explicit.suffix}` : prefixText;
+      }
+
+      const suffixOnly = normalizeBoundarySuffixToken(part);
+      if (!suffixOnly) return '';
+
+      return suffixOnly;
+    })
+    .filter(Boolean)
+    .join(', ');
 };
 
-const expandLegacyBoundaryText = (value = '') => {
-  const registry = getDriftplatsCodeNameMap();
-  const normalized = normalizeLegacyBoundaryCodeSpacing(value);
-  const codePattern = [...registry.keys()]
-    .sort((left, right) => right.length - left.length)
-    .map((code) => escapeRegExp(code))
-    .join('|');
+const expandLegacyBoundaryText = (value = '') =>
+  splitLegacyBoundarySides(value)
+    .map((part) => formatLegacyBoundarySide(part, { expandNames: true }))
+    .join(' – ');
 
-  const expanded = codePattern
-    ? normalized.replace(
-        new RegExp(`(^|[\\s\\-–,(/])(${codePattern})(?=\\s+[A-Za-z0-9])`, 'gu'),
-        (_, prefix = '', code = '') => `${prefix}${registry.get(code) || code}`
-      )
-    : normalized;
-
-  return normalizeLegacyBoundaryNameSpacing(expanded);
-};
-
-const abbreviateLegacyBoundaryText = (value = '') => {
-  const registry = getDriftplatsNameCodeMap();
-  let text = cleanText(value);
-  const names = [...registry.keys()].sort((left, right) => right.length - left.length);
-
-  names.forEach((name) => {
-    const code = registry.get(name);
-    if (!code) return;
-
-    const regex = new RegExp(
-      `(^|[\\s\\-–,(/])(${escapeRegExp(name)})(?=(?:\\s*[A-Za-z0-9]+|\\s*[\\-–,/)])|$)`,
-      'gu'
-    );
-    text = text.replace(regex, (_, prefix = '') => `${prefix}${code}`);
-  });
-
-  return normalizeLegacyBoundaryCodeSpacing(text);
-};
+const abbreviateLegacyBoundaryText = (value = '') =>
+  splitLegacyBoundarySides(value)
+    .map((part) => formatLegacyBoundarySide(part, { expandNames: false }))
+    .join(' – ');
 
 const formatLegacyBoundaryText = (value = '', options = {}) => {
   const { expandNames = true } = options;
@@ -496,8 +567,6 @@ const formatLegacyBoundaryText = (value = '', options = {}) => {
 
   return normalized
     .replace(/\s*-\s*/g, ' – ')
-    .replace(/\bHb\b/g, 'HB')
-    .replace(/\bTp\b/g, 'TP')
     .replace(/\bBlb\b/g, 'Blb')
     .replace(/\bGan\b/g, 'Gan')
     .replace(/\bVåk\b/g, 'Våk')
@@ -699,10 +768,27 @@ const getBoundaryHighlightTokens = (boundaryText = '') => {
   const normalized = cleanText(boundaryText);
   if (!normalized) return [];
 
-  const parts = normalized
-    .split(/\s*[-–]\s*|,\s*/)
-    .map((token) => cleanText(token))
-    .filter(Boolean);
+  const parts = [];
+  splitLegacyBoundarySides(normalized).forEach((side) => {
+    const sideParts = cleanText(side)
+      .split(/\s*,\s*/)
+      .map((token) => cleanText(token))
+      .filter(Boolean);
+
+    let currentPrefix = null;
+    sideParts.forEach((token) => {
+      const explicit = isInheritedBoundaryShorthand(token, currentPrefix) ? null : matchKnownBoundaryPrefix(token);
+      if (explicit) {
+        currentPrefix = explicit;
+        parts.push(`${explicit.code}${explicit.suffix}`.trim());
+        return;
+      }
+
+      const suffixOnly = normalizeBoundarySuffixToken(token);
+      if (!suffixOnly) return;
+      parts.push(currentPrefix?.code ? `${currentPrefix.code}${suffixOnly}` : suffixOnly);
+    });
+  });
 
   return [...new Set([
     normalized,
@@ -980,7 +1066,7 @@ const getLegacySectionRowHeight = (doc, row, sectionColumns, fontSize = 12) =>
           lineGap: 1,
         })
       )
-    ) + 4
+    ) + 8
   );
 
 const getLegacyChapterOneRowHeight = (doc, row, entryColumns, sectionColumns) => {
@@ -1123,7 +1209,7 @@ const estimateLegacyTotalPages = (doc, chapterOneGroups, dispSettings = {}, proj
 const addCoverPage = (doc, project, dispSettings) => {
   const left = doc.page.margins.left;
   const width = doc.page.width - doc.page.margins.left - doc.page.margins.right;
-  const routeLine = cleanText(project.plats || '');
+  const routeLine = applyDispDisplayNames(cleanText(project.plats || ''));
   const displayRouteLine = routeLine && !/[.!?]$/.test(routeLine) ? `${routeLine}.` : routeLine;
   const weekLine = formatLegacyWeekLine(dispSettings.veckaOchDagar || '');
   const coverBoundarySource = cleanText(
@@ -1175,7 +1261,7 @@ const addCoverPage = (doc, project, dispSettings) => {
     });
   }
   doc.fillColor('#ff0000').font(PDF_FONTS.headerBold).fontSize(16).text(
-    `Förplanera ca:${cleanText(dispSettings.forplaneraCa || '1 tim innan start')}`,
+    `Förplanering: ${cleanText(dispSettings.forplaneraCa || 'ca 1 tim innan start')}`,
     left,
     forplaneraY,
     {
@@ -1331,6 +1417,22 @@ const drawLegacyBoundarySegment = (doc, text, x, y, maxWidth, highlightTokens = 
   const separator = ' – ';
   const highlightLeftWhole = options.highlightLeft && !cleanText(options.highlightLeftPart);
   const highlightRightWhole = options.highlightRight && !cleanText(options.highlightRightPart);
+  const leftNeedsCustomHighlight =
+    highlightLeftWhole ||
+    Boolean(cleanText(options.highlightLeftPart)) ||
+    (!options.highlightLeft && shouldHighlightBoundaryText(leftToken, highlightTokens));
+  const rightNeedsCustomHighlight =
+    highlightRightWhole ||
+    Boolean(cleanText(options.highlightRightPart)) ||
+    (!options.highlightRight && shouldHighlightBoundaryText(rightToken, highlightTokens));
+
+  if (!leftNeedsCustomHighlight && !rightNeedsCustomHighlight) {
+    doc.fillColor('#000000').text(normalizedText, x, y, {
+      width: maxWidth,
+      lineGap: 1,
+    });
+    return;
+  }
 
   drawBoundaryToken(doc, leftToken, {
     x,
@@ -1835,7 +1937,7 @@ const getLegacyChapters = (project = {}, dispSettings = {}, chapterOneGroups = [
       paragraphs: [
         `Säkerhetssamtal till HTSM ska ske via Telefon ${htsmTelefon || 'Ej angivet'}`,
         `Reservnr: ${reservnr || 'Ej angivet'}`,
-        `Telvxl öppnar ca: ${cleanText(dispSettings.forplaneraCa || '1 tim innan start')}.`,
+        `Telvxl öppnar ca: ${cleanText(dispSettings.forplaneraCa || 'ca 1 tim innan start')}.`,
         'Tänk på samtalsdisciplinen, Alla samtal spelas in.',
       ],
     },

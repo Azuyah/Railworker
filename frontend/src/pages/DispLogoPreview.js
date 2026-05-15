@@ -15,7 +15,7 @@ const coverText = {
   line: 'Raabanan',
   week: 'V13 Nm Tis, Lor, Son',
   banobjekt: '17096-1',
-  planning: '1 tim innan start',
+  planning: 'ca 1 tim innan start',
   stations: 'Helsingborg, Gantofta, Vallakra, Tagarp, Billeberga, Teckomatorp',
   htsm: '010-149 01 64',
   limits: 'Hb 103 - Tp 33, 82',

@@ -20,7 +20,7 @@ const sample = {
   reserve: '010-149 01 65',
   fjtkl: '010-127 12 61',
   banobjekt: '17096-1',
-  planning: '1 tim innan start',
+  planning: 'ca 1 tim innan start',
 };
 
 function PreviewShell({ title, note, children }) {

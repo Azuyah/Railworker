@@ -536,7 +536,7 @@ const defaultDispSettings = () => ({
   giltigTillagg: '',
   versionsnummer: '1/MA11',
   banobjektVnr: '',
-  forplaneraCa: '1 tim innan start',
+  forplaneraCa: 'ca 1 tim innan start',
   rodmarkeradeGranspunkter: '',
   visaBeteckningarKapitel1: true,
   visaFullaGranspunkterKapitel1: true,
@@ -3243,12 +3243,12 @@ const SkapaProjekt = () => {
                     </p>
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-semibold text-slate-900">Förplanera ca</label>
+                    <label className="mb-1 block text-sm font-semibold text-slate-900">Förplanering</label>
                     <input
                       type="text"
                       value={dispSettings.forplaneraCa}
                       onChange={(e) => setDispSettings((current) => ({ ...current, forplaneraCa: e.target.value }))}
-                      placeholder="Ex. 1 tim innan start"
+                      placeholder="Ex. ca 1 tim innan start"
                       className="min-h-[56px] w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 focus:border-slate-900 focus:outline-none"
                     />
                   </div>

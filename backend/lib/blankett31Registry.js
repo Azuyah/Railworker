@@ -48,7 +48,7 @@ const normalizeBoundaryCodeSpacing = (value = '') => {
 
   if (codePattern) {
     text = text.replace(
-      new RegExp(`(^|[\\s\\-–,(/])(${codePattern})\\s*([A-Za-z0-9]+)`, 'gu'),
+      new RegExp(`(^|[\\s\\-–,(/])(${codePattern})\\s*(\\d[\\dA-Za-z/]*)`, 'gu'),
       (_, prefix = '', code = '', suffix = '') => `${prefix}${code} ${suffix}`
     );
   }
@@ -62,7 +62,7 @@ const normalizeBoundaryNameSpacing = (value = '') => {
 
   namesByLength.forEach((name) => {
     text = text.replace(
-      new RegExp(`(${escapeRegExp(name)})\\s*([A-Za-z0-9]+)`, 'gu'),
+      new RegExp(`(${escapeRegExp(name)})\\s*(\\d[\\dA-Za-z/]*)`, 'gu'),
       (_, placeName = '', suffix = '') => `${placeName} ${suffix}`
     );
   });
