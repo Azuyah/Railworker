@@ -1497,6 +1497,7 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
     highlightTokens,
     mode = 'full',
     showNote = true,
+    continuationHint = '',
   } = config;
   const totalHeight = headerHeight + rows.reduce((sum, row) => sum + (row.rowHeight || rowHeight), 0) + 12;
   const bottom = top + totalHeight;
@@ -1721,17 +1722,26 @@ const drawLegacyChapterOneTable = (doc, rows, config) => {
     y += currentRowHeight;
   });
 
+  if (continuationHint) {
+    doc.font(PDF_FONTS.bodyItalic).fontSize(8.5).fillColor('#6b7280').text(continuationHint, left + 8, bottom - 10, {
+      width: width - 16,
+      align: 'right',
+      lineBreak: false,
+    });
+  }
+
   if (showNote) {
     const redNoteWord = 'rödmarkerade.';
     const notePrefix = noteText.endsWith(redNoteWord)
       ? noteText.slice(0, -redNoteWord.length)
       : noteText;
-    doc.font(PDF_FONTS.bodyBold).fontSize(10.5).fillColor('#000000').text(notePrefix, left + 8, bottom + 10, {
+    const noteY = bottom + 10;
+    doc.font(PDF_FONTS.bodyBold).fontSize(10.5).fillColor('#000000').text(notePrefix, left + 8, noteY, {
       width: width - 16,
       lineBreak: false,
     });
     const prefixWidth = doc.widthOfString(notePrefix);
-    doc.fillColor('#c1121f').text(redNoteWord, left + 8 + prefixWidth, bottom + 10, {
+    doc.fillColor('#c1121f').text(redNoteWord, left + 8 + prefixWidth, noteY, {
       lineBreak: false,
     });
   }
@@ -1792,7 +1802,8 @@ const addEntriesAndSectionsPageForGroup = (
     { kind: 'spacer' },
     ...sectionRows,
   ];
-  const firstPageAvailableHeight = 560 - headerHeight - 12;
+  const firstPageContinuationHintReserve = 16;
+  const firstPageAvailableHeight = 560 - headerHeight - 12 - firstPageContinuationHintReserve;
   const continuedPageAvailableHeight = 620 - headerHeight - 12;
   const firstPageChunks = paginateLegacyChapterOneRows(doc, rows, firstPageAvailableHeight, entryColumns, sectionColumns);
   const firstPageRows = firstPageChunks[0] || rows.map((row) => ({
@@ -1835,6 +1846,7 @@ const addEntriesAndSectionsPageForGroup = (
     highlightTokens,
     mode: 'full',
     showNote: continuationChunks.length === 0,
+    continuationHint: continuationChunks.length > 0 ? 'Fortsättning på nästa sida' : '',
   });
 
   continuationChunks.forEach((chunk, chunkIndex) => {
