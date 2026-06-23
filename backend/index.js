@@ -39,6 +39,46 @@ app.use(cors(corsOptions));
 
 app.use(express.json({ limit: '25mb' }));
 
+app.get('/health', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({
+      ok: true,
+      service: 'railworker-backend',
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('Healthcheck misslyckades:', error);
+    res.status(503).json({
+      ok: false,
+      service: 'railworker-backend',
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+app.get('/api/health', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({
+      ok: true,
+      service: 'railworker-backend',
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('API-healthcheck misslyckades:', error);
+    res.status(503).json({
+      ok: false,
+      service: 'railworker-backend',
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
 app.get('/api/telefonkatalog', (req, res) => {
   if (!fs.existsSync(TELEFONKATALOG_PATH)) {
     return res.status(404).json({ error: 'Telefonkatalogen kunde inte hittas.' });
