@@ -42,6 +42,25 @@ const cleanText = (value = '') =>
     .replace(/\s+/g, ' ')
     .trim();
 
+const GRILLBY_ENKOPING_PROJECT_ID = 105;
+const GRILLBY_ENKOPING_PROTECTION_PARAGRAPHS = [
+  'Permanenta kortslutningen av spårledning gäller för detta projekt under totalavstängningstiderna.',
+  'Permanent kortslutning kommer att finnas i ändarna på D-skyddet.',
+  'Den permanenta kortslutningen ska utföras med en stållina i rälsfoten och beläggningen ska bekräftas av HTSM innan någon annan anordning får beviljas utan egen kortslutning av spårledningen.',
+  'Därefter behöver inte varje enskilt A-skydd egen kortslutning av spårledning.',
+  'Vidare får hindertavlor på ömse sidor om varje enskilt arbete placeras på kontaktledningsstolpe förutsatt att de syns väl.',
+];
+
+const isLegacyGrillbyEnkopingProject = (project = {}) => {
+  if (Number(project?.id) === GRILLBY_ENKOPING_PROJECT_ID) {
+    return true;
+  }
+
+  const projectName = cleanText(project?.name).toLowerCase();
+  const projectTitle = cleanText(project?.formState?.dispSettings?.rubrik).toLowerCase();
+  return projectName === 'grillby - enköping' || projectTitle === 'grillby - enköping';
+};
+
 const sanitizeSectionText = (value = '') =>
   cleanText(value)
     .replace(/yttre\s+gr[aä]nspunkter.*$/i, '')
@@ -1633,6 +1652,13 @@ const getLegacyChapters = (project = {}, dispSettings = {}, chapterOneGroups = [
   const eldriftnummer = cleanText(project.formState?.eldriftnummer || '');
   const larmTlc = extractPrimaryPhone(project.formState?.nodnummer || '') || 'Ej angivet';
   const fjtklContactLines = buildFjtklContactLines(project, chapterOneGroups);
+  const protectionParagraphs = [
+    'Respektive Tillsyningsman (TSM) ansvarar för att skyddsåtgärder enligt TTJ moduler utförs.',
+  ];
+
+  if (isLegacyGrillbyEnkopingProject(project)) {
+    protectionParagraphs.push(...GRILLBY_ENKOPING_PROTECTION_PARAGRAPHS);
+  }
 
   return [
     {
@@ -1657,9 +1683,7 @@ const getLegacyChapters = (project = {}, dispSettings = {}, chapterOneGroups = [
     {
       number: 4,
       title: 'Skyddsåtgärder',
-      paragraphs: [
-        'Respektive Tillsyningsman (TSM) ansvarar för att skyddsåtgärder enligt TTJ moduler utförs.',
-      ],
+      paragraphs: protectionParagraphs,
     },
     {
       number: 5,
