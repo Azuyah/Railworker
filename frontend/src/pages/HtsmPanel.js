@@ -52,6 +52,8 @@ const clearLiveSyncToken = () => {
   }
 };
 
+const BULK_LIVE_SYNC_ID = 'bulk-live-sync';
+
 const getLiveSyncStatus = (project) => {
   const syncedAt = project?.formState?.liveSync?.syncedAt;
   if (!syncedAt) {
@@ -183,6 +185,7 @@ const Dashboard = () => {
   const filteredProjects = projects.filter((project) =>
     project.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  const projectsMarkedForLive = projects.filter((project) => Boolean(project?.visibleToTsm));
 
   const activeProjects = filteredProjects.filter((project) => !isProjectSent(project));
   const sentProjects = filteredProjects.filter((project) => isProjectSent(project));
@@ -347,37 +350,21 @@ const Dashboard = () => {
     }
   };
 
-  const handleSyncProjectToLive = async (project) => {
+  const syncProjectToLive = async (project, preferredLiveToken = '') => {
     const localToken = getLocalToken();
     if (!localToken || !project?.id) {
-      toast({
-        title: 'Ingen lokal inloggning hittades',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
-      return;
+      throw new Error('Ingen lokal inloggning hittades');
     }
 
-    const liveToken = getLiveSyncToken() || requestLiveSyncToken();
+    const liveToken = preferredLiveToken || getLiveSyncToken() || requestLiveSyncToken();
     if (!liveToken) {
-      return;
+      throw new Error('Live-token saknas');
     }
 
-    try {
-      setSyncingProjectId(project.id);
-
-      const localProjectRes = await axios.get(apiUrl(`/api/project/${project.id}`), {
-        headers: {
-          Authorization: `Bearer ${localToken}`,
-        },
-      });
-      const fullProject = localProjectRes.data;
-      const payload = toLivePayload(fullProject);
-
+    const syncProject = async (token, fullProject, payload) => {
       const liveProjectsRes = await axios.get(`${PROD_API_BASE_URL}/api/projects`, {
         headers: {
-          Authorization: `Bearer ${liveToken}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -395,14 +382,14 @@ const Dashboard = () => {
       if (matchingLiveProject?.id) {
         await axios.put(`${PROD_API_BASE_URL}/api/projects/${matchingLiveProject.id}`, payload, {
           headers: {
-            Authorization: `Bearer ${liveToken}`,
+            Authorization: `Bearer ${token}`,
           },
         });
         liveProjectId = matchingLiveProject.id;
       } else {
         const createRes = await axios.post(`${PROD_API_BASE_URL}/api/projects`, payload, {
           headers: {
-            Authorization: `Bearer ${liveToken}`,
+            Authorization: `Bearer ${token}`,
           },
         });
         liveProjectId = createRes.data?.id || null;
@@ -414,7 +401,7 @@ const Dashboard = () => {
           { visibleToTsm: payload.visibleToTsm },
           {
             headers: {
-              Authorization: `Bearer ${liveToken}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );
@@ -426,16 +413,58 @@ const Dashboard = () => {
           { sentToManagement: Boolean(fullProject.formState.sentToManagement) },
           {
             headers: {
-              Authorization: `Bearer ${liveToken}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );
       }
 
-      if (liveProjectId) {
-        await persistLocalLiveSyncMeta(fullProject, liveProjectId);
+      return liveProjectId;
+    };
+
+    const localProjectRes = await axios.get(apiUrl(`/api/project/${project.id}`), {
+      headers: {
+        Authorization: `Bearer ${localToken}`,
+      },
+    });
+    const fullProject = localProjectRes.data;
+    const payload = toLivePayload(fullProject);
+    let liveProjectId = null;
+    let tokenUsed = liveToken;
+
+    try {
+      liveProjectId = await syncProject(liveToken, fullProject, payload);
+    } catch (error) {
+      const status = Number(error?.response?.status);
+      if (status !== 401 && status !== 403) {
+        throw error;
       }
 
+      clearLiveSyncToken();
+      const replacementToken = requestLiveSyncToken();
+      if (!replacementToken) {
+        throw error;
+      }
+
+      tokenUsed = replacementToken;
+      liveProjectId = await syncProject(replacementToken, fullProject, payload);
+    }
+
+    if (liveProjectId) {
+      await persistLocalLiveSyncMeta(fullProject, liveProjectId);
+    }
+
+    return {
+      liveProjectId,
+      payload,
+      tokenUsed,
+    };
+  };
+
+  const handleSyncProjectToLive = async (project) => {
+    try {
+      setSyncingProjectId(project.id);
+      const { payload } = await syncProjectToLive(project);
       await fetchUserAndProjects();
 
       toast({
@@ -461,6 +490,71 @@ const Dashboard = () => {
           'Kontrollera live-tokenen och försök igen.',
         status: 'error',
         duration: 4500,
+        isClosable: true,
+      });
+    } finally {
+      setSyncingProjectId(null);
+    }
+  };
+
+  const handleSyncMarkedProjectsToLive = async () => {
+    if (!projectsMarkedForLive.length) {
+      toast({
+        title: 'Inga projekt markerade för TSM',
+        description: 'Slå på Visa för TSM på de projekt som ska publiceras live.',
+        status: 'info',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    try {
+      setSyncingProjectId(BULK_LIVE_SYNC_ID);
+      let currentLiveToken = getLiveSyncToken() || requestLiveSyncToken();
+      if (!currentLiveToken) {
+        return;
+      }
+
+      let successCount = 0;
+      const failedProjects = [];
+
+      for (const project of projectsMarkedForLive) {
+        try {
+          const { tokenUsed } = await syncProjectToLive(project, currentLiveToken);
+          currentLiveToken = tokenUsed || currentLiveToken;
+          successCount += 1;
+        } catch (error) {
+          failedProjects.push({
+            name: project.name || `Projekt ${project.id}`,
+            error,
+          });
+        }
+      }
+
+      await fetchUserAndProjects();
+
+      if (!failedProjects.length) {
+        toast({
+          title: `${successCount} projekt publicerade till live`,
+          description: 'Alla projekt som är markerade för TSM är nu publicerade till live.',
+          status: 'success',
+          duration: 4000,
+          isClosable: true,
+        });
+        return;
+      }
+
+      const firstError =
+        failedProjects[0]?.error?.response?.data?.error ||
+        failedProjects[0]?.error?.message ||
+        'Okänt fel';
+
+      toast({
+        title: `${successCount} projekt publicerade, ${failedProjects.length} misslyckades`,
+        description: `${failedProjects[0]?.name}: ${firstError}`,
+        status: successCount > 0 ? 'warning' : 'error',
+        duration: 5000,
         isClosable: true,
       });
     } finally {
@@ -657,17 +751,36 @@ const Dashboard = () => {
                     </Text>
                   )}
                 </Box>
-                <Button
-                  bg="blue.700"
-                  color="white"
-                  size="lg"
-                  borderRadius="full"
-                  px={8}
-                  _hover={{ bg: 'blue.800' }}
-                  onClick={() => navigate('/skapa-projekt')}
-                >
-                  + Skapa projekt
-                </Button>
+                <HStack spacing={3} wrap="wrap">
+                  {showLiveSync && (
+                    <Button
+                      variant="outline"
+                      borderColor="emerald.400"
+                      color="emerald.700"
+                      bg="white"
+                      size="lg"
+                      borderRadius="full"
+                      px={6}
+                      onClick={handleSyncMarkedProjectsToLive}
+                      isLoading={syncingProjectId === BULK_LIVE_SYNC_ID}
+                      isDisabled={!projectsMarkedForLive.length}
+                      loadingText="Publicerar markerade"
+                    >
+                      {`Publicera markerade live (${projectsMarkedForLive.length})`}
+                    </Button>
+                  )}
+                  <Button
+                    bg="blue.700"
+                    color="white"
+                    size="lg"
+                    borderRadius="full"
+                    px={8}
+                    _hover={{ bg: 'blue.800' }}
+                    onClick={() => navigate('/skapa-projekt')}
+                  >
+                    + Skapa projekt
+                  </Button>
+                </HStack>
               </HStack>
             </Stack>
           </Box>
