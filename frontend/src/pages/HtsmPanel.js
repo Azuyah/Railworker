@@ -2,11 +2,24 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
+  Alert,
+  AlertDescription,
+  AlertIcon,
+  AlertTitle,
   Badge,
   Box,
   Button,
+  Checkbox,
   Collapse,
+  Divider,
   Input,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
   Spinner,
   Switch,
   Text,
@@ -17,6 +30,13 @@ import {
 } from '@chakra-ui/react';
 import Header from '../components/Header';
 import { apiUrl, PROD_API_BASE_URL, isLocalAppHost } from '../lib/api';
+import {
+  buildBulkLiveReview,
+  findMatchingLiveProject,
+  hasLiveMatchChangedSinceReview,
+  isProjectInSearch,
+  isProjectSent,
+} from './htsmLiveSync';
 
 const getStoredUser = () => {
   try {
@@ -82,6 +102,8 @@ const Dashboard = () => {
   const [updatingSentStatusId, setUpdatingSentStatusId] = useState(null);
   const [syncingProjectId, setSyncingProjectId] = useState(null);
   const [showSentProjects, setShowSentProjects] = useState(false);
+  const [bulkReview, setBulkReview] = useState(null);
+  const [loadingBulkReview, setLoadingBulkReview] = useState(false);
   const toast = useToast();
   const showLiveSync = isLocalAppHost();
 
@@ -180,11 +202,7 @@ const Dashboard = () => {
     }
   }, []);
 
-  const isProjectSent = (project) => Boolean(project?.formState?.sentToManagement);
-
-  const filteredProjects = projects.filter((project) =>
-    project.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProjects = projects.filter((project) => isProjectInSearch(project, searchQuery));
   const projectsMarkedForLive = projects.filter((project) => Boolean(project?.visibleToTsm));
 
   const activeProjects = filteredProjects.filter((project) => !isProjectSent(project));
@@ -350,7 +368,11 @@ const Dashboard = () => {
     }
   };
 
-  const syncProjectToLive = async (project, preferredLiveToken = '') => {
+  const syncProjectToLive = async (
+    project,
+    preferredLiveToken = '',
+    reviewedLiveProjectId = undefined
+  ) => {
     const localToken = getLocalToken();
     if (!localToken || !project?.id) {
       throw new Error('Ingen lokal inloggning hittades');
@@ -369,14 +391,13 @@ const Dashboard = () => {
       });
 
       const liveProjects = Array.isArray(liveProjectsRes.data) ? liveProjectsRes.data : [];
-      const storedLiveProjectId = Number(fullProject?.formState?.liveSync?.liveProjectId);
-      const matchingLiveProject =
-        liveProjects.find((item) => Number(item.id) === storedLiveProjectId) ||
-        liveProjects.find((item) =>
-          String(item?.name || '').trim() === String(fullProject?.name || '').trim() &&
-          String(item?.startDate || '') === String(fullProject?.startDate || '') &&
-          String(item?.plats || '').trim() === String(fullProject?.plats || '').trim()
+      const matchingLiveProject = findMatchingLiveProject(fullProject, liveProjects);
+
+      if (hasLiveMatchChangedSinceReview(matchingLiveProject, reviewedLiveProjectId)) {
+        throw new Error(
+          'Liveversionen har ändrats sedan granskningen. Avbryt och öppna granskningen igen.'
         );
+      }
 
       let liveProjectId = null;
       if (matchingLiveProject?.id) {
@@ -497,7 +518,37 @@ const Dashboard = () => {
     }
   };
 
-  const handleSyncMarkedProjectsToLive = async () => {
+  const fetchLiveProjectsForReview = async (preferredToken = '') => {
+    let liveToken = preferredToken || getLiveSyncToken() || requestLiveSyncToken();
+    if (!liveToken) return null;
+
+    try {
+      const response = await axios.get(`${PROD_API_BASE_URL}/api/projects`, {
+        headers: { Authorization: `Bearer ${liveToken}` },
+      });
+      return {
+        liveToken,
+        liveProjects: Array.isArray(response.data) ? response.data : [],
+      };
+    } catch (error) {
+      const status = Number(error?.response?.status);
+      if (status !== 401 && status !== 403) throw error;
+
+      clearLiveSyncToken();
+      liveToken = requestLiveSyncToken();
+      if (!liveToken) return null;
+
+      const response = await axios.get(`${PROD_API_BASE_URL}/api/projects`, {
+        headers: { Authorization: `Bearer ${liveToken}` },
+      });
+      return {
+        liveToken,
+        liveProjects: Array.isArray(response.data) ? response.data : [],
+      };
+    }
+  };
+
+  const handleOpenBulkLiveReview = async () => {
     if (!projectsMarkedForLive.length) {
       toast({
         title: 'Inga projekt markerade för TSM',
@@ -510,18 +561,57 @@ const Dashboard = () => {
     }
 
     try {
+      setLoadingBulkReview(true);
+      const preflight = await fetchLiveProjectsForReview();
+      if (!preflight) return;
+
+      setBulkReview({
+        liveToken: preflight.liveToken,
+        items: buildBulkLiveReview(projects, searchQuery, preflight.liveProjects),
+      });
+    } catch (error) {
+      console.error('Kunde inte förhandsgranska publiceringen:', error);
+      toast({
+        title: 'Kunde inte förhandsgranska publiceringen',
+        description: error?.response?.data?.error || error?.message || 'Försök igen.',
+        status: 'error',
+        duration: 4500,
+        isClosable: true,
+      });
+    } finally {
+      setLoadingBulkReview(false);
+    }
+  };
+
+  const handleBulkReviewSelection = (projectId, selected) => {
+    setBulkReview((current) => ({
+      ...current,
+      items: current.items.map((item) => (
+        item.projectId === projectId ? { ...item, selected } : item
+      )),
+    }));
+  };
+
+  const handleSyncMarkedProjectsToLive = async () => {
+    const selectedItems = bulkReview?.items?.filter((item) => item.selected) || [];
+    if (!selectedItems.length) return;
+
+    try {
       setSyncingProjectId(BULK_LIVE_SYNC_ID);
-      let currentLiveToken = getLiveSyncToken() || requestLiveSyncToken();
-      if (!currentLiveToken) {
-        return;
-      }
+      let currentLiveToken = bulkReview.liveToken;
+      setBulkReview(null);
 
       let successCount = 0;
       const failedProjects = [];
 
-      for (const project of projectsMarkedForLive) {
+      for (const item of selectedItems) {
+        const project = item.project;
         try {
-          const { tokenUsed } = await syncProjectToLive(project, currentLiveToken);
+          const { tokenUsed } = await syncProjectToLive(
+            project,
+            currentLiveToken,
+            item.matchingLiveProjectId
+          );
           currentLiveToken = tokenUsed || currentLiveToken;
           successCount += 1;
         } catch (error) {
@@ -537,7 +627,7 @@ const Dashboard = () => {
       if (!failedProjects.length) {
         toast({
           title: `${successCount} projekt publicerade till live`,
-          description: 'Alla projekt som är markerade för TSM är nu publicerade till live.',
+          description: 'Alla valda projekt är nu publicerade till live.',
           status: 'success',
           duration: 4000,
           isClosable: true,
@@ -761,10 +851,10 @@ const Dashboard = () => {
                       size="lg"
                       borderRadius="full"
                       px={6}
-                      onClick={handleSyncMarkedProjectsToLive}
-                      isLoading={syncingProjectId === BULK_LIVE_SYNC_ID}
+                      onClick={handleOpenBulkLiveReview}
+                      isLoading={loadingBulkReview || syncingProjectId === BULK_LIVE_SYNC_ID}
                       isDisabled={!projectsMarkedForLive.length}
-                      loadingText="Publicerar markerade"
+                      loadingText={loadingBulkReview ? 'Granskar live' : 'Publicerar markerade'}
                     >
                       {`Publicera markerade live (${projectsMarkedForLive.length})`}
                     </Button>
@@ -916,6 +1006,90 @@ const Dashboard = () => {
           </Box>
         </Stack>
       </Box>
+      <Modal
+        isOpen={Boolean(bulkReview)}
+        onClose={() => setBulkReview(null)}
+        size="3xl"
+        scrollBehavior="inside"
+      >
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Granska publicering till live</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text color="gray.700" mb={4}>
+              Kontrollera urvalet nedan. Inget skickas till livemiljön förrän du bekräftar.
+            </Text>
+            {bulkReview?.items?.some((item) => item.selected && item.willOverwrite) && (
+              <Alert status="warning" borderRadius="lg" mb={4} alignItems="start">
+                <AlertIcon mt={1} />
+                <Box>
+                  <AlertTitle>Befintlig liveversion kommer att skrivas över</AlertTitle>
+                  <AlertDescription>
+                    Ett eller flera valda projekt matchar redan ett liveprojekt. Den lokala versionens uppgifter ersätter liveversionens uppgifter.
+                  </AlertDescription>
+                </Box>
+              </Alert>
+            )}
+            <VStack align="stretch" spacing={3}>
+              {bulkReview?.items?.map((item) => (
+                <Box
+                  key={item.projectId}
+                  border="1px solid"
+                  borderColor={item.willOverwrite ? 'orange.300' : 'gray.200'}
+                  borderRadius="lg"
+                  p={4}
+                  bg={item.selected ? 'white' : 'gray.50'}
+                >
+                  <Checkbox
+                    isChecked={item.selected}
+                    onChange={(event) => handleBulkReviewSelection(item.projectId, event.target.checked)}
+                    alignItems="start"
+                    width="full"
+                  >
+                    <Text fontWeight="700">{item.project.name || `Projekt ${item.projectId}`}</Text>
+                  </Checkbox>
+                  <HStack spacing={2} wrap="wrap" mt={3} ml={6}>
+                    <Badge colorScheme={item.willOverwrite ? 'orange' : 'green'} textTransform="none">
+                      {item.willOverwrite ? 'Redan publicerad – skrivs över' : 'Nytt liveprojekt'}
+                    </Badge>
+                    {item.sentToManagement && (
+                      <Badge colorScheme="orange" textTransform="none">Skickat till arbetsledningen</Badge>
+                    )}
+                    {!item.inCurrentSearch && (
+                      <Badge colorScheme="purple" textTransform="none">Utanför aktuellt sökresultat</Badge>
+                    )}
+                    {item.publishedLocally && !item.willOverwrite && (
+                      <Badge colorScheme="yellow" textTransform="none">Tidigare publicerad lokalt – liveversion saknas</Badge>
+                    )}
+                  </HStack>
+                  {item.project.plats && (
+                    <Text fontSize="sm" color="gray.600" mt={2} ml={6}>{item.project.plats}</Text>
+                  )}
+                </Box>
+              ))}
+            </VStack>
+          </ModalBody>
+          <Divider />
+          <ModalFooter>
+            <HStack justify="space-between" width="full" wrap="wrap">
+              <Text fontSize="sm" color="gray.600">
+                {`${bulkReview?.items?.filter((item) => item.selected).length || 0} av ${bulkReview?.items?.length || 0} projekt valda`}
+              </Text>
+              <HStack>
+                <Button variant="ghost" onClick={() => setBulkReview(null)}>Avbryt</Button>
+                <Button
+                  colorScheme={bulkReview?.items?.some((item) => item.selected && item.willOverwrite) ? 'orange' : 'green'}
+                  onClick={handleSyncMarkedProjectsToLive}
+                  isDisabled={!bulkReview?.items?.some((item) => item.selected)}
+                >
+                  Bekräfta och publicera valda
+                </Button>
+              </HStack>
+            </HStack>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 };
